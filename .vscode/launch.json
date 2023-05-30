@@ -1,0 +1,41 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Current file",
+			"type": "python",
+			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"subProcess": true,
+			"env": {
+				"PYTHONPATH": "${workspaceFolder}"
+			}
+		},
+		{
+			"name": "Debug Run",
+			"type": "python",
+			"request": "launch",
+			"program": "${workspaceFolder}/src/cogelot/commands/debug_run.py",
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"subProcess": true
+		},
+		{
+			"name": "Debug Tests",
+			"type": "python",
+			"request": "launch",
+			"justMyCode": false,
+			"purpose": [
+				"debug-test"
+			],
+			"env": {
+				"_PYTEST_RAISE": "1"
+			}
+		}
+	]
+}

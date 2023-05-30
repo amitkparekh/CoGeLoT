@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "vima"
+version = "1.0.0"
+description = ""
+authors = [
+  "VIMA Team ",
+  "Amit Parekh <7276308+amitkparekh@users.noreply.github.com>",
+]
+readme = "README.md"
+license = "MIT"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3.9",
+]
+packages = [{ include = "vima", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "^2.0.1"
+dm-tree = "*"
+kornia = "*"
+einops = "*"
+tokenizers = "*"
+transformers = "*"
+omegaconf = "*"
+numpy = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
