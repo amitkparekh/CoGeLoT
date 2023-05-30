@@ -52,7 +52,7 @@ After running the above command, we should see a PyBullet GUI pop up, alongside 
 
 # Paper and Citation
 
-Our paper is posted on [arXiv](https://arxiv.org/abs/2210.03094). If you find our work useful, please consider citing us! 
+Our paper is posted on [arXiv](https://arxiv.org/abs/2210.03094). If you find our work useful, please consider citing us!
 
 ```bibtex
 @article{jiang2022vima,

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import warnings
 
-import torch
 import kornia
+import torch
 
 
 @torch.no_grad()
@@ -13,10 +13,7 @@ def basic_image_tensor_preprocess(
     std: tuple[float, float, float] = (0.5, 0.5, 0.5),
     shape: tuple[int, int] | None = None,
 ):
-    """
-    Check for resize, and divide by 255
-    """
-
+    """Check for resize, and divide by 255."""
     assert torch.is_tensor(img)
     assert img.dim() >= 4
     original_shape = list(img.size())
@@ -44,8 +41,8 @@ def basic_image_tensor_preprocess(
 
 
 def torch_normalize(tensor: torch.Tensor, mean, std, inplace=False):
-    """
-    Adapted from https://pytorch.org/docs/stable/_modules/torchvision/transforms/functional.html#normalize
+    """Adapted from
+    https://pytorch.org/docs/stable/_modules/torchvision/transforms/functional.html#normalize.
 
     Normalize a tensor image with mean and standard deviation.
 
@@ -64,7 +61,7 @@ def torch_normalize(tensor: torch.Tensor, mean, std, inplace=False):
         Tensor: Normalized Tensor image.
     """
     if not torch.is_tensor(tensor):
-        raise TypeError("tensor should be a torch tensor. Got {}.".format(type(tensor)))
+        raise TypeError(f"tensor should be a torch tensor. Got {type(tensor)}.")
 
     if not inplace:
         tensor = tensor.clone()

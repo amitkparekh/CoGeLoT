@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
+from torch import nn
 from transformers.models.openai.modeling_openai import (
-    OpenAIGPTPreTrainedModel,
     OpenAIGPTConfig,
+    OpenAIGPTPreTrainedModel,
 )
 
-from .components import XAttention, Block
+from vima.nn.seq_modeling.xattn_gpt.components import Block, XAttention
 
 
 class XAttnGPT(OpenAIGPTPreTrainedModel):
@@ -24,7 +24,7 @@ class XAttnGPT(OpenAIGPTPreTrainedModel):
         xattn_detach_qk: bool = False,
         xattn_n_positions: int,
         use_geglu: bool = False,
-    ):
+    ) -> None:
         kwargs = {}
         if use_geglu:
             kwargs["afn"] = "geglu"
@@ -45,9 +45,7 @@ class XAttnGPT(OpenAIGPTPreTrainedModel):
         self.positions_embed = nn.Embedding(n_positions, embd_dim)
         self.xattn_positions_embed = nn.Embedding(xattn_n_positions, embd_dim)
         self.drop = nn.Dropout(cfg.embd_pdrop)
-        self.h = nn.ModuleList(
-            [Block(n_positions, cfg, scale=True) for _ in range(n_layer)]
-        )
+        self.h = nn.ModuleList([Block(n_positions, cfg, scale=True) for _ in range(n_layer)])
         self.xattns = nn.ModuleList(
             [
                 XAttention(
@@ -105,7 +103,7 @@ class XAttnGPT(OpenAIGPTPreTrainedModel):
         obs_action_tokens = obs_action_tokens + position_embeds
         obs_action_tokens = self.drop(obs_action_tokens)
 
-        output_shape = input_shape + (obs_action_tokens.size(-1),)
+        output_shape = (*input_shape, obs_action_tokens.size(-1))
 
         assert prompt_tokens.size(1) <= self.xattn_position_ids.size(0)
         if prompt_position_ids is None:
@@ -127,9 +125,7 @@ class XAttnGPT(OpenAIGPTPreTrainedModel):
                 attention_mask=prompt_mask,
                 kv_position_ids=None,
             )
-            obs_action_tokens = self_attn(
-                obs_action_tokens, attention_mask=obs_action_masks
-            )[0]
+            obs_action_tokens = self_attn(obs_action_tokens, attention_mask=obs_action_masks)[0]
 
         obs_action_tokens = obs_action_tokens.view(*output_shape)
         assert obs_action_tokens.shape == (B_oa, L_oa, E_oa)

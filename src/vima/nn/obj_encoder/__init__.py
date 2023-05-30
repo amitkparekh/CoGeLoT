@@ -1,6 +1,6 @@
-from .obj_encoder import (
-    ObjEncoder,
+from vima.nn.obj_encoder.obj_encoder import (
     GatoMultiViewRGBEncoder,
-    MultiViewRGBPerceiverEncoder,
     MultiViewRGBEncoder,
+    MultiViewRGBPerceiverEncoder,
+    ObjEncoder,
 )

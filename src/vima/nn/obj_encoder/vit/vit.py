@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from .preprocess import basic_image_tensor_preprocess
+from vima.nn.obj_encoder.vit.preprocess import basic_image_tensor_preprocess
 
 
 VIMA_IMG_MEAN = (0.3471, 0.3429, 0.3383)
@@ -20,7 +22,7 @@ class ViTEncoder(nn.Module):
         width: int,
         layers: int,
         heads: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.output_dim = output_dim
@@ -34,9 +36,7 @@ class ViTEncoder(nn.Module):
         )
 
     def forward(self, x):
-        """
-        x: (..., 3, H, W)
-        """
+        """X: (..., 3, H, W)."""
         assert x.dim() >= 4
         leading_dim = x.shape[:-3]
         x = basic_image_tensor_preprocess(x, mean=VIMA_IMG_MEAN, std=VIMA_IMG_STD)
@@ -56,7 +56,7 @@ class GatoViTEncoder(nn.Module):
         layers: int,
         heads: int,
         output_dim: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.output_dim = output_dim
@@ -70,9 +70,7 @@ class GatoViTEncoder(nn.Module):
         )
 
     def forward(self, x):
-        """
-        x: (..., 3, H, W)
-        """
+        """X: (..., 3, H, W)."""
         assert x.dim() >= 4
         leading_dim = x.shape[:-3]
         x = basic_image_tensor_preprocess(x, mean=VIMA_IMG_MEAN, std=VIMA_IMG_STD)
@@ -91,7 +89,7 @@ class GatoVisionTransformerRectangular(nn.Module):
         layers: int,
         heads: int,
         output_dim: int,
-    ):
+    ) -> None:
         super().__init__()
         self.output_dim = output_dim
         self.conv1 = nn.Conv2d(
@@ -109,9 +107,7 @@ class GatoVisionTransformerRectangular(nn.Module):
             scale * torch.randn(n_patches_height * n_patches_width, width)
         )
         self.ln_pre = nn.LayerNorm(width)
-        self.blocks = nn.Sequential(
-            *[ResidualAttentionBlock(width, heads) for _ in range(layers)]
-        )
+        self.blocks = nn.Sequential(*[ResidualAttentionBlock(width, heads) for _ in range(layers)])
         self.ln_post = nn.LayerNorm(width)
         self.projection = nn.Parameter(scale * torch.randn(width, output_dim))
 
@@ -143,7 +139,7 @@ class VisionTransformer(nn.Module):
         layers: int,
         heads: int,
         output_dim: int,
-    ):
+    ) -> None:
         super().__init__()
         self._resolution = resolution
         self._patch_size = patch_size
@@ -162,9 +158,7 @@ class VisionTransformer(nn.Module):
             scale * torch.randn((resolution // patch_size) ** 2 + 1, width)
         )
         self.ln_pre = nn.LayerNorm(width)
-        self.blocks = nn.Sequential(
-            *[ResidualAttentionBlock(width, heads) for _ in range(layers)]
-        )
+        self.blocks = nn.Sequential(*[ResidualAttentionBlock(width, heads) for _ in range(layers)])
         self.ln_post = nn.LayerNorm(width)
         self.projection = nn.Parameter(scale * torch.randn(width, output_dim))
 
@@ -197,7 +191,7 @@ class QuickGELU(nn.Module):
 
 
 class ResidualAttentionBlock(nn.Module):
-    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None):
+    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None) -> None:
         super().__init__()
 
         self.attn = nn.MultiheadAttention(d_model, n_head)
@@ -246,7 +240,7 @@ class ViTEncoderRectangular(nn.Module):
         width: int,
         layers: int,
         heads: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.output_dim = output_dim
@@ -260,9 +254,7 @@ class ViTEncoderRectangular(nn.Module):
         )
 
     def forward(self, x):
-        """
-        x: (..., 3, H, W)
-        """
+        """X: (..., 3, H, W)."""
         assert x.dim() >= 4
         leading_dim = x.shape[:-3]
         x = basic_image_tensor_preprocess(x, mean=VIMA_IMG_MEAN, std=VIMA_IMG_STD)
@@ -281,7 +273,7 @@ class VisionTransformerRectangular(nn.Module):
         layers: int,
         heads: int,
         output_dim: int,
-    ):
+    ) -> None:
         super().__init__()
         self.output_dim = output_dim
         self.conv1 = nn.Conv2d(
@@ -300,9 +292,7 @@ class VisionTransformerRectangular(nn.Module):
             scale * torch.randn(n_patches_height * n_patches_width + 1, width)
         )
         self.ln_pre = nn.LayerNorm(width)
-        self.blocks = nn.Sequential(
-            *[ResidualAttentionBlock(width, heads) for _ in range(layers)]
-        )
+        self.blocks = nn.Sequential(*[ResidualAttentionBlock(width, heads) for _ in range(layers)])
         self.ln_post = nn.LayerNorm(width)
         self.projection = nn.Parameter(scale * torch.randn(width, output_dim))
 

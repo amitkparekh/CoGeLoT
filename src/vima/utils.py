@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import collections
-import numpy as np
-import copy
-import tree
 import collections.abc
-import torch
-import pprint
+import copy
 import fnmatch
-from contextlib import contextmanager
-from typing import List, Union, Optional, Dict, Callable
 import functools
+import pprint
+from collections.abc import Callable
+from contextlib import contextmanager
+from typing import Dict, List, Optional, Union
+
+import numpy as np
+import torch
+import tree
+
 
 __all__ = [
     "any_concat",
@@ -25,9 +30,7 @@ __all__ = [
 
 
 def any_concat(xs: list, *, dim: int = 0):
-    """
-    Works for both torch Tensor and numpy array
-    """
+    """Works for both torch Tensor and numpy array."""
 
     def _any_concat_helper(*xs):
         x = xs[0]
@@ -45,9 +48,7 @@ def any_concat(xs: list, *, dim: int = 0):
 
 
 def any_stack(xs: list, *, dim: int = 0):
-    """
-    Works for both torch Tensor and numpy array
-    """
+    """Works for both torch Tensor and numpy array."""
 
     def _any_stack_helper(*xs):
         x = xs[0]
@@ -66,8 +67,8 @@ def any_stack(xs: list, *, dim: int = 0):
 
 def any_to_torch_tensor(
     x,
-    dtype: Union[str, torch.dtype, None] = None,
-    device: Union[str, int, torch.device, None] = None,
+    dtype: str | torch.dtype | None = None,
+    device: str | int | torch.device | None = None,
     copy=False,
     non_blocking=False,
     smart_optimize: bool = True,
@@ -75,7 +76,7 @@ def any_to_torch_tensor(
     dtype = torch_dtype(dtype)
     device = torch_device(device)
 
-    if not isinstance(x, (torch.Tensor, np.ndarray)):
+    if not isinstance(x, torch.Tensor | np.ndarray):
         # x is a primitive python sequence
         x = torch.tensor(x, dtype=dtype)
         copy = False
@@ -99,10 +100,7 @@ def any_to_torch_tensor(
     src_dtype_size = torch_dtype_size(x.dtype)
 
     # destination dtype size
-    if dtype is None:
-        dest_dtype_size = src_dtype_size
-    else:
-        dest_dtype_size = torch_dtype_size(dtype)
+    dest_dtype_size = src_dtype_size if dtype is None else torch_dtype_size(dtype)
 
     if x.dtype != dtype or x.device != device:
         # a copy will always be performed, no need to force copy again
@@ -124,7 +122,7 @@ def any_to_torch_tensor(
 
 def any_to_numpy(
     x,
-    dtype: Union[str, np.dtype, None] = None,
+    dtype: str | np.dtype | None = None,
     copy: bool = False,
     non_blocking: bool = False,
     smart_optimize: bool = True,
@@ -154,7 +152,7 @@ def _transfer_then_convert(x, dtype, device, copy, non_blocking):
     return x.to(dtype=dtype, copy=False, non_blocking=non_blocking)
 
 
-def torch_dtype(dtype: Union[str, torch.dtype, None]) -> torch.dtype:
+def torch_dtype(dtype: str | torch.dtype | None) -> torch.dtype:
     if dtype is None:
         return None
     elif isinstance(dtype, torch.dtype):
@@ -164,15 +162,13 @@ def torch_dtype(dtype: Union[str, torch.dtype, None]) -> torch.dtype:
             dtype = getattr(torch, dtype)
         except AttributeError:
             raise ValueError(f'"{dtype}" is not a valid torch dtype')
-        assert isinstance(
-            dtype, torch.dtype
-        ), f"dtype {dtype} is not a valid torch tensor type"
+        assert isinstance(dtype, torch.dtype), f"dtype {dtype} is not a valid torch tensor type"
         return dtype
     else:
         raise NotImplementedError(f"{dtype} not supported")
 
 
-def torch_device(device: Union[str, int, None]) -> torch.device:
+def torch_device(device: str | int | None) -> torch.device:
     if device is None:
         return None
     elif device == "auto":
@@ -183,7 +179,7 @@ def torch_device(device: Union[str, int, None]) -> torch.device:
         return torch.device(device)
 
 
-def torch_dtype_size(dtype: Union[str, torch.dtype]) -> int:
+def torch_dtype_size(dtype: str | torch.dtype) -> int:
     return _TORCH_DTYPE_TABLE[torch_dtype(dtype)]
 
 
@@ -210,18 +206,18 @@ _DATA_VAR = "_data_"
 
 
 class StopTraverse:
-    """
-    Prevent DataDict from recursing into the primitive dict structure.
-    When you access the value, it will auto-unwrap into the original primitive
+    """Prevent DataDict from recursing into the primitive dict structure.
+
+    When you access the value, it will auto-unwrap into the original primitive.
     """
 
-    def __init__(self, value):
+    def __init__(self, value) -> None:
         if isinstance(value, StopTraverse):
             # do not double-wrap StopTraverse
             value = value.value
         self.value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__} {self.value}"
 
 
@@ -233,18 +229,17 @@ class DataDict(collections.abc.MutableMapping):
         "strict_match": False,
     }
 
-    def __init__(self, _data_: collections.abc.Mapping = None, **kwargs):
-        """
-        Constructor:
-            * DataDict(mapping)
-            * DataDict(iterable[(key, value)])
-            * DataDict(**kwargs)
+    def __init__(self, _data_: collections.abc.Mapping = None, **kwargs) -> None:
+        """Constructor:
+        * DataDict(mapping)
+        * DataDict(iterable[(key, value)])
+        * DataDict(**kwargs).
         """
         if _data_ is not None:
             is_iter = _is_iterable(_data_)
             assert _is_mapping(_data_) or is_iter, (
                 f"data type {type(_data_)} is not supported. "
-                f"Only Mapping and Iterable[(key, value)] are valid."
+                "Only Mapping and Iterable[(key, value)] are valid."
             )
             assert not kwargs, (
                 "DataDict can only be constructed by either a single "
@@ -271,15 +266,15 @@ class DataDict(collections.abc.MutableMapping):
             raise AttributeError(f'Missing key-attribute "{name}"')
         return self[name]
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value) -> None:
         if name == _DATA_VAR:
             super().__setattr__(name, value)
         else:
             self[name] = value
 
-    def __delattr__(self, name):
+    def __delattr__(self, name) -> None:
         if name == _DATA_VAR:
-            raise RuntimeError(f'Cannot delete "_data_" attr from DataDict')
+            raise RuntimeError('Cannot delete "_data_" attr from DataDict')
         del self[name]
 
     def __getitem__(self, key):
@@ -292,7 +287,7 @@ class DataDict(collections.abc.MutableMapping):
                 subdict = self._data_[parent_key]
                 if not hasattr(subdict, "__getitem__"):
                     raise KeyError(
-                        f"Parent is not a subscriptable object, "
+                        "Parent is not a subscriptable object, "
                         f'cannot access child key "{child_key}"'
                     )
                 return subdict[child_key]
@@ -300,10 +295,7 @@ class DataDict(collections.abc.MutableMapping):
                 if key not in self._data_:
                     raise KeyError(f'Missing key "{key}"')
                 obj = self._data_[key]
-                if (
-                    isinstance(obj, StopTraverse)
-                    and DataDict._AUTO_UNWRAP_STOP_TRAVERSE
-                ):
+                if isinstance(obj, StopTraverse) and DataDict._AUTO_UNWRAP_STOP_TRAVERSE:
                     return obj.value
                 else:
                     return obj
@@ -351,7 +343,7 @@ class DataDict(collections.abc.MutableMapping):
         else:
             raise NotImplementedError("__delitem__ cannot handle non-string keys.")
 
-    def __contains__(self, key: str):
+    def __contains__(self, key: str) -> bool:
         if "." in key:
             parent_key, child_key = key.split(".", 1)
             if parent_key in self._data_:
@@ -400,18 +392,16 @@ class DataDict(collections.abc.MutableMapping):
         return v
 
     def update(self, other=None, **kwargs):
-        """
-        Same behavior as dict.update. Does not recurse into nested dicts.
-        If you need recursive update, use merge() instead
+        """Same behavior as dict.update.
+
+        Does not recurse into nested dicts. If you need recursive update, use merge() instead.
         """
         other_dict = DataDict(other, **kwargs)
         self._data_.update(other_dict._data_)
         return self
 
     def merge(self, other=None, **kwargs):
-        """
-        Recursively update dict.
-        """
+        """Recursively update dict."""
         other_dict = DataDict(other, **kwargs)
         strict_match = DataDict._INTERNAL_SETTINGS__["strict_match"]
         our_keys = set(self.keys())
@@ -430,11 +420,7 @@ class DataDict(collections.abc.MutableMapping):
                 self._data_[k] = v
 
     def __ior__(self, other):
-        """
-        |= operator
-        https://docs.python.org/3/library/operator.html
-        Python 3.9: dict union
-        """
+        """|= operator https://docs.python.org/3/library/operator.html Python 3.9: dict union."""
         return self.update(other)
 
     def __or__(self, other):
@@ -444,16 +430,12 @@ class DataDict(collections.abc.MutableMapping):
         return DataDict({k: self._data_[k] for k in keys})
 
     def __and__(self, other):
-        """
-        & operator
-        Get the intersection of keys between this dict and other.keys()
-        """
+        """& operator Get the intersection of keys between this dict and other.keys()."""
         return self._filter_key_dict(set(self.keys()) & _get_keys_set(other))
 
     def __sub__(self, other):
-        """
-        - operator
-        Get the subtraction set of keys between this dict and other.keys()
+        """- operator
+        Get the subtraction set of keys between this dict and other.keys().
         """
         return self._filter_key_dict(set(self.keys()) - _get_keys_set(other))
 
@@ -480,15 +462,11 @@ class DataDict(collections.abc.MutableMapping):
         return DataDict(copy.deepcopy(self._data_))
 
     def copy(self):
-        """
-        Copies all nested levels except the numpy/torch tensors.
-        """
+        """Copies all nested levels except the numpy/torch tensors."""
         return copy.copy(self)
 
     def deepcopy(self):
-        """
-        Deepcopies everything, including the leaf tensors.
-        """
+        """Deepcopies everything, including the leaf tensors."""
         return copy.deepcopy(self)
 
     # ------------------ Mapping functions -------------------
@@ -513,23 +491,19 @@ class DataDict(collections.abc.MutableMapping):
         *other_datadicts,
         inplace: bool = False,
     ):
+        """Args:
+        func: lambda path, v: <your func>.
         """
-        Args:
-            func: lambda path, v: <your func>
-        """
-        return self.map_structure(
-            func, *other_datadicts, inplace=inplace, with_path=True
-        )
+        return self.map_structure(func, *other_datadicts, inplace=inplace, with_path=True)
 
     def traverse(self, func, top_down: bool = True):
         return tree.traverse(func, self, top_down=top_down)
 
-    def to_container(self, flatten_keys: bool = False) -> Dict:
-        """
-        Args:
-            flatten_keys: True to return a one-level dict with nested keys flattened
-                by joining ".": {"obs.rgb": ..., "obs.state.proprio": ... }
-                False to return the nested dict
+    def to_container(self, flatten_keys: bool = False) -> dict:
+        """Args:
+        flatten_keys: True to return a one-level dict with nested keys flattened
+        by joining ".": {"obs.rgb": ..., "obs.state.proprio": ... }
+        False to return the nested dict.
         """
         if flatten_keys:
             ret = {}
@@ -561,31 +535,27 @@ class DataDict(collections.abc.MutableMapping):
 
     def to_numpy(
         self,
-        dtypes: Union[Dict[str, Union[str, type]], str, type, None] = None,
+        dtypes: dict[str, str | type] | str | type | None = None,
         copy: bool = False,
         non_blocking: bool = False,
         inplace: bool = True,
-        include_keys: Optional[List[str]] = None,
-        exclude_keys: Optional[List[str]] = None,
+        include_keys: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
     ):
+        """dtypes: one of None, np.dtype, or {key_name: np.dtype}
+        1. None: use default dtype inferred from the data
+        2. np.dtype: use this dtype for all values
+        3. a dict that maps a key to desired dtype
+        nested key should be specified with dots, e.g. `obs.rgb`
+        special key `None` to be a "catch-all" key
+        you can also use special value `None` to automatically infer dtype
+        for a given key.
         """
-        dtypes: one of None, np.dtype, or {key_name: np.dtype}
-            1. None: use default dtype inferred from the data
-            2. np.dtype: use this dtype for all values
-            3. a dict that maps a key to desired dtype
-               nested key should be specified with dots, e.g. `obs.rgb`
-               special key `None` to be a "catch-all" key
-               you can also use special value `None` to automatically infer dtype
-               for a given key
-        """
-
         dtypes = _preprocess_dtypes(dtypes, "numpy")
 
         def _convert_fn(paths, value):
             key = ".".join(map(str, paths))
-            if not match_patterns(
-                key, include_keys, exclude_keys, precedence="exclude"
-            ):
+            if not match_patterns(key, include_keys, exclude_keys, precedence="exclude"):
                 # key is not matched, we don't convert and return value as-is
                 return value
             return any_to_numpy(
@@ -600,25 +570,22 @@ class DataDict(collections.abc.MutableMapping):
 
     def to_torch_tensor(
         self,
-        dtypes: Union[
-            Dict[str, Union[str, torch.dtype]], str, torch.dtype, None
-        ] = None,
+        dtypes: dict[str, str | torch.dtype] | str | torch.dtype | None = None,
         copy: bool = False,
-        device: Union[torch.device, int, str, None] = None,
+        device: torch.device | int | str | None = None,
         non_blocking: bool = False,
         inplace: bool = True,
-        include_keys: Optional[List[str]] = None,
-        exclude_keys: Optional[List[str]] = None,
+        include_keys: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
     ):
-        """
-        dtypes: one of None, np.dtype, or {key_name: np.dtype}
+        """dtypes: one of None, np.dtype, or {key_name: np.dtype}
             1. None: use default dtype inferred from the data
             2. np.dtype: use this dtype for all values
             3. a dict that maps a key to desired dtype
                nested key should be specified with dots, e.g. `obs.rgb`
                special key `None` to be a "catch-all" key
                you can also use special value `None` to automatically infer dtype
-               for a given key
+               for a given key.
 
         device: one of None, str, or torch.device
             - "auto": use the current context device
@@ -629,9 +596,7 @@ class DataDict(collections.abc.MutableMapping):
 
         def _convert_fn(paths, value):
             key = ".".join(map(str, paths))
-            if not match_patterns(
-                key, include_keys, exclude_keys, precedence="exclude"
-            ):
+            if not match_patterns(key, include_keys, exclude_keys, precedence="exclude"):
                 # key is not matched, we don't convert and return value as-is
                 return value
             return any_to_torch_tensor(
@@ -647,7 +612,7 @@ class DataDict(collections.abc.MutableMapping):
 
 
 def any_to_datadict(D, resolve: bool = True) -> DataDict:
-    from omegaconf import OmegaConf, DictConfig
+    from omegaconf import DictConfig, OmegaConf
 
     if isinstance(D, DataDict):
         return D
@@ -656,9 +621,7 @@ def any_to_datadict(D, resolve: bool = True) -> DataDict:
     elif _is_mapping(D):
         return DataDict(D)
     else:
-        raise NotImplementedError(
-            f"Data type {type(D)} cannot be converted to DataDict"
-        )
+        raise NotImplementedError(f"Data type {type(D)} cannot be converted to DataDict")
 
 
 # ========================================================
@@ -675,7 +638,7 @@ def _is_iterable(x):
 
 
 def _is_sliceable(x):
-    return isinstance(x, (np.ndarray, torch.Tensor))
+    return isinstance(x, np.ndarray | torch.Tensor)
 
 
 def _get_keys_set(x):
@@ -684,16 +647,12 @@ def _get_keys_set(x):
     elif isinstance(x, collections.abc.Set):
         return x
     else:
-        raise NotImplementedError(
-            f"Unsupported type {type(x)}, must be either dict or set."
-        )
+        raise NotImplementedError(f"Unsupported type {type(x)}, must be either dict or set.")
 
 
 def _wrap_datadict(objs):
     return tree.traverse(
-        lambda x: DataDict(x)
-        if _is_mapping(x) and not isinstance(x, DataDict)
-        else None,
+        lambda x: DataDict(x) if _is_mapping(x) and not isinstance(x, DataDict) else None,
         objs,
         top_down=False,
     )
@@ -707,9 +666,8 @@ def _unwrap_datadict(x):
 
 
 def _match_pattern(key, pattern_dict):
-    """
-    Returns:
-        matched value
+    """Returns:
+    matched value.
     """
     for pattern, v in pattern_dict.items():
         if pattern is not None and fnmatch.fnmatch(key, pattern):
@@ -757,17 +715,17 @@ def _preprocess_dtypes(dtypes, mode):
 
 def match_patterns(
     item: str,
-    include: Union[str, List[str], Callable, List[Callable], None] = None,
-    exclude: Union[str, List[str], Callable, List[Callable], None] = None,
+    include: str | list[str] | Callable | list[Callable] | None = None,
+    exclude: str | list[str] | Callable | list[Callable] | None = None,
     *,
     precedence="exclude",
 ):
     assert precedence in ["include", "exclude"]
     if exclude is None:
         exclude = []
-    if isinstance(exclude, (str, Callable)):
+    if isinstance(exclude, str | Callable):
         exclude = [exclude]
-    if isinstance(include, (str, Callable)):
+    if isinstance(include, str | Callable):
         include = [include]
     if include is None:
         # exclude is the sole veto vote
@@ -792,7 +750,6 @@ def _match_patterns_helper(element, patterns):
 
 
 def stack_sequence_fields(sequence):
-
     # Handle empty input sequences.
     if not sequence:
         raise ValueError("Input sequence must not be empty")
@@ -815,10 +772,9 @@ def fast_map_structure(func, *structure):
 
 
 def get_batch_size(x, strict: bool = False) -> int:
-    """
-    Args:
-        x: can be any arbitrary nested structure of np array and torch tensor
-        strict: True to check all batch sizes are the same
+    """Args:
+    x: can be any arbitrary nested structure of np array and torch tensor
+    strict: True to check all batch sizes are the same.
     """
 
     def _get_batch_size(x):
@@ -842,9 +798,8 @@ def get_batch_size(x, strict: bool = False) -> int:
 
 
 def meta_decorator(decor):
-    single_callable = (
-        lambda args, kwargs: len(args) == 1 and len(kwargs) == 0 and callable(args[0])
-    )
+    def single_callable(args, kwargs):
+        return len(args) == 1 and len(kwargs) == 0 and callable(args[0])
 
     @functools.wraps(decor)
     def new_decor(*args, **kwargs):
@@ -861,10 +816,7 @@ def meta_decorator(decor):
 
 @meta_decorator
 def make_recursive_func(fn, *, with_path=False):
-    """
-    Decorator that turns a function that works on a single array/tensor to working on
-    arbitrary nested structures.
-    """
+    """Make function for single array/tensor work on arbitrary nested structures."""
 
     @functools.wraps(fn)
     def _wrapper(tensor_struct, *args, **kwargs):
@@ -880,9 +832,8 @@ def make_recursive_func(fn, *, with_path=False):
 
 @make_recursive_func
 def any_slice(x, slice):
-    """
-    Args:
-        slice: you can use np.s_[...] to return the slice object
+    """Args:
+    slice: you can use np.s_[...] to return the slice object.
     """
     if is_array_tensor(x):
         return x[slice]
@@ -891,14 +842,12 @@ def any_slice(x, slice):
 
 
 def is_array_tensor(obj):
-    return isinstance(obj, (np.ndarray, torch.Tensor))
+    return isinstance(obj, np.ndarray | torch.Tensor)
 
 
 @make_recursive_func
 def any_transpose_first_two_axes(x):
-    """
-    util to convert between (L, B, ...) and (B, L, ...)
-    """
+    """Util to convert between (L, B, ...) and (B, L, ...)."""
     if isinstance(x, np.ndarray):
         return np.swapaxes(x, 0, 1)
     elif torch.is_tensor(x):

@@ -1,6 +1,6 @@
-from .action_decoder import *
-from .action_embd import *
-from .obj_encoder import *
-from .prompt_encoder import *
-from .seq_modeling import *
-from .utils import Embedding, build_mlp
+from vima.nn.action_decoder import *
+from vima.nn.action_embd import *
+from vima.nn.obj_encoder import *
+from vima.nn.prompt_encoder import *
+from vima.nn.seq_modeling import *
+from vima.nn.utils import Embedding, build_mlp

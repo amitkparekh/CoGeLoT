@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from ..utils import build_mlp
+from vima.nn.utils import build_mlp
 
 
 class ActionEmbedding(nn.Module):
-    def __init__(self, output_dim: int, *, embed_dict: dict[str, nn.Module]):
+    def __init__(self, output_dim: int, *, embed_dict: dict[str, nn.Module]) -> None:
         super().__init__()
         self._embed_dict = nn.ModuleDict(embed_dict)
-        embed_dict_output_dim = sum(
-            embed_dict[k].output_dim for k in sorted(embed_dict.keys())
-        )
+        embed_dict_output_dim = sum(embed_dict[k].output_dim for k in sorted(embed_dict.keys()))
         self._post_layer = (
             nn.Identity()
             if output_dim == embed_dict_output_dim
@@ -31,16 +29,14 @@ class ActionEmbedding(nn.Module):
             assert set(x_dict.keys()) == set(self._embed_dict.keys())
             self._input_fields_checked = True
         return self._post_layer(
-            torch.cat(
-                [self._embed_dict[k](x_dict[k]) for k in sorted(x_dict.keys())], dim=-1
-            )
+            torch.cat([self._embed_dict[k](x_dict[k]) for k in sorted(x_dict.keys())], dim=-1)
         )
 
 
 class ContinuousActionEmbedding(nn.Module):
     def __init__(
         self, output_dim: int, *, input_dim: int, hidden_dim: int, hidden_depth: int
-    ):
+    ) -> None:
         super().__init__()
 
         self._layer = build_mlp(

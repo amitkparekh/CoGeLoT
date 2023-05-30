@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 from einops import rearrange
+from torch import nn
 
 import vima.nn as vnn
 
@@ -15,7 +15,7 @@ class VIMAFlamingoPolicy(nn.Module):
         dt_n_layers: int,
         dt_n_heads: int,
         xattn_n_heads: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.embed_dim = embed_dim
@@ -52,9 +52,7 @@ class VIMAFlamingoPolicy(nn.Module):
 
         obs_feat_dim = self.obj_encoder.output_dim + 2
         self.obs_fusion_layer = (
-            nn.Identity()
-            if obs_feat_dim == embed_dim
-            else nn.Linear(obs_feat_dim, embed_dim)
+            nn.Identity() if obs_feat_dim == embed_dim else nn.Linear(obs_feat_dim, embed_dim)
         )
 
         self.action_encoder = vnn.ActionEmbedding(
@@ -133,20 +131,14 @@ class VIMAFlamingoPolicy(nn.Module):
         L_action = 0 if action_token is None else action_token.shape[0]
         L = L_obs * self._obj_xf_num_queries + L_action
 
-        tokens = torch.empty(
-            L, B, self.embed_dim, dtype=torch.float32, device=self.device
-        )
+        tokens = torch.empty(L, B, self.embed_dim, dtype=torch.float32, device=self.device)
         obs_token = rearrange(obs_token, "L B Q E -> B L Q E")
         obs_token = rearrange(obs_token, "B L Q E -> B (L Q) E")
         obs_token = rearrange(obs_token, "B L E -> L B E")
         for q in range(self._obj_xf_num_queries):
-            tokens[q :: self._obj_xf_num_queries + 1] = obs_token[
-                q :: self._obj_xf_num_queries
-            ]
+            tokens[q :: self._obj_xf_num_queries + 1] = obs_token[q :: self._obj_xf_num_queries]
         if action_token is not None:
-            tokens[
-                self._obj_xf_num_queries :: self._obj_xf_num_queries + 1
-            ] = action_token
+            tokens[self._obj_xf_num_queries :: self._obj_xf_num_queries + 1] = action_token
         tokens_out = self.xattn_gpt(
             obs_action_tokens=tokens,
             prompt_tokens=prompt_token,
@@ -235,12 +227,8 @@ class VIMAFlamingoPolicy(nn.Module):
 
     def discretize_action(self, action):
         device = action["pose0_position"].device
-        boundary_x = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_x_bins, device=device
-        )
-        boundary_y = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_y_bins, device=device
-        )
+        boundary_x = torch.linspace(start=0, end=1, steps=self._n_discrete_x_bins, device=device)
+        boundary_y = torch.linspace(start=0, end=1, steps=self._n_discrete_y_bins, device=device)
         boundary_rot = torch.linspace(
             start=0, end=1, steps=self._n_discrete_rot_bins, device=device
         )
@@ -275,9 +263,7 @@ class VIMAFlamingoPolicy(nn.Module):
         actions["pose0_position"][..., 1] = (
             actions["pose0_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose0_rotation"] = (
-            actions["pose0_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
 
         actions["pose1_position"][..., 0] = (
             actions["pose1_position"][..., 0] / self._n_discrete_x_bins
@@ -285,7 +271,5 @@ class VIMAFlamingoPolicy(nn.Module):
         actions["pose1_position"][..., 1] = (
             actions["pose1_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose1_rotation"] = (
-            actions["pose1_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
         return actions

@@ -1,6 +1,6 @@
 # Model Card
 
-Inspired by [Model Cards for Model Reporting (Mitchell et al.)](https://arxiv.org/abs/1810.03993) and [Lessons from Archives (Jo & Gebru)](https://arxiv.org/abs/1912.10389), we’re providing some accompanying information about the VIMA model.
+Inspired by [Model Cards for Model Reporting (Mitchell et al.)](https://arxiv.org/abs/1810.03993) and [Lessons from Archives (Jo & Gebru)](https://arxiv.org/abs/1912.10389), we're providing some accompanying information about the VIMA model.
 
 ## Model Details
 VIMA (**Vi**suo**M**otor **A**ttention) is a novel Transformer agent that ingests multimodal prompts and outputs robot arm control autoregressively. VIMA is developed primarily by researchers at Stanford/NVIDIA.
@@ -35,7 +35,7 @@ Our provided model checkpoints are pre-trained on VIMA-Bench, which may not dire
 
 ## Paper and Citation
 
-Our paper is posted on [arXiv](https://arxiv.org/abs/2210.03094). If you find our work useful, please consider citing us! 
+Our paper is posted on [arXiv](https://arxiv.org/abs/2210.03094). If you find our work useful, please consider citing us!
 
 ```bibtex
 @article{jiang2022vima,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
+from torch import nn
 from transformers.models.perceiver.modeling_perceiver import (
     PerceiverConfig,
     PerceiverModel,
@@ -19,7 +19,7 @@ class ObjectsPerceiverEncoder(nn.Module):
         num_self_attention_heads: int,
         num_cross_attention_heads: int,
         attention_probs_dropout_prob: float,
-    ):
+    ) -> None:
         super().__init__()
 
         cfg = PerceiverConfig(

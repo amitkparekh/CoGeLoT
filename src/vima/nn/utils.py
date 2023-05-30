@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 
-import torch.nn as nn
+from torch import nn
 from torch.nn import Embedding as _Embedding
 
 
@@ -28,9 +29,8 @@ def build_mlp(
     add_output_activation: bool | str | Callable = False,
     add_output_norm: bool = False,
 ) -> nn.Sequential:
-    """
-    In other popular RL implementations, tanh is typically used with orthogonal
-    initialization, which may perform better than ReLU.
+    """In other popular RL implementations, tanh is typically used with orthogonal initialization,
+    which may perform better than ReLU.
 
     Args:
         norm_type: None, "batchnorm", "layernorm", applied to intermediate layers
@@ -82,7 +82,7 @@ def build_mlp(
         mods = [nn.Linear(input_dim, output_dim)]
     else:
         mods = [nn.Linear(input_dim, hidden_dim), norm_type(hidden_dim), act_layer()]
-        for i in range(hidden_depth - 1):
+        for _i in range(hidden_depth - 1):
             mods += [
                 nn.Linear(hidden_dim, hidden_dim),
                 norm_type(hidden_dim),
@@ -91,11 +91,11 @@ def build_mlp(
         mods.append(nn.Linear(hidden_dim, output_dim))
 
     if add_input_norm:
-        mods = [norm_type(input_dim)] + mods
+        mods = [norm_type(input_dim), *mods]
     if add_input_activation:
         if add_input_activation is not True:
             act_layer = get_activation(add_input_activation)
-        mods = [act_layer()] + mods
+        mods = [act_layer(), *mods]
     if add_output_norm:
         mods.append(norm_type(output_dim))
     if add_output_activation:
@@ -132,9 +132,7 @@ def get_activation(activation: str | Callable | None) -> Callable:
 
 def get_initializer(method: str | Callable, activation: str) -> Callable:
     if isinstance(method, str):
-        assert hasattr(
-            nn.init, f"{method}_"
-        ), f"Initializer nn.init.{method}_ does not exist"
+        assert hasattr(nn.init, f"{method}_"), f"Initializer nn.init.{method}_ does not exist"
         if method == "orthogonal":
             try:
                 gain = nn.init.calculate_gain(activation)

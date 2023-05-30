@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 from einops import rearrange
+from torch import nn
 
 import vima.nn as vnn
-from ..utils import *
+from vima.utils import *
 
 
 class VIMAPolicy(nn.Module):
@@ -16,7 +16,7 @@ class VIMAPolicy(nn.Module):
         xf_n_layers: int,
         sattn_n_heads: int,
         xattn_n_heads: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.embed_dim = embed_dim
@@ -126,9 +126,7 @@ class VIMAPolicy(nn.Module):
         n_max_objs = obs_token.shape[-2]
         L = L_obs * n_max_objs + L_action
 
-        tokens = torch.empty(
-            L, B, self.embed_dim, dtype=torch.float32, device=obs_token.device
-        )
+        tokens = torch.empty(L, B, self.embed_dim, dtype=torch.float32, device=obs_token.device)
         masks = torch.ones(L, B, dtype=torch.bool, device=obs_token.device)
         obs_token = rearrange(obs_token, "L B Q E -> B L Q E")
         obs_token = rearrange(obs_token, "B L Q E -> B (L Q) E")
@@ -189,10 +187,7 @@ class VIMAPolicy(nn.Module):
                     assembled_mask.append(True)
                 elif item == 1:
                     obj_mask = any_concat(
-                        [
-                            image_batch["mask"][view][img_ptr]
-                            for view in sorted(self._views)
-                        ],
+                        [image_batch["mask"][view][img_ptr] for view in sorted(self._views)],
                         dim=-1,
                     )
                     for q in range(n_max_objs):
@@ -246,9 +241,7 @@ class VIMAPolicy(nn.Module):
         objects = objects.map_structure(func=lambda x: x.reshape(-1, *x.shape[2:]))
         img_feats = self.obj_encoder(**objects)
         img_feats = img_feats.reshape(*leading_dims, *img_feats.shape[1:])
-        obj_mask = {
-            k: objects["mask"][k].reshape(*leading_dims, -1) for k in objects["mask"]
-        }
+        obj_mask = {k: objects["mask"][k].reshape(*leading_dims, -1) for k in objects["mask"]}
 
         ee_feats = self.end_effector_encoder(ee)
         ee_feats = ee_feats.unsqueeze(2).repeat(1, 1, img_feats.shape[-2], 1)
@@ -266,12 +259,8 @@ class VIMAPolicy(nn.Module):
 
     def discretize_action(self, action):
         device = action["pose0_position"].device
-        boundary_x = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_x_bins, device=device
-        )
-        boundary_y = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_y_bins, device=device
-        )
+        boundary_x = torch.linspace(start=0, end=1, steps=self._n_discrete_x_bins, device=device)
+        boundary_y = torch.linspace(start=0, end=1, steps=self._n_discrete_y_bins, device=device)
         boundary_rot = torch.linspace(
             start=0, end=1, steps=self._n_discrete_rot_bins, device=device
         )
@@ -306,9 +295,7 @@ class VIMAPolicy(nn.Module):
         actions["pose0_position"][..., 1] = (
             actions["pose0_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose0_rotation"] = (
-            actions["pose0_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
 
         actions["pose1_position"][..., 0] = (
             actions["pose1_position"][..., 0] / self._n_discrete_x_bins
@@ -316,7 +303,5 @@ class VIMAPolicy(nn.Module):
         actions["pose1_position"][..., 1] = (
             actions["pose1_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose1_rotation"] = (
-            actions["pose1_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
         return actions

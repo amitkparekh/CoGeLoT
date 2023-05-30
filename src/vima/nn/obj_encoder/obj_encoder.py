@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from .vit import ViTEncoder, GatoViTEncoder, ViTEncoderRectangular
-from .perceiver import ObjectsPerceiverEncoder
-from ..utils import build_mlp
+from vima.nn.obj_encoder.perceiver import ObjectsPerceiverEncoder
+from vima.nn.obj_encoder.vit import GatoViTEncoder, ViTEncoder, ViTEncoderRectangular
+from vima.nn.utils import build_mlp
 
 
 class ObjEncoder(nn.Module):
@@ -25,7 +25,7 @@ class ObjEncoder(nn.Module):
         vit_heads: int,
         bbox_mlp_hidden_dim: int,
         bbox_mlp_hidden_depth: int,
-    ):
+    ) -> None:
         super().__init__()
 
         views = sorted(views)
@@ -69,12 +69,8 @@ class ObjEncoder(nn.Module):
         bbox,
         mask,
     ):
-        """
-        out: (..., n_objs * n_views, E)
-        """
-        img_feats = {
-            view: self.cropped_img_encoder(cropped_img[view]) for view in self._views
-        }
+        """Out: (..., n_objs * n_views, E)."""
+        img_feats = {view: self.cropped_img_encoder(cropped_img[view]) for view in self._views}
         # normalize bbox
         bbox = {view: bbox[view].float() for view in self._views}
         _normalizer = torch.tensor(
@@ -110,7 +106,7 @@ class GatoMultiViewRGBEncoder(nn.Module):
         vit_width: int | None = None,
         vit_layers: int | None = None,
         vit_heads: int | None = None,
-    ):
+    ) -> None:
         super().__init__()
 
         views = sorted(views)
@@ -130,9 +126,8 @@ class GatoMultiViewRGBEncoder(nn.Module):
         self,
         rgb,
     ):
-        """
-        input: (..., 3, H, W)
-        output: (..., L * n_views, E)
+        """input: (..., 3, H, W)
+        output: (..., L * n_views, E).
         """
         img_feats = {
             view: self.cropped_img_encoder(rgb[view]) for view in self._views
@@ -164,7 +159,7 @@ class MultiViewRGBPerceiverEncoder(nn.Module):
         perceiver_num_self_attention_heads: int,
         perceiver_num_cross_attention_heads: int,
         perceiver_attention_probs_dropout_prob: float,
-    ):
+    ) -> None:
         super().__init__()
 
         views = sorted(views)
@@ -195,9 +190,7 @@ class MultiViewRGBPerceiverEncoder(nn.Module):
     ):
         img_feats = {view: self.cropped_img_encoder(rgb[view]) for view in self._views}
         img_feats = torch.concat([img_feats[view] for view in self._views], dim=-2)
-        masks = torch.ones(
-            img_feats.shape[:2], device=img_feats.device, dtype=torch.bool
-        )
+        masks = torch.ones(img_feats.shape[:2], device=img_feats.device, dtype=torch.bool)
         out = self.peceiver(img_feats, masks)
         return out
 
@@ -217,7 +210,7 @@ class MultiViewRGBEncoder(nn.Module):
         vit_width: int | None = None,
         vit_layers: int | None = None,
         vit_heads: int | None = None,
-    ):
+    ) -> None:
         super().__init__()
 
         views = sorted(views)

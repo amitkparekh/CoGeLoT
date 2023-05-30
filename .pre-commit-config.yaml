@@ -1,0 +1,110 @@
+default_language_version:
+  node: 16.14.2
+
+# Only commit is installed by default: https://pre-commit.com/#pre-commit-install
+# Pending rename of pre-push from: https://github.com/pre-commit/pre-commit/issues/2732
+default_install_hook_types: ["commit-msg", "pre-commit"]
+
+repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: 3.2.2
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: check-toml
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: end-of-file-fixer
+        types: [text]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        types: [text]
+      - id: mixed-line-ending
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        args: [--remove]
+      - id: debug-statements
+        types: [python]
+
+  - repo: https://github.com/sirosen/check-jsonschema
+    rev: 0.23.0
+    hooks:
+      - id: check-github-workflows
+        types: [yaml]
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-use-type-annotations
+        types: [python]
+      - id: python-check-blanket-noqa
+        types: [python]
+      - id: python-check-blanket-type-ignore
+        types: [python]
+      - id: python-no-log-warn
+        types: [python]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.4.0
+    hooks:
+      - id: pyupgrade
+        types: [python]
+        args: ["--py311-plus"]
+
+  - repo: https://github.com/sirosen/texthooks
+    rev: 0.5.0
+    hooks:
+      - id: fix-smartquotes
+
+  # - repo: https://github.com/hakancelik96/unimport
+  #   rev: 0.16.0
+  #   hooks:
+  #     - id: unimport
+  #       types: [python]
+  #       args:
+  #         - --remove
+  #         - --exclude
+  #         - '^.*/?__init__\.py$'
+  #         - --include-star-import
+  #         - --gitignore
+
+  - repo: https://github.com/MarcoGorelli/absolufy-imports
+    rev: v0.3.1
+    hooks:
+      - id: absolufy-imports
+        types: [python]
+
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: v3.0.0-alpha.6
+  #   hooks:
+  #     - id: prettier
+  #       types_or: [html, javascript, shell, yaml, json]
+
+  - repo: https://github.com/myint/docformatter
+    rev: v1.7.1
+    hooks:
+      - id: docformatter
+        types: [python]
+        args: [--in-place, --wrap-summaries=99, --wrap-descriptions=99]
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.270"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black-jupyter
+        types: [python]

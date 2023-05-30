@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 from einops import rearrange
+from torch import nn
 
 import vima.nn as vnn
-from ..utils import *
+from vima.utils import *
 
 
 class VIMAGatoPolicy(nn.Module):
@@ -18,7 +18,7 @@ class VIMAGatoPolicy(nn.Module):
         n_layer=12,
         n_head=12,
         dropout: float = 0.1,
-    ):
+    ) -> None:
         super().__init__()
 
         self.embed_dim = embed_dim
@@ -48,9 +48,7 @@ class VIMAGatoPolicy(nn.Module):
 
         obs_feat_dim = self.obj_encoder.output_dim + 2
         self.obs_fusion_layer = (
-            nn.Identity()
-            if obs_feat_dim == embed_dim
-            else nn.Linear(obs_feat_dim, embed_dim)
+            nn.Identity() if obs_feat_dim == embed_dim else nn.Linear(obs_feat_dim, embed_dim)
         )
 
         self.action_encoder = vnn.ActionEmbedding(
@@ -129,9 +127,7 @@ class VIMAGatoPolicy(nn.Module):
         L_action = 0 if action_token is None else action_token.shape[0]
         L = L_obs * self._obj_xf_num_queries + L_action + L_prompt + 1
 
-        tokens = torch.empty(
-            L, B, self.embed_dim, dtype=torch.float32, device=self.device
-        )
+        tokens = torch.empty(L, B, self.embed_dim, dtype=torch.float32, device=self.device)
         tokens[:L_prompt] = prompt_token
         tokens[L_prompt] = self.prompt_sep_token.unsqueeze(0).repeat(B, 1)
         obs_token = rearrange(obs_token, "L B Q E -> B L Q E")
@@ -142,9 +138,9 @@ class VIMAGatoPolicy(nn.Module):
                 q :: self._obj_xf_num_queries
             ]
         if action_token is not None:
-            tokens[
-                L_prompt + 1 + self._obj_xf_num_queries :: self._obj_xf_num_queries + 1
-            ] = action_token
+            tokens[L_prompt + 1 + self._obj_xf_num_queries :: self._obj_xf_num_queries + 1] = (
+                action_token
+            )
         mask = torch.cat(
             [
                 prompt_token_mask,
@@ -270,12 +266,8 @@ class VIMAGatoPolicy(nn.Module):
 
     def discretize_action(self, action):
         device = action["pose0_position"].device
-        boundary_x = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_x_bins, device=device
-        )
-        boundary_y = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_y_bins, device=device
-        )
+        boundary_x = torch.linspace(start=0, end=1, steps=self._n_discrete_x_bins, device=device)
+        boundary_y = torch.linspace(start=0, end=1, steps=self._n_discrete_y_bins, device=device)
         boundary_rot = torch.linspace(
             start=0, end=1, steps=self._n_discrete_rot_bins, device=device
         )
@@ -310,9 +302,7 @@ class VIMAGatoPolicy(nn.Module):
         actions["pose0_position"][..., 1] = (
             actions["pose0_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose0_rotation"] = (
-            actions["pose0_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
 
         actions["pose1_position"][..., 0] = (
             actions["pose1_position"][..., 0] / self._n_discrete_x_bins
@@ -320,7 +310,5 @@ class VIMAGatoPolicy(nn.Module):
         actions["pose1_position"][..., 1] = (
             actions["pose1_position"][..., 1] / self._n_discrete_y_bins
         )
-        actions["pose1_rotation"] = (
-            actions["pose1_rotation"] / self._n_discrete_rot_bins
-        )
+        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
         return actions

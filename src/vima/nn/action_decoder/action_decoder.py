@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from .dists import Categorical, MultiCategorical
-from ..utils import build_mlp
+from vima.nn.action_decoder.dists import Categorical, MultiCategorical
+from vima.nn.utils import build_mlp
 
 
 class ActionDecoder(nn.Module):
@@ -20,7 +21,7 @@ class ActionDecoder(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
-    ):
+    ) -> None:
         super().__init__()
 
         self._decoders = nn.ModuleDict()
@@ -62,8 +63,7 @@ def _build_mlp_distribution_net(
     norm_type: Literal["batchnorm", "layernorm"] | None = None,
     last_layer_gain: float | None = 0.01,
 ):
-    """
-    Use orthogonal initialization to initialize the MLP policy
+    """Use orthogonal initialization to initialize the MLP policy.
 
     Args:
         last_layer_gain: orthogonal initialization gain for the last FC layer.
@@ -71,7 +71,6 @@ def _build_mlp_distribution_net(
             Gaussian centered around 0.0 in the beginning.
             Set to None to use the default gain (dependent on the NN activation)
     """
-
     mlp = build_mlp(
         input_dim=input_dim,
         output_dim=output_dim,
@@ -99,9 +98,8 @@ class CategoricalNet(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
-    ):
-        """
-        Use orthogonal initialization to initialize the MLP policy
+    ) -> None:
+        """Use orthogonal initialization to initialize the MLP policy.
 
         Args:
             last_layer_gain: orthogonal initialization gain for the last FC layer.
@@ -136,10 +134,9 @@ class MultiCategoricalNet(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
-    ):
-        """
-        Use orthogonal initialization to initialize the MLP policy
-        Split head, does not share the NN weights
+    ) -> None:
+        """Use orthogonal initialization to initialize the MLP policy Split head, does not share
+        the NN weights.
 
         Args:
             last_layer_gain: orthogonal initialization gain for the last FC layer.
@@ -172,7 +169,7 @@ class CategoricalHead(nn.Module):
 
 
 class MultiCategoricalHead(nn.Module):
-    def __init__(self, action_dims: list[int]):
+    def __init__(self, action_dims: list[int]) -> None:
         super().__init__()
         self._action_dims = tuple(action_dims)
 

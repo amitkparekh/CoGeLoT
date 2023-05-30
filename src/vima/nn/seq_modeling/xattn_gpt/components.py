@@ -3,16 +3,12 @@ from __future__ import annotations
 import math
 
 import torch
-import torch.nn as nn
-from transformers.models.openai.modeling_openai import (
-    Attention as _Attention,
-    Conv1D,
-    ACT_FNS,
-)
+from torch import nn
+from transformers.models.openai.modeling_openai import ACT_FNS, Attention as _Attention, Conv1D
 
 
 class Block(nn.Module):
-    def __init__(self, n_positions, config, scale=False):
+    def __init__(self, n_positions, config, scale=False) -> None:
         super().__init__()
         nx = config.n_embd
         self.attn = Attention(nx, n_positions, config, scale)
@@ -38,9 +34,7 @@ class Block(nn.Module):
 
 
 class Attention(_Attention):
-    def _attn(
-        self, q, k, v, attention_mask=None, head_mask=None, output_attentions=False
-    ):
+    def _attn(self, q, k, v, attention_mask=None, head_mask=None, output_attentions=False):
         q = q.to(torch.float32)
         k = k.to(torch.float32)
         w = torch.matmul(q, k)
@@ -71,7 +65,7 @@ class Attention(_Attention):
 
 
 class MLP(nn.Module):
-    def __init__(self, n_state, config):  # in MLP: n_state=3072 (4 * n_embd)
+    def __init__(self, n_state, config) -> None:  # in MLP: n_state=3072 (4 * n_embd)
         super().__init__()
         nx = config.n_embd
         self.c_fc = Conv1D(n_state, nx)
@@ -104,13 +98,11 @@ class XAttention(nn.Module):
         fp32_logits: bool = True,
         auto_add_pos_embd: bool = True,
         use_geglu: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         self.num_heads = num_heads
         if dim % num_heads != 0:
-            raise ValueError(
-                f"dim ({dim}) must be divisible by num_heads ({num_heads})."
-            )
+            raise ValueError(f"dim ({dim}) must be divisible by num_heads ({num_heads}).")
         self.dim = dim
         self.dim_per_head = dim // num_heads
 
@@ -174,9 +166,7 @@ class XAttention(nn.Module):
         if self._fp32_logits:
             queries = queries.to(torch.float32)
             keys = keys.to(torch.float32)
-        attention_scores = torch.matmul(
-            queries, keys.transpose(-1, -2)
-        )  # (B, NH, T_q, T_k)
+        attention_scores = torch.matmul(queries, keys.transpose(-1, -2))  # (B, NH, T_q, T_k)
 
         batch_size, num_heads, q_len, q_head_dim = queries.shape
         _, _, kv_len, v_head_dim = values.shape
@@ -218,8 +208,7 @@ class XAttention(nn.Module):
         return output
 
     def invert_attention_mask(self, encoder_attention_mask):
-        """
-        Invert an attention mask (e.g., switches 0. and 1.).
+        """Invert an attention mask (e.g., switches 0. and 1.).
 
         Args:
             encoder_attention_mask (`torch.Tensor`): An attention mask.
@@ -239,23 +228,22 @@ class XAttention(nn.Module):
         encoder_extended_attention_mask = encoder_extended_attention_mask.to(
             dtype=self.dtype
         )  # fp16 compatibility
-        encoder_extended_attention_mask = (
-            1.0 - encoder_extended_attention_mask
-        ) * torch.finfo(self.dtype).min
+        encoder_extended_attention_mask = (1.0 - encoder_extended_attention_mask) * torch.finfo(
+            self.dtype
+        ).min
 
         return encoder_extended_attention_mask
 
     @property
     def dtype(self) -> torch.dtype:
-        """
-        `torch.dtype`: The dtype of the module (assuming that all the module parameters have the same dtype).
-        """
+        """Get dtype."""
         return get_parameter_dtype(self)
 
 
 def get_parameter_dtype(parameter):
-    """
-    Returns the first found floating dtype in parameters if there is one, otherwise returns the last dtype it found.
+    """Return first found floating dtype in parameters if there is one.
+
+    otherwise returns the last dtype it found.
     """
     last_dtype = None
     for t in parameter.parameters():
@@ -266,3 +254,4 @@ def get_parameter_dtype(parameter):
     if last_dtype is not None:
         # if no floating dtype was found return whatever the first dtype is
         return last_dtype
+    return None
