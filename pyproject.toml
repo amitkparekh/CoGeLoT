@@ -44,11 +44,10 @@ preview = true
 line-length = 99
 ignore-init-module-imports = true
 target-version = "py311"
-fix-only = true
 src = ["src"]
 
 # Enable every possible rule
-select = ["ALL"]
+# select = ["ALL"]
 
 ignore = [
 	# Allow function call as argument default

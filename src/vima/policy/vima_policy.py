@@ -5,7 +5,7 @@ from einops import rearrange
 from torch import nn
 
 import vima.nn as vnn
-from vima.utils import *
+from vima.utils import any_concat, any_to_torch_tensor
 
 
 class VIMAPolicy(nn.Module):

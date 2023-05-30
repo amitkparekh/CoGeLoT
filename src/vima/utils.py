@@ -8,7 +8,6 @@ import functools
 import pprint
 from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -322,7 +321,7 @@ class DataDict(collections.abc.MutableMapping):
                     if _is_mapping(value):
                         for path in paths:
                             v = v[path]
-                except Exception as e:
+                except Exception:
                     if strict_match:
                         raise TypeError(f"Sub-structure mismatch, key path: {paths}")
                     else:

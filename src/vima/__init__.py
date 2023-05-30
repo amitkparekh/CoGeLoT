@@ -2,7 +2,7 @@ import os
 
 import torch
 
-from vima.policy import *
+from vima.policy import VIMAPolicy
 
 
 def create_policy_from_ckpt(ckpt_path, device):
