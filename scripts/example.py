@@ -1,3 +1,6 @@
+# unimport: skip_file
+# ruff: noqa
+
 from __future__ import annotations
 
 import argparse
