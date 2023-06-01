@@ -162,7 +162,7 @@ class VIMAFlamingoPolicy(nn.Module):
                 else:
                     raise ValueError(f"Invalid prompt token type {item}")
             L_max = max(L_max, L_this)
-        n_words = word_batch.shape[0]
+        word_batch.shape[0]
         batch_word_emb = self.prompt_embedding(word_batch)
         batch_image_emb = self.obj_encoder(**image_batch)
         batch_image_emb = self.prompt_obj_post_layer(batch_image_emb)

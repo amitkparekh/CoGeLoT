@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-from typing import Optional, Tuple, Union
 
 import torch
 from torch import nn

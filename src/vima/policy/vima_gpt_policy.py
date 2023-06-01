@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 import vima.nn as vnn
-from vima.utils import *
+from vima.utils import any_concat, any_stack
 
 
 class VIMAGPTPolicy(nn.Module):
@@ -177,7 +177,7 @@ class VIMAGPTPolicy(nn.Module):
 
     def forward_prompt_assembly(self, prompts):
         raw_prompts_token_type, word_batch, image_batch = prompts
-        B = len(raw_prompts_token_type)
+        len(raw_prompts_token_type)
         L_max = 0
         for raw_prompt in raw_prompts_token_type:
             L_this = 0
@@ -189,9 +189,9 @@ class VIMAGPTPolicy(nn.Module):
                 else:
                     raise ValueError(f"Invalid prompt token type {item}")
             L_max = max(L_max, L_this)
-        n_words = word_batch.shape[0]
+        word_batch.shape[0]
         batch_word_emb = self.prompt_embedding(word_batch)
-        n_img = len(list(image_batch["rgb"].values())[0])
+        len(list(image_batch["rgb"].values())[0])
         batch_image_emb = self.obj_encoder(**image_batch)
         batch_image_emb = self.prompt_obj_post_layer(batch_image_emb)
         prompt_tokens, prompt_masks = [], []
