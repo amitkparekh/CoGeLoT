@@ -1,0 +1,36 @@
+extend = "../../pyproject.toml"
+
+# Enable every possible rule
+select = ["ALL"]
+
+ignore = [
+	# Allow function call as argument default
+	"B008",
+	# Don't ask for docstring at top of module --- put it in the functions/classes
+	"D100",
+	# Do not check for docstring within __init__ method
+	"D107",
+	# Don't ask about line length, Black recommends using bugbear B950 instead
+	"E501",
+	# Disable because this project uses jaxtyping (https://github.com/google/jaxtyping/blob/main/FAQ.md#flake8-is-throwing-an-error)
+	"F722",
+	# Allow import to be uppercase, because torch.nn.functional as F
+	"N812",
+	# Do not enforce annotations for self, cls, or similar
+	"ANN1",
+	# Do not block using 'Any' type since it happens
+	"ANN401",
+	# Let Black handle commas
+	"COM",
+	# Let logging use f-strings
+	"G004",
+	# Disable 'flake8-errmsg' because we assume users of this project can read tracebacks
+	"EM",
+	# We don't need to care about creating separate exception classes for every single type of error
+	"TRY003",
+	# Allow assigning variables before returning them
+	"RET504",
+	# Don't care about requiring an author name or issue link for a todo
+	"TD002",
+	"TD003",
+]

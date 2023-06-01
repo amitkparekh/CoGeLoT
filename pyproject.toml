@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "vima"
+name = "cogelot"
 version = "1.0.0"
 description = ""
 authors = [
@@ -8,17 +8,15 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-classifiers = [
-	"Development Status :: 5 - Production/Stable",
-	"Topic :: Scientific/Engineering :: Artificial Intelligence",
-	"Environment :: Console",
-	"Programming Language :: Python :: 3.9",
+packages = [
+	{ include = "vima", from = "src" },
+	{ include = "cogelot", from = "src" },
 ]
-packages = [{ include = "vima", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 torch = "^2.0.1"
+lightning = "^2"
 dm-tree = "*"
 kornia = "*"
 einops = "*"
@@ -26,6 +24,11 @@ tokenizers = "*"
 transformers = "*"
 omegaconf = "*"
 numpy = "*"
+torchmetrics = "*"
+pandas = "*"
+loguru = "*"
+tqdm = "*"
+rich = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
