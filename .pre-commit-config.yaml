@@ -66,17 +66,17 @@ repos:
     hooks:
       - id: fix-smartquotes
 
-  # - repo: https://github.com/hakancelik96/unimport
-  #   rev: 0.16.0
-  #   hooks:
-  #     - id: unimport
-  #       types: [python]
-  #       args:
-  #         - --remove
-  #         - --exclude
-  #         - '^.*/?__init__\.py$'
-  #         - --include-star-import
-  #         - --gitignore
+  - repo: https://github.com/hakancelik96/unimport
+    rev: 0.16.0
+    hooks:
+      - id: unimport
+        types: [python]
+        args:
+          - --remove
+          - --exclude
+          - '^.*/?__init__\.py$'
+          - --include-star-import
+          - --gitignore
 
   - repo: https://github.com/MarcoGorelli/absolufy-imports
     rev: v0.3.1
