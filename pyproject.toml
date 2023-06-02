@@ -29,6 +29,7 @@ pandas = "*"
 loguru = "*"
 tqdm = "*"
 rich = "*"
+pydantic = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
