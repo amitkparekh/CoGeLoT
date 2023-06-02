@@ -29,7 +29,9 @@ pandas = "*"
 loguru = "*"
 tqdm = "*"
 rich = "*"
+thinc = "*"
 pydantic = "*"
+opencv-python = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
@@ -110,7 +112,7 @@ convention = "google"
 combine-as-imports = true
 lines-after-imports = 2
 required-imports = ["from __future__ import annotations"]
-known-first-party = ["vima"]
+known-first-party = ["vima", "cogelot"]
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
