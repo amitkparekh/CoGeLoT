@@ -28,7 +28,7 @@ progress = Progress(
     MofNCompleteColumn(),
     TimeElapsedColumn(),
     TimeRemainingColumn(),
-    RateColumn(unit="it"),
+    RateColumn(unit="it"),  # pyright: ignore[reportGeneralTypeIssues]
 )
 
 
