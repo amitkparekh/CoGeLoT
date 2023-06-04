@@ -30,7 +30,7 @@ class AssetPlaceholderToken(BaseModel):
         """Return the list of placeholder tokens for this template."""
         token_list = [self.asset_name]
         if self.max_idx:
-            token_list.extend([f"{self.asset_name}_{idx}" for idx in range(1, self.max_idx + 1)])
+            token_list.extend([f"{self.asset_name}_{idx}" for idx in range(0, self.max_idx + 1)])
 
         return [f"{self.left_symbol}{token}{self.right_symbol}" for token in token_list]
 
