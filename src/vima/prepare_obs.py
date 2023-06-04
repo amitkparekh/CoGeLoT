@@ -15,7 +15,8 @@ from vima.utils import (
 def prepare_obs(
     *,
     obs: dict,
-    meta: dict,
+    n_objects: int,
+    obj_id_to_info: dict,
 ) -> DataDict:
     """Prepare observations for the model.
 
@@ -24,8 +25,8 @@ def prepare_obs(
     rgb_dict = obs.pop("rgb")
     segm_dict = obs.pop("segm")
     views = sorted(rgb_dict.keys())
-    assert meta["n_objects"] == len(meta["obj_id_to_info"])
-    objects = list(meta["obj_id_to_info"].keys())
+    assert n_objects == len(obj_id_to_info)
+    objects = list(obj_id_to_info.keys())
 
     L_obs = get_batch_size(obs)
 

@@ -1,21 +1,17 @@
-from typing import TYPE_CHECKING
-
 import cv2
 import numpy as np
+import torch
 from einops import rearrange
+from tokenizers import Tokenizer
 
 from vima.utils import (
+    DataDict,
     any_concat,
     any_stack,
     any_to_datadict,
     any_to_torch_tensor,
     stack_sequence_fields,
 )
-
-
-if TYPE_CHECKING:
-    import torch
-    from tokenizers import Tokenizer
 
 
 def prepare_prompt(
@@ -25,7 +21,7 @@ def prepare_prompt(
     views: list[str],
     tokenizer: Tokenizer,
     placeholders: list[str],
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[list[list[int]], torch.Tensor, DataDict]:
     """Prepare the promot from the assets and the prompt string.
 
     This is taken from `vima/scripts/example.py:prepare_prompt`.
