@@ -37,6 +37,13 @@ opencv-python = "*"
 black = "*"
 pre-commit = "*"
 ruff = "*"
+mypy = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-cases = "*"
+pytest-xdist = "*"
+pytest-cov = "*"
 
 [build-system]
 requires = ["poetry-core"]
@@ -150,7 +157,6 @@ reportUnnecessaryContains = true
 reportImplicitStringConcatenation = false
 reportUnusedExpression = "warning"
 reportShadowedImports = "error"
-
 
 [tool.mypy]
 python_version = 3.11
