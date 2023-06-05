@@ -18,8 +18,8 @@ class Modality(Enum):
     IMAGE = 1
 
 
-class Perspective(Enum):
-    """Different perspectives for the same image."""
+class View(Enum):
+    """Different views for the same image."""
 
     FRONT = "front"
     TOP = "top"
@@ -95,9 +95,9 @@ class ImageView(BaseModel):
     front: ImageNumpy
     top: ImageNumpy
 
-    def get_perspective(self, perspective: Perspective) -> ImageNumpy:
+    def get_view(self, view: View) -> ImageNumpy:
         """Get the perspective of the asset."""
-        return getattr(self, perspective.value)
+        return getattr(self, view.value)
 
 
 class SegmentationModalityView(ImageView):

@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from einops import rearrange
 
-from cogelot.data.structures import Bbox, ImageNumpy, ImageType, Perspective
+from cogelot.data.structures import Bbox, ImageNumpy, ImageType, View
 from cogelot.data.token import VisualObject, VisualToken
 
 
@@ -21,12 +21,12 @@ class ImageTokenizer:
         *,
         token_position_idx: int,
         token_value: str,
-        image_per_type_per_perspective: dict[Perspective, dict[ImageType, ImageNumpy]],
+        image_per_type_per_view: dict[View, dict[ImageType, ImageNumpy]],
         available_object_ids: list[int],
     ) -> VisualToken:
         """Create a visual token from the raw images."""
         all_visual_objects = self.extract_objects_from_images(
-            image_per_type_per_perspective=image_per_type_per_perspective,
+            image_per_type_per_view=image_per_type_per_view,
             available_object_ids=available_object_ids,
         )
         visual_token = self.create_visual_token_from_objects(
@@ -45,13 +45,13 @@ class ImageTokenizer:
     def extract_objects_from_images(
         self,
         *,
-        image_per_type_per_perspective: dict[Perspective, dict[ImageType, ImageNumpy]],
+        image_per_type_per_view: dict[View, dict[ImageType, ImageNumpy]],
         available_object_ids: list[int],
     ) -> list[VisualObject]:
-        """Extract objects from images and create a visual token for the given perspective."""
+        """Extract objects from images and create a visual token for the given view."""
         visual_objects: list[VisualObject] = []
 
-        for perspective, images_per_type in image_per_type_per_perspective.items():
+        for view, images_per_type in image_per_type_per_view.items():
             for object_id in available_object_ids:
                 # Extract the bounding box for the object ID from the segmentation image
                 try:
@@ -69,7 +69,7 @@ class ImageTokenizer:
 
                 # Create the visual object
                 visual_objects.append(
-                    VisualObject(perspective=perspective, bbox=bbox, cropped_image=cropped_image)
+                    VisualObject(view=view, bbox=bbox, cropped_image=cropped_image)
                 )
 
         return visual_objects
