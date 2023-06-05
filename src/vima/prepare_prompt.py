@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 from einops import rearrange
-from tokenizers import Tokenizer
+from transformers import PreTrainedTokenizerBase
 
 from vima.utils import (
     DataDict,
@@ -19,7 +19,7 @@ def prepare_prompt(
     prompt: str,
     prompt_assets: dict,
     views: list[str],
-    tokenizer: Tokenizer,
+    tokenizer: PreTrainedTokenizerBase,
     placeholders: list[str],
 ) -> tuple[list[list[int]], torch.Tensor, DataDict]:
     """Prepare the promot from the assets and the prompt string.
@@ -27,8 +27,8 @@ def prepare_prompt(
     This is taken from `vima/scripts/example.py:prepare_prompt`.
     """
     views = sorted(views)
-    encoding = tokenizer.encode(prompt, add_special_tokens=True)
-    prompt_ids, prompt_tokens = encoding.ids, encoding.tokens
+    encoding = tokenizer(prompt, add_special_tokens=True)
+    prompt_ids, prompt_tokens = encoding["input_ids"], encoding.tokens()
     assert set(prompt_assets.keys()) == {
         token[1:-1] for token in prompt_tokens if token in placeholders
     }
