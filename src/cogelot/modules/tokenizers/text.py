@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
-from tokenizers import AddedToken, Tokenizer
+from tokenizers import AddedToken
+from transformers import AutoTokenizer
 
 
 if TYPE_CHECKING:
@@ -63,22 +65,32 @@ PLACEHOLDER_TOKENS = (
 )
 
 
-def get_placeholders_list(
-    placeholder_tokens: Iterable[AssetPlaceholderToken] = PLACEHOLDER_TOKENS,
-) -> set[str]:
-    """Get a list of all the placeholders used from the tokens."""
-    placeholders: set[str] = set()
-    for token in placeholder_tokens:
-        placeholders.update(token.all_placeholders)
-    return placeholders
+class TextTokenizer:
+    """Text tokenizer for text inputs."""
 
+    def __init__(
+        self,
+        pretrained_model: str,
+        placeholder_tokens: Iterable[AssetPlaceholderToken] = PLACEHOLDER_TOKENS,
+    ) -> None:
+        """Create a tokenizer from something."""
+        # Instantiate from the pretrained model
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_model)
 
-def add_placeholder_tokens_to_tokenizer(
-    tokenizer: Tokenizer, placeholder_tokens: Iterable[AssetPlaceholderToken] = PLACEHOLDER_TOKENS
-) -> None:
-    """Add the placeholder tokens into the tokenizer.
+        # Add all the placeholder tokens to the tokenizer
+        for token in placeholder_tokens:
+            tokenizer.add_tokens(
+                token.all_added_tokens  # pyright: ignore[reportGeneralTypeIssues]
+            )
 
-    This is non-pure and will alter the tokenizer given in place.
-    """
-    for token in placeholder_tokens:
-        tokenizer.add_tokens(token.all_added_tokens)
+        self.tokenizer = tokenizer
+        self.placeholder_tokens = placeholder_tokens
+
+    @cached_property
+    def all_placeholders(self) -> set[str]:
+        """Get the list of all the placeholders used from the tokens."""
+        return {
+            token
+            for placeholder in self.placeholder_tokens
+            for token in placeholder.all_placeholders
+        }

@@ -1,5 +1,6 @@
 from cogelot.modules.tokenizers.image import ImageTokenizer
 from cogelot.modules.tokenizers.text import (
+    PLACEHOLDER_TOKENS,
     AssetPlaceholderToken,
-    add_placeholder_tokens_to_tokenizer,
+    TextTokenizer,
 )
