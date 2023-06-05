@@ -89,7 +89,7 @@ class ObjectInfo(BaseModel):
     obj_id: int
 
 
-class ImageView(BaseModel):
+class ImageView(BaseModel, arbitrary_types_allowed=True):
     """Get the output of a given modality for the various views."""
 
     front: ImageNumpy
@@ -127,7 +127,6 @@ class SegmentationModalityView(ImageView):
 class Asset(BaseModel):
     """An asset within the environment."""
 
-    name: str
     rgb: ImageView
     segm: SegmentationModalityView
 

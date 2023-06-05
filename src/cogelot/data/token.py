@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from cogelot.data.structures import Bbox, BboxNumpy, ImageNumpy, Modality, View
 
 
-class VisualObject(BaseModel):
+class VisualObject(BaseModel, arbitrary_types_allowed=True):
     """A single object in the visual token."""
 
     bbox: Bbox
