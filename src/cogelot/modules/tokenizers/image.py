@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import cv2
 import numpy as np
-from transformers.image_transforms import resize
+from einops import rearrange
 
 from cogelot.data.structures import Bbox, ImageNumpy, ImageType, Perspective
 from cogelot.data.token import VisualObject, VisualToken
@@ -107,12 +108,20 @@ class ImageTokenizer:
 
     def resize(self, image: ImageNumpy) -> ImageNumpy:
         """Resize the image."""
-        image = resize(image, (self.image_size, self.image_size), return_numpy=True)
+        image = rearrange(image, "c h w -> h w c")
+        image = np.asarray(image)
+        image = cv2.resize(
+            image,  # pyright: ignore[reportGeneralTypeIssues]
+            (self.image_size, self.image_size),
+            interpolation=cv2.INTER_AREA,
+        )
+        image = rearrange(image, "h w c -> c h w")
+        image = np.asarray(image)
         return image
 
     def crop_to_bounding_box(self, image: ImageNumpy, bbox: Bbox) -> ImageNumpy:
         """Crop the image to the bounding box."""
-        return image[:, bbox.y_min : bbox.y_max, bbox.x_min : bbox.x_max]
+        return image[:, bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]
 
     def pad_to_square(self, image: ImageNumpy, *, padding_value: int = 0) -> ImageNumpy:
         """Pad the image to ensure it is a square."""
