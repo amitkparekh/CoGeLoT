@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from pathlib import Path
 
 from loguru import logger
@@ -56,7 +55,7 @@ def normalize_raw_data(raw_data_dir: Path, normlized_data_dir: Path) -> None:
     )
     with progress:
         for instance_dir in all_instance_dirs:
-            with suppress(FileNotFoundError):
+            if instance_dir.is_dir():
                 normalize_instance(instance_dir, normlized_data_dir)
             progress.advance(normalize_progress_task)
         logger.debug("Finished normalizing instances")
