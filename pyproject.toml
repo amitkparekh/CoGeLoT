@@ -34,6 +34,7 @@ pydantic = "*"
 opencv-python = "*"
 jaxtyping = "*"
 beartype = "*"
+safetensors = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"

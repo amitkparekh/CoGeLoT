@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 import numpy as np
-import orjson
 import torch
 from PIL import Image
 from pydantic import BaseModel, validator
@@ -19,14 +18,6 @@ from cogelot.data.structures import (
     Position,
     Rotation,
 )
-
-
-def orjson_dumps(v: Any, *, default: Any) -> str:
-    """Convert Model to JSON string.
-
-    orjson.dumps returns bytes, to match standard json.dumps we need to decode.
-    """
-    return orjson.dumps(v, default=default, option=orjson.OPT_SERIALIZE_NUMPY).decode()
 
 
 class VIMAInstance(BaseModel):
@@ -45,12 +36,6 @@ class VIMAInstance(BaseModel):
 
     observations: list[Observation]
     actions: list[PoseAction]
-
-    class Config:
-        """Pydantic config."""
-
-        json_dumps = orjson_dumps
-        json_loads = orjson.loads
 
     @validator("observations")
     @classmethod
@@ -90,11 +75,11 @@ class VIMAInstance(BaseModel):
 
     @overload
     def get_action_for_observation(self, observation: int) -> PoseAction | None:
-        ...
+        ...  # noqa: WPS428
 
     @overload
     def get_action_for_observation(self, observation: Observation) -> PoseAction | None:
-        ...
+        ...  # noqa: WPS428
 
     def get_action_for_observation(self, observation: int | Observation) -> PoseAction | None:
         """Get the action for a given observation.
@@ -135,29 +120,6 @@ class VIMAInstanceFactory:
             observations=observations,
         )
 
-    def _parse_object_metadata(self, trajectory_metadata: dict[str, Any]) -> list[ObjectMetadata]:
-        """Extract the object metadata."""
-        object_metadata: list[ObjectMetadata] = []
-
-        for object_id, object_info in trajectory_metadata["obj_id_to_info"].items():
-            object_metadata.append(
-                ObjectMetadata(
-                    obj_id=object_id,
-                    obj_name=object_info["obj_name"],
-                    obj_asset_name=object_info["obj_assets"],
-                    texture_name=object_info["texture_name"],
-                )
-            )
-
-        return object_metadata
-
-    def _parse_object_ids_and_labels(self, trajectory_metadata: dict[str, Any]) -> dict[int, str]:
-        """Extract the object IDs and their labels."""
-        return {
-            obj_id: obj_info["obj_name"]
-            for obj_id, obj_info in trajectory_metadata["obj_id_to_info"].items()
-        }
-
     def parse_observations(self, instance_dir: Path) -> list[Observation]:
         """Parse observations from raw data."""
         raw_obs_data = self._load_data_from_pickle(
@@ -197,11 +159,53 @@ class VIMAInstanceFactory:
         raw_action_data = self._load_raw_pose_action_data(instance_dir)
         return self._parse_pose_actions_from_raw_data(raw_action_data)
 
+    def _parse_object_metadata(self, trajectory_metadata: dict[str, Any]) -> list[ObjectMetadata]:
+        """Extract the object metadata."""
+        object_metadata: list[ObjectMetadata] = []
+
+        for object_id, object_info in trajectory_metadata["obj_id_to_info"].items():
+            object_metadata.append(
+                ObjectMetadata(
+                    obj_id=object_id,
+                    obj_name=object_info["obj_name"],
+                    obj_asset_name=object_info["obj_assets"],
+                    texture_name=object_info["texture_name"],
+                )
+            )
+
+        return object_metadata
+
+    def _load_data_from_pickle(self, pickled_file: Path) -> Any:
+        """Load the data from a pickle file."""
+        return pickle.load(pickled_file.open("rb"))  # noqa: S301
+
     def _load_trajectory_metadata(self, instance_dir: Path) -> dict[str, Any]:
         """Load the trajectory metadata."""
         return self._load_data_from_pickle(
             instance_dir.joinpath(self.trajectory_metadata_file_name)
         )
+
+    def _parse_object_ids_and_labels(self, trajectory_metadata: dict[str, Any]) -> dict[int, str]:
+        """Extract the object IDs and their labels."""
+        return {
+            obj_id: obj_info["obj_name"]
+            for obj_id, obj_info in trajectory_metadata["obj_id_to_info"].items()
+        }
+
+    def _load_rgb_observation_image(
+        self, *, instance_dir: Path, view: Literal["top", "front"], frame_idx: int
+    ) -> np.ndarray:
+        """Load the RGB image of the observation for the given view."""
+        image_path = instance_dir.joinpath(self.rgb_path_per_view[view], f"{frame_idx}.jpg")
+        image = Image.open(image_path)
+        return np.array(image)
+
+    def _get_num_actions_from_raw_pose_action_data(self, raw_action_data: dict[str, Any]) -> int:
+        """Get the number of actions from the raw pose action data.
+
+        All the pose actions should have the same batch size/identiacal first dimension
+        """
+        return len(raw_action_data[self.pose_action_keys[0]])
 
     def _parse_pose_actions_from_raw_data(
         self, raw_action_data: dict[str, Any]
@@ -227,22 +231,3 @@ class VIMAInstanceFactory:
     def _load_raw_pose_action_data(self, instance_dir: Path) -> dict[str, Any]:
         """Load the raw pose action data."""
         return self._load_data_from_pickle(instance_dir.joinpath(self.actions_file_name))
-
-    def _load_data_from_pickle(self, pickled_file: Path) -> Any:
-        """Load the data from a pickle file."""
-        return pickle.load(pickled_file.open("rb"))  # noqa: S301
-
-    def _get_num_actions_from_raw_pose_action_data(self, raw_action_data: dict[str, Any]) -> int:
-        """Get the number of actions from the raw pose action data.
-
-        All the pose actions should have the same batch size/identiacal first dimension
-        """
-        return len(raw_action_data[self.pose_action_keys[0]])
-
-    def _load_rgb_observation_image(
-        self, *, instance_dir: Path, view: Literal["top", "front"], frame_idx: int
-    ) -> np.ndarray:
-        """Load the RGB image of the observation for the given view."""
-        image_path = instance_dir.joinpath(self.rgb_path_per_view[view], f"{frame_idx}.jpg")
-        image = Image.open(image_path)
-        return np.array(image)

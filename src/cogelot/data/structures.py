@@ -18,26 +18,19 @@ ImageNumpy = npt.NDArray[np.int_]
 BboxNumpy = npt.NDArray[np.int_]
 
 
-class Modality(Enum):
-    """Different modalities that can be encoded."""
-
-    TEXT = 0
-    IMAGE = 1
-
-
 class View(Enum):
     """Different views for the same image."""
 
-    FRONT = "front"
-    TOP = "top"
+    front = "front"
+    top = "top"
 
 
 class ImageType(Enum):
     """Different types of images."""
 
-    RGB = "rgb"
-    SEGMENTATION = "segmentation"
-    DEPTH = "depth"
+    rgb = "rgb"
+    segmentation = "segmentation"
+    depth = "depth"
 
 
 class Bbox(BaseModel):
@@ -116,7 +109,7 @@ class SegmentationModalityView(ImageView):
     This explicitly also includes various information about each object in the view too.
     """
 
-    obj_info: list[ObjectMetadata]
+    obj_metadata: list[ObjectMetadata]
 
     @validator("obj_info")
     @classmethod
@@ -131,7 +124,7 @@ class SegmentationModalityView(ImageView):
     @property
     def object_ids(self) -> list[int]:
         """Get the object ids from the object info."""
-        return [info.obj_id for info in self.obj_info]
+        return [metadata.obj_id for metadata in self.obj_metadata]
 
 
 class Asset(BaseModel):
@@ -156,7 +149,7 @@ class Assets(BaseModel):
 
     __root__: dict[str, Asset]
 
-    def __getitem__(self, item: str) -> Asset:
+    def __getitem__(self, item: str) -> Asset:  # noqa: WPS110
         """Let the Assets class be subscriptable like a dictionary."""
         return self.__root__[item]
 
@@ -168,11 +161,11 @@ class Assets(BaseModel):
         """Get the keys of the assets."""
         return self.__root__.keys()
 
-    def values(self) -> ValuesView[Asset]:
+    def values(self) -> ValuesView[Asset]:  # noqa: WPS110
         """Get the values of the assets."""
         return self.__root__.values()
 
-    def items(self) -> ItemsView[str, Asset]:
+    def items(self) -> ItemsView[str, Asset]:  # noqa: WPS110
         """Get the items of the assets."""
         return self.__root__.items()
 
@@ -196,11 +189,11 @@ class Assets(BaseModel):
 
 PositionTensor = Annotated[
     torch.Tensor,
-    Is[lambda tensor: tensor.numel() == 3 and tensor.dtype is torch.float],  # noqa: PLR2004
+    Is[lambda tens: tens.numel() == 3 and tens.dtype is torch.float],  # noqa: PLR2004,WPS221
 ]
 RotationTensor = Annotated[
     torch.Tensor,
-    Is[lambda tensor: tensor.numel() == 4 and tensor.dtype is torch.float],  # noqa: PLR2004
+    Is[lambda tens: tens.numel() == 4 and tens.dtype is torch.float],  # noqa: PLR2004,WPS221
 ]
 
 
@@ -215,7 +208,11 @@ class Position(BaseModel):
     def from_tensor(cls, tensor: PositionTensor) -> Position:
         """Instantiate from a tensor."""
         flattened_tensor: list[float] = tensor.flatten().tolist()
-        return cls(x=flattened_tensor[0], y=flattened_tensor[1], z=flattened_tensor[2])
+        return cls(
+            x=flattened_tensor[0],
+            y=flattened_tensor[1],
+            z=flattened_tensor[2],
+        )
 
     @property
     def as_tensor(self) -> PositionTensor:
@@ -252,6 +249,13 @@ class Observation(Asset):
     """Single observation from the environment."""
 
     index: int
+
+    def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, ImageNumpy]]:
+        """Convert the observation to a dictionary of images per view."""
+        return {
+            view: {image_type: getattr(self, image_type.value)[view] for image_type in ImageType}
+            for view in View
+        }
 
 
 class PoseAction(BaseModel):

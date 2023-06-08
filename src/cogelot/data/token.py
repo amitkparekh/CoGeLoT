@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+from enum import Enum
+
 import numpy as np
 from pydantic import BaseModel, Field
 
-from cogelot.data.structures import Bbox, BboxNumpy, ImageNumpy, Modality, View
+from cogelot.data.structures import (
+    Bbox,
+    BboxNumpy,
+    ImageNumpy,
+    PositionTensor,
+    RotationTensor,
+    View,
+)
 
 
 class VisualObject(BaseModel, arbitrary_types_allowed=True):
@@ -14,34 +23,39 @@ class VisualObject(BaseModel, arbitrary_types_allowed=True):
     view: View
 
 
+class TokenType(Enum):
+    """Different modalities that can be encoded."""
+
+    text = 0
+    image = 1
+    end_effector = 2
+    action = 3
+
+
 class Token(BaseModel):
     """A single token."""
 
-    modality: Modality
-    token: str
-    position: int = Field(..., ge=0)
+    token_type: TokenType
+    index: int = Field(..., ge=0)
+    token: str | None = None
+
+    def __len__(self) -> int:
+        """Default token length to just 1."""
+        return 1
 
 
 class TextToken(Token):
     """A single token with text information."""
 
-    modality: Modality = Modality.TEXT
+    token_type: TokenType = TokenType.text
     token_id: int
-
-    def __len__(self) -> int:
-        """Since it is a text token, it just has a length of 1."""
-        return 1
 
 
 class VisualToken(Token):
     """A single token with visual information."""
 
-    modality: Modality = Modality.IMAGE
+    token_type: TokenType = TokenType.image
     objects: list[VisualObject]
-
-    def __len__(self) -> int:
-        """Get the number of objects represented by the visual token."""
-        return len(self.objects)
 
     def get_objects_for_view(self, view: View) -> list[VisualObject]:
         """Get all the objects for a given view."""
@@ -60,3 +74,24 @@ class VisualToken(Token):
         all_bboxes = [obj.bbox.as_xcychw for obj in objects_for_view]
         bboxes_array = np.asarray(all_bboxes)
         return bboxes_array
+
+    def __len__(self) -> int:
+        """Get the number of objects represented by the visual token."""
+        return len(self.objects)
+
+
+class EndEffectorToken(TextToken):
+    """Token for the end effector."""
+
+    token_type: TokenType = TokenType.end_effector
+
+
+class ActionToken(Token, arbitrary_types_allowed=True):
+    """Token for the agent action."""
+
+    token_type: TokenType = TokenType.action
+
+    pose0_position: PositionTensor
+    pose1_position: PositionTensor
+    pose0_rotation: RotationTensor
+    pose1_rotation: RotationTensor
