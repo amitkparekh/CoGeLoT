@@ -9,6 +9,7 @@ from cogelot.data.structures import (
     Bbox,
     BboxNumpy,
     ImageNumpy,
+    PoseAction,
     PositionTensor,
     RotationTensor,
     View,
@@ -95,3 +96,14 @@ class ActionToken(Token, arbitrary_types_allowed=True):
     pose1_position: PositionTensor
     pose0_rotation: RotationTensor
     pose1_rotation: RotationTensor
+
+    @classmethod
+    def from_pose_action(cls, pose_action: PoseAction) -> ActionToken:
+        """Create an action token from a pose action."""
+        return ActionToken(
+            index=pose_action.index,
+            pose0_position=pose_action.pose0_position.as_tensor,
+            pose1_position=pose_action.pose1_position.as_tensor,
+            pose0_rotation=pose_action.pose0_rotation.as_tensor,
+            pose1_rotation=pose_action.pose1_rotation.as_tensor,
+        )
