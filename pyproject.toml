@@ -34,13 +34,14 @@ pydantic = "*"
 opencv-python = "*"
 jaxtyping = "*"
 beartype = "*"
-orjson = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
 pre-commit = "*"
 ruff = "*"
 mypy = "*"
+wemake-python-styleguide = "*"
+flake8-pyproject = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
@@ -61,6 +62,8 @@ line-length = 99
 ignore-init-module-imports = true
 target-version = "py311"
 src = ["src"]
+
+external = ["WPS", "WPS*", "WPS110", "WPS221", "WPS428"]
 
 # Enable every possible rule
 # select = ["ALL"]
@@ -199,3 +202,79 @@ show_error_codes = true
 show_column_numbers = true
 
 plugins = "pydantic.mypy,numpy.typing.mypy_plugin,thinc.mypy"
+
+
+[tool.flake8]
+select = ["WPS"]
+
+extend-ignore = [
+	# Do not warn on too many imports.
+	"WPS201",
+	# Do not warn on too many module members
+	"WPS202",
+	# Do not warn when too many arguments in functions
+	"WPS211",
+	# Do not warn on too many methods
+	"WPS214",
+	# Allow lots of importing from the same module --- it can happen and thats okay!
+	"WPS235",
+	# Do not warn on complex f-string
+	"WPS237",
+	# Allow relative module references
+	"WPS300",
+	# Allow f-strings
+	"WPS305",
+	# Do not force base classes to inherit object
+	"WPS306",
+	# Do not flag implicit string concatenation since this is something Black does
+	"WPS326",
+	# Allow return statement that simply returns a prior statement
+	"WPS331",
+	# Allow new lines to start with a dot (caused by Black)
+	"WPS348",
+	# Allow logic in __init__ modules
+	"WPS412",
+	# Naming things is difficult, let the developer choose to use properties or methods
+	"WPS615",
+]
+
+max-line-length = 99
+max-line-complexity = 15
+max-local-variables = 10
+max-function-expressions = 10
+max-module-expressions = 20
+min-name-length = 1
+max-methods = 9
+max-string-usages = 10
+show-violation-links = true
+format = "wemake"
+
+# Black enforces double quotes.
+inline-quotes = "double"
+
+docstring-convention = "google"
+
+# Darglint
+docstring_style = "google"
+strictness = "long"
+
+nested-classes-whitelist = ["Meta", "Params", "Config"]
+
+allowed-domain-names = ["objects", "obj"]
+
+per-file-ignores = [
+	"src/*/_version.py:WPS410",
+	"src/**/__init__.py:WPS436",
+	"src/*/__main__.py:WPS404",
+	"src/*/commands/*:WPS404",
+	"tests/*:WPS118,WPS202,WPS204,WPS210,WPS214,WPS218,WPS226,WPS231,WPS232,WPS235,WPS301,WPS404,WPS407,WPS432,WPS437,WPS442",
+]
+
+extend-exclude = [
+	".venv/",
+	"*_cache/",
+	".cache/",
+	"storage/",
+	"src/vima",
+	'scripts/example.py',
+]
