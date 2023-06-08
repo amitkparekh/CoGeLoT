@@ -216,8 +216,8 @@ class VIMAInstanceFactory:
     ) -> np.ndarray:
         """Load the RGB image of the observation for the given view."""
         image_path = instance_dir.joinpath(self.rgb_path_per_view[view], f"{frame_idx}.jpg")
-        image = Image.open(image_path)
-        return np.array(image)
+        with Image.open(image_path) as image:
+            return np.array(image)
 
     def _get_num_actions_from_raw_pose_action_data(self, raw_action_data: dict[str, Any]) -> int:
         """Get the number of actions from the raw pose action data.
