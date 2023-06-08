@@ -19,7 +19,7 @@ def data_dir(fixture_storage_dir: Path, mission_task: str, mission_id: str) -> P
     return fixture_storage_dir.joinpath(mission_task, f"{mission_id}/")
 
 
-@fixture(scope="module")
+@fixture(scope="session")
 def vima_instance(data_dir: Path) -> VIMAInstance:
     """Load example data."""
     vima_instance_factory = VIMAInstanceFactory()
@@ -27,7 +27,7 @@ def vima_instance(data_dir: Path) -> VIMAInstance:
     return instance
 
 
-@fixture(scope="module")
+@fixture(scope="session")
 def trajectory_metadata(data_dir: Path) -> dict[str, Any]:
     """Load example data."""
     trajectory_metadata = pickle.load(data_dir.joinpath("trajectory.pkl").open("rb"))

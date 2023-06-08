@@ -1,7 +1,13 @@
 from pytest_cases import fixture
 
 from cogelot.data.structures import View
-from cogelot.modules.tokenizers import ImageTokenizer, MultimodalPromptTokenizer, TextTokenizer
+from cogelot.modules.tokenizers import (
+    EndEffectorTokenizer,
+    ImageTokenizer,
+    MultimodalPromptTokenizer,
+    ObservationTokenizer,
+    TextTokenizer,
+)
 from vima.policy import VIMAPolicy
 
 
@@ -22,7 +28,21 @@ def multimodal_prompt_tokenizer(
     return MultimodalPromptTokenizer(
         text_tokenizer=text_tokenizer,
         image_tokenizer=image_tokenizer,
-        views=[View.FRONT, View.TOP],
+        views=[View.front, View.top],
+    )
+
+
+@fixture(scope="session")
+def end_effector_tokenizer() -> EndEffectorTokenizer:
+    return EndEffectorTokenizer()
+
+
+@fixture(scope="session")
+def observation_tokenizer(
+    image_tokenizer: ImageTokenizer, end_effector_tokenizer: EndEffectorTokenizer
+) -> ObservationTokenizer:
+    return ObservationTokenizer(
+        image_tokenizer=image_tokenizer, end_effector_tokenizer=end_effector_tokenizer
     )
 
 
