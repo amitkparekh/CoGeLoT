@@ -32,6 +32,7 @@ rich = "*"
 thinc = "*"
 pydantic = "*"
 opencv-python = "*"
+jaxtyping = "*"
 beartype = "*"
 orjson = "*"
 
