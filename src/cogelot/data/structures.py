@@ -231,7 +231,10 @@ class Observation(Asset):
     def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, ImageNumpy]]:
         """Convert the observation to a dictionary of images per view."""
         return {
-            view: {image_type: getattr(self, image_type.value)[view] for image_type in ImageType}
+            view: {
+                image_type: getattr(self, image_type.value).get_view(view)
+                for image_type in (ImageType.rgb, ImageType.segmentation)
+            }
             for view in View
         }
 
