@@ -81,6 +81,9 @@ class MultimodalPromptTokenizer:
         self, token: TextToken, *, assets: Assets
     ) -> VisualToken:
         """Convert text token to visual tokens."""
+        if not token.token:
+            raise ValueError("Token value is empty.")
+
         asset = assets.get_asset_from_placeholder(token.token)
         image_per_type_per_view = {
             view: {
