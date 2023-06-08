@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from einops import rearrange
 
-from cogelot.data.structures import Bbox, ImageNumpy, ImageType, View
+from cogelot.data.structures import Bbox, ImageNumpy, ImageType, Observation, View
 from cogelot.data.token import VisualObject, VisualToken
 
 
@@ -15,6 +15,21 @@ class ImageTokenizer:
 
     def __init__(self, image_size: int = 32) -> None:
         self.image_size = image_size
+
+    def create_visual_token_from_observation(
+        self,
+        *,
+        observation: Observation,
+        all_object_ids: list[int],
+        token_value: str | None = None,
+    ) -> VisualToken:
+        """Create a visual token from an observation."""
+        return self.create_visual_token_from_images(
+            token_position_idx=observation.index,
+            token_value=token_value,
+            image_per_type_per_view=observation.to_image_per_type_per_view(),
+            available_object_ids=all_object_ids,
+        )
 
     def create_visual_token_from_images(
         self,
