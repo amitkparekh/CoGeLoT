@@ -35,6 +35,10 @@ def normalize_instance(instance_dir: Path, normalized_data_dir: Path) -> None:
     task_name = instance_dir.parent.stem
     output_file = normalized_data_dir.joinpath(f"{task_name}_{task_number}.json")
 
+    # Skip instances that have already been normalized
+    if output_file.exists():
+        return
+
     instance_factory = VIMAInstanceFactory()
     instance = instance_factory.parse_from_instance_dir(instance_dir)
     output_file.write_text(instance.json())
