@@ -20,9 +20,9 @@ class ImageTokenizer:
         self,
         *,
         token_position_idx: int,
-        token_value: str,
         image_per_type_per_view: dict[View, dict[ImageType, ImageNumpy]],
         available_object_ids: list[int],
+        token_value: str | None = None,
     ) -> VisualToken:
         """Create a visual token from the raw images."""
         all_visual_objects = self.extract_objects_from_images(
@@ -37,10 +37,14 @@ class ImageTokenizer:
         return visual_token
 
     def create_visual_token_from_objects(
-        self, *, token_position_idx: int, token_value: str, objects: list[VisualObject]
+        self,
+        *,
+        token_position_idx: int,
+        objects: list[VisualObject],
+        token_value: str | None = None,
     ) -> VisualToken:
         """Create a visual token."""
-        return VisualToken(token=token_value, position=token_position_idx, objects=objects)
+        return VisualToken(token=token_value, index=token_position_idx, objects=objects)
 
     def extract_objects_from_images(
         self,
@@ -56,7 +60,7 @@ class ImageTokenizer:
                 # Extract the bounding box for the object ID from the segmentation image
                 try:
                     bbox = self.create_bounding_box_from_segmentation_image(
-                        object_id, images_per_type[ImageType.SEGMENTATION]
+                        object_id, images_per_type[ImageType.segmentation]
                     )
                 except ValueError:
                     # If the object is too small, then we skip it
@@ -64,7 +68,7 @@ class ImageTokenizer:
 
                 # Crop the object from the RGB image using the bounding box
                 cropped_image = self.extract_object_from_image(
-                    images_per_type[ImageType.RGB], bbox
+                    images_per_type[ImageType.rgb], bbox
                 )
 
                 # Create the visual object
@@ -97,13 +101,10 @@ class ImageTokenizer:
     def extract_object_from_image(self, image: ImageNumpy, bbox: Bbox) -> ImageNumpy:
         """Crop the object from the RGB image using the bounding box."""
         cropped_image = self.crop_to_bounding_box(image, bbox)
-
         # Make sure the cropped image is square
         cropped_image = self.pad_to_square(cropped_image)
-
         # Resize the image
         cropped_image = self.resize(cropped_image)
-
         return cropped_image
 
     def resize(self, image: ImageNumpy) -> ImageNumpy:
@@ -111,8 +112,8 @@ class ImageTokenizer:
         image = rearrange(image, "c h w -> h w c")
         image = np.asarray(image)
         image = cv2.resize(
-            image,  # pyright: ignore[reportGeneralTypeIssues]
-            (self.image_size, self.image_size),
+            src=image,  # pyright: ignore[reportGeneralTypeIssues]
+            dsize=(self.image_size, self.image_size),
             interpolation=cv2.INTER_AREA,
         )
         image = rearrange(image, "h w c -> c h w")
@@ -121,7 +122,7 @@ class ImageTokenizer:
 
     def crop_to_bounding_box(self, image: ImageNumpy, bbox: Bbox) -> ImageNumpy:
         """Crop the image to the bounding box."""
-        return image[:, bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]
+        return image[:, bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]  # noqa: WPS221
 
     def pad_to_square(self, image: ImageNumpy, *, padding_value: int = 0) -> ImageNumpy:
         """Pad the image to ensure it is a square."""

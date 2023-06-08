@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, TypeVar, cast
 
 import torch
 
-from cogelot.data.structures import Assets, ImageType, Modality, View
-from cogelot.data.token import TextToken, Token, VisualToken
+from cogelot.data.structures import Assets, ImageType, View
+from cogelot.data.token import TextToken, Token, TokenType, VisualToken
 
 
 if TYPE_CHECKING:
@@ -35,15 +35,15 @@ class MultimodalPromptTokenizer:
     ) -> list[TextToken | VisualToken]:
         """Tokenize a single prompt into a list of tokens."""
         tokenized_text = self.tokenize_string(input_text)
-        tokens_per_modality = self.split_tokens_by_modality(tokenized_text)
+        tokens_per_modality = self.split_tokens_by_token_type(tokenized_text)
         visual_tokens = [
             self.convert_text_token_to_visual_token(token, assets=assets)
-            for token in tokens_per_modality[Modality.IMAGE]
+            for token in tokens_per_modality[TokenType.image]
         ]
 
         # Sort all the tokens by position
-        all_tokens = [*tokens_per_modality[Modality.TEXT], *visual_tokens]
-        all_tokens.sort(key=lambda token: token.position)
+        all_tokens = [*tokens_per_modality[TokenType.text], *visual_tokens]
+        all_tokens.sort(key=lambda token: token.index)
         return all_tokens
 
     @torch.no_grad()
@@ -55,7 +55,7 @@ class MultimodalPromptTokenizer:
         token_values: list[str] = text_encoding.tokens()
 
         text_tokens: list[TextToken] = [
-            TextToken(token_id=token_id, token=token_value, position=idx)
+            TextToken(token_id=token_id, token=token_value, index=idx)
             for idx, (token_id, token_value) in enumerate(
                 zip(token_ids, token_values, strict=True)
             )
@@ -64,15 +64,15 @@ class MultimodalPromptTokenizer:
         return text_tokens
 
     @torch.no_grad()
-    def split_tokens_by_modality(self, tokens: list[T]) -> dict[Modality, list[T]]:
+    def split_tokens_by_token_type(self, tokens: list[T]) -> dict[TokenType, list[T]]:
         """Extract text tokens with placeholders."""
-        split_tokens: dict[Modality, list[T]] = {modality: [] for modality in Modality}
+        split_tokens: dict[TokenType, list[T]] = {modality: [] for modality in TokenType}
 
         for token in tokens:
             if token.token in self._placeholder_names:
-                split_tokens[Modality.IMAGE].append(token)
+                split_tokens[TokenType.image].append(token)
             else:
-                split_tokens[Modality.TEXT].append(token)
+                split_tokens[TokenType.text].append(token)
 
         return split_tokens
 
@@ -84,14 +84,14 @@ class MultimodalPromptTokenizer:
         asset = assets.get_asset_from_placeholder(token.token)
         image_per_type_per_view = {
             view: {
-                ImageType.RGB: asset.rgb.get_view(view),
-                ImageType.SEGMENTATION: asset.segm.get_view(view),
+                ImageType.rgb: asset.rgb.get_view(view),
+                ImageType.segmentation: asset.segm.get_view(view),
             }
             for view in self._views
         }
 
         visual_token = self.image_tokenizer.create_visual_token_from_images(
-            token_position_idx=token.position,
+            token_position_idx=token.index,
             token_value=token.token,
             image_per_type_per_view=image_per_type_per_view,
             available_object_ids=asset.object_ids,
