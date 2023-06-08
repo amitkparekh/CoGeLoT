@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from beartype.vale import Is
 from numpy import typing as npt
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class ImageType(Enum):
     """Different types of images."""
 
     rgb = "rgb"
-    segmentation = "segmentation"
+    segmentation = "segm"
     depth = "depth"
 
 
@@ -103,45 +103,23 @@ class ImageView(BaseModel, arbitrary_types_allowed=True):
         return getattr(self, view.value)
 
 
-class SegmentationModalityView(ImageView):
-    """Various views for the segmentation modality.
-
-    This explicitly also includes various information about each object in the view too.
-    """
-
-    obj_metadata: list[ObjectMetadata]
-
-    @validator("obj_info")
-    @classmethod
-    def ensure_obj_info_is_a_list(
-        cls, obj_info: ObjectMetadata | list[ObjectMetadata]
-    ) -> list[ObjectMetadata]:
-        """Ensure the object info is always a list."""
-        if not isinstance(obj_info, list):
-            return [obj_info]
-        return obj_info
-
-    @property
-    def object_ids(self) -> list[int]:
-        """Get the object ids from the object info."""
-        return [metadata.obj_id for metadata in self.obj_metadata]
-
-
 class Asset(BaseModel):
     """An asset within the environment."""
 
+    _obj_ids_to_ignore: set[int] = {0, 1}
+
     rgb: ImageView
-    segm: ImageView | SegmentationModalityView
+    segm: ImageView
 
     @property
     def object_ids(self) -> list[int]:
-        """Get the object IDs for the asset, given the current placeholder type."""
-        if isinstance(self.segm, SegmentationModalityView):
-            return self.segm.object_ids
-        raise ValueError(
-            f"Cannot get object IDs for asset {self} because it is not a segmentation modality"
-            " view!"
-        )
+        """Get the object IDs for the asset, given the current placeholder type.
+
+        For some reason, they ignore {0,1} no matter what. So we do the same here.
+        """
+        get_unique_ids_from_segmentation = np.unique([self.segm.front, self.segm.top])
+        unique_ids = set(get_unique_ids_from_segmentation) - self._obj_ids_to_ignore
+        return list(unique_ids)
 
 
 class Assets(BaseModel):
