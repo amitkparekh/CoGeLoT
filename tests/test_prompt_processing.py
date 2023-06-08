@@ -3,8 +3,8 @@ from typing import Any
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
-from cogelot.data.structures import Assets, Modality, View
-from cogelot.data.token import VisualToken
+from cogelot.data.structures import Assets, View
+from cogelot.data.token import TokenType, VisualToken
 from cogelot.modules.tokenizers import MultimodalPromptTokenizer, TextTokenizer
 from vima.policy import VIMAPolicy
 from vima.prepare_prompt import prepare_prompt
@@ -61,14 +61,14 @@ def test_our_prompt_is_the_same_as_theirs(
     assert their_token_ids == our_token_ids
 
     # Check that the modality are in the right order
-    their_modalities = [Modality(modality) for modality in their_prepared_prompt[0][0]]
-    our_modalities = [token.modality for token in our_prepared_prompt]
+    their_modalities = [TokenType(modality) for modality in their_prepared_prompt[0][0]]
+    our_modalities = [token.token_type for token in our_prepared_prompt]
     assert their_modalities == our_modalities
 
     # Get the list of visual tokens
-    our_visual_tokens = multimodal_prompt_tokenizer.split_tokens_by_modality(our_prepared_prompt)[
-        Modality.IMAGE
-    ]
+    our_visual_tokens = multimodal_prompt_tokenizer.split_tokens_by_token_type(
+        our_prepared_prompt
+    )[TokenType.image]
     assert all([isinstance(token, VisualToken) for token in our_visual_tokens])
 
     # Check the bounding boxes for each view
