@@ -53,10 +53,17 @@ def normalize_raw_data(raw_data_dir: Path, normlized_data_dir: Path) -> None:
     normalize_progress_task = progress.add_task(
         "Normalizing instances", total=len(all_instance_dirs)
     )
+
+    failed_instances = []
+
     with progress:
         for instance_dir in all_instance_dirs:
-            if instance_dir.is_dir():
+            try:
                 normalize_instance(instance_dir, normlized_data_dir)
+            except Exception:  # noqa: BLE001
+                failed_instances.append(instance_dir)
+                logger.exception(f"Failed to normalize `{instance_dir}`")
+
             progress.advance(normalize_progress_task)
         logger.debug("Finished normalizing instances")
 
