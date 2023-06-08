@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 import numpy as np
+import orjson
 import torch
 from PIL import Image
 from pydantic import BaseModel, validator
@@ -18,6 +19,18 @@ from cogelot.data.structures import (
     Position,
     Rotation,
 )
+
+
+def orjson_dumps(v: Any, *, default: Any) -> str:
+    """Convert Model to JSON string.
+
+    orjson.dumps returns bytes, to match standard json.dumps we need to decode.
+    """
+    return orjson.dumps(
+        v,
+        default=default,
+        option=orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY | orjson.OPT_APPEND_NEWLINE,
+    ).decode()
 
 
 class VIMAInstance(BaseModel):
@@ -36,6 +49,12 @@ class VIMAInstance(BaseModel):
 
     observations: list[Observation]
     actions: list[PoseAction]
+
+    class Config:
+        """Pydantic config."""
+
+        json_loads = orjson.loads
+        json_dumps = orjson_dumps
 
     @validator("observations")
     @classmethod

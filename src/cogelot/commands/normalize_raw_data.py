@@ -13,7 +13,6 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
-from safetensors.torch import save_file
 from tqdm.rich import RateColumn
 
 from cogelot.data.vima import VIMAInstanceFactory
@@ -34,11 +33,11 @@ def normalize_instance(instance_dir: Path, normalized_data_dir: Path) -> None:
     """Normalize a single instance and save it."""
     task_number = instance_dir.stem
     task_name = instance_dir.parent.stem
-    output_file = normalized_data_dir.joinpath(f"{task_name}_{task_number}.safetensors")
+    output_file = normalized_data_dir.joinpath(f"{task_name}_{task_number}.json")
 
     instance_factory = VIMAInstanceFactory()
     instance = instance_factory.parse_from_instance_dir(instance_dir)
-    save_file(instance.dict(), output_file)
+    output_file.write_text(instance.json())
 
 
 def normalize_raw_data(raw_data_dir: Path, normlized_data_dir: Path) -> None:
