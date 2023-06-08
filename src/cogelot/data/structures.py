@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import TYPE_CHECKING, Annotated
 
 import numpy as np
+import torch
+from beartype.vale import Is
 from numpy import typing as npt
 from pydantic import BaseModel, validator
+
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView, KeysView, ValuesView
 
 
 ImageNumpy = npt.NDArray[np.int_]
@@ -83,10 +90,13 @@ class Bbox(BaseModel):
         return (self.x_center, self.y_center, self.height, self.width)
 
 
-class ObjectInfo(BaseModel):
+class ObjectMetadata(BaseModel):
     """Metadata for a given object."""
 
     obj_id: int
+    obj_name: str
+    obj_asset_name: str
+    texture_name: str
 
 
 class ImageView(BaseModel, arbitrary_types_allowed=True):
@@ -106,13 +116,13 @@ class SegmentationModalityView(ImageView):
     This explicitly also includes various information about each object in the view too.
     """
 
-    obj_info: list[ObjectInfo]
+    obj_info: list[ObjectMetadata]
 
     @validator("obj_info")
     @classmethod
     def ensure_obj_info_is_a_list(
-        cls, obj_info: ObjectInfo | list[ObjectInfo]
-    ) -> list[ObjectInfo]:
+        cls, obj_info: ObjectMetadata | list[ObjectMetadata]
+    ) -> list[ObjectMetadata]:
         """Ensure the object info is always a list."""
         if not isinstance(obj_info, list):
             return [obj_info]
@@ -128,12 +138,17 @@ class Asset(BaseModel):
     """An asset within the environment."""
 
     rgb: ImageView
-    segm: SegmentationModalityView
+    segm: ImageView | SegmentationModalityView
 
     @property
     def object_ids(self) -> list[int]:
         """Get the object IDs for the asset, given the current placeholder type."""
-        return self.segm.object_ids
+        if isinstance(self.segm, SegmentationModalityView):
+            return self.segm.object_ids
+        raise ValueError(
+            f"Cannot get object IDs for asset {self} because it is not a segmentation modality"
+            " view!"
+        )
 
 
 class Assets(BaseModel):
@@ -144,6 +159,26 @@ class Assets(BaseModel):
     def __getitem__(self, item: str) -> Asset:
         """Let the Assets class be subscriptable like a dictionary."""
         return self.__root__[item]
+
+    def __len__(self) -> int:
+        """Get the number of assets."""
+        return len(self.__root__)
+
+    def keys(self) -> KeysView[str]:
+        """Get the keys of the assets."""
+        return self.__root__.keys()
+
+    def values(self) -> ValuesView[Asset]:
+        """Get the values of the assets."""
+        return self.__root__.values()
+
+    def items(self) -> ItemsView[str, Asset]:
+        """Get the items of the assets."""
+        return self.__root__.items()
+
+    def get_asset_names(self) -> list[str]:
+        """Get all the asset names."""
+        return list(self.__root__.keys())
 
     def get_asset_from_name(self, name: str) -> Asset:
         """Get the asset from the asset name."""
@@ -157,3 +192,75 @@ class Assets(BaseModel):
         # Get the name of the asset by removing the left/right synbols
         asset_name = placeholder[1:-1]
         return self.get_asset_from_name(asset_name)
+
+
+PositionTensor = Annotated[
+    torch.Tensor,
+    Is[lambda tensor: tensor.numel() == 3 and tensor.dtype is torch.float],  # noqa: PLR2004
+]
+RotationTensor = Annotated[
+    torch.Tensor,
+    Is[lambda tensor: tensor.numel() == 4 and tensor.dtype is torch.float],  # noqa: PLR2004
+]
+
+
+class Position(BaseModel):
+    """Position of a pose."""
+
+    x: float
+    y: float
+    z: float
+
+    @classmethod
+    def from_tensor(cls, tensor: PositionTensor) -> Position:
+        """Instantiate from a tensor."""
+        flattened_tensor: list[float] = tensor.flatten().tolist()
+        return cls(x=flattened_tensor[0], y=flattened_tensor[1], z=flattened_tensor[2])
+
+    @property
+    def as_tensor(self) -> PositionTensor:
+        """Convert the position to a tensor."""
+        return torch.tensor([self.x, self.y, self.z])
+
+
+class Rotation(BaseModel):
+    """Rotation of a pose."""
+
+    x: float
+    y: float
+    z: float
+    w: float
+
+    @classmethod
+    def from_tensor(cls, tensor: RotationTensor) -> Rotation:
+        """Instantiate from a tensor."""
+        flattened_tensor: list[float] = tensor.flatten().tolist()
+        return cls(
+            x=flattened_tensor[0],
+            y=flattened_tensor[1],
+            z=flattened_tensor[2],
+            w=flattened_tensor[3],
+        )
+
+    @property
+    def as_tensor(self) -> RotationTensor:
+        """Convert the rotation to a tensor."""
+        return torch.tensor([self.x, self.y, self.z, self.w])
+
+
+class Observation(Asset):
+    """Single observation from the environment."""
+
+    index: int
+
+
+class PoseAction(BaseModel):
+    """Actions which are taken by the agent in the environment."""
+
+    index: int
+
+    pose0_position: Position
+    pose1_position: Position
+
+    pose0_rotation: Rotation
+    pose1_rotation: Rotation

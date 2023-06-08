@@ -32,6 +32,8 @@ rich = "*"
 thinc = "*"
 pydantic = "*"
 opencv-python = "*"
+beartype = "*"
+orjson = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
