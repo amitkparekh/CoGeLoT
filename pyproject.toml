@@ -103,7 +103,7 @@ ignore = [
 
 unfixable = [
 	# Do not remove unused imports
-	"F401",
+	# "F401",
 	# Do not remove unused variables
 	"F841",
 	# Do not auto-remove commented out code
@@ -244,6 +244,7 @@ max-line-complexity = 15
 max-local-variables = 10
 max-function-expressions = 10
 max-module-expressions = 20
+max-annotation-complexity = 4
 min-name-length = 1
 max-methods = 9
 max-string-usages = 10
