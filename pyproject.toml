@@ -35,6 +35,7 @@ opencv-python = "*"
 jaxtyping = "*"
 beartype = "*"
 orjson = "*"
+torchdata = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
@@ -99,6 +100,8 @@ ignore = [
 	# Don't care about requiring an author name or issue link for a todo
 	"TD002",
 	"TD003",
+	# Disable flagging commented-out code because it's false-positives on shape comments
+	"ERA001",
 ]
 
 unfixable = [

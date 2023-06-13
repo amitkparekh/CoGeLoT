@@ -3323,6 +3323,38 @@ typing-extensions = "*"
 opt-einsum = ["opt-einsum (>=3.3)"]
 
 [[package]]
+name = "torchdata"
+version = "0.6.1"
+description = "Composable data loading modules for PyTorch"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchdata-0.6.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:b97f60619764d5f2f62ebcf18bff8a7cfc5c84d30d04d30724b753ec95864a70"},
+    {file = "torchdata-0.6.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ff46aa549c0da9aa2bcba95767034a81c950dc7ccc0e24f38cf6f7878ca1826d"},
+    {file = "torchdata-0.6.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cae1b4a516124c00ef47db12bab0cc6898bd2d7e749ffb14b6ebf1fe610a6b46"},
+    {file = "torchdata-0.6.1-cp310-cp310-win_amd64.whl", hash = "sha256:f2a8b0a388753502d49bd5bd186cd8d41dc2d91121246617804578371591b5e6"},
+    {file = "torchdata-0.6.1-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:6474ed86ed7e060698888fa8ece9155dc94bdb9dfcc1874fa6d7707823551adc"},
+    {file = "torchdata-0.6.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:05db07d2793d181867578be99c211b3c71f83f3fda0bf33a70e5c93794513692"},
+    {file = "torchdata-0.6.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6a9d4c7d86b0aab2f70cdf0eae50f6eea997051889b0c04ae2f843df048ba9ea"},
+    {file = "torchdata-0.6.1-cp311-cp311-win_amd64.whl", hash = "sha256:3501325411063b0da6d85c93222234973780ca3df7d110ee1795723f9b2e3405"},
+    {file = "torchdata-0.6.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:129d5b2d35717862b194b31a27b61b5faa9efd4ffc36c1a07d85b320dea8b4c6"},
+    {file = "torchdata-0.6.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:2752fd8452d42aeaf480985f5d3d82506ab1ce51ca42cdb61c981145cd2890a8"},
+    {file = "torchdata-0.6.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:08b745c14adea7e4a36de4241485f9ea058e3ad3959c3e6dd1526c2f278006e7"},
+    {file = "torchdata-0.6.1-cp38-cp38-win_amd64.whl", hash = "sha256:080c1c54128b4eb8e83cf4de74fa38e892cd6bf3114a557a853969543285f2d9"},
+    {file = "torchdata-0.6.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:7e11108140adaba55491b6124f07b61cce161f53f8604e70961da025ccd014bd"},
+    {file = "torchdata-0.6.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:42961c40bf9c3fb66aaf4189f9154cb4f2eb3862359e64267708e3d273452d68"},
+    {file = "torchdata-0.6.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:87d012adf90cd15d7164a886512b6746788477172394fe56971799d276f8809e"},
+    {file = "torchdata-0.6.1-cp39-cp39-win_amd64.whl", hash = "sha256:24d7fb2fcb0af43660fc44d8583cb8f7d25762bb759e8fde003db29c5036d940"},
+    {file = "torchdata-0.6.1-py3-none-any.whl", hash = "sha256:6a6d51cfbb63efe65788ad71e84c2be23a0c6520869e075774e7fc2ee535b9ed"},
+]
+
+[package.dependencies]
+requests = "*"
+torch = "2.0.1"
+urllib3 = ">=1.25"
+
+[[package]]
 name = "torchmetrics"
 version = "0.11.4"
 description = "PyTorch native Metrics"
@@ -3817,4 +3849,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "158a4a3c7348e1f78369ebdc752dbb340b985ead207fda4a914fc92d31fe803d"
+content-hash = "5c0824a5907b424fdf6e1a240ada5e07ba21ac43fe5ae080c8945e1f83999b2c"
