@@ -2,23 +2,14 @@ from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any, Literal
 
 import numpy as np
 import orjson
-import torch
 from PIL import Image
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator
 
 from cogelot.data.constants import EndEffector
-from cogelot.data.structures import (
-    Assets,
-    ObjectMetadata,
-    Observation,
-    PoseAction,
-    Position,
-    Rotation,
-)
 
 
 def orjson_dumps(v: Any, *, default: Any) -> str:
@@ -33,54 +24,107 @@ def orjson_dumps(v: Any, *, default: Any) -> str:
     ).decode()
 
 
+class ObjectMetadata(BaseModel):
+    """Metadata for a given object."""
+
+    obj_id: int
+    obj_name: str
+    obj_asset_name: str
+    texture_name: str
+
+
+class PoseActions(BaseModel, arbitrary_types_allowed=True):
+    """Actions which are taken by the agent in the environment."""
+
+    pose0_position: np.ndarray
+    pose1_position: np.ndarray
+    pose0_rotation: np.ndarray
+    pose1_rotation: np.ndarray
+
+    @root_validator
+    @classmethod
+    def check_first_dim_is_identical(
+        cls, values: dict[str, np.ndarray]  # noqa: WPS110
+    ) -> dict[str, np.ndarray]:
+        """Ensure that the first dims are identical."""
+        first_dims = [v.shape[0] for v in values.values()]
+
+        if not all(first_dims[0] == d for d in first_dims):
+            raise ValueError("All first dims must be identical")
+
+        return values
+
+    def __len__(self) -> int:
+        """Return the number of actions."""
+        return self.pose0_position.shape[0]
+
+
+class Observations(BaseModel, arbitrary_types_allowed=True):
+    """Observations from the environment."""
+
+    ee: np.ndarray
+    rgb: dict[Literal["top", "front"], np.ndarray]
+    segm: dict[Literal["top", "front"], np.ndarray]
+
+    def __len__(self) -> int:
+        """Return the number of observations."""
+        return self.ee.shape[0]
+
+    @root_validator
+    @classmethod
+    def check_first_dim_is_identical(
+        cls, values: dict[str, Any]  # noqa: WPS110
+    ) -> dict[str, Any]:
+        """Ensure that the first dims are identical."""
+        rgb_front = values["rgb"]["front"]
+        rgb_top = values["rgb"]["top"]
+        segm_front = values["segm"]["front"]
+        segm_top = values["segm"]["top"]
+
+        all_first_dims_are_identical = all(
+            rgb_front.shape[0] == dim
+            for dim in (rgb_top.shape[0], segm_front.shape[0], segm_top.shape[0])
+        )
+
+        if not all_first_dims_are_identical:
+            raise ValueError("All first dims must be identical")
+
+        return values
+
+
 class VIMAInstance(BaseModel):
-    """Parsed VIMA instance."""
+    """A single instance of the VIMA dataset, merging all the files into a single object."""
 
     index: int
-    path: Path
     task: str
+    path: Path
 
     object_metadata: list[ObjectMetadata]
 
-    end_effector: EndEffector
+    end_effector_type: EndEffector
+
+    pose_actions: PoseActions
+    observations: Observations
 
     prompt: str
-    prompt_assets: Assets
-
-    observations: list[Observation]
-    actions: list[PoseAction]
+    prompt_assets: dict[str, dict[str, Any]]
 
     class Config:
         """Pydantic config."""
 
         json_loads = orjson.loads
         json_dumps = orjson_dumps
-
-    @validator("observations")
-    @classmethod
-    def sort_obsevations(cls, observations: list[Observation]) -> list[Observation]:
-        """Sort observations by their index."""
-        return sorted(observations, key=lambda obs: obs.index)
-
-    @validator("actions")
-    @classmethod
-    def sort_actions(cls, actions: list[PoseAction]) -> list[PoseAction]:
-        """Sort actions by their index."""
-        return sorted(actions, key=lambda action: action.index)
+        arbitrary_types_allowed = True
 
     @property
-    def num_steps(self) -> int:
-        """Get the number of steps in the instance."""
+    def num_actions(self) -> int:
+        """Number of actions in the instance."""
+        return len(self.pose_actions)
+
+    @property
+    def num_observations(self) -> int:
+        """Number of observations in the instance."""
         return len(self.observations)
-
-    @property
-    def action_per_observation(self) -> dict[Observation, PoseAction | None]:
-        """Get the action per observation."""
-        actions = self.actions
-        if len(self.observations) != len(self.actions):
-            actions = [*actions, None]
-
-        return dict(zip(self.observations, actions, strict=True))
 
     @property
     def num_objects(self) -> int:
@@ -92,28 +136,9 @@ class VIMAInstance(BaseModel):
         """Get the object ids."""
         return [obj.obj_id for obj in self.object_metadata]
 
-    @overload
-    def get_action_for_observation(self, observation: int) -> PoseAction | None:
-        ...  # noqa: WPS428
-
-    @overload
-    def get_action_for_observation(self, observation: Observation) -> PoseAction | None:
-        ...  # noqa: WPS428
-
-    def get_action_for_observation(self, observation: int | Observation) -> PoseAction | None:
-        """Get the action for a given observation.
-
-        Args:
-            observation: The observation index or the observation itself.
-        """
-        if isinstance(observation, int):
-            observation = self.observations[observation]
-
-        return self.action_per_observation[observation]
-
 
 class VIMAInstanceFactory:
-    """Build VIMA instances from their raw data."""
+    """Build VIMA instances from the raw data."""
 
     pose_action_keys = ("pose0_position", "pose1_position", "pose0_rotation", "pose1_rotation")
     actions_file_name = "action.pkl"
@@ -122,63 +147,24 @@ class VIMAInstanceFactory:
     rgb_path_per_view = {"top": "rgb_top", "front": "rgb_front"}
 
     def parse_from_instance_dir(self, instance_dir: Path) -> VIMAInstance:
-        """Parse a VIMA Instance from one of their instance dirs."""
-        trajectory_metadata = self._load_trajectory_metadata(instance_dir)
-        pose_actions = self.parse_pose_actions(instance_dir)
-        observations = self.parse_observations(instance_dir)
+        """Parse a VIMA instance from their instance dir."""
+        trajectory_metadata = self._load_data_from_pickle(
+            instance_dir.joinpath(self.trajectory_metadata_file_name)
+        )
 
         return VIMAInstance(
             index=int(instance_dir.stem),
             path=instance_dir,
             task=instance_dir.parent.stem,
-            object_metadata=self._parse_object_metadata(trajectory_metadata),
             prompt=trajectory_metadata["prompt"],
-            prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),
-            end_effector=trajectory_metadata["end_effector_type"],
-            actions=pose_actions,
-            observations=observations,
+            prompt_assets=trajectory_metadata["prompt_assets"],
+            end_effector_type=trajectory_metadata["end_effector_type"],
+            object_metadata=self.parse_object_metadata(trajectory_metadata),
+            pose_actions=self.parse_pose_actions(instance_dir),
+            observations=self.parse_observations(instance_dir),
         )
 
-    def parse_observations(self, instance_dir: Path) -> list[Observation]:
-        """Parse observations from raw data."""
-        raw_obs_data = self._load_data_from_pickle(
-            instance_dir.joinpath(self.observations_file_name)
-        )
-        raw_segmentation_data = raw_obs_data["segm"]
-
-        num_obserations = len(raw_segmentation_data["top"])
-
-        observations: list[Observation] = []
-
-        for obs_idx in range(num_obserations):
-            observations.append(
-                Observation.parse_obj(
-                    {
-                        "index": obs_idx,
-                        "rgb": {
-                            "front": self._load_rgb_observation_image(
-                                instance_dir=instance_dir, view="front", frame_idx=obs_idx
-                            ),
-                            "top": self._load_rgb_observation_image(
-                                instance_dir=instance_dir, view="top", frame_idx=obs_idx
-                            ),
-                        },
-                        "segm": {
-                            "front": raw_segmentation_data["front"][obs_idx],
-                            "top": raw_segmentation_data["top"][obs_idx],
-                        },
-                    }
-                )
-            )
-
-        return observations
-
-    def parse_pose_actions(self, instance_dir: Path) -> list[PoseAction]:
-        """Parse pose actions from raw data."""
-        raw_action_data = self._load_raw_pose_action_data(instance_dir)
-        return self._parse_pose_actions_from_raw_data(raw_action_data)
-
-    def _parse_object_metadata(self, trajectory_metadata: dict[str, Any]) -> list[ObjectMetadata]:
+    def parse_object_metadata(self, trajectory_metadata: dict[str, Any]) -> list[ObjectMetadata]:
         """Extract the object metadata."""
         object_metadata: list[ObjectMetadata] = []
 
@@ -194,59 +180,38 @@ class VIMAInstanceFactory:
 
         return object_metadata
 
+    def parse_pose_actions(self, instance_dir: Path) -> PoseActions:
+        """Parse the pose actions."""
+        actions = self._load_data_from_pickle(instance_dir.joinpath(self.actions_file_name))
+        pose_actions = {key: actions[key] for key in self.pose_action_keys}
+
+        return PoseActions.parse_obj(pose_actions)
+
+    def parse_observations(self, instance_dir: Path) -> Observations:
+        """Parse the observations."""
+        observations = self._load_data_from_pickle(
+            instance_dir.joinpath(self.observations_file_name)
+        )
+        rgb: dict[Literal["front", "top"], np.ndarray] = {
+            "front": self._load_all_rgb_images(instance_dir=instance_dir, view="front"),
+            "top": self._load_all_rgb_images(instance_dir=instance_dir, view="top"),
+        }
+
+        return Observations(ee=observations["ee"], rgb=rgb, segm=observations["segm"])
+
     def _load_data_from_pickle(self, pickled_file: Path) -> Any:
         """Load the data from a pickle file."""
         return pickle.load(pickled_file.open("rb"))  # noqa: S301
 
-    def _load_trajectory_metadata(self, instance_dir: Path) -> dict[str, Any]:
-        """Load the trajectory metadata."""
-        return self._load_data_from_pickle(
-            instance_dir.joinpath(self.trajectory_metadata_file_name)
-        )
-
-    def _parse_object_ids_and_labels(self, trajectory_metadata: dict[str, Any]) -> dict[int, str]:
-        """Extract the object IDs and their labels."""
-        return {
-            obj_id: obj_info["obj_name"]
-            for obj_id, obj_info in trajectory_metadata["obj_id_to_info"].items()
-        }
-
-    def _load_rgb_observation_image(
-        self, *, instance_dir: Path, view: Literal["top", "front"], frame_idx: int
+    def _load_all_rgb_images(
+        self, *, instance_dir: Path, view: Literal["front", "top"]
     ) -> np.ndarray:
-        """Load the RGB image of the observation for the given view."""
-        image_path = instance_dir.joinpath(self.rgb_path_per_view[view], f"{frame_idx}.jpg")
-        with Image.open(image_path) as image:
-            return np.array(image)
+        """Load all the RGB images from the given dir."""
+        images_dir = instance_dir.joinpath(self.rgb_path_per_view[view])
+        images: list[np.ndarray] = []
 
-    def _get_num_actions_from_raw_pose_action_data(self, raw_action_data: dict[str, Any]) -> int:
-        """Get the number of actions from the raw pose action data.
+        for image_path in sorted(images_dir.glob("*.jpg")):
+            with Image.open(image_path) as image:
+                images.append(np.array(image))
 
-        All the pose actions should have the same batch size/identiacal first dimension
-        """
-        return len(raw_action_data[self.pose_action_keys[0]])
-
-    def _parse_pose_actions_from_raw_data(
-        self, raw_action_data: dict[str, Any]
-    ) -> list[PoseAction]:
-        """Parse pose actions from raw data."""
-        tensors = {key: torch.tensor(raw_action_data[key]) for key in self.pose_action_keys}
-
-        num_actions = self._get_num_actions_from_raw_pose_action_data(raw_action_data)
-
-        actions = [
-            PoseAction(
-                index=action_idx,
-                pose0_position=Position.from_tensor(tensors["pose0_position"][action_idx]),
-                pose1_position=Position.from_tensor(tensors["pose1_position"][action_idx]),
-                pose0_rotation=Rotation.from_tensor(tensors["pose0_rotation"][action_idx]),
-                pose1_rotation=Rotation.from_tensor(tensors["pose1_rotation"][action_idx]),
-            )
-            for action_idx in range(num_actions)
-        ]
-
-        return actions
-
-    def _load_raw_pose_action_data(self, instance_dir: Path) -> dict[str, Any]:
-        """Load the raw pose action data."""
-        return self._load_data_from_pickle(instance_dir.joinpath(self.actions_file_name))
+        return np.array(images)
