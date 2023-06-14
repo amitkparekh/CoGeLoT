@@ -53,6 +53,8 @@ class VIMAInstance(BaseModel):
     index: int
     task: str
 
+    total_steps: int
+
     object_metadata: list[ObjectMetadata]
 
     end_effector_type: EndEffector
