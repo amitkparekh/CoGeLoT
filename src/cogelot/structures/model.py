@@ -6,15 +6,19 @@ from typing import TYPE_CHECKING, NamedTuple
 if TYPE_CHECKING:
     import torch
 
-    from vima.utils import DataDict
+    from cogelot.structures.token import ImageToken, ObservationToken, PoseActionToken, TextToken
 
 
 class PreprocessedInstance(NamedTuple):
-    """Preprocessed instance for the model."""
+    """Preprocessed instance for the model.
 
-    prompt: tuple[list[list[int]], torch.Tensor, DataDict]
-    observations: DataDict
-    actions: DataDict
+    Given a prompt and a history, the model should be able to produce the target. Since
+    tokenization is only ever needed once, we just do this aspect once.
+    """
+
+    prompt: list[TextToken | ImageToken]
+    history: list[ObservationToken | PoseActionToken]
+    target: PoseActionToken
 
 
 class ModelInstance(NamedTuple):
