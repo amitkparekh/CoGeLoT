@@ -4,6 +4,7 @@ from typing import Literal
 
 import orjson
 import torch
+from loguru import logger
 from pydantic import BaseModel, validator
 from pydantic_numpy import NDArray
 
@@ -100,3 +101,11 @@ class VIMAInstance(BaseModel):
     def file_name(self) -> str:
         """Get the file name."""
         return f"{self.task}_{self.index}.json"
+
+    def decompose(self) -> list[VIMAInstance]:
+        """Decompose the instance into multiple instances.
+
+        Each instance is the whole trajectory, whereas we don't want that.
+        """
+        logger.warning("Decomposing trajectories is not implemented yet. Just returning self.")
+        return [self]
