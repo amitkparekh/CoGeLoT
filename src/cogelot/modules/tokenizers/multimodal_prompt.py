@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, cast
 
-import torch
-
-from cogelot.data.structures import Assets, ImageType, View
-from cogelot.data.token import TextToken, Token, TokenType, VisualToken
+from cogelot.structures.common import Assets, ImageType
+from cogelot.structures.token import ImageToken, TextToken, Token, TokenType
 
 
 if TYPE_CHECKING:
     from cogelot.modules.tokenizers.image import ImageTokenizer
     from cogelot.modules.tokenizers.text import TextTokenizer
+    from cogelot.structures.common import View
 
 T = TypeVar("T", bound=Token)
 
@@ -30,23 +29,20 @@ class MultimodalPromptTokenizer:
         self._views = views
         self._placeholder_names = text_tokenizer.all_placeholders
 
-    def forward_single_prompt(
-        self, *, input_text: str, assets: Assets
-    ) -> list[TextToken | VisualToken]:
+    def tokenize(self, prompt: str, assets: Assets) -> list[TextToken | ImageToken]:
         """Tokenize a single prompt into a list of tokens."""
-        tokenized_text = self.tokenize_string(input_text)
+        tokenized_text = self.tokenize_string(prompt)
         tokens_per_modality = self.split_tokens_by_token_type(tokenized_text)
-        visual_tokens = [
-            self.convert_text_token_to_visual_token(token, assets=assets)
+        image_tokens = [
+            self.convert_text_token_to_image_token(token, assets=assets)
             for token in tokens_per_modality[TokenType.image]
         ]
 
-        # Sort all the tokens by position
-        all_tokens = [*tokens_per_modality[TokenType.text], *visual_tokens]
+        # Sort all the tokens by position since no two tokens have the same index
+        all_tokens = [*tokens_per_modality[TokenType.text], *image_tokens]
         all_tokens.sort(key=lambda token: token.index)
         return all_tokens
 
-    @torch.no_grad()
     def tokenize_string(self, text: str) -> list[TextToken]:
         """Tokenize a string of text into tokens."""
         text_encoding = self.text_tokenizer(text)
@@ -63,7 +59,6 @@ class MultimodalPromptTokenizer:
 
         return text_tokens
 
-    @torch.no_grad()
     def split_tokens_by_token_type(self, tokens: list[T]) -> dict[TokenType, list[T]]:
         """Extract text tokens with placeholders."""
         split_tokens: dict[TokenType, list[T]] = {modality: [] for modality in TokenType}
@@ -72,14 +67,11 @@ class MultimodalPromptTokenizer:
             if token.token in self._placeholder_names:
                 split_tokens[TokenType.image].append(token)
             else:
-                split_tokens[TokenType.text].append(token)
+                split_tokens[token.token_type].append(token)
 
         return split_tokens
 
-    @torch.no_grad()
-    def convert_text_token_to_visual_token(
-        self, token: TextToken, *, assets: Assets
-    ) -> VisualToken:
+    def convert_text_token_to_image_token(self, token: TextToken, *, assets: Assets) -> ImageToken:
         """Convert text token to visual tokens."""
         if not token.token:
             raise ValueError("Token value is empty.")
@@ -93,7 +85,7 @@ class MultimodalPromptTokenizer:
             for view in self._views
         }
 
-        visual_token = self.image_tokenizer.create_visual_token_from_images(
+        visual_token = self.image_tokenizer.tokenize_images(
             token_position_idx=token.index,
             token_value=token.token,
             image_per_type_per_view=image_per_type_per_view,

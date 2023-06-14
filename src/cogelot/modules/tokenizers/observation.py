@@ -1,28 +1,22 @@
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 
-from cogelot.data.token import ActionToken, EndEffectorToken, VisualToken
+from cogelot.structures.token import EndEffectorToken, ImageToken, ObservationToken
 
 
 if TYPE_CHECKING:
-    from cogelot.data.constants import EndEffector
-    from cogelot.data.structures import Observation, PoseAction
-    from cogelot.data.vima import VIMAInstance
+    from collections.abc import Iterator
+
     from cogelot.modules.tokenizers.end_effector import EndEffectorTokenizer
     from cogelot.modules.tokenizers.image import ImageTokenizer
+    from cogelot.structures.common import Observation
+    from cogelot.structures.vima import EndEffector
 
 
 class ObservationTokenizer:
     """Tokenize observations into tokens."""
-
-    # Define the order of tokens for each time step, which matter when sorting all the tokens in
-    # the observations
-    token_order_per_timestep = {
-        VisualToken: 0,
-        EndEffectorToken: 1,
-        ActionToken: 2,
-    }
 
     def __init__(
         self, image_tokenizer: ImageTokenizer, end_effector_tokenizer: EndEffectorTokenizer
@@ -30,57 +24,51 @@ class ObservationTokenizer:
         self.image_tokenizer = image_tokenizer
         self.end_effector_tokenizer = end_effector_tokenizer
 
-    def forward_vima_instance(
-        self, instance: VIMAInstance
-    ) -> list[VisualToken | EndEffectorToken | ActionToken]:
-        """Tokenize a observations from a single VIMA instance."""
-        return self.forward_single_prompt(
-            observations=instance.observations,
-            actions=instance.actions,
-            object_ids=instance.object_ids,
-            end_effector=instance.end_effector,
-        )
-
-    def forward_single_prompt(
-        self,
-        *,
-        observations: list[Observation],
-        actions: list[PoseAction],
-        object_ids: list[int],
-        end_effector: EndEffector,
-    ) -> list[VisualToken | EndEffectorToken | ActionToken]:
-        """Tokenize a single prompt into a list of tokens."""
-        visual_token_per_observation = [
-            self.image_tokenizer.create_visual_token_from_observation(
-                observation=observation, all_object_ids=object_ids
+    def tokenize(
+        self, observations: list[Observation], end_effector: EndEffector, all_object_ids: set[int]
+    ) -> list[ObservationToken]:
+        """Tokenize a single instance."""
+        image_tokens = [
+            self.image_tokenizer.tokenize_observation(
+                observation=observation, all_object_ids=all_object_ids
             )
             for observation in observations
         ]
-        end_effector_tokens = self._create_end_effector_tokens_per_observation(
-            end_effector, num_observations=len(observations)
+        end_effector_tokens = self._create_end_effector_tokens(
+            image_tokens=image_tokens, end_effector=end_effector
         )
-        action_tokens = self._tokenize_actions(actions)
 
-        token_sequence = [*visual_token_per_observation, *action_tokens, *end_effector_tokens]
-        # Sort each toekn by its index and its type
-        token_sequence = sorted(
-            token_sequence,
-            key=lambda token: (token.index, self.token_order_per_timestep[type(token)]),
+        observations_tokens = list(
+            self._create_observation_tokens(image_tokens, end_effector_tokens)
         )
-        return token_sequence
 
-    def _create_end_effector_tokens_per_observation(
-        self, end_effector: EndEffector, *, num_observations: int = 1
+        return observations_tokens
+
+    def _create_end_effector_tokens(
+        self, image_tokens: list[ImageToken], end_effector: EndEffector
     ) -> list[EndEffectorToken]:
-        """Tokenize the end effector."""
-        token_id = self.end_effector_tokenizer.encode(end_effector)
-        tokens = [
-            EndEffectorToken(token=end_effector, index=obs_index, token_id=token_id)
-            for obs_index in range(num_observations)
+        """Create end effector tokens from image tokens."""
+        end_effector_token_id = self.end_effector_tokenizer.encode(end_effector)
+        end_effector_tokens = [
+            EndEffectorToken(
+                token_id=end_effector_token_id, token=end_effector, index=image_token.index
+            )
+            for image_token in image_tokens
         ]
-        return tokens
+        return end_effector_tokens
 
-    def _tokenize_actions(self, actions: list[PoseAction]) -> list[ActionToken]:
-        """Tokenize pose actions."""
-        tokens = [ActionToken.from_pose_action(pose_action=action) for action in actions]
-        return tokens
+    def _create_observation_tokens(
+        self, image_tokens: list[ImageToken], end_effector_tokens: list[EndEffectorToken]
+    ) -> Iterator[ObservationToken]:
+        token_sequence = [*image_tokens, *end_effector_tokens]
+        token_sequence.sort(key=lambda token: token.index)
+
+        for _, tokens_iterator in itertools.groupby(token_sequence, key=lambda token: token.index):
+            tokens = list(tokens_iterator)
+            image_token = [token for token in tokens if isinstance(token, ImageToken)][0]
+            end_effector_token = [
+                token for token in tokens if isinstance(token, EndEffectorToken)
+            ][0]
+            yield ObservationToken.from_tokens(
+                image_token=image_token, end_effector_token=end_effector_token
+            )

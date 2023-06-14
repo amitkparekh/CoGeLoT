@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 from pytest_cases import fixture
 
-from cogelot.data.structures import View
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
     ImageTokenizer,
-    MultimodalPromptTokenizer,
     ObservationTokenizer,
+    PoseActionTokenizer,
     TextTokenizer,
 )
-from vima.policy import VIMAPolicy
 
 
 @fixture(scope="session")
@@ -22,19 +22,18 @@ def image_tokenizer() -> ImageTokenizer:
 
 
 @fixture(scope="session")
-def multimodal_prompt_tokenizer(
-    text_tokenizer: TextTokenizer, image_tokenizer: ImageTokenizer
-) -> MultimodalPromptTokenizer:
-    return MultimodalPromptTokenizer(
-        text_tokenizer=text_tokenizer,
-        image_tokenizer=image_tokenizer,
-        views=[View.front, View.top],
-    )
+def end_effector_tokenizer() -> EndEffectorTokenizer:
+    return EndEffectorTokenizer()
 
 
 @fixture(scope="session")
-def end_effector_tokenizer() -> EndEffectorTokenizer:
-    return EndEffectorTokenizer()
+def pose_action_tokenizer() -> PoseActionTokenizer:
+    return PoseActionTokenizer(
+        n_discrete_x_bins=50,
+        n_discrete_y_bins=100,
+        n_discrete_z_bins=50,
+        n_discrete_rotation_bins=50,
+    )
 
 
 @fixture(scope="session")
@@ -44,8 +43,3 @@ def observation_tokenizer(
     return ObservationTokenizer(
         image_tokenizer=image_tokenizer, end_effector_tokenizer=end_effector_tokenizer
     )
-
-
-@fixture(scope="session")
-def vima_policy() -> VIMAPolicy:
-    return VIMAPolicy(embed_dim=512, xf_n_layers=3, sattn_n_heads=8, xattn_n_heads=8)
