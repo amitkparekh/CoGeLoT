@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import orjson
 import torch
 from pydantic import BaseModel, validator
+from pydantic_numpy import NDArray
 
 from cogelot.common.io import orjson_dumps
 from cogelot.structures.common import Action, Assets, Observation, Timestep
-
-
-if TYPE_CHECKING:
-    from pydantic_numpy import NDArray
 
 
 EndEffector = Literal["suction", "spatula"]
