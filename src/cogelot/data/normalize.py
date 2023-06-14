@@ -142,7 +142,7 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
     return VIMAInstance(
         index=int(instance_dir.stem),
         task=instance_dir.parent.stem,
-        total_steps=trajectory_metadata["n_steps"],
+        total_steps=trajectory_metadata["steps"],
         prompt=trajectory_metadata["prompt"],
         prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),
         end_effector_type=trajectory_metadata["end_effector_type"],
