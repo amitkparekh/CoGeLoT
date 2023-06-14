@@ -14,7 +14,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.11"
 torch = "^2.0.1"
 lightning = "^2"
 dm-tree = "*"
@@ -36,6 +36,7 @@ jaxtyping = "*"
 beartype = "*"
 orjson = "*"
 torchdata = "*"
+pydantic-numpy = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
@@ -135,7 +136,7 @@ known-first-party = ["vima", "cogelot"]
 ban-relative-imports = "all"
 
 [tool.ruff.flake8-type-checking]
-exempt-modules = ["typing", "typing_extensions"]
+exempt-modules = ["typing", "typing_extensions", "pydantic_numpy"]
 runtime-evaluated-base-classes = [
 	"pydantic.BaseModel",
 	"pydantic.generics.GenericModel",
@@ -230,6 +231,8 @@ extend-ignore = [
 	"WPS305",
 	# Do not force base classes to inherit object
 	"WPS306",
+	# Defer to RUFF's SIM117 for this one
+	"WPS316",
 	# Do not flag implicit string concatenation since this is something Black does
 	"WPS326",
 	# Allow return statement that simply returns a prior statement
