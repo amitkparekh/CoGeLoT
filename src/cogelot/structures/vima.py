@@ -90,6 +90,16 @@ class VIMAInstance(BaseModel):
         return len(self.observations)
 
     @property
+    def actions_history(self) -> list[PoseAction]:
+        """Get the actions without the target."""
+        return self.pose_actions[:-1]
+
+    @property
+    def target_action(self) -> PoseAction:
+        """Get the target action."""
+        return self.pose_actions[-1]
+
+    @property
     def num_objects(self) -> int:
         """Get the number of objects in the instance."""
         return len(self.object_metadata)
