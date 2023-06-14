@@ -10,7 +10,7 @@ def test_normalizing_raw_data_works(fixture_storage_dir: Path) -> None:
     normalize_datapipe = datapipes.normalize_raw_data(fixture_storage_dir)
     for instance in normalize_datapipe:
         assert isinstance(instance, VIMAInstance)
-        assert instance.num_observations == instance.num_actions + 1
+        assert instance.num_observations == instance.num_actions
 
 
 def test_caching_normalized_raw_data_works(fixture_storage_dir: Path, tmp_path: Path) -> None:

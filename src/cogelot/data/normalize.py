@@ -139,6 +139,19 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         instance_dir.joinpath(TRAJECTORY_METADATA_FILE_NAME)
     )
 
+    pose_actions = parse_pose_actions(instance_dir)
+    observations = parse_observations(instance_dir)
+
+    # Each observation should be able to be paired with a pose action that was taken
+    if len(observations) > len(pose_actions):
+        observations = observations[: len(pose_actions)]
+
+    if len(observations) != len(pose_actions):
+        raise ValueError(
+            f"Number of observations ({len(observations)}) does not match number of pose actions "
+            f"({len(pose_actions)}) for instance {instance_dir}"
+        )
+
     return VIMAInstance(
         index=int(instance_dir.stem),
         task=instance_dir.parent.stem,
@@ -147,6 +160,6 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),
         end_effector_type=trajectory_metadata["end_effector_type"],
         object_metadata=parse_object_metadata(trajectory_metadata),
-        pose_actions=parse_pose_actions(instance_dir),
-        observations=parse_observations(instance_dir),
+        pose_actions=pose_actions,
+        observations=observations,
     )
