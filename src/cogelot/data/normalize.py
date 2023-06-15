@@ -44,19 +44,8 @@ def load_rgb_observation_image(
     """Load the RGB image of the observation for the given view."""
     image_path = instance_dir.joinpath(RGB_PATH_PER_VIEW[view], f"{frame_idx}.jpg")
     with Image.open(image_path) as image:
-        return np.array(image)
-
-
-def load_all_rgb_images(*, instance_dir: Path, view: Literal["front", "top"]) -> np.ndarray:
-    """Load all the RGB images from the given dir."""
-    images_dir = instance_dir.joinpath(RGB_PATH_PER_VIEW[view])
-    images: list[np.ndarray] = []
-
-    for image_path in sorted(images_dir.glob("*.jpg")):
-        with Image.open(image_path) as image:
-            images.append(np.array(image))
-
-    return np.array(images)
+        # Also move the axes to be in the same structure as the prompt assets
+        return np.ascontiguousarray(np.moveaxis(np.array(image), -1, 0))
 
 
 def load_data_from_pickle(pickled_file: Path) -> Any:

@@ -29,11 +29,16 @@ class PoseActionTokenizer:
     def tokenize(self, actions: list[PoseAction]) -> list[PoseActionToken]:
         """Tokenize actions into discrete actions."""
         # Convert to tensors
-        actions_as_tensors = (action.to_tensor() for action in actions)
+        actions_as_tensors = ((action.index, action.to_tensor()) for action in actions)
         # Make continuous
-        continuous_actions = (self.de_discretize_actions(action) for action in actions_as_tensors)
+        continuous_actions = (
+            (index, self.de_discretize_actions(action)) for index, action in actions_as_tensors
+        )
         # Convert to tokens
-        tokens = [PoseActionToken.parse_obj(action) for action in continuous_actions]
+        tokens = [
+            PoseActionToken.parse_obj({"index": idx, **action})
+            for idx, action in continuous_actions
+        ]
 
         return tokens
 

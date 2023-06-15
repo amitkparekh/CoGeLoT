@@ -114,10 +114,10 @@ class PoseActionToken(Token, arbitrary_types_allowed=True):
     pose1_rotation: RotationTensor
 
     @classmethod
-    def from_pose_action(cls, index: int, pose_actions: PoseAction) -> PoseActionToken:
+    def from_pose_action(cls, pose_actions: PoseAction) -> PoseActionToken:
         """Create an action token from a pose action."""
         return PoseActionToken(
-            index=index,
+            index=pose_actions.index,
             pose0_position=torch.from_numpy(pose_actions.pose0_position),
             pose1_position=torch.from_numpy(pose_actions.pose1_position),
             pose0_rotation=torch.from_numpy(pose_actions.pose0_rotation),

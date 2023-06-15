@@ -16,13 +16,13 @@ MIN_DIMENSION_SIZE = 2
 def pad_image_to_square(image: np.ndarray, *, padding_value: int = 0) -> np.ndarray:
     """Pad the image to ensure it is a square."""
     # If the image is already square, return it
-    if image.shape[0] == image.shape[1]:
+    if image.shape[1] == image.shape[2]:
         return image
 
-    dimension_to_pad = 0 if image.shape[0] < image.shape[1] else 1
+    dimension_to_pad = 1 if image.shape[1] < image.shape[2] else 2
 
     # Calculate the padding that needs to go before and after the image
-    difference = abs(image.shape[0] - image.shape[1])
+    difference = abs(image.shape[1] - image.shape[2])
     padding_before = difference // 2
     padding_after = difference - padding_before
 
@@ -42,12 +42,13 @@ def pad_image_to_square(image: np.ndarray, *, padding_value: int = 0) -> np.ndar
 
 def crop_to_bounding_box(image: np.ndarray, bbox: Bbox) -> np.ndarray:
     """Crop the image to the bounding box."""
-    return image[bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]  # noqa: WPS221
+    return image[:, bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]  # noqa: WPS221
 
 
 def resize_image(image: np.ndarray, *, image_size: int = DEFAULT_IMAGE_SIZE) -> np.ndarray:
     """Resize the image."""
-    image = np.asarray(image)
+    image = rearrange(image, "c h w -> h w c")
+    image = np.asarray(image).astype(np.float32)
     image = cv2.resize(
         src=image,  # pyright: ignore[reportGeneralTypeIssues]
         dsize=(image_size, image_size),

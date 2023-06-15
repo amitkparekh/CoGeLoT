@@ -37,6 +37,7 @@ beartype = "*"
 orjson = "*"
 torchdata = "*"
 pydantic-numpy = "*"
+dill = "*"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
@@ -66,7 +67,7 @@ ignore-init-module-imports = true
 target-version = "py311"
 src = ["src"]
 
-external = ["WPS", "WPS*", "WPS110", "WPS221", "WPS428"]
+external = ["WPS", "WPS*", "WPS110", "WPS221", "WPS428", "WPS601"]
 
 # Enable every possible rule
 # select = ["ALL"]

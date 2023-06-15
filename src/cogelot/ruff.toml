@@ -26,6 +26,8 @@ ignore = [
 	"G004",
 	# Disable 'flake8-errmsg' because we assume users of this project can read tracebacks
 	"EM",
+	# Allow TODO comments
+	"FIX002",
 	# We don't need to care about creating separate exception classes for every single type of error
 	"TRY003",
 	# Allow assigning variables before returning them

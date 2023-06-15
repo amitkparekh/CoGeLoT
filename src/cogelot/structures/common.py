@@ -186,6 +186,14 @@ class Assets(BaseModel):
         """Get the number of assets."""
         return len(self.__root__)
 
+    @property
+    def all_object_ids(self) -> set[int]:
+        """Get all the object IDs for all the assets."""
+        all_object_ids: set[int] = set()
+        for asset in self.values():
+            all_object_ids.update(asset.object_ids)
+        return all_object_ids
+
     def keys(self) -> KeysView[str]:
         """Get the keys of the assets."""
         return self.__root__.keys()
@@ -227,6 +235,13 @@ class Observation(Timestep, Asset):
                 for image_type in (ImageType.rgb, ImageType.segmentation)
             }
             for view in View
+        }
+
+    def to_image_per_view_per_type(self) -> dict[ImageType, dict[View, np.ndarray]]:
+        """Convert the observation to a dictionary of images per view."""
+        return {
+            image_type: {view: getattr(self, image_type.value).get_view(view) for view in View}
+            for image_type in (ImageType.rgb, ImageType.segmentation)
         }
 
 
