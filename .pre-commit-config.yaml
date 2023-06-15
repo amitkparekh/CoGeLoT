@@ -7,7 +7,7 @@ default_install_hook_types: ["commit-msg", "pre-commit"]
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: 3.2.2
+    rev: 3.3.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -37,7 +37,7 @@ repos:
         types: [python]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.23.1
+    rev: 0.23.2
     hooks:
       - id: check-github-workflows
         types: [yaml]
