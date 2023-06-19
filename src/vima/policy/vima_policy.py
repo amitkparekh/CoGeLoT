@@ -224,13 +224,20 @@ class VIMAPolicy(nn.Module):
 
         prompt_tokens = torch.stack(prompt_tokens, dim=0)
         prompt_masks = torch.stack(prompt_masks, dim=0)
-        prompt_tokens = prompt_tokens.transpose(0, 1)
-        if self.t5_prompt_encoder is not None:
-            prompt_tokens = self.t5_prompt_encoder(
-                prompt_tokens, attention_mask=prompt_masks, batch_first=False
-            )
-            prompt_tokens = self.t5_prompt_encoder_post_layer(prompt_tokens)
+        # prompt_tokens = prompt_tokens.transpose(0, 1)
+        # if self.t5_prompt_encoder is not None:
+        #     prompt_tokens = self.t5_prompt_encoder(
+        #         prompt_tokens, attention_mask=prompt_masks, batch_first=False
+        #     )
+        #     prompt_tokens = self.t5_prompt_encoder_post_layer(prompt_tokens)
         return prompt_tokens, prompt_masks
+
+    def forward_prepared_prompt(self, prompt_tokens, prompt_masks):
+        prompt_tokens = self.t5_prompt_encoder(
+            prompt_tokens, attention_mask=prompt_masks, batch_first=True
+        )
+        prompt_tokens = self.t5_prompt_encoder_post_layer(prompt_tokens)
+        return prompt_tokens
 
     def forward_obs_token(self, obs):
         objects, ee = obs["objects"], obs["ee"]
