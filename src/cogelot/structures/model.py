@@ -1,12 +1,8 @@
-from __future__ import annotations
+from typing import NamedTuple
 
-from typing import TYPE_CHECKING, NamedTuple
+import torch
 
-
-if TYPE_CHECKING:
-    import torch
-
-    from cogelot.structures.token import ImageToken, ObservationToken, PoseActionToken, TextToken
+from vima.utils import DataDict
 
 
 class PreprocessedInstance(NamedTuple):
@@ -16,16 +12,18 @@ class PreprocessedInstance(NamedTuple):
     tokenization is only ever needed once, we just do this aspect once.
     """
 
-    prompt: list[TextToken | ImageToken]
-    history: list[ObservationToken | PoseActionToken]
-    target: PoseActionToken
+    prompt: tuple[list[list[int]], torch.Tensor, DataDict]
+    observations: DataDict
+    actions: DataDict
 
 
 class ModelInstance(NamedTuple):
     """Instance directly given to the model."""
 
-    encoder_input: torch.Tensor
-    encoder_input_mask: torch.Tensor
+    embedded_prompt: torch.Tensor
+    embedded_prompt_mask: torch.Tensor
 
-    decoder_input: torch.Tensor
-    decoder_input_mask: torch.Tensor
+    embedded_observations: torch.Tensor
+    embedded_observations_mask: torch.Tensor
+
+    embedded_actions: torch.Tensor

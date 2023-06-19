@@ -1,6 +1,5 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Literal, cast
+from pathlib import Path
+from typing import Literal, cast
 
 from lightning import LightningDataModule
 from loguru import logger
@@ -11,13 +10,8 @@ from torchdata.dataloader2 import (
 from torchdata.datapipes.iter import IterDataPipe
 
 from cogelot.data import datapipes
+from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from cogelot.data.preprocess import InstancePreprocessor
 
 
 SetupStage = Literal["fit", "validate", "test", "predict"] | str
@@ -69,7 +63,9 @@ class VIMADataModule(LightningDataModule):
             self.normalized_data_dir
         )
         # Preprocess the normalized dataset (e.g. tokenize, etc.)
-        preprocessed_datapipe = loaded_normalized_datapipe.map(self.instance_preprocessor.process)
+        preprocessed_datapipe = loaded_normalized_datapipe.map(
+            self.instance_preprocessor.preprocess
+        )
         # Cache the preprocessed dataset to disk
         cached_preprocessed_datapipe = datapipes.cache_preprocessed_data(
             preprocessed_datapipe, self.preprocessed_data_dir
