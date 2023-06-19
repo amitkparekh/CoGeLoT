@@ -1,3 +1,5 @@
+from typing import Literal, TypedDict
+
 import cv2
 import numpy as np
 from einops import rearrange
@@ -12,9 +14,17 @@ from vima.utils import (
 )
 
 
+class ObsDict(TypedDict):
+    """Dictionary of observations that they expect."""
+
+    ee: np.ndarray
+    rgb: dict[Literal["top", "front"], np.ndarray]
+    segm: dict[Literal["top", "front"], np.ndarray]
+
+
 def prepare_obs(
     *,
-    obs: dict,
+    obs: ObsDict,
     object_ids: list[int],
 ) -> DataDict:
     """Prepare observations for the model.
@@ -69,7 +79,7 @@ def prepare_obs(
                     )
                     assert cropped_img.shape[1] == cropped_img.shape[2], "INTERNAL"
                 cropped_img = rearrange(cropped_img, "c h w -> h w c")
-                cropped_img = np.asarray(cropped_img)
+                cropped_img = np.asarray(cropped_img).astype(np.float32)
                 cropped_img = cv2.resize(
                     cropped_img,
                     (32, 32),
