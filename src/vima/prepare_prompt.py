@@ -21,6 +21,7 @@ def prepare_prompt(
     views: list[str],
     tokenizer: PreTrainedTokenizerBase,
     placeholders: list[str],
+    all_object_ids: set[int],
 ) -> tuple[list[list[int]], torch.Tensor, DataDict]:
     """Prepare the promot from the assets and the prompt string.
 
@@ -44,12 +45,6 @@ def prepare_prompt(
             asset_name = token[1:-1]
             assert asset_name in prompt_assets, f"missing prompt asset {asset_name}"
             asset = prompt_assets[asset_name]
-            obj_info = asset["segm"]["obj_info"]
-            placeholder_type = asset["placeholder_type"]
-            if placeholder_type == "object":
-                objects = [obj_info["obj_id"]]
-            elif placeholder_type == "scene":
-                objects = [each_info["obj_id"] for each_info in obj_info]
             obj_repr = {
                 "cropped_img": {view: [] for view in views},
                 "bbox": {view: [] for view in views},
@@ -59,7 +54,7 @@ def prepare_prompt(
                 segm_this_view = asset["segm"][view]
                 bboxes = []
                 cropped_imgs = []
-                for obj_id in objects:
+                for obj_id in all_object_ids:
                     ys, xs = np.nonzero(segm_this_view == obj_id)
                     if len(xs) < 2 or len(ys) < 2:
                         continue
@@ -84,7 +79,7 @@ def prepare_prompt(
                         )
                         assert cropped_img.shape[1] == cropped_img.shape[2], "INTERNAL"
                     cropped_img = rearrange(cropped_img, "c h w -> h w c")
-                    cropped_img = np.asarray(cropped_img)
+                    cropped_img = np.asarray(cropped_img).astype(np.float32)
                     cropped_img = cv2.resize(
                         cropped_img,
                         (32, 32),
