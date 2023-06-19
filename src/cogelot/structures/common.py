@@ -1,17 +1,11 @@
-from __future__ import annotations
-
+from collections.abc import ItemsView, KeysView, ValuesView
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated
+from typing import Self
 
 import numpy as np
 import torch
-from beartype.vale import Is
 from pydantic import BaseModel
 from pydantic_numpy import NDArray
-
-
-if TYPE_CHECKING:
-    from collections.abc import ItemsView, KeysView, ValuesView
 
 
 class View(Enum):
@@ -40,7 +34,7 @@ class Bbox(BaseModel):
     height: int
 
     @classmethod
-    def from_abs_xyxy(cls, x_min: int, x_max: int, y_min: int, y_max: int) -> Bbox:
+    def from_abs_xyxy(cls, x_min: int, x_max: int, y_min: int, y_max: int) -> Self:
         """Create from absolute XYXY coordinates."""
         return cls(
             x_min=x_min,
@@ -52,7 +46,7 @@ class Bbox(BaseModel):
         )
 
     @classmethod
-    def from_abs_xywh(cls, x_min: int, y_min: int, width: int, height: int) -> Bbox:
+    def from_abs_xywh(cls, x_min: int, y_min: int, width: int, height: int) -> Self:
         """Create from absolute XYWH coordinates."""
         return cls(
             x_min=x_min,
@@ -79,16 +73,6 @@ class Bbox(BaseModel):
         return (self.x_center, self.y_center, self.height, self.width)
 
 
-PositionTensor = Annotated[
-    torch.Tensor,
-    Is[lambda tens: tens.numel() == 3 and tens.dtype is torch.float],  # noqa: PLR2004,WPS221
-]
-RotationTensor = Annotated[
-    torch.Tensor,
-    Is[lambda tens: tens.numel() == 4 and tens.dtype is torch.float],  # noqa: PLR2004,WPS221
-]
-
-
 class Position(BaseModel):
     """Position of a pose."""
 
@@ -97,7 +81,7 @@ class Position(BaseModel):
     z: float
 
     @classmethod
-    def from_tensor(cls, tensor: PositionTensor) -> Position:
+    def from_tensor(cls, tensor: torch.Tensor) -> Self:
         """Instantiate from a tensor."""
         flattened_tensor: list[float] = tensor.flatten().tolist()
         return cls(
@@ -107,7 +91,7 @@ class Position(BaseModel):
         )
 
     @property
-    def as_tensor(self) -> PositionTensor:
+    def as_tensor(self) -> torch.Tensor:
         """Convert the position to a tensor."""
         return torch.tensor([self.x, self.y, self.z])
 
@@ -121,7 +105,7 @@ class Rotation(BaseModel):
     w: float
 
     @classmethod
-    def from_tensor(cls, tensor: RotationTensor) -> Rotation:
+    def from_tensor(cls, tensor: torch.Tensor) -> Self:
         """Instantiate from a tensor."""
         flattened_tensor: list[float] = tensor.flatten().tolist()
         return cls(
@@ -132,7 +116,7 @@ class Rotation(BaseModel):
         )
 
     @property
-    def as_tensor(self) -> RotationTensor:
+    def as_tensor(self) -> torch.Tensor:
         """Convert the rotation to a tensor."""
         return torch.tensor([self.x, self.y, self.z, self.w])
 
