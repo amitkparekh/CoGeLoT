@@ -17,7 +17,7 @@ def build_mlp(
     hidden_dim: int,
     output_dim: int,
     hidden_depth: int = None,
-    num_layers: int = None,
+    num_layers: int | None = None,
     activation: str | Callable = "relu",
     weight_init: str | Callable = "orthogonal",
     bias_init="zeros",
