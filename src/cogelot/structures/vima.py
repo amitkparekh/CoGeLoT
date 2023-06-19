@@ -1,5 +1,6 @@
 from typing import Literal, Self
 
+import numpy as np
 import orjson
 import torch
 from loguru import logger
@@ -34,6 +35,29 @@ class PoseAction(Action, arbitrary_types_allowed=True):
     def __len__(self) -> int:
         """Return the number of actions."""
         return self.pose0_position.shape[0]
+
+    @property
+    def is_continuous(self) -> bool:
+        """Determine if the actions are currently continuous or not."""
+        array_is_continuous_tracker: list[bool] = []
+
+        # For every value in the class, make sure its a numpy array, and then check if its
+        # a float or not.
+        for possible_array in self.dict().values():
+            if isinstance(possible_array, np.ndarray):
+                is_float = np.issubdtype(possible_array.dtype, np.floating)
+                cast_to_float_is_identical_to_original = bool(
+                    np.all(possible_array.astype(float) == possible_array)
+                )
+                array_is_continuous_tracker.append(
+                    cast_to_float_is_identical_to_original and is_float
+                )
+
+        # Make sure all are true
+        if sum(array_is_continuous_tracker) > 0 and not all(array_is_continuous_tracker):
+            raise ValueError("Some are continuous?")
+
+        return all(array_is_continuous_tracker)
 
     def to_tensor(self) -> dict[PoseActionType, torch.Tensor]:
         """Convert the actions to a tensor dict."""
