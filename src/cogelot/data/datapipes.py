@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from dill import pickle
+import dill as pickle
 from torchdata.datapipes.iter import FileLister, IterableWrapper, IterDataPipe
 
 from cogelot.data.normalize import (
