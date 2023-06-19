@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Literal
+from typing import Literal, Self
 
 import orjson
 import torch
@@ -72,7 +70,7 @@ class VIMAInstance(BaseModel):
         json_dumps = orjson_dumps
         arbitrary_types_allowed = True
 
-    @validator("pose_actions", "observations")
+    @validator("pose_actions", "observations", allow_reuse=True)
     @classmethod
     def sort_by_index(cls, indexed_steps: list[Timestep]) -> list[Timestep]:
         """Sort the steps by index."""
@@ -90,16 +88,6 @@ class VIMAInstance(BaseModel):
         return len(self.observations)
 
     @property
-    def actions_history(self) -> list[PoseAction]:
-        """Get the actions without the target."""
-        return self.pose_actions[:-1]
-
-    @property
-    def target_action(self) -> PoseAction:
-        """Get the target action."""
-        return self.pose_actions[-1]
-
-    @property
     def num_objects(self) -> int:
         """Get the number of objects in the instance."""
         return len(self.object_metadata)
@@ -114,7 +102,7 @@ class VIMAInstance(BaseModel):
         """Get the file name."""
         return f"{self.task}_{self.index}.json"
 
-    def decompose(self) -> list[VIMAInstance]:
+    def decompose(self) -> list[Self]:
         """Decompose the instance into multiple instances.
 
         Each instance is the whole trajectory, whereas we don't want that.
