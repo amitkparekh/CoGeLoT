@@ -2,7 +2,10 @@ from pathlib import Path
 
 from pytest_cases import fixture
 
+from cogelot.data import datapipes
 from cogelot.data.normalize import create_vima_instance_from_instance_dir
+from cogelot.data.preprocess import InstancePreprocessor
+from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
 
@@ -22,3 +25,23 @@ def data_dir(fixture_storage_dir: Path, mission_task: str, mission_id: str) -> P
 def normalized_instance(data_dir: Path) -> VIMAInstance:
     """A single normalized VIMA instance."""
     return create_vima_instance_from_instance_dir(data_dir)
+
+
+@fixture(scope="session")
+def preprocessed_instance(
+    normalized_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
+) -> PreprocessedInstance:
+    """A single preprocessed instance."""
+    return instance_preprocessor.preprocess(normalized_instance)
+
+
+@fixture(scope="module")
+def all_preprocessed_instances(
+    fixture_storage_dir: Path, instance_preprocessor: InstancePreprocessor
+) -> list[PreprocessedInstance]:
+    """All preprocessed instances."""
+    normalize_datapipe = datapipes.normalize_raw_data(fixture_storage_dir)
+    preprocessed_instances = [
+        instance_preprocessor.preprocess(instance) for instance in normalize_datapipe
+    ]
+    return preprocessed_instances
