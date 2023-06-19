@@ -1,13 +1,8 @@
-from __future__ import annotations
-
+from collections.abc import Mapping
 from types import MappingProxyType
-from typing import TYPE_CHECKING, get_args
+from typing import get_args
 
 from cogelot.structures.vima import EndEffector
-
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 UNK_TOKEN = "[UNK]"  # noqa: S105

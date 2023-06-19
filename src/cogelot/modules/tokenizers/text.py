@@ -1,15 +1,10 @@
-from __future__ import annotations
-
+from collections.abc import Iterable
 from functools import cached_property
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from tokenizers import AddedToken
 from transformers import AutoTokenizer  # pyright: ignore[reportGeneralTypeIssues]
 
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 LEFT_SYMBOL = "{"
 RIGHT_SYMBOL = "}"

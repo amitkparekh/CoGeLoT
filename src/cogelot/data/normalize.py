@@ -1,8 +1,8 @@
-from __future__ import annotations
-
 import pickle
+from collections.abc import Iterator, Mapping
+from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Literal, get_args
+from typing import Any, Literal, get_args
 
 import numpy as np
 from PIL import Image
@@ -14,11 +14,6 @@ from cogelot.structures.vima import (
     PoseActionType,
     VIMAInstance,
 )
-
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping
-    from pathlib import Path
 
 
 POSE_ACTION_KEYS: tuple[PoseActionType, ...] = get_args(PoseActionType)

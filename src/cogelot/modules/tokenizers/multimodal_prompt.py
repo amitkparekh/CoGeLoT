@@ -1,15 +1,10 @@
-from __future__ import annotations
+from typing import TypeVar, cast
 
-from typing import TYPE_CHECKING, TypeVar, cast
+from cogelot.modules.tokenizers.image import ImageTokenizer
+from cogelot.modules.tokenizers.text import TextTokenizer
+from cogelot.structures.common import Assets, ImageType, View
+from cogelot.structures.token import ImageToken, TextToken, Token, TokenSequence, TokenType
 
-from cogelot.structures.common import Assets, ImageType
-from cogelot.structures.token import ImageToken, TextToken, Token, TokenType
-
-
-if TYPE_CHECKING:
-    from cogelot.modules.tokenizers.image import ImageTokenizer
-    from cogelot.modules.tokenizers.text import TextTokenizer
-    from cogelot.structures.common import View
 
 T = TypeVar("T", bound=Token)
 
@@ -29,7 +24,7 @@ class MultimodalPromptTokenizer:
         self._views = views
         self._placeholder_names = text_tokenizer.all_placeholders
 
-    def tokenize(self, prompt: str, assets: Assets) -> list[TextToken | ImageToken]:
+    def tokenize(self, prompt: str, assets: Assets) -> TokenSequence[TextToken | ImageToken]:
         """Tokenize a single prompt into a list of tokens."""
         tokenized_text = self.tokenize_string(prompt)
         tokens_per_modality = self.split_tokens_by_token_type(tokenized_text)
@@ -39,7 +34,9 @@ class MultimodalPromptTokenizer:
         ]
 
         # Sort all the tokens by position since no two tokens have the same index
-        all_tokens = [*tokens_per_modality[TokenType.text], *image_tokens]
+        all_tokens = TokenSequence[TextToken | ImageToken](
+            [*tokens_per_modality[TokenType.text], *image_tokens]
+        )
         all_tokens.sort(key=lambda token: token.index)
         return all_tokens
 

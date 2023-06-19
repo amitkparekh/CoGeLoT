@@ -1,15 +1,8 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from cogelot.structures.token import ObservationToken, PoseActionToken
-
-
-if TYPE_CHECKING:
-    from cogelot.modules.tokenizers.observation import ObservationTokenizer
-    from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
-    from cogelot.structures.common import Observation
-    from cogelot.structures.vima import EndEffector, PoseAction
+from cogelot.modules.tokenizers.observation import ObservationTokenizer
+from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
+from cogelot.structures.common import Observation
+from cogelot.structures.token import ObservationToken, PoseActionToken, Token, TokenSequence
+from cogelot.structures.vima import EndEffector, PoseAction
 
 
 class MultimodalHistoryTokenizer:
@@ -17,7 +10,7 @@ class MultimodalHistoryTokenizer:
 
     # Define the order of tokens for each time step, which matter when sorting all the tokens in
     # the observations
-    token_order_per_timestep = {
+    token_order_per_timestep: dict[type[Token], int] = {
         ObservationToken: 0,
         PoseActionToken: 2,
     }
@@ -36,7 +29,7 @@ class MultimodalHistoryTokenizer:
         pose_actions: list[PoseAction],
         end_effector: EndEffector,
         all_object_ids: set[int],
-    ) -> list[ObservationToken | PoseActionToken]:
+    ) -> TokenSequence[ObservationToken | PoseActionToken]:
         """Tokenize the history into a single sequence."""
         observation_tokens = self.observation_tokenizer.tokenize(
             observations, end_effector, all_object_ids
@@ -48,4 +41,4 @@ class MultimodalHistoryTokenizer:
             key=lambda token: (token.index, self.token_order_per_timestep[type(token)]),
         )
 
-        return token_sequence
+        return TokenSequence[ObservationToken | PoseActionToken](token_sequence)

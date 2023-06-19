@@ -1,18 +1,11 @@
-from __future__ import annotations
-
 import itertools
-from typing import TYPE_CHECKING
+from collections.abc import Iterator
 
+from cogelot.modules.tokenizers.end_effector import EndEffectorTokenizer
+from cogelot.modules.tokenizers.image import ImageTokenizer
+from cogelot.structures.common import Observation
 from cogelot.structures.token import EndEffectorToken, ImageToken, ObservationToken
-
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-    from cogelot.modules.tokenizers.end_effector import EndEffectorTokenizer
-    from cogelot.modules.tokenizers.image import ImageTokenizer
-    from cogelot.structures.common import Observation
-    from cogelot.structures.vima import EndEffector
+from cogelot.structures.vima import EndEffector
 
 
 class ObservationTokenizer:
