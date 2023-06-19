@@ -119,24 +119,25 @@ class VIMAPolicy(nn.Module):
         prompt_token: torch.Tensor,
         prompt_token_mask: torch.Tensor,
     ):
-        L_obs, B = obs_token.shape[:2]
-        L_action = 0 if action_token is None else action_token.shape[0]
+        B, L_obs = obs_token.shape[:2]
+        L_action = 0 if action_token is None else action_token.shape[1]
         n_max_objs = obs_token.shape[-2]
         L = L_obs * n_max_objs + L_action
 
         tokens = torch.empty(L, B, self.embed_dim, dtype=torch.float32, device=obs_token.device)
         masks = torch.ones(L, B, dtype=torch.bool, device=obs_token.device)
-        obs_token = rearrange(obs_token, "L B Q E -> B L Q E")
+        # obs_token = rearrange(obs_token, "L B Q E -> B L Q E")
         obs_token = rearrange(obs_token, "B L Q E -> B (L Q) E")
         obs_token = rearrange(obs_token, "B L E -> L B E")
-        obs_mask = rearrange(obs_mask, "L B Q -> B L Q")
+        # obs_mask = rearrange(obs_mask, "L B Q -> B L Q")
         obs_mask = rearrange(obs_mask, "B L Q -> B (L Q)")
         obs_mask = rearrange(obs_mask, "B L -> L B")
         for q in range(n_max_objs):
             tokens[q :: n_max_objs + 1] = obs_token[q::n_max_objs]
             masks[q :: n_max_objs + 1] = obs_mask[q::n_max_objs]
+
         if action_token is not None:
-            tokens[n_max_objs :: n_max_objs + 1] = action_token
+            tokens[n_max_objs :: n_max_objs + 1] = action_token.transpose(0, 1)
 
         position_ids = torch.cumsum(masks, dim=0) - 1
         position_ids = position_ids.long()
@@ -144,7 +145,7 @@ class VIMAPolicy(nn.Module):
 
         tokens_out = self.xattn_gpt(
             obs_action_tokens=tokens,
-            prompt_tokens=prompt_token,
+            prompt_tokens=prompt_token.transpose(0, 1),
             prompt_mask=prompt_token_mask,
             obs_action_masks=masks.transpose(0, 1),
             obs_action_position_ids=position_ids.transpose(0, 1),
