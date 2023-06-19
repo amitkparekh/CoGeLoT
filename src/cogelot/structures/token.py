@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import Self, TypeVar
 
 import torch
 from pydantic import BaseModel, Field
 
-from cogelot.structures.common import Bbox, PositionTensor, RotationTensor, View
-
-
-if TYPE_CHECKING:
-    from cogelot.structures.vima import PoseAction
+from cogelot.structures.common import Bbox, View
+from cogelot.structures.vima import PoseAction, PoseActionType
 
 
 class TokenType(Enum):
@@ -91,9 +86,7 @@ class ObservationToken(EndEffectorToken, ImageToken):
     token_type: TokenType = TokenType.observation
 
     @classmethod
-    def from_tokens(
-        cls, *, image_token: ImageToken, end_effector_token: EndEffectorToken
-    ) -> ObservationToken:
+    def from_tokens(cls, *, image_token: ImageToken, end_effector_token: EndEffectorToken) -> Self:
         """Instantiate by merging an image token and an end effector token."""
         return cls(
             index=image_token.index,
@@ -108,18 +101,43 @@ class PoseActionToken(Token, arbitrary_types_allowed=True):
 
     token_type: TokenType = TokenType.action
 
-    pose0_position: PositionTensor
-    pose1_position: PositionTensor
-    pose0_rotation: RotationTensor
-    pose1_rotation: RotationTensor
+    pose0_position: torch.Tensor
+    pose1_position: torch.Tensor
+    pose0_rotation: torch.Tensor
+    pose1_rotation: torch.Tensor
 
     @classmethod
-    def from_pose_action(cls, pose_actions: PoseAction) -> PoseActionToken:
+    def from_pose_action(cls, pose_actions: PoseAction) -> Self:
         """Create an action token from a pose action."""
-        return PoseActionToken(
+        return cls(
             index=pose_actions.index,
             pose0_position=torch.from_numpy(pose_actions.pose0_position),
             pose1_position=torch.from_numpy(pose_actions.pose1_position),
             pose0_rotation=torch.from_numpy(pose_actions.pose0_rotation),
             pose1_rotation=torch.from_numpy(pose_actions.pose1_rotation),
         )
+
+    def to_target_pose_action(self) -> dict[PoseActionType, torch.Tensor]:
+        """Convert to a dictionary of pose action tensors."""
+        return {
+            "pose0_position": self.pose0_position,
+            "pose1_position": self.pose1_position,
+            "pose0_rotation": self.pose0_rotation,
+            "pose1_rotation": self.pose1_rotation,
+        }
+
+
+T = TypeVar("T", bound=Token)
+S = TypeVar("S", bound=Token)
+
+
+class TokenSequence(list[T]):
+    """Container for a sequence of tokens."""
+
+    def __len__(self) -> int:
+        """Get the number of tokens in the sequence."""
+        return sum(len(token) for token in self)
+
+    def get_tokens_of_class(self, token_class: type[S]) -> list[S]:
+        """Get all tokens of a given class."""
+        return [token for token in self if isinstance(token, token_class)]
