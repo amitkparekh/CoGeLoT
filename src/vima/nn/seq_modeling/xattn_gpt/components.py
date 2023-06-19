@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import math
 
 import torch
@@ -7,6 +5,8 @@ from torch import nn
 from transformers.models.openai.modeling_openai import ACT_FNS, Attention as _Attention, Conv1D
 
 
+# NOTE: This is literally identical to the `Block` from `modeling_openai.py`. The point of this is
+# to use different `Attention` and `MLP` modules.
 class Block(nn.Module):
     def __init__(self, n_positions, config, scale=False) -> None:
         super().__init__()
@@ -35,15 +35,17 @@ class Block(nn.Module):
 
 class Attention(_Attention):
     def _attn(self, q, k, v, attention_mask=None, head_mask=None, output_attentions=False):
+        # NOTE: Start of change
         q = q.to(torch.float32)
         k = k.to(torch.float32)
+        # NOTE: End of change
         w = torch.matmul(q, k)
         if self.scale:
             w = w / math.sqrt(v.size(-1))
         # w = w * self.bias + -1e9 * (1 - self.bias)  # TF implementation method: mask_attn_weights
         # XD: self.b may be larger than w, so we need to crop it
         b = self.bias[:, :, : w.size(-2), : w.size(-1)]
-        b = b.to(w.dtype)
+        b = b.to(w.dtype)  # NOTE: Changed
         w = w * b + -1e4 * (1 - b)
 
         if attention_mask is not None:
@@ -51,7 +53,7 @@ class Attention(_Attention):
             w = w + attention_mask
 
         w = nn.functional.softmax(w, dim=-1)
-        w = w.to(v.dtype)
+        w = w.to(v.dtype)  # NOTE: Changed
         w = self.attn_dropout(w)
 
         # Mask heads if we want to
