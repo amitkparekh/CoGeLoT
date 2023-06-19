@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 
 from cogelot.data import datapipes
@@ -26,10 +24,9 @@ def test_caching_normalized_raw_data_works(fixture_storage_dir: Path, tmp_path: 
 
 
 def test_preprocessing_data_works(
-    normalized_instance: VIMAInstance,
-    instance_preprocessor: InstancePreprocessor,
+    normalized_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
 ) -> None:
-    preprocessed_instance = instance_preprocessor.process(normalized_instance)
+    preprocessed_instance = instance_preprocessor.preprocess(normalized_instance)
 
     assert preprocessed_instance is not None
 
