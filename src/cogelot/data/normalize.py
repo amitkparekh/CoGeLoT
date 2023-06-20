@@ -67,17 +67,19 @@ def parse_object_metadata(trajectory_metadata: dict[str, Any]) -> list[ObjectMet
 
 
 def parse_pose_actions(instance_dir: Path) -> list[PoseAction]:
-    """Parse the pose actions."""
+    """Parse the pose actions.
+
+    For the positions, they have removed the z-axis dimension from the data, so we are doing the
+    same here.
+    """
     raw_action_data = load_data_from_pickle(instance_dir.joinpath(ACTIONS_FILE_NAME))
     num_actions = len(raw_action_data[POSE_ACTION_KEYS[0]])
-    actions_dict: dict[PoseActionType, np.ndarray] = {
-        key: raw_action_data[key] for key in POSE_ACTION_KEYS
-    }
+    actions_dict = {key: raw_action_data[key] for key in POSE_ACTION_KEYS}
     actions = [
         PoseAction(
             index=action_idx,
-            pose0_position=actions_dict["pose0_position"][action_idx],
-            pose1_position=actions_dict["pose1_position"][action_idx],
+            pose0_position=actions_dict["pose0_position"][action_idx, :-1],
+            pose1_position=actions_dict["pose1_position"][action_idx, :-1],
             pose0_rotation=actions_dict["pose0_rotation"][action_idx],
             pose1_rotation=actions_dict["pose1_rotation"][action_idx],
         )
