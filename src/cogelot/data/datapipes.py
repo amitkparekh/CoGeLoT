@@ -18,7 +18,6 @@ def normalize_raw_data(raw_data_root: Path) -> IterDataPipe[VIMAInstance]:
         IterableWrapper(list(get_all_instance_directories(raw_data_root)))
         .sharding_filter()
         .map(create_vima_instance_from_instance_dir)
-        .flatmap(VIMAInstance.decompose)
     )
 
     return cast(IterDataPipe[VIMAInstance], normalize_raw_datapipe)
