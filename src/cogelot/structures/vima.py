@@ -69,6 +69,13 @@ class PoseAction(Action, arbitrary_types_allowed=True):
         }
 
 
+class ActionBounds(BaseModel):
+    """Bounds for the actions."""
+
+    low: NDArray
+    high: NDArray
+
+
 class VIMAInstance(BaseModel):
     """A single instance of the VIMA dataset, merging all the files into a single object."""
 
@@ -81,6 +88,7 @@ class VIMAInstance(BaseModel):
 
     end_effector_type: EndEffector
 
+    action_bounds: ActionBounds
     pose_actions: list[PoseAction]
     observations: list[Observation]
 

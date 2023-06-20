@@ -9,6 +9,7 @@ from PIL import Image
 
 from cogelot.structures.common import Assets, Observation
 from cogelot.structures.vima import (
+    ActionBounds,
     ObjectMetadata,
     PoseAction,
     PoseActionType,
@@ -144,6 +145,7 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),
         end_effector_type=trajectory_metadata["end_effector_type"],
         object_metadata=parse_object_metadata(trajectory_metadata),
+        action_bounds=ActionBounds.parse_obj(trajectory_metadata["action_bounds"]),
         pose_actions=pose_actions,
         observations=observations,
     )
