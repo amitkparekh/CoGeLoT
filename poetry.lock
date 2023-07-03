@@ -691,7 +691,7 @@ files = [
 name = "dm-tree"
 version = "0.1.8"
 description = "Tree is a library for working with nested data structures."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -752,7 +752,7 @@ files = [
 name = "einops"
 version = "0.6.1"
 description = "A new flavour of deep learning operations"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1253,6 +1253,23 @@ torch = ["torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3"]
 
 [[package]]
+name = "hydra-core"
+version = "1.3.2"
+description = "A framework for elegantly configuring complex applications"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "hydra-core-1.3.2.tar.gz", hash = "sha256:8a878ed67216997c3e9d88a8e72e7b4767e81af37afb4ea3334b269a4390a824"},
+    {file = "hydra_core-1.3.2-py3-none-any.whl", hash = "sha256:fa0238a9e31df3373b35b0bfb672c34cc92718d21f81311d8996a16de1141d8b"},
+]
+
+[package.dependencies]
+antlr4-python3-runtime = ">=4.9.0,<4.10.0"
+omegaconf = ">=2.2,<2.4"
+packaging = "*"
+
+[[package]]
 name = "identify"
 version = "2.5.24"
 description = "File identification library for Python"
@@ -1392,7 +1409,7 @@ ansicon = {version = "*", markers = "platform_system == \"Windows\""}
 name = "kornia"
 version = "0.6.12"
 description = "Open Source Differentiable Computer Vision Library for PyTorch"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1971,7 +1988,7 @@ PyYAML = ">=5.1.0"
 name = "opencv-python"
 version = "4.8.0.74"
 description = "Wrapper package for OpenCV python bindings."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -2081,7 +2098,7 @@ files = [
 name = "pandas"
 version = "2.0.3"
 description = "Powerful data structures for data analysis, time series, and statistics"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -3378,7 +3395,7 @@ files = [
 name = "tzdata"
 version = "2023.3"
 description = "Provider of IANA time zone data"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2"
 files = [
@@ -3693,4 +3710,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "0fdaca0a356b5fdeba0912e5ea56121059103ac623761601f20a2068ccdf4b43"
+content-hash = "1e067ea744818e04d34a8004439b59ba78b4e04366bca8a227d2dc99fa510551"
