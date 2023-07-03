@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, cast, get_args
+from typing import TYPE_CHECKING, Any, cast, get_args
 
 import torch
 from lightning import pytorch as pl
+from transformers import get_cosine_schedule_with_warmup
 
 from cogelot.modules.preprocessors.their_instance_batcher import (
     TheirInstanceBatcher,
@@ -70,6 +71,17 @@ class VIMALightningModule(pl.LightningModule):
     def validation_step(self, batch: list[PreprocessedInstance]) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
         return self.training_step(batch)
+
+    def configure_optimizers(self) -> Any:
+        """Configure the optimizer and scheduler."""
+        optimizer = torch.optim.AdamW(self.parameters(), lr=0.0001, weight_decay=0)
+        scheduler = get_cosine_schedule_with_warmup(
+            optimizer, num_warmup_steps=7000, num_training_steps=24000
+        )
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
+        }
 
     def _compute_loss(
         self,
