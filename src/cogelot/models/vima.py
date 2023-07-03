@@ -2,8 +2,6 @@ from typing import TYPE_CHECKING, cast, get_args
 
 import torch
 from lightning import pytorch as pl
-from torchmetrics import MeanMetric
-from torchmetrics.classification import MulticlassAccuracy
 
 from cogelot.modules.preprocessors.their_instance_batcher import (
     TheirInstanceBatcher,
@@ -29,9 +27,6 @@ class VIMALightningModule(pl.LightningModule):
 
         self.vima_policy = vima_policy
         self.instance_batcher = TheirInstanceBatcher(vima_policy)
-
-        self.loss = MeanMetric()
-        self.accuracy = MulticlassAccuracy(num_classes=100, ignore_index=self.ignore_target_index)
 
     def forward(
         self, instances: list[PreprocessedInstance]
@@ -67,7 +62,14 @@ class VIMALightningModule(pl.LightningModule):
         target_actions = collate_target_action_tokens(batch)
 
         loss = self._compute_loss(predicted_actions, target_actions)
+
+        self.log("train/loss", loss, on_step=True, prog_bar=True, logger=True)
+
         return loss
+
+    def validation_step(self, batch: list[PreprocessedInstance]) -> torch.Tensor:
+        """Perform a validation step (identical to training step)."""
+        return self.training_step(batch)
 
     def _compute_loss(
         self,
@@ -98,14 +100,9 @@ class VIMALightningModule(pl.LightningModule):
                         ignore_index=self.ignore_target_index,
                     )
                 )
-                self.accuracy.update(predicted_logits.argmax(-1), target_axis.reshape(-1))
 
         # Convert loss list to tensor
         stacked_loss = torch.stack(losses)
-
-        # Update the loss tracker for the epoch
-        self.loss.update(stacked_loss)
-
         # Return the average loss for the batch
         average_loss = torch.mean(stacked_loss)
         return average_loss
