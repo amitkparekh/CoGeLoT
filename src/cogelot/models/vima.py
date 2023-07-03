@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterator
+from functools import partial
 from typing import TYPE_CHECKING, Any, cast, get_args
 
 import torch
@@ -19,7 +20,10 @@ if TYPE_CHECKING:
 
 
 OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
-LRSchedulerPartialFn = Callable[[torch.optim.Optimizer], torch.optim.lr_scheduler.LambdaLR]
+LRSchedulerPartialFn = Callable[[torch.optim.Optimizer], torch.optim.lr_scheduler.LRScheduler]
+
+_default_optimizer = torch.optim.Adam
+_default_lr_scheduler = partial(torch.optim.lr_scheduler.ConstantLR, factor=1)
 
 
 class VIMALightningModule(pl.LightningModule):
@@ -31,8 +35,8 @@ class VIMALightningModule(pl.LightningModule):
         self,
         *,
         vima_policy: VIMAPolicy,
-        optimizer_partial_fn: OptimizerPartialFn,
-        lr_scheduler_partial_fn: LRSchedulerPartialFn
+        optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
+        lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
     ) -> None:
         super().__init__()
 
