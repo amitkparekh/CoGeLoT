@@ -106,10 +106,10 @@ class VIMAPolicy(nn.Module):
         )
 
         self._views = ["front", "top"]
-        self._n_discrete_x_bins = 50
-        self._n_discrete_y_bins = 100
-        self._n_discrete_z_bins = 50
-        self._n_discrete_rot_bins = 50
+        self.n_discrete_x_bins = 50
+        self.n_discrete_y_bins = 100
+        self.n_discrete_z_bins = 50
+        self.n_discrete_rot_bins = 50
 
     def forward(
         self,
@@ -265,10 +265,10 @@ class VIMAPolicy(nn.Module):
 
     def discretize_action(self, action):
         device = action["pose0_position"].device
-        boundary_x = torch.linspace(start=0, end=1, steps=self._n_discrete_x_bins, device=device)
-        boundary_y = torch.linspace(start=0, end=1, steps=self._n_discrete_y_bins, device=device)
+        boundary_x = torch.linspace(start=0, end=1, steps=self.n_discrete_x_bins, device=device)
+        boundary_y = torch.linspace(start=0, end=1, steps=self.n_discrete_y_bins, device=device)
         boundary_rot = torch.linspace(
-            start=0, end=1, steps=self._n_discrete_rot_bins, device=device
+            start=0, end=1, steps=self.n_discrete_rot_bins, device=device
         )
 
         action["pose0_position"][..., 0] = torch.bucketize(
@@ -296,18 +296,18 @@ class VIMAPolicy(nn.Module):
     def _de_discretize_actions(self, actions):
         actions = {k: v.float() for k, v in actions.items()}
         actions["pose0_position"][..., 0] = (
-            actions["pose0_position"][..., 0] / self._n_discrete_x_bins
+            actions["pose0_position"][..., 0] / self.n_discrete_x_bins
         )
         actions["pose0_position"][..., 1] = (
-            actions["pose0_position"][..., 1] / self._n_discrete_y_bins
+            actions["pose0_position"][..., 1] / self.n_discrete_y_bins
         )
-        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
+        actions["pose0_rotation"] = actions["pose0_rotation"] / self.n_discrete_rot_bins
 
         actions["pose1_position"][..., 0] = (
-            actions["pose1_position"][..., 0] / self._n_discrete_x_bins
+            actions["pose1_position"][..., 0] / self.n_discrete_x_bins
         )
         actions["pose1_position"][..., 1] = (
-            actions["pose1_position"][..., 1] / self._n_discrete_y_bins
+            actions["pose1_position"][..., 1] / self.n_discrete_y_bins
         )
-        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
+        actions["pose1_rotation"] = actions["pose1_rotation"] / self.n_discrete_rot_bins
         return actions
