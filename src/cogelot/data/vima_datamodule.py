@@ -117,12 +117,10 @@ class VIMADataModule(LightningDataModule):
         self, datapipe: IterDataPipe[list[PreprocessedInstance]]
     ) -> DataLoader[list[PreprocessedInstance]]:
         """Create a dataloader from a datapipe."""
-        mp_rs = MultiProcessingReadingService(num_workers=self._num_workers)
-
         try:
             dl = DataLoader[list[PreprocessedInstance]](
                 datapipe,  # pyright: ignore[reportGeneralTypeIssues]
-                reading_service=mp_rs,
+                reading_service=MultiProcessingReadingService(num_workers=self._num_workers),
             )
         except (UnboundLocalError, AttributeError) as err:
             raise RuntimeError(
