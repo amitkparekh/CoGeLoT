@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import cast
+from typing import NamedTuple, cast
 
 import dill as pickle
 from torchdata.datapipes.iter import FileLister, IterableWrapper, IterDataPipe
@@ -75,3 +75,38 @@ def load_cached_preprocessed_data(
         .map(pickle.load)
     )
     return cast(IterDataPipe[PreprocessedInstance], datapipe)
+
+
+class DatasetSplit(NamedTuple):
+    """A named tuple to hold the train and validation splits."""
+
+    train: IterDataPipe[PreprocessedInstance]
+    valid: IterDataPipe[PreprocessedInstance]
+
+
+def create_validation_split(
+    preprocessed_datapipe: IterDataPipe[PreprocessedInstance],
+    num_val_instances: int,
+    seed: int = 0,
+) -> tuple[IterDataPipe[PreprocessedInstance], IterDataPipe[PreprocessedInstance]]:
+    """Split the preprocessed data into a validation set and a training set."""
+    total_num_instances = len(list(preprocessed_datapipe))
+
+    train, valid = preprocessed_datapipe.split(
+        total_length=total_num_instances,
+        weights={"train": total_num_instances - num_val_instances, "valid": num_val_instances},
+        seed=seed,
+    )
+
+    return train, valid
+
+
+def batch_datapipe(
+    preprocessed_datapipe: IterDataPipe[PreprocessedInstance], batch_size: int
+) -> IterDataPipe[list[PreprocessedInstance]]:
+    """Batch the preprocessed data."""
+    return (
+        preprocessed_datapipe.shuffle()
+        .sharding_filter()
+        .batch(batch_size=batch_size, drop_last=True)
+    )
