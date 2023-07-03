@@ -29,7 +29,6 @@ pandas = "*"
 loguru = "*"
 tqdm = "*"
 rich = "*"
-thinc = "*"
 pydantic = "*"
 opencv-python = "*"
 jaxtyping = "*"
@@ -206,7 +205,7 @@ show_error_context = true
 show_error_codes = true
 show_column_numbers = true
 
-plugins = "pydantic.mypy,numpy.typing.mypy_plugin,thinc.mypy"
+plugins = "pydantic.mypy,numpy.typing.mypy_plugin"
 
 
 [tool.flake8]
