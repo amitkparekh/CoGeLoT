@@ -48,6 +48,7 @@ def test_datamodule_works(
         preprocessed_data_dir=preprocessed_data_dir,
         num_workers=1,
         batch_size=1,
+        num_validation_instances=1,
     )
 
     datamodule.prepare_data()
