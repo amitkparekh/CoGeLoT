@@ -1,8 +1,8 @@
+from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING, Any, cast, get_args
 
 import torch
 from lightning import pytorch as pl
-from transformers import get_cosine_schedule_with_warmup
 
 from cogelot.modules.preprocessors.their_instance_batcher import (
     TheirInstanceBatcher,
@@ -18,16 +18,29 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
 
+OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
+LRSchedulerPartialFn = Callable[[torch.optim.Optimizer], torch.optim.lr_scheduler.LambdaLR]
+
+
 class VIMALightningModule(pl.LightningModule):
     """Lighting module for a VIMA model."""
 
     ignore_target_index: int = -100
 
-    def __init__(self, *, vima_policy: VIMAPolicy) -> None:
+    def __init__(
+        self,
+        *,
+        vima_policy: VIMAPolicy,
+        optimizer_partial_fn: OptimizerPartialFn,
+        lr_scheduler_partial_fn: LRSchedulerPartialFn
+    ) -> None:
         super().__init__()
 
         self.vima_policy = vima_policy
         self.instance_batcher = TheirInstanceBatcher(vima_policy)
+
+        self._optimizer_partial_fn = optimizer_partial_fn
+        self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
     def forward(
         self, instances: list[PreprocessedInstance]
@@ -81,10 +94,8 @@ class VIMALightningModule(pl.LightningModule):
 
     def configure_optimizers(self) -> Any:
         """Configure the optimizer and scheduler."""
-        optimizer = torch.optim.AdamW(self.parameters(), lr=0.0001, weight_decay=0)
-        scheduler = get_cosine_schedule_with_warmup(
-            optimizer, num_warmup_steps=7000, num_training_steps=24000
-        )
+        optimizer = self._optimizer_partial_fn(self.parameters())
+        scheduler = self._lr_scheduler_partial_fn(optimizer)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
