@@ -70,7 +70,14 @@ class VIMALightningModule(pl.LightningModule):
 
     def validation_step(self, batch: list[PreprocessedInstance]) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
-        return self.training_step(batch)
+        predicted_actions = self.forward(batch)
+        target_actions = collate_target_action_tokens(batch)
+
+        loss = self._compute_loss(predicted_actions, target_actions)
+
+        self.log("val/loss", loss, on_step=True, prog_bar=True, logger=True)
+
+        return loss
 
     def configure_optimizers(self) -> Any:
         """Configure the optimizer and scheduler."""
