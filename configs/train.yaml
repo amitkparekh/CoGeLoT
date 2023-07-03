@@ -1,0 +1,51 @@
+defaults:
+  - _self_
+
+datamodule:
+  _target_: cogelot.data.vima_datamodule.VIMADataModule
+
+  instance_preprocessor:
+    _target_: cogelot.data.preprocess.InstancePreprocessor
+
+    text_tokenizer:
+      _target_: cogelot.modules.tokenizers.TextTokenizer
+      pretrained_model: t5-base
+
+    end_effector_tokenizer:
+      _target_: cogelot.modules.tokenizers.EndEffectorTokenizer
+
+    pose_action_tokenizer:
+      _target_: cogelot.modules.tokenizers.PoseActionTokenizer
+      n_discrete_x_bins: 50
+      n_discrete_y_bins: 100
+      n_discrete_z_bins: 50
+      n_discrete_rotation_bins: 50
+
+  batch_size: 32
+  num_workers: 4
+  num_validation_instances: 5000
+  raw_data_dir: ./storage/data/raw/
+  normalized_data_dir: ./storage/data/normalized/
+  preprocessed_data_dir: ./storage/data/preprocessed/
+
+model:
+  _target_: cogelot.models.vima.VIMALightningModule
+
+  vima_policy:
+    _target_: vima.policy.vima_policy.VIMAPolicy
+    embed_dim: 768
+    xf_n_layers: 11
+    sattn_n_heads: 24
+    xattn_n_heads: 24
+
+  optimizer_partial_fn:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.0001
+    weight_decay: 0
+
+  lr_scheduler_partial_fn:
+    _target_: transformers.get_cosine_schedule_with_warmup
+    _partial_: true
+    num_warmup_steps: 7000
+    num_training_steps: 24000
