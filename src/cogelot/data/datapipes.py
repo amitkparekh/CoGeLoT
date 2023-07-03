@@ -92,7 +92,7 @@ def create_validation_split(
     """Split the preprocessed data into a validation set and a training set."""
     total_num_instances = len(list(preprocessed_datapipe))
 
-    train, valid = preprocessed_datapipe.split(
+    train, valid = preprocessed_datapipe.random_split(
         total_length=total_num_instances,
         weights={"train": total_num_instances - num_val_instances, "valid": num_val_instances},
         seed=seed,
