@@ -46,6 +46,8 @@ class VIMALightningModule(pl.LightningModule):
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
+        self.save_hyperparameters()
+
     def forward(
         self, instances: list[PreprocessedInstance]
     ) -> dict[PoseActionType, MultiCategorical]:
@@ -81,7 +83,7 @@ class VIMALightningModule(pl.LightningModule):
 
         loss = self._compute_loss(predicted_actions, target_actions)
 
-        self.log("train/loss", loss, on_step=True, prog_bar=True, logger=True)
+        self.log("train_loss", loss, on_step=True, prog_bar=True, logger=True)
 
         return loss
 
@@ -92,7 +94,7 @@ class VIMALightningModule(pl.LightningModule):
 
         loss = self._compute_loss(predicted_actions, target_actions)
 
-        self.log("val/loss", loss, on_step=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss, on_step=True, prog_bar=True, logger=True)
 
         return loss
 
