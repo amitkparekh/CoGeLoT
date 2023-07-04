@@ -10,6 +10,26 @@ from cogelot.common.io import orjson_dumps
 from cogelot.structures.common import Action, Assets, Observation, Timestep
 
 
+Task = Literal[
+    "follow_motion",
+    "follow_order",
+    "manipulate_old_neighbor",
+    "novel_adj_and_noun",
+    "novel_adj",
+    "novel_noun",
+    "pick_in_order_then_restore",
+    "rearrange_then_restore",
+    "rearrange",
+    "rotate",
+    "same_shape",
+    "same_texture",
+    "scene_understanding",
+    "sweep_without_exceeding",
+    "sweep_without_touching",
+    "sweep",
+    "twist",
+    "visual_manipulation",
+]
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
@@ -79,7 +99,7 @@ class VIMAInstance(BaseModel):
     """A single instance of the VIMA dataset, merging all the files into a single object."""
 
     index: int
-    task: str
+    task: Task
 
     total_steps: int
 

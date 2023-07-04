@@ -78,6 +78,7 @@ class InstancePreprocessor:
         actions = self.prepare_actions(instance.pose_actions)
 
         return PreprocessedInstance(
+            task=instance.task,
             prompt=prompt,
             observations=observations,
             actions=actions,
