@@ -1,4 +1,4 @@
-from typing import Any, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 import numpy as np
 import torch
@@ -46,7 +46,7 @@ class InstancePreprocessor:
     That means tokenizing them and getting them ready to just be embedded.
     """
 
-    views: set[str] = {"front", "top"}
+    views: ClassVar[set[str]] = {"front", "top"}
 
     def __init__(
         self,
