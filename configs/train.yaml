@@ -1,6 +1,8 @@
 defaults:
   - _self_
 
+experiment_root: ./storage/experiments/
+
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
 
@@ -21,7 +23,7 @@ datamodule:
       n_discrete_z_bins: 50
       n_discrete_rotation_bins: 50
 
-  batch_size: 32
+  batch_size: 16
   num_workers: 4
   num_validation_instances: 5000
   raw_data_dir: ./storage/data/raw/
@@ -49,3 +51,35 @@ model:
     _partial_: true
     num_warmup_steps: 7000
     num_training_steps: 24000
+
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+
+  max_steps: ${model.lr_scheduler_partial_fn.num_training_steps}
+
+  gradient_clip_val: 1.0
+
+  logger:
+    - _target_: lightning.pytorch.loggers.CSVLogger
+      save_dir: ./storage/logs/
+
+    - _target_: lightning.pytorch.loggers.CometLogger
+      api_key: ${oc.env:COMET_API_KEY}
+      project_name: ${oc.env:COMET_PROJECT_NAME}
+      workspace: ${oc.env:COMET_WORKSPACE}
+      offline: true
+
+  callbacks:
+    - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      dirpath: ./storage/models/
+      save_last: true
+      save_top_k: 1
+      monitor: val_loss
+      mode: min
+      filename: "{epoch:02d}-{val_loss:.2f}"
+
+    - _target_: lightning.pytorch.callbacks.RichModelSummary
+
+    - _target_: lightning.pytorch.callbacks.RichProgressBar
+
+    - _target_: lightning.pytorch.callbacks.DeviceStatsMonitor
