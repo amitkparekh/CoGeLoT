@@ -9,12 +9,6 @@ from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
 
-def _rename_preprocessed_files_in_dir(dir_path: Path) -> None:
-    existing_files = list(dir_path.iterdir())
-    for index, file_path in enumerate(existing_files, start=len(existing_files)):
-        file_path.rename(file_path.with_stem(str(index)))
-
-
 def test_normalizing_raw_data_works(fixture_storage_dir: Path) -> None:
     normalize_datapipe = datapipes.normalize_raw_data(fixture_storage_dir)
     for instance in normalize_datapipe:
