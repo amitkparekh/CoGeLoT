@@ -6,6 +6,9 @@ from cogelot.structures.vima import Task
 from vima.utils import DataDict
 
 
+Prompt = tuple[list[list[int]], torch.Tensor, DataDict]
+
+
 class PreprocessedInstance(NamedTuple):
     """Preprocessed instance for the model.
 
@@ -17,7 +20,7 @@ class PreprocessedInstance(NamedTuple):
 
     task: Task
 
-    prompt: tuple[list[list[int]], torch.Tensor, DataDict]
+    prompt: Prompt
     observations: DataDict
     actions: DataDict
 
