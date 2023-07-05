@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from functools import cached_property
+from typing import Any
 
 from pydantic import BaseModel
 from tokenizers import AddedToken
@@ -68,10 +69,11 @@ class TextTokenizer:
         self,
         pretrained_model: str,
         placeholder_tokens: Iterable[AssetPlaceholderToken] = PLACEHOLDER_TOKENS,
+        **kwargs: Any,
     ) -> None:
         """Create a tokenizer from something."""
         # Instantiate from the pretrained model
-        tokenizer = AutoTokenizer.from_pretrained(pretrained_model)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_model, **kwargs)
 
         # Add all the placeholder tokens to the tokenizer
         for token in placeholder_tokens:
