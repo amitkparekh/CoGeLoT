@@ -46,8 +46,6 @@ class VIMALightningModule(pl.LightningModule):
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
-        self.save_hyperparameters()
-
     def forward(
         self, instances: list[PreprocessedInstance]
     ) -> dict[PoseActionType, MultiCategorical]:
