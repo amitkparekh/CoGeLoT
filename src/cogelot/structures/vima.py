@@ -1,4 +1,5 @@
-from typing import Literal
+from pathlib import Path
+from typing import Literal, Self
 
 import numpy as np
 import orjson
@@ -6,7 +7,7 @@ import torch
 from pydantic import BaseModel, validator
 from pydantic_numpy import NDArray
 
-from cogelot.common.io import orjson_dumps
+from cogelot.common.io import load_json, orjson_dumps, save_json
 from cogelot.structures.common import Action, Assets, Observation, Timestep
 
 
@@ -62,7 +63,7 @@ class PoseAction(Action, arbitrary_types_allowed=True):
 
         # For every value in the class, make sure its a numpy array, and then check if its
         # a float or not.
-        for possible_array in self.dict().values():
+        for possible_array in dict(self).values():
             if isinstance(possible_array, np.ndarray):
                 is_float = np.issubdtype(possible_array.dtype, np.floating)
                 cast_to_float_is_identical_to_original = bool(
@@ -88,7 +89,7 @@ class PoseAction(Action, arbitrary_types_allowed=True):
         }
 
 
-class ActionBounds(BaseModel):
+class ActionBounds(BaseModel, arbitrary_types_allowed=True):
     """Bounds for the actions."""
 
     low: NDArray
@@ -152,3 +153,15 @@ class VIMAInstance(BaseModel):
     def file_name(self) -> str:
         """Get the file name."""
         return f"{self.task}_{self.index}.json"
+
+    def save(self, output_dir: Path, *, compress: bool = False) -> Path:
+        """Save the file to the output dir."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        instance_path = output_dir.joinpath(self.file_name)
+        output_path = save_json(self.dict(), instance_path, compress=compress)
+        return output_path
+
+    @classmethod
+    def load(cls, instance_path: Path) -> Self:
+        """Load the instance from the file."""
+        return cls.parse_obj(load_json(instance_path))

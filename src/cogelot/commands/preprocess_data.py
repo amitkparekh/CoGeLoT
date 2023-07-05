@@ -1,9 +1,8 @@
-import gzip
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
+from typing import cast
 
-import dill as pickle
 import hydra
 from lightning import seed_everything
 from loguru import logger
@@ -12,12 +11,14 @@ from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
     Progress,
+    ProgressColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
 from tqdm.rich import RateColumn
 
-from cogelot.data.normalize import get_all_instance_directories, parse_and_save_instance
+from cogelot.common.io import save_pickle
+from cogelot.data.parse import get_all_raw_instance_directories, parse_and_save_instance
 from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.structures.vima import VIMAInstance
 
@@ -29,7 +30,7 @@ progress = Progress(
     "[progress.description]{task.description}",
     BarColumn(bar_width=None),
     MofNCompleteColumn(),
-    RateColumn(unit="it"),
+    cast(ProgressColumn, RateColumn(unit="it")),
     TimeElapsedColumn(),
     TimeRemainingColumn(),
 )
@@ -40,7 +41,7 @@ def _get_raw_instance_directories(raw_data_root: Path) -> list[Path]:
     get_raw_instance_dir_task = progress.add_task("Get raw instance directories", total=None)
     raw_instance_directories = list(
         progress.track(
-            get_all_instance_directories(raw_data_root),
+            get_all_raw_instance_directories(raw_data_root),
             task_id=get_raw_instance_dir_task,
         )
     )
@@ -94,14 +95,10 @@ def _preprocess_instances(
     progress_task = progress.add_task("Preprocess instances", total=len(normalized_instances))
 
     for index, instance_path in enumerate(normalized_instances):
-        instance = VIMAInstance.parse_obj(gzip.decompress(instance_path.read_bytes()))
+        instance = VIMAInstance.load(instance_path)
         preprocessed_instance = instance_preprocessor.preprocess(instance)
-        compressed_preprocessed_instance = pickle.dumps(preprocessed_instance)
-
         preprocessed_instance_path = preprocessed_data_root.joinpath(f"{index}.pkl")
-
-        preprocessed_instance_path.write_bytes(compressed_preprocessed_instance)
-
+        save_pickle(preprocessed_instance, preprocessed_instance_path, compress=True)
         progress.advance(progress_task)
 
 

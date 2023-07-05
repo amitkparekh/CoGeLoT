@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import Any, ClassVar, Literal, cast, overload
+from typing import Any, ClassVar, Literal, cast
 
 import numpy as np
 import torch
@@ -60,19 +59,8 @@ class InstancePreprocessor:
         self.end_effector_tokenizer = end_effector_tokenizer
         self.pose_action_tokenizer = pose_action_tokenizer
 
-    @overload
-    def preprocess(self, instance: Path) -> PreprocessedInstance:
-        ...
-
-    @overload
     def preprocess(self, instance: VIMAInstance) -> PreprocessedInstance:
-        ...
-
-    def preprocess(self, instance: VIMAInstance | Path) -> PreprocessedInstance:
         """Preprocess a single instance of the dataset."""
-        if isinstance(instance, Path):
-            instance = VIMAInstance.parse_file(instance)
-
         # Prepare the prompt
         prompt = self.prepare_prompt(
             prompt=instance.prompt,

@@ -5,73 +5,11 @@ import dill as pickle
 from loguru import logger
 from torchdata.datapipes.iter import FileLister, IterableWrapper, IterDataPipe, Multiplexer
 
-from cogelot.data.normalize import (
-    create_vima_instance_from_instance_dir,
-    get_all_instance_directories,
-)
 from cogelot.structures.model import PreprocessedInstance
-from cogelot.structures.vima import Task, VIMAInstance
+from cogelot.structures.vima import Task
 
 
-def get_raw_instance_directories(raw_data_root: Path) -> IterDataPipe[Path]:
-    """Create a datapipe to get all the raw instance directories."""
-    datapipe = IterableWrapper(get_all_instance_directories(raw_data_root), deepcopy=False)
-    return cast(IterDataPipe[Path], datapipe)
-
-
-def normalize_raw_data(raw_instance_paths: list[Path]) -> IterDataPipe[VIMAInstance]:
-    """Create a datapipe to normalize all the raw data."""
-    normalize_raw_datapipe = (
-        IterableWrapper(raw_instance_paths)
-        .sharding_filter()
-        .map(create_vima_instance_from_instance_dir)
-    )
-
-    return cast(IterDataPipe[VIMAInstance], normalize_raw_datapipe)
-
-
-def cache_normalized_data(
-    normalized_data_pipe: IterDataPipe[VIMAInstance], normalized_data_root: Path
-) -> IterDataPipe[Path]:
-    """Create a datapipe to cache the normalized data to disk."""
-    return (
-        normalized_data_pipe.map(
-            lambda instance: (normalized_data_root.joinpath(instance.file_name), instance.json())
-        )
-        .save_to_disk(mode="w")
-        .map(Path)
-    )
-
-
-def load_cached_normalized_data(normalized_data_dir: Path) -> IterDataPipe[VIMAInstance]:
-    """Load normalized data from the disk."""
-    datapipe = (
-        FileLister(root=str(normalized_data_dir))
-        .sharding_filter()
-        .map(lambda path: VIMAInstance.parse_file(path))
-    )
-    return cast(IterDataPipe[VIMAInstance], datapipe)
-
-
-def cache_preprocessed_data(
-    preprocessed_datapipe: IterDataPipe[PreprocessedInstance], preprocessed_data_dir: Path
-) -> IterDataPipe[Path]:
-    """Create a datapipe to cache the preprocessed data to disk."""
-    return (
-        preprocessed_datapipe.enumerate()
-        .map(
-            lambda enumerated_tuple: (
-                (
-                    preprocessed_data_dir.joinpath(f"{enumerated_tuple[0]}.pt"),
-                    pickle.dumps(enumerated_tuple[1]),
-                )
-            )
-        )
-        .save_to_disk(mode="wb")
-    )
-
-
-def load_cached_preprocessed_data(
+def load_preprocessed_instances(
     preprocessed_data_dir: Path,
 ) -> IterDataPipe[PreprocessedInstance]:
     """Load preprocessed data from the disk."""
@@ -82,6 +20,17 @@ def load_cached_preprocessed_data(
         .map(pickle.load)
     )
     return cast(IterDataPipe[PreprocessedInstance], datapipe)
+
+
+def batch_datapipe(
+    preprocessed_datapipe: IterDataPipe[PreprocessedInstance], batch_size: int
+) -> IterDataPipe[list[PreprocessedInstance]]:
+    """Batch the preprocessed data."""
+    return (
+        preprocessed_datapipe.shuffle()
+        .sharding_filter()
+        .batch(batch_size=batch_size, drop_last=True)
+    )
 
 
 def get_all_tasks_in_dataset(
@@ -155,14 +104,3 @@ def create_validation_split(
     validation_instances = cast(IterDataPipe[PreprocessedInstance], validation_instances)
 
     return train_instances, validation_instances
-
-
-def batch_datapipe(
-    preprocessed_datapipe: IterDataPipe[PreprocessedInstance], batch_size: int
-) -> IterDataPipe[list[PreprocessedInstance]]:
-    """Batch the preprocessed data."""
-    return (
-        preprocessed_datapipe.shuffle()
-        .sharding_filter()
-        .batch(batch_size=batch_size, drop_last=True)
-    )

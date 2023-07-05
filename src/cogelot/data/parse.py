@@ -1,4 +1,3 @@
-import gzip
 import pickle
 import shutil
 from collections.abc import Iterator, Mapping
@@ -27,7 +26,7 @@ OBSERVATIONS_FILE_NAME = "obs.pkl"
 RGB_PATH_PER_VIEW: Mapping[str, str] = MappingProxyType({"top": "rgb_top", "front": "rgb_front"})
 
 
-def get_all_instance_directories(raw_data_dir: Path) -> Iterator[Path]:
+def get_all_raw_instance_directories(raw_data_dir: Path) -> Iterator[Path]:
     """Get all the instance directories."""
     return raw_data_dir.glob("*/*/")
 
@@ -92,28 +91,26 @@ def parse_observations(instance_dir: Path) -> list[Observation]:
     raw_segmentation_data = raw_obs_data["segm"]
     num_obserations = len(raw_segmentation_data["top"])
 
-    observations: list[Observation] = []
-
-    for obs_idx in range(num_obserations):
-        observations.append(
-            Observation.parse_obj(
-                {
-                    "index": obs_idx,
-                    "rgb": {
-                        "front": load_rgb_observation_image(
-                            instance_dir=instance_dir, view="front", frame_idx=obs_idx
-                        ),
-                        "top": load_rgb_observation_image(
-                            instance_dir=instance_dir, view="top", frame_idx=obs_idx
-                        ),
-                    },
-                    "segm": {
-                        "front": raw_segmentation_data["front"][obs_idx],
-                        "top": raw_segmentation_data["top"][obs_idx],
-                    },
-                }
-            )
+    observations: list[Observation] = [
+        Observation.parse_obj(
+            {
+                "index": obs_idx,
+                "rgb": {
+                    "front": load_rgb_observation_image(
+                        instance_dir=instance_dir, view="front", frame_idx=obs_idx
+                    ),
+                    "top": load_rgb_observation_image(
+                        instance_dir=instance_dir, view="top", frame_idx=obs_idx
+                    ),
+                },
+                "segm": {
+                    "front": raw_segmentation_data["front"][obs_idx],
+                    "top": raw_segmentation_data["top"][obs_idx],
+                },
+            }
         )
+        for obs_idx in range(num_obserations)
+    ]
 
     return observations
 
@@ -162,9 +159,6 @@ def parse_and_save_instance(
     Optionally, delete the raw instance dir if desired.
     """
     instance = create_vima_instance_from_instance_dir(raw_instance_dir)
-    instance_path = output_dir.joinpath(instance.file_name).with_suffix(".json.gz")
-    instance_path.parent.mkdir(parents=True, exist_ok=True)
-    instance_path.write_bytes(gzip.compress(instance.json().encode("utf-8")))
-
+    instance.save(output_dir, compress=True)
     if delete_raw_instance_dir:
         shutil.rmtree(raw_instance_dir)
