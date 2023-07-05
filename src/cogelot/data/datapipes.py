@@ -13,10 +13,16 @@ from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import Task, VIMAInstance
 
 
-def normalize_raw_data(raw_data_root: Path) -> IterDataPipe[VIMAInstance]:
+def get_raw_instance_directories(raw_data_root: Path) -> IterDataPipe[Path]:
+    """Create a datapipe to get all the raw instance directories."""
+    datapipe = IterableWrapper(get_all_instance_directories(raw_data_root), deepcopy=False)
+    return cast(IterDataPipe[Path], datapipe)
+
+
+def normalize_raw_data(raw_instance_paths: list[Path]) -> IterDataPipe[VIMAInstance]:
     """Create a datapipe to normalize all the raw data."""
     normalize_raw_datapipe = (
-        IterableWrapper(list(get_all_instance_directories(raw_data_root)))
+        IterableWrapper(raw_instance_paths)
         .sharding_filter()
         .map(create_vima_instance_from_instance_dir)
     )

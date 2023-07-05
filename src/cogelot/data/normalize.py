@@ -1,8 +1,10 @@
+import gzip
 import pickle
+import shutil
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal, get_args
+from typing import Any, Literal, cast, get_args
 
 import numpy as np
 from PIL import Image
@@ -13,6 +15,7 @@ from cogelot.structures.vima import (
     ObjectMetadata,
     PoseAction,
     PoseActionType,
+    Task,
     VIMAInstance,
 )
 
@@ -26,12 +29,7 @@ RGB_PATH_PER_VIEW: Mapping[str, str] = MappingProxyType({"top": "rgb_top", "fron
 
 def get_all_instance_directories(raw_data_dir: Path) -> Iterator[Path]:
     """Get all the instance directories."""
-    return (
-        instance_dir
-        for task_dir in raw_data_dir.iterdir()
-        for instance_dir in task_dir.iterdir()
-        if instance_dir.is_dir()
-    )
+    return raw_data_dir.glob("*/*/")
 
 
 def load_rgb_observation_image(
@@ -141,7 +139,7 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
 
     return VIMAInstance(
         index=int(instance_dir.stem),
-        task=instance_dir.parent.stem,
+        task=cast(Task, instance_dir.parent.stem),
         total_steps=trajectory_metadata["steps"],
         prompt=trajectory_metadata["prompt"],
         prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),
@@ -151,3 +149,22 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         pose_actions=pose_actions,
         observations=observations,
     )
+
+
+def parse_and_save_instance(
+    raw_instance_dir: Path, *, output_dir: Path, delete_raw_instance_dir: bool = False
+) -> None:
+    """Parse the raw instance and save it to the output dir.
+
+    Because there are repeated values within the JSON (as a result of the numpy arrays), each json
+    is also compressed with gzip to make the file size smaller.
+
+    Optionally, delete the raw instance dir if desired.
+    """
+    instance = create_vima_instance_from_instance_dir(raw_instance_dir)
+    instance_path = output_dir.joinpath(instance.file_name).with_suffix(".json.gz")
+    instance_path.parent.mkdir(parents=True, exist_ok=True)
+    instance_path.write_bytes(gzip.compress(instance.json().encode("utf-8")))
+
+    if delete_raw_instance_dir:
+        shutil.rmtree(raw_instance_dir)

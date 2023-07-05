@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+
+seed: 1000
+num_workers: 12
+
+raw_data_dir: ./storage/data/raw/vima_v6/
+normalized_data_dir: ./storage/data/normalized/
+preprocessed_data_dir: ./storage/data/preprocessed/
+
+delete_raw_instances_after_parse: False
+
+instance_preprocessor:
+  _target_: cogelot.data.preprocess.InstancePreprocessor
+
+  text_tokenizer:
+    _target_: cogelot.modules.tokenizers.TextTokenizer
+    pretrained_model: t5-base
+    model_max_length: 512
+
+  end_effector_tokenizer:
+    _target_: cogelot.modules.tokenizers.EndEffectorTokenizer
+
+  pose_action_tokenizer:
+    _target_: cogelot.modules.tokenizers.PoseActionTokenizer
+    n_discrete_x_bins: 50
+    n_discrete_y_bins: 100
+    n_discrete_z_bins: 50
+    n_discrete_rotation_bins: 50
