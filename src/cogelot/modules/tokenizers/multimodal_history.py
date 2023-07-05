@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from cogelot.modules.tokenizers.observation import ObservationTokenizer
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.structures.common import Observation
@@ -10,7 +12,7 @@ class MultimodalHistoryTokenizer:
 
     # Define the order of tokens for each time step, which matter when sorting all the tokens in
     # the observations
-    token_order_per_timestep: dict[type[Token], int] = {
+    token_order_per_timestep: ClassVar[dict[type[Token], int]] = {
         ObservationToken: 0,
         PoseActionToken: 2,
     }
@@ -36,7 +38,10 @@ class MultimodalHistoryTokenizer:
         )
         action_tokens = self.pose_action_tokenizer.tokenize(pose_actions)
 
-        token_sequence = [*observation_tokens, *action_tokens]
+        token_sequence: list[ObservationToken | PoseActionToken] = [
+            *observation_tokens,
+            *action_tokens,
+        ]
         token_sequence.sort(
             key=lambda token: (token.index, self.token_order_per_timestep[type(token)]),
         )

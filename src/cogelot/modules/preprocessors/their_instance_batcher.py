@@ -1,5 +1,5 @@
 import itertools
-from typing import get_args
+from typing import ClassVar, get_args
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -57,7 +57,7 @@ def stitch_observations_with_actions(
 class TheirInstanceBatcher(torch.nn.Module):
     """Embed and prepare batches of instances."""
 
-    views: set[str] = {"front", "top"}
+    views: ClassVar[set[str]] = {"front", "top"}
     default_mask_value: bool = False
 
     def __init__(self, vima_policy: VIMAPolicy) -> None:
