@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import cast
 
-import dill as pickle
 from loguru import logger
 from torchdata.datapipes.iter import FileLister, IterableWrapper, IterDataPipe, Multiplexer
 
+from cogelot.common.io import load_pickle
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import Task
 
@@ -13,12 +13,7 @@ def load_preprocessed_instances(
     preprocessed_data_dir: Path,
 ) -> IterDataPipe[PreprocessedInstance]:
     """Load preprocessed data from the disk."""
-    datapipe = (
-        FileLister(root=str(preprocessed_data_dir))
-        .open_files("rb")
-        .map(lambda x: x[1])
-        .map(pickle.load)
-    )
+    datapipe = FileLister(root=str(preprocessed_data_dir)).map(Path).map(load_pickle)
     return cast(IterDataPipe[PreprocessedInstance], datapipe)
 
 
