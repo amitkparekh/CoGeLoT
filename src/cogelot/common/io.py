@@ -1,5 +1,6 @@
 import gzip
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +55,8 @@ def _load(
 
 def save_json(data: Any, path: Path, *, compress: bool = False) -> Path:  # noqa: WPS110
     """Save the json to the path."""
-    return _save(orjson.dumps, data, path, compress=compress)
+    dump_fn = partial(orjson.dumps, option=ORJSON_OPTIONS)
+    return _save(dump_fn, data, path, compress=compress)
 
 
 def load_json(path: Path) -> Any:
