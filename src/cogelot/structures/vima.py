@@ -22,6 +22,7 @@ Task = Literal[
     "rearrange_then_restore",
     "rearrange",
     "rotate",
+    "same_profile",
     "same_shape",
     "same_texture",
     "scene_understanding",
