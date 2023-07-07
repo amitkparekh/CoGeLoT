@@ -12,7 +12,6 @@ from rich.progress import (
     MofNCompleteColumn,
     Progress,
     ProgressColumn,
-    TaskID,
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
@@ -51,41 +50,6 @@ def _get_raw_instance_directories(raw_data_root: Path) -> list[Path]:
     return raw_instance_directories
 
 
-def _ignore_already_normalized_instances(
-    raw_instance_directories: list[Path], normalized_data_root: Path, task_id: TaskID
-) -> list[Path]:
-    """Ignore any already normalized instances.
-
-    Normalizing takes a while and there were weird errors during, so this is a way to make sure
-    that any previous are not run again, which means it'll be faster overall.
-    """
-    logger.info("Checking if any instances have already been normalized...")
-    all_normalized_instances = list(normalized_data_root.glob("*.json*"))
-
-    if not all_normalized_instances:
-        logger.info("No normalized instances found. Continuing...")
-        return raw_instance_directories
-
-    non_normalized_raw_instance_dirs = []
-
-    logger.info(
-        f"Found {len(all_normalized_instances)} already normalized instances. Skipping these"
-        " so we don't run them again."
-    )
-    normalized_instance_names = [instance.stem for instance in all_normalized_instances]
-
-    for raw_instance_dir in raw_instance_directories:
-        task = raw_instance_dir.parent.stem
-        index = int(raw_instance_dir.with_suffix("").stem)
-        expected_normalized_name = f"{task}_{index}"
-        if expected_normalized_name in normalized_instance_names:
-            progress.advance(task_id)
-        else:
-            non_normalized_raw_instance_dirs.append(raw_instance_dir)
-
-    return non_normalized_raw_instance_dirs
-
-
 def _replace_raw_instances_with_normalized(
     raw_instance_directories: list[Path],
     *,
@@ -106,10 +70,6 @@ def _replace_raw_instances_with_normalized(
     )
 
     progress_task = progress.add_task("Parse instances", total=len(raw_instance_directories))
-
-    raw_instance_directories = _ignore_already_normalized_instances(
-        raw_instance_directories, normalized_data_root, progress_task
-    )
 
     with Pool(num_workers) as pool:
         parse_fn = partial(
