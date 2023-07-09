@@ -27,16 +27,20 @@ model:
     weight_decay: 0
 
   lr_scheduler_partial_fn:
-    _target_: transformers.get_cosine_schedule_with_warmup
+    _target_: cogelot.training.lr_scheduler.get_cosine_schedule_with_warmup_and_lr_end
     _partial_: true
     num_warmup_steps: 7000
     num_training_steps: 24000
+    # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
+    lr_end: 1e-7
 
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
   default_root_dir: ./storage/
-  max_steps: ${model.lr_scheduler_partial_fn.num_training_steps}
   gradient_clip_val: 1.0
+
+  # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1622973970
+  max_epochs: 10
 
   # logger:
   #   - _target_: lightning.pytorch.loggers.CSVLogger
