@@ -1,7 +1,7 @@
 from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import hydra
 from lightning import seed_everything
@@ -16,12 +16,16 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
+from torch.utils.data import DataLoader, Dataset
 from tqdm.rich import RateColumn
 
 from cogelot.common.io import save_pickle
 from cogelot.data.parse import get_all_raw_instance_directories, parse_and_save_instance
-from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.structures.vima import VIMAInstance
+
+
+if TYPE_CHECKING:
+    from cogelot.data.preprocess import InstancePreprocessor
 
 
 CONFIG_DIR = Path("configs/")
@@ -92,7 +96,7 @@ def _replace_raw_instances_with_normalized(
     *,
     normalized_data_root: Path,
     num_workers: int = 0,
-    imap_chunksize: int = 10,
+    imap_chunksize: int = 1,
     delete_raw_instance_directory: bool = False,
 ) -> None:
     """Replace each raw instance directory with a normalized variant.
@@ -126,20 +130,45 @@ def _replace_raw_instances_with_normalized(
             progress.advance(progress_task)
 
 
+class InstancePreprocessDataset(Dataset[None]):
+    """Preprocess instances across processes."""
+
+    def __init__(
+        self, normalized_instances: list[Path], preprocessed_data_root: Path, config: DictConfig
+    ) -> None:
+        self._preprocessed_data_root = preprocessed_data_root
+
+        self._normalized_instances = normalized_instances
+        self._instance_preprocessor: InstancePreprocessor = hydra.utils.instantiate(
+            config["instance_preprocessor"]
+        )
+
+    def __getitem__(self, index: int) -> None:
+        """Preprocess the instance and save it."""
+        instance_path = self._normalized_instances[index]
+        instance = VIMAInstance.load(instance_path)
+        preprocessed_instance = self._instance_preprocessor.preprocess(instance)
+        preprocessed_instance_path = self._preprocessed_data_root.joinpath(f"{index}.pkl")
+        save_pickle(preprocessed_instance, preprocessed_instance_path, compress=True)
+
+
 def _preprocess_instances(
     normalized_instances: list[Path],
-    instance_preprocessor: InstancePreprocessor,
     *,
     preprocessed_data_root: Path,
+    config: DictConfig,
+    num_workers: int = 0,
 ) -> None:
     """Preprocess every instance ready for modelling."""
+    preprocessed_data_root.mkdir(parents=True, exist_ok=True)
     progress_task = progress.add_task("Preprocess instances", total=len(normalized_instances))
 
-    for index, instance_path in enumerate(normalized_instances):
-        instance = VIMAInstance.load(instance_path)
-        preprocessed_instance = instance_preprocessor.preprocess(instance)
-        preprocessed_instance_path = preprocessed_data_root.joinpath(f"{index}.pkl")
-        save_pickle(preprocessed_instance, preprocessed_instance_path, compress=True)
+    dataset = InstancePreprocessDataset(normalized_instances, preprocessed_data_root, config)
+    dataloader = DataLoader(
+        dataset=dataset, num_workers=num_workers, batch_size=None, batch_sampler=None
+    )
+
+    for _ in dataloader:
         progress.advance(progress_task)
 
 
@@ -162,10 +191,6 @@ def preprocess_data(config: DictConfig) -> None:
     normalized_data_root = Path(config.get("normalized_data_dir"))
     preprocessed_data_root = Path(config.get("preprocessed_data_dir"))
 
-    instance_preprocessor: InstancePreprocessor = hydra.utils.instantiate(
-        config["instance_preprocessor"]
-    )
-
     with progress:
         # See if there are any raw directories
         raw_instance_directories = _get_raw_instance_directories(raw_data_root)
@@ -185,9 +210,7 @@ def preprocess_data(config: DictConfig) -> None:
         # Preprocess each instance for the model
         if normalized_instances:
             _preprocess_instances(
-                normalized_instances,
-                instance_preprocessor,
-                preprocessed_data_root=preprocessed_data_root,
+                normalized_instances, preprocessed_data_root=preprocessed_data_root, config=config
             )
 
 
