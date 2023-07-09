@@ -72,11 +72,12 @@ def _ignore_already_normalized_instances(
         f"Found {len(all_normalized_instances)} already normalized instances. Skipping these"
         " so we don't run them again."
     )
-    normalized_instance_names = [instance.stem for instance in all_normalized_instances]
-
+    normalized_instance_names = [
+        instance.name.split(".")[0] for instance in all_normalized_instances
+    ]
     for raw_instance_dir in raw_instance_directories:
         task = raw_instance_dir.parent.stem
-        index = int(raw_instance_dir.with_suffix("").stem)
+        index = int(raw_instance_dir.stem)
         expected_normalized_name = f"{task}_{index}"
         if expected_normalized_name in normalized_instance_names:
             progress.advance(task_id)
