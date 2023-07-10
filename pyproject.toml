@@ -34,6 +34,7 @@ torchdata = "*"
 dill = "*"
 hydra-core = "*"
 comet-ml = "*"
+typer = "^0.9.0"
 
 [tool.poetry.group.vima.dependencies]
 opencv-python = "*"
