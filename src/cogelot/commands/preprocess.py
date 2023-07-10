@@ -159,6 +159,7 @@ def normalize_raw_data(
             )
         )
         progress_bar.update(get_raw_instance_dir_task, total=len(raw_instance_directory_iterator))
+        progress_bar.update(normalize_instance_task, total=len(raw_instance_directory_iterator))
 
         parse_and_save_partial = partial(
             parse_and_save_instance,
