@@ -1,15 +1,6 @@
 defaults:
   - _self_
 
-seed: 1000
-num_workers: 12
-
-raw_data_dir: ./storage/data/raw/vima_v6/
-normalized_data_dir: ./storage/data/normalized/
-preprocessed_data_dir: ./storage/data/preprocessed/
-
-delete_raw_instances_after_parse: False
-
 instance_preprocessor:
   _target_: cogelot.data.preprocess.InstancePreprocessor
 
