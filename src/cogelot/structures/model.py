@@ -1,28 +1,38 @@
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import torch
+from pydantic import BaseModel
 
 from cogelot.structures.vima import Task
 from vima.utils import DataDict
 
 
-Prompt = tuple[list[list[int]], torch.Tensor, DataDict]
-
-
-class PreprocessedInstance(NamedTuple):
+class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
     """Preprocessed instance for the model.
 
     Given a prompt and a history, the model should be able to produce the target. Since
     tokenization is only ever needed once, we just do this aspect once.
-
-    We also include the task of the instance so we can easily create a balanced validation split.
     """
 
     task: Task
 
-    prompt: Prompt
+    raw_prompts_token_type: list[list[int]]
+    word_batch: torch.Tensor
+    image_batch: DataDict
+
     observations: DataDict
     actions: DataDict
+
+    def to_hf_dict(self) -> dict[str, Any]:
+        """To a dictionary for HF datasets."""
+        return {
+            "task": self.task,
+            "raw_prompts_token_type": self.raw_prompts_token_type,
+            "word_batch": self.word_batch,
+            "image_batch": self.image_batch.to_container(),
+            "observations": self.observations.to_container(),
+            "actions": self.actions.to_container(),
+        }
 
 
 class ModelInstance(NamedTuple):

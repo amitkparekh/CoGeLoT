@@ -1,5 +1,3 @@
-import random
-import shutil
 from collections.abc import Iterator
 from functools import partial
 from multiprocessing import Pool
@@ -8,7 +6,6 @@ from typing import TYPE_CHECKING, cast
 
 import hydra
 import typer
-from lightning import seed_everything
 from loguru import logger
 from omegaconf import DictConfig
 from pydantic import BaseSettings
@@ -17,6 +14,11 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.rich import RateColumn
 
 from cogelot.common.io import save_pickle
+from cogelot.data.hf_dataset import (
+    create_hf_dataset,
+    create_validation_split,
+    generate_preprocess_instances_for_hf_dataset,
+)
 from cogelot.data.parse import get_all_raw_instance_directories, parse_and_save_instance
 from cogelot.structures.vima import VIMAInstance
 
@@ -36,10 +38,7 @@ class PreprocessSettings(BaseSettings):
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
     normalized_data_dir: Path = storage_data_dir.joinpath("normalized/")
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
-    split_preprocessed_data_dir: Path = storage_data_dir.joinpath("split_preprocessed/")
-
-    train_instances_data_dir: Path = split_preprocessed_data_dir.joinpath("train/")
-    val_instances_data_dir: Path = split_preprocessed_data_dir.joinpath("val/")
+    hf_dataset_dir: Path = storage_data_dir.joinpath("hf/")
 
     seed: int = 1000
 
@@ -225,62 +224,44 @@ def preprocess_normalized_data(
             progress_bar.advance(preprocess_instance_task)
 
 
-@app.command(name="split")
-def create_dataset_splits(  # noqa: WPS213, RUF100
-    preprocessed_instance_root: Path = typer.Argument(
+@app.command(name="convert-to-hf")
+def convert_to_hf_dataset(
+    preprocessed_instances_root: Path = typer.Argument(
         settings.preprocessed_data_dir,
         help="Root directory for the preprocessed data",
-        envvar="PREPROCESSED_DATA_ROOT",
+        envvar="PREPROCESSED_DATA_DIR",
     ),
-    train_instances_dir: Path = typer.Argument(
-        settings.train_instances_data_dir,
-        help="Output directory for the train instances.",
-        envvar="TRAIN_INSTANCES_DIR",
+    hf_dataset_dir: Path = typer.Argument(
+        settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASETS_DIR"
     ),
-    val_instances_dir: Path = typer.Argument(
-        settings.val_instances_data_dir,
-        help="Output directory for the validation instances.",
-        envvar="VAL_INSTANCES_DIR",
+    max_num_validation_instances: int = typer.Option(
+        default=settings.max_num_validation_instances,
+        help="Maximum number of validation instances.",
+        envvar="MAX_NUM_VALIDATION_INSTANCES",
     ),
-    num_validation_instances: int = typer.Option(
-        settings.max_num_validation_instances,
-        help="Number of validation instances.",
-        envvar="NUM_VALIDATION_INSTANCES",
+    num_workers: int = typer.Option(1, help="Number of workers."),
+    seed: int = typer.Option(settings.seed, help="Seed for the random number generator."),
+    writer_batch_size: int = typer.Option(
+        default=1000, help="Writer batch size when creating the split."
     ),
-    seed: int = typer.Option(
-        settings.seed, help="Seed for the random number generator.", envvar="SEED"
+    max_shard_size: str = typer.Option(
+        default="1GB", help="Maximum shard size when saving the dataset."
     ),
 ) -> None:
-    """Split the preprocessed instances into train and validation sets."""
-    seed_everything(seed)
+    """Create a HuggingFace dataset from the preprocessed instances."""
+    gen_fn = partial(
+        generate_preprocess_instances_for_hf_dataset,
+        preprocessed_instances_root=preprocessed_instances_root,
+    )
 
-    logger.info("Getting all the tasks")
-    task_dirs = list(preprocessed_instance_root.glob("*/"))
-    all_tasks = [task_dir.stem for task_dir in task_dirs]
-
-    num_tasks_in_dataset = len(all_tasks)
-    num_val_instances_per_task = num_validation_instances // num_tasks_in_dataset
-
-    logger.info("Creating the train and validation splits")
-    train_instances_dir.mkdir(parents=True, exist_ok=True)
-    val_instances_dir.mkdir(parents=True, exist_ok=True)
-
-    for task_dir in task_dirs:
-        logger.info(f"Getting instances for {task_dir}")
-        task_instance_paths = list(task_dir.glob("*.pkl*"))
-
-        logger.info(f"Shuffling and splitting instances for {task_dir}")
-        random.shuffle(task_instance_paths)
-        validation_instances = task_instance_paths[:num_val_instances_per_task]
-        train_instances = task_instance_paths[num_val_instances_per_task:]
-
-        logger.info("Moving validation instances")
-        for val_instance_path in validation_instances:
-            shutil.move(val_instance_path, val_instances_dir)
-
-        logger.info("Moving train instances")
-        for train_instance_path in train_instances:
-            shutil.move(train_instance_path, train_instances_dir)
+    hf_dataset = create_hf_dataset(gen_fn, num_workers=num_workers)
+    split_dataset = create_validation_split(
+        hf_dataset,
+        max_num_validation_instances=max_num_validation_instances,
+        seed=seed,
+        writer_batch_size=writer_batch_size,
+    )
+    split_dataset.save_to_disk(hf_dataset_dir, max_shard_size=max_shard_size, num_proc=num_workers)
 
 
 if __name__ == "__main__":

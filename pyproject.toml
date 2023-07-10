@@ -35,6 +35,7 @@ dill = "*"
 hydra-core = "*"
 comet-ml = "*"
 typer = "^0.9.0"
+datasets = "*"
 
 [tool.poetry.group.vima.dependencies]
 opencv-python = "*"
@@ -71,7 +72,7 @@ ignore-init-module-imports = true
 target-version = "py311"
 src = ["src"]
 
-external = ["WPS", "WPS*", "WPS110", "WPS221", "WPS428", "WPS601"]
+external = ["WPS", "WPS*", "WPS110", "WPS213", "WPS221", "WPS428", "WPS601"]
 
 # Enable every possible rule
 # select = ["ALL"]

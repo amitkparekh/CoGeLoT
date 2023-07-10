@@ -79,7 +79,9 @@ class InstancePreprocessor:
 
         return PreprocessedInstance(
             task=instance.task,
-            prompt=prompt,
+            raw_prompts_token_type=prompt[0],
+            word_batch=prompt[1],
+            image_batch=prompt[2],
             observations=observations,
             actions=actions,
         )

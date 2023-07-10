@@ -1,9 +1,11 @@
 from pathlib import Path
+from typing import Any, Iterator
 
+from datasets import Dataset
 from torchdata.datapipes.iter import IterableWrapper
 
 from cogelot.common.io import load_pickle, save_pickle
-from cogelot.data.datapipes import create_validation_split
+from cogelot.data.hf_dataset import create_hf_dataset, create_validation_split
 from cogelot.data.parse import create_vima_instance_from_instance_dir
 from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
@@ -26,6 +28,16 @@ def test_saving_vima_instance_works(vima_instance: VIMAInstance, tmp_path: Path)
     assert VIMAInstance.load(output_path)
 
 
+def test_create_hf_dataset_from_vima_instance_works(fixture_storage_dir: Path) -> None:
+    def gen_from_task_dir() -> Iterator[dict[str, Any]]:
+        for instance_dir in fixture_storage_dir.glob("*/*/"):
+            instance = create_vima_instance_from_instance_dir(instance_dir)
+            yield instance.dict()
+
+    dataset = Dataset.from_generator(gen_from_task_dir)
+    assert dataset
+
+
 def test_preprocessing_data_works(
     normalized_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
 ) -> None:
@@ -41,36 +53,37 @@ def test_saving_preprocessed_instance_works(
     assert load_pickle(saved_path)
 
 
-def test_validation_set_creation_works(
+def test_create_hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> None:
+    def gen() -> Iterator[dict[str, Any]]:
+        for instance in all_preprocessed_instances:
+            yield instance.to_hf_dict()
+
+    ds = create_hf_dataset(gen)
+
+    assert ds
+
+
+def test_validation_split_creation_works(
     all_preprocessed_instances: list[PreprocessedInstance],
 ) -> None:
+    num_cycles = 5
     num_valid_instances = 2
 
     # Create a datapipe and repeat the input data multiple times
-    dataset_dp = IterableWrapper(all_preprocessed_instances).cycle(5)
+    all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
 
-    train_split, valid_split = create_validation_split(
-        dataset_dp,  # pyright: ignore[reportGeneralTypeIssues]
-        num_valid_instances,
+    def gen() -> Iterator[dict[str, Any]]:
+        for instance in all_preprocessed_instances:
+            yield instance.to_hf_dict()
+
+    dataset = create_hf_dataset(gen)
+    split_dataset = create_validation_split(
+        dataset, max_num_validation_instances=num_valid_instances
     )
 
-    assert len(list(valid_split)) == num_valid_instances
-    assert len(list(train_split)) == len(dataset_dp) - num_valid_instances
-
-
-# def test_datamodule_can_make_training_instances(vima_datamodule: VIMADataModule) -> None:
-#     vima_datamodule.prepare_data()
-#     vima_datamodule.setup(stage="fit")
-#     assert vima_datamodule.training_datapipe is not None
-
-#     batch_instances = list(vima_datamodule.training_datapipe)
-#     assert batch_instances is not None
-
-#     vima_datamodule.setup(stage="fit")
-#     dataloader = vima_datamodule.train_dataloader()
-#     assert dataloader is not None
-
-#     for batch in dataloader:
-#         assert batch is not None
-#         assert len(batch) == 1
-#         assert isinstance(batch[0], PreprocessedInstance)
+    assert split_dataset
+    assert (
+        len(list(split_dataset["train"]))
+        == (num_cycles * len(all_preprocessed_instances)) - num_valid_instances
+    )
+    assert len(list(split_dataset["test"])) == num_valid_instances

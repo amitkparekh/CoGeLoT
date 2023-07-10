@@ -72,7 +72,9 @@ class TheirInstanceBatcher(torch.nn.Module):
 
         for instance in instances:
             # Encode the prompt
-            encoded_prompt, prompt_mask = self.encode_multimodal_prompt(*instance.prompt)
+            encoded_prompt, prompt_mask = self.encode_multimodal_prompt(
+                instance.raw_prompts_token_type, instance.word_batch, instance.image_batch
+            )
             encoded_prompts.append(encoded_prompt)
             prompt_masks.append(prompt_mask)
 
