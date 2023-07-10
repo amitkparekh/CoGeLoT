@@ -159,8 +159,8 @@ class VIMAInstance(BaseModel):
 
     def save(self, output_dir: Path, *, compress: bool = False) -> Path:
         """Save the file to the output dir."""
-        output_dir.mkdir(parents=True, exist_ok=True)
         instance_path = output_dir.joinpath(self.file_name)
+        instance_path.parent.mkdir(parents=True, exist_ok=True)
         output_path = save_json(self.dict(), instance_path, compress=compress)
         return output_path
 
