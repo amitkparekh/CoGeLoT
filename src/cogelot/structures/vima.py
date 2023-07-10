@@ -155,7 +155,7 @@ class VIMAInstance(BaseModel):
     @property
     def file_name(self) -> str:
         """Get the file name."""
-        return f"{self.task}_{self.index}.json"
+        return f"{self.task}/{self.index}.json"
 
     def save(self, output_dir: Path, *, compress: bool = False) -> Path:
         """Save the file to the output dir."""
