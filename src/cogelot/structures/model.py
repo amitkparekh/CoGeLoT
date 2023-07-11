@@ -1,10 +1,10 @@
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Self
 
 import torch
 from pydantic import BaseModel
 
-from cogelot.structures.vima import Task
-from vima.utils import DataDict
+from cogelot.structures.vima import SortedTaskList, Task
+from vima.utils import DataDict, any_to_datadict
 
 
 class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
@@ -33,6 +33,18 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
             "observations": self.observations.to_container(),
             "actions": self.actions.to_container(),
         }
+
+    @classmethod
+    def from_hf_dict(cls, instance: dict[str, Any]) -> Self:
+        """From a dictionary outputted by the HF datasets."""
+        return cls(
+            task=SortedTaskList[instance["task"]],
+            raw_prompts_token_type=instance["raw_prompts_token_type"],
+            word_batch=instance["word_batch"],
+            image_batch=any_to_datadict(instance["image_batch"]),
+            observations=any_to_datadict(instance["observations"]),
+            actions=any_to_datadict(instance["actions"]),
+        )
 
 
 class ModelInstance(NamedTuple):
