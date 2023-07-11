@@ -16,6 +16,10 @@ ignore = [
 	"F722",
 	# Allow import to be uppercase, because torch.nn.functional as F
 	"N812",
+	# Allow asserts to be used because they're just convenient for type-narrowing. Type-narrowing is
+	# more important than the possibility that someone is running python with -O (in optimized mode).
+	# https://stackoverflow.com/a/68429294
+	"S101",
 	# Do not enforce annotations for self, cls, or similar
 	"ANN1",
 	# Do not block using 'Any' type since it happens
