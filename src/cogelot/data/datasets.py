@@ -5,6 +5,7 @@ from typing import Any, cast
 import datasets
 
 from cogelot.common.io import load_pickle
+from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import SortedTaskList
 
 
@@ -109,6 +110,13 @@ def create_hf_dataset(
     )
 
 
+def set_dataset_format(dataset: datasets.Dataset) -> datasets.Dataset:
+    """Set dataset format for VIMA instances."""
+    columns_with_tensors = ["word_batch", "image_batch", "observations", "actions"]
+    dataset = dataset.with_format("torch", columns=columns_with_tensors, output_all_columns=True)
+    return dataset
+
+
 def create_validation_split(
     vima_hf_dataset: datasets.Dataset,
     *,
@@ -124,3 +132,12 @@ def create_validation_split(
         seed=seed,
         writer_batch_size=writer_batch_size,
     )
+
+
+def dataloader_collate_fn(batch: list[dict[str, Any]]) -> list[PreprocessedInstance]:
+    """Collate function for dataloader.
+
+    For a list of instances from the HF dataset, we want to convert back to a
+    list[PreprocessedInstance] because we need the DataDict's for modelling.
+    """
+    return list(map(PreprocessedInstance.from_hf_dict, batch))
