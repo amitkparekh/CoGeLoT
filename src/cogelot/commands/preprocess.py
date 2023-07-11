@@ -251,7 +251,7 @@ def convert_to_hf_dataset(
     """Create a HuggingFace dataset from the preprocessed instances."""
     gen_fn = partial(
         generate_preprocess_instances_for_hf_dataset,
-        preprocessed_instances_root=preprocessed_instances_root,
+        preprocessed_instance_paths=list(preprocessed_instances_root.glob("*/*.pkl*")),
     )
 
     hf_dataset = create_hf_dataset(gen_fn, num_workers=num_workers)
