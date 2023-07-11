@@ -1,7 +1,11 @@
 from pathlib import Path
+from typing import Any, Iterator
 
+import datasets
 from pytest_cases import fixture
+from torchdata.datapipes.iter import IterableWrapper
 
+from cogelot.data.datasets import create_hf_dataset, set_dataset_format
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
@@ -50,6 +54,22 @@ def all_preprocessed_instances(
         instance_preprocessor.preprocess(instance) for instance in parsed_instances
     )
     return list(preprocessed_instances)
+
+
+@fixture(scope="session")
+def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datasets.Dataset:
+    num_cycles = 5
+
+    # Create a datapipe and repeat the input data multiple times
+    all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
+
+    def gen() -> Iterator[dict[str, Any]]:
+        generator = (instance.to_hf_dict() for instance in all_preprocessed_instances)
+        yield from generator
+
+    dataset = create_hf_dataset(gen)
+    dataset = set_dataset_format(dataset)
+    return dataset
 
 
 # @fixture(scope="session")
