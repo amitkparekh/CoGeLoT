@@ -222,6 +222,10 @@ def preprocess_normalized_data(
                 task_id=get_normalized_instance_paths_task,
             )
         )
+        progress_bar.update(
+            get_normalized_instance_paths_task, total=len(normalized_instance_paths)
+        )
+        progress_bar.update(preprocess_instance_task, total=len(normalized_instance_paths))
 
         dataset = InstancePreprocessDataset(normalized_instance_paths, output_dir, config)
         dataloader = DataLoader(
@@ -256,12 +260,12 @@ def convert_to_hf_dataset(
     ),
 ) -> None:
     """Create a HuggingFace dataset from the preprocessed instances."""
-    gen_fn = partial(
+    hf_dataset = create_hf_dataset(
         generate_preprocess_instances_for_hf_dataset,
+        num_workers=num_workers,
         preprocessed_instance_paths=list(preprocessed_instances_root.glob("*/*.pkl*")),
     )
 
-    hf_dataset = create_hf_dataset(gen_fn, num_workers=num_workers)
     hf_dataset = set_dataset_format(hf_dataset)
     split_dataset = create_validation_split(
         hf_dataset,

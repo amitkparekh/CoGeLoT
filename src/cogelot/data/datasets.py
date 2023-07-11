@@ -97,7 +97,8 @@ def generate_preprocess_instances_for_hf_dataset(
 
 
 def create_hf_dataset(
-    preprocessed_instance_generator: Callable[[], Iterator[dict[str, Any]]],
+    preprocessed_instance_generator: Callable[[list[Path]], Iterator[dict[str, Any]]],
+    preprocessed_instance_paths: list[Path],
     *,
     num_workers: int | None = None,
 ) -> datasets.Dataset:
@@ -105,7 +106,10 @@ def create_hf_dataset(
     return cast(
         datasets.Dataset,
         datasets.Dataset.from_generator(
-            preprocessed_instance_generator, features=Features, num_proc=num_workers
+            preprocessed_instance_generator,
+            features=Features,
+            num_proc=num_workers,
+            gen_kwargs={"preprocessed_instance_paths": preprocessed_instance_paths},
         ),
     )
 
