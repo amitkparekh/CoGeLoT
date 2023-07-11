@@ -91,6 +91,10 @@ class InstancePreprocessDataset(Dataset[None]):
         """Preprocess the instance and save it."""
         instance_path = self._normalized_instance_paths[index]
 
+        if not instance_path.stat().st_size:
+            logger.error(f"Skipping empty instance: {instance_path}")
+            return
+
         # Preprocess the instance
         instance = VIMAInstance.load(instance_path)
         preprocessed_instance = self._instance_preprocessor.preprocess(instance)
