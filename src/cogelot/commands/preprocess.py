@@ -18,6 +18,7 @@ from cogelot.data.datasets import (
     create_hf_dataset,
     create_validation_split,
     generate_preprocess_instances_for_hf_dataset,
+    set_dataset_format,
 )
 from cogelot.data.parse import get_all_raw_instance_directories, parse_and_save_instance
 from cogelot.structures.vima import VIMAInstance
@@ -255,6 +256,7 @@ def convert_to_hf_dataset(
     )
 
     hf_dataset = create_hf_dataset(gen_fn, num_workers=num_workers)
+    hf_dataset = set_dataset_format(hf_dataset)
     split_dataset = create_validation_split(
         hf_dataset,
         max_num_validation_instances=max_num_validation_instances,
