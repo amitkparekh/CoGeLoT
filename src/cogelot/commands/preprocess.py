@@ -200,7 +200,7 @@ def preprocess_normalized_data(
 
     logger.info("Load instance preprocessor config from file")
     with hydra.initialize_config_dir(
-        config_dir=str(instance_preprocessor_hydra_config.parent.resolve())
+        config_dir=str(instance_preprocessor_hydra_config.parent.resolve()), version_base="1.3"
     ):
         config = hydra.compose(config_name=instance_preprocessor_hydra_config.name)
 
