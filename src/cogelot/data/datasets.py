@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 import datasets
 
@@ -114,7 +114,10 @@ def create_hf_dataset(
     )
 
 
-def set_dataset_format(dataset: datasets.Dataset) -> datasets.Dataset:
+T = TypeVar("T", datasets.Dataset, datasets.DatasetDict)
+
+
+def set_dataset_format(dataset: T) -> T:
     """Set dataset format for VIMA instances."""
     columns_with_tensors = ["word_batch", "image_batch", "observations", "actions"]
     dataset = dataset.with_format("torch", columns=columns_with_tensors, output_all_columns=True)
@@ -130,12 +133,20 @@ def create_validation_split(
     stratify_column: str = "task",
 ) -> datasets.DatasetDict:
     """Create the train/validation split for the dataset."""
-    return vima_hf_dataset.train_test_split(
+    dataset_split = vima_hf_dataset.train_test_split(
         test_size=max_num_validation_instances,
         stratify_by_column=stratify_column,
         seed=seed,
         writer_batch_size=writer_batch_size,
     )
+    dataset_dict = datasets.DatasetDict(
+        {
+            "train": dataset_split["train"],
+            "valid": dataset_split["test"],
+        }
+    )
+    dataset_dict = set_dataset_format(dataset_dict)
+    return dataset_dict
 
 
 def dataloader_collate_fn(batch: list[dict[str, Any]]) -> list[PreprocessedInstance]:
