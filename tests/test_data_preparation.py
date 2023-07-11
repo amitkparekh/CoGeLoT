@@ -55,11 +55,11 @@ def test_saving_preprocessed_instance_works(
 
 
 def test_create_hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> None:
-    def gen() -> Iterator[dict[str, Any]]:
-        for instance in all_preprocessed_instances:
+    def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
+        for instance in instances:
             yield instance.to_hf_dict()
 
-    ds = create_hf_dataset(gen)
+    ds = create_hf_dataset(gen, all_preprocessed_instances)
     ds = ds.with_format("torch")
 
     assert ds
@@ -75,11 +75,11 @@ def test_validation_split_creation_works(
     # Create a datapipe and repeat the input data multiple times
     all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
 
-    def gen() -> Iterator[dict[str, Any]]:
-        for instance in all_preprocessed_instances:
+    def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
+        for instance in instances:
             yield instance.to_hf_dict()
 
-    dataset = create_hf_dataset(gen)
+    dataset = create_hf_dataset(gen, all_preprocessed_instances)
     split_dataset = create_validation_split(
         dataset, max_num_validation_instances=num_valid_instances
     )

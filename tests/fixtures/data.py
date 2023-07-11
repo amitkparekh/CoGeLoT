@@ -63,11 +63,11 @@ def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datase
     # Create a datapipe and repeat the input data multiple times
     all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
 
-    def gen() -> Iterator[dict[str, Any]]:
-        generator = (instance.to_hf_dict() for instance in all_preprocessed_instances)
+    def gen(instances) -> Iterator[dict[str, Any]]:
+        generator = (instance.to_hf_dict() for instance in instances)
         yield from generator
 
-    dataset = create_hf_dataset(gen)
+    dataset = create_hf_dataset(gen, all_preprocessed_instances)
     dataset = set_dataset_format(dataset)
     return dataset
 
