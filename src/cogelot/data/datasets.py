@@ -1,21 +1,21 @@
 from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, cast, get_args
+from typing import Any, cast
 
 import datasets
 
 from cogelot.common.io import load_pickle
-from cogelot.structures.vima import Task as TaskLiteral
+from cogelot.structures.vima import SortedTaskList
 
 
-Task = datasets.ClassLabel(names=list(get_args(TaskLiteral)))
-Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("uint16"))
+Task = datasets.ClassLabel(names=cast(list[str], SortedTaskList))
+Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
 CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
 Mask = datasets.Value("bool")
-PosePosition = datasets.Sequence(id="pose_position", length=2, feature=datasets.Value("uint32"))
-PoseRotation = datasets.Sequence(id="pose_rotation", length=4, feature=datasets.Value("uint32"))
-RawPromptsTokenType = datasets.Sequence(datasets.Value("uint8"))
-WordTokens = datasets.Sequence(id="tokens", feature=datasets.Value("uint64"))
+PosePosition = datasets.Sequence(id="pose_position", length=2, feature=datasets.Value("int32"))
+PoseRotation = datasets.Sequence(id="pose_rotation", length=4, feature=datasets.Value("int32"))
+RawPromptsTokenType = datasets.Sequence(datasets.Value("int8"))
+WordTokens = datasets.Sequence(id="tokens", feature=datasets.Value("int64"))
 
 
 def _wrap_feature_in_batch_sequence(feature: Any, *, length: int = 1) -> datasets.Sequence:
@@ -60,7 +60,7 @@ Features = datasets.Features(
             },
         },
         "observations": {
-            "ee": datasets.Sequence(datasets.Sequence(datasets.Value("uint8"))),
+            "ee": datasets.Sequence(datasets.Sequence(datasets.Value("int8"))),
             "objects": {
                 "bbox": {
                     "front": _observation_feature_wrapper(Bbox),
