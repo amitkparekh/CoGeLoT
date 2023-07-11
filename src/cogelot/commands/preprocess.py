@@ -198,7 +198,7 @@ def preprocess_normalized_data(
     progress_bar = create_progress()
 
     logger.info("Load instance preprocessor config from file")
-    with hydra.initialize(config_path=str(instance_preprocessor_hydra_config.parent)):
+    with hydra.initialize(config_path=str(instance_preprocessor_hydra_config.parent.resolve())):
         config = hydra.compose(config_name=instance_preprocessor_hydra_config.name)
 
     with progress_bar:
