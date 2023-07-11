@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.rich import RateColumn
 
 from cogelot.common.io import save_pickle
-from cogelot.data.hf_dataset import (
+from cogelot.data.datasets import (
     create_hf_dataset,
     create_validation_split,
     generate_preprocess_instances_for_hf_dataset,
