@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Self
+from typing import Literal, Self, get_args
 
 import numpy as np
 import orjson
@@ -36,6 +36,8 @@ Task = Literal[
 ]
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
+
+SortedTaskList: list[Task] = sorted(get_args(Task))
 
 
 class ObjectMetadata(BaseModel):
