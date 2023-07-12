@@ -1,16 +1,11 @@
 from pathlib import Path
 from typing import Literal
 
+import datasets
 from lightning import LightningDataModule
-from torchdata.dataloader2 import (
-    DataLoader2 as DataLoader,
-    DistributedReadingService,
-    MultiProcessingReadingService,
-    SequentialReadingService,
-)
-from torchdata.datapipes.iter import IterDataPipe
+from torch.utils.data import DataLoader
 
-from cogelot.data import datapipes
+from cogelot.data.datasets import dataloader_collate_fn
 from cogelot.structures.model import PreprocessedInstance
 
 
@@ -23,58 +18,55 @@ class VIMADataModule(LightningDataModule):
     def __init__(
         self,
         *,
-        preprocessed_data_dir: Path,
+        dataset_path: Path,
         num_workers: int,
         batch_size: int,
-        num_validation_instances: int,
     ) -> None:
         super().__init__()
-
-        self._preprocessed_data_dir = Path(preprocessed_data_dir)
-
-        self.batch_size = batch_size
+        self._dataset_path = dataset_path
         self._num_workers = num_workers
 
-        self._num_validation_instances = num_validation_instances
+        self.batch_size = batch_size
 
-        self.training_datapipe: IterDataPipe[list[PreprocessedInstance]]
-        self.validation_datapipe: IterDataPipe[list[PreprocessedInstance]]
+        self.train_dataset: datasets.Dataset
+        self.valid_dataset: datasets.Dataset
 
     def setup(self, stage: SetupStage) -> None:
         """Setup each GPU to run the data."""
         if stage == "fit":
-            all_instances = datapipes.load_preprocessed_instances(self._preprocessed_data_dir)
-            train_dataset, valid_dataset = datapipes.create_validation_split(
-                all_instances, self._num_validation_instances
-            )
+            dataset = datasets.load_from_disk(str(self._dataset_path))
+            assert isinstance(dataset, datasets.DatasetDict)
+            self.train_dataset = dataset["train"]
+            self.valid_dataset = dataset["valid"]
 
-            self.training_datapipe = datapipes.batch_datapipe(train_dataset, self.batch_size)
-            self.validation_datapipe = datapipes.batch_datapipe(valid_dataset, self.batch_size)
+        if stage == "validate":
+            dataset = datasets.load_from_disk(str(self._dataset_path))
+            assert isinstance(dataset, datasets.DatasetDict)
+            self.valid_dataset = dataset["valid"]
 
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the training set."""
-        return self._create_dataloader(self.training_datapipe)
+        return self._create_dataloader(self.train_dataset)
 
     def val_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the validation set."""
-        return self._create_dataloader(self.validation_datapipe)
+        return self._create_dataloader(self.valid_dataset)
 
     def _create_dataloader(
-        self, datapipe: IterDataPipe[list[PreprocessedInstance]]
+        self, dataset: datasets.Dataset
     ) -> DataLoader[list[PreprocessedInstance]]:
         """Create a dataloader from a datapipe."""
-        mp_rs = MultiProcessingReadingService(num_workers=self._num_workers)
-        dist_rs = DistributedReadingService()
-        rs = SequentialReadingService(dist_rs, mp_rs)
-
         try:
-            dl = DataLoader[list[PreprocessedInstance]](
-                datapipe,  # pyright: ignore[reportGeneralTypeIssues]
-                reading_service=rs,
+            dataloader = DataLoader[list[PreprocessedInstance]](
+                dataset,  # pyright: ignore[reportGeneralTypeIssues]
+                batch_size=self.batch_size,
+                num_workers=self._num_workers,
+                shuffle=True,
+                collate_fn=dataloader_collate_fn,
             )
         except (UnboundLocalError, AttributeError) as err:
             raise RuntimeError(
-                "The validation datapipe has not been initialized. Was setup() called?"
+                "The dataset has not been initialized. Was setup() called?"
             ) from err
 
-        return dl
+        return dataloader
