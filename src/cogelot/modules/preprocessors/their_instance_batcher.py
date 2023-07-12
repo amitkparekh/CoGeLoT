@@ -4,9 +4,9 @@ from typing import ClassVar, get_args
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
+from cogelot.modules.policy import Policy
 from cogelot.structures.model import ModelInstance, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
-from vima.policy import VIMAPolicy
 from vima.utils import DataDict
 
 
@@ -60,9 +60,9 @@ class TheirInstanceBatcher(torch.nn.Module):
     views: ClassVar[set[str]] = {"front", "top"}
     default_mask_value: bool = False
 
-    def __init__(self, vima_policy: VIMAPolicy) -> None:
+    def __init__(self, policy: Policy) -> None:
         super().__init__()
-        self.vima_policy = vima_policy
+        self.policy = policy
 
     def forward(self, instances: list[PreprocessedInstance]) -> ModelInstance:
         """Prepare a batch of instances."""
@@ -111,18 +111,14 @@ class TheirInstanceBatcher(torch.nn.Module):
         image_batch: DataDict,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode the multimodal prompt."""
-        encoded_prompt, prompt_mask = self.vima_policy.forward_prompt_assembly(
+        encoded_prompt, prompt_mask = self.policy.assemble_prompt(
             (raw_prompt_token_type, word_batch, image_batch)
         )
         return encoded_prompt.squeeze(0), prompt_mask.squeeze(0)
 
     def encode_observations(self, observations: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode the observations."""
-        encoded_obs, obs_mask = self.vima_policy.forward_obs_token(observations)
-
-        if not isinstance(obs_mask, torch.Tensor):
-            raise TypeError(f"Expected `obs_mask` to be a tensor, got {type(obs_mask)}")
-
+        encoded_obs, obs_mask = self.policy.embed_observation_token(observations)
         encoded_obs = encoded_obs.transpose(0, 1).squeeze(0)
         obs_mask = obs_mask.transpose(0, 1).squeeze(0)
 
@@ -130,7 +126,7 @@ class TheirInstanceBatcher(torch.nn.Module):
 
     def encode_actions(self, actions: DataDict) -> torch.Tensor:
         """Encode the actions into a tensor."""
-        encoded_actions = self.vima_policy.forward_action_token(actions)
+        encoded_actions = self.policy.embed_action_token(actions)
         # If there are 3 dims, just get it down to 2
         # if encoded_actions.ndim == 3:
         #     encoded_actions = encoded_actions.squeeze(0)

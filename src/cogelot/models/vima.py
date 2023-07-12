@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, cast, get_args
 import torch
 from lightning import pytorch as pl
 
+from cogelot.modules.policy import Policy
 from cogelot.modules.preprocessors.their_instance_batcher import (
     TheirInstanceBatcher,
     collate_target_action_tokens,
@@ -12,7 +13,6 @@ from cogelot.modules.preprocessors.their_instance_batcher import (
 from cogelot.structures.model import ModelInstance, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
 from vima.nn.action_decoder.dists import MultiCategorical
-from vima.policy import VIMAPolicy
 
 
 if TYPE_CHECKING:
@@ -34,14 +34,14 @@ class VIMALightningModule(pl.LightningModule):
     def __init__(
         self,
         *,
-        vima_policy: VIMAPolicy,
+        policy: Policy,
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
     ) -> None:
         super().__init__()
 
-        self.vima_policy = vima_policy
-        self.instance_batcher = TheirInstanceBatcher(vima_policy)
+        self.policy = policy
+        self.instance_batcher = TheirInstanceBatcher(self.policy)
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
@@ -54,23 +54,21 @@ class VIMALightningModule(pl.LightningModule):
         prepared_batch: ModelInstance = self.instance_batcher(instances)
 
         # Encode the prompt
-        encoded_prompt = self.vima_policy.forward_prepared_prompt(
+        encoded_prompt = self.policy.encode_prompt(
             prepared_batch.embedded_prompt, prepared_batch.embedded_prompt_mask
         )
 
         encoded_predicted_actions: Float[torch.Tensor, "num_obs batch dim"] = (
-            self.vima_policy.forward(
-                obs_token=prepared_batch.embedded_observations,
-                action_token=prepared_batch.embedded_actions,
-                prompt_token=encoded_prompt,
-                prompt_token_mask=prepared_batch.embedded_prompt_mask,
-                obs_mask=prepared_batch.embedded_observations_mask,
+            self.policy.predict_action_token(
+                encoded_prompt=encoded_prompt,
+                encoded_prompt_mask=prepared_batch.embedded_prompt_mask,
+                embedded_observations=prepared_batch.embedded_observations,
+                embedded_observations_mask=prepared_batch.embedded_observations_mask,
+                embedded_actions=prepared_batch.embedded_actions,
             )
         )
 
-        predicted_actions_dists: dict[PoseActionType, MultiCategorical] = (
-            self.vima_policy.forward_action_decoder(encoded_predicted_actions)
-        )
+        predicted_actions_dists = self.policy.decode_action_token(encoded_predicted_actions)
 
         return predicted_actions_dists
 
