@@ -149,7 +149,11 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
 
 
 def parse_and_save_instance(
-    raw_instance_dir: Path, *, output_dir: Path, delete_raw_instance_dir: bool = False
+    raw_instance_dir: Path,
+    *,
+    output_dir: Path,
+    delete_raw_instance_dir: bool = False,
+    replace_if_exists: bool = False,
 ) -> None:
     """Parse the raw instance and save it to the output dir.
 
@@ -159,6 +163,10 @@ def parse_and_save_instance(
     Optionally, delete the raw instance dir if desired.
     """
     instance = create_vima_instance_from_instance_dir(raw_instance_dir)
+
+    if not replace_if_exists and output_dir.joinpath(instance.file_name).exists():
+        return
+
     instance.save(output_dir, compress=True)
     if delete_raw_instance_dir:
         shutil.rmtree(raw_instance_dir)

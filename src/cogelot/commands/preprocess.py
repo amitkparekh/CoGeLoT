@@ -147,6 +147,9 @@ def normalize_raw_data(
     delete_raw_instances: bool = typer.Option(
         default=False, help="Whether to delete the raw instances after normalization."
     ),
+    replace_if_exists: bool = typer.Option(
+        default=False, help="Replace the normalized file if exists."
+    ),
 ) -> None:
     """Normalize the raw data."""
     progress_bar = create_progress()
@@ -169,6 +172,7 @@ def normalize_raw_data(
             parse_and_save_instance,
             output_dir=output_dir,
             delete_raw_instance_dir=delete_raw_instances,
+            replace_if_exists=replace_if_exists,
         )
 
         with Pool(num_workers) as pool:
