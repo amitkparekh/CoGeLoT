@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 import hydra
 import typer
+from datasets import load_from_disk
 from loguru import logger
 from omegaconf import DictConfig
 from pydantic import BaseSettings
@@ -249,7 +250,7 @@ def convert_to_hf_dataset(
         envvar="PREPROCESSED_DATA_DIR",
     ),
     hf_dataset_dir: Path = typer.Argument(
-        settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASETS_DIR"
+        settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASET_DIR"
     ),
     max_num_validation_instances: int = typer.Option(
         default=settings.max_num_validation_instances,
@@ -277,6 +278,18 @@ def convert_to_hf_dataset(
         writer_batch_size=writer_batch_size,
     )
     split_dataset.save_to_disk(hf_dataset_dir, num_proc=num_workers)
+
+
+@app.command(name="upload-to-hub")
+def upload_to_hub(
+    hf_dataset_dir: Path = typer.Argument(
+        settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASET_DIR"
+    ),
+    repo_id: str = typer.Argument(..., help="Repository ID."),
+) -> None:
+    """Upload the dataset to the HuggingFace Hub."""
+    dataset = load_from_disk(str(hf_dataset_dir.resolve()))
+    dataset.push_to_hub(repo_id)
 
 
 if __name__ == "__main__":
