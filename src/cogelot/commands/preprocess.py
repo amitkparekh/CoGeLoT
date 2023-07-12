@@ -263,7 +263,7 @@ def convert_to_hf_dataset(
     hf_dataset = create_hf_dataset(
         generate_preprocess_instances_for_hf_dataset,
         num_workers=num_workers,
-        preprocessed_instance_paths=list(preprocessed_instances_root.glob("*/*.pkl*")),
+        preprocessed_instances=list(preprocessed_instances_root.glob("*/*.pkl*")),
     )
 
     hf_dataset = set_dataset_format(hf_dataset)
