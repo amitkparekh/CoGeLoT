@@ -1,9 +1,9 @@
+import itertools
 from pathlib import Path
 from typing import Any, Iterator
 
 import datasets
 from pytest_cases import fixture
-from torchdata.datapipes.iter import IterableWrapper
 
 from cogelot.data.datasets import create_hf_dataset, set_dataset_format
 from cogelot.data.parse import (
@@ -60,8 +60,10 @@ def all_preprocessed_instances(
 def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datasets.Dataset:
     num_cycles = 5
 
-    # Create a datapipe and repeat the input data multiple times
-    all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
+    # Repeat the input data multiple times
+    all_preprocessed_instances = list(
+        itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
+    )
 
     def gen(instances) -> Iterator[dict[str, Any]]:
         generator = (instance.to_hf_dict() for instance in instances)

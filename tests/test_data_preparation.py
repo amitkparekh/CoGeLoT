@@ -1,9 +1,9 @@
+import itertools
 from pathlib import Path
 from typing import Any, Iterator
 
 from datasets import Dataset
 from torch.utils.data import DataLoader
-from torchdata.datapipes.iter import IterableWrapper
 
 from cogelot.common.io import load_pickle, save_pickle
 from cogelot.data.datasets import create_hf_dataset, create_validation_split, dataloader_collate_fn
@@ -73,7 +73,9 @@ def test_validation_split_creation_works(
     num_valid_instances = 2
 
     # Create a datapipe and repeat the input data multiple times
-    all_preprocessed_instances = IterableWrapper(all_preprocessed_instances).cycle(num_cycles)
+    all_preprocessed_instances = list(
+        itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
+    )
 
     def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
         for instance in instances:
