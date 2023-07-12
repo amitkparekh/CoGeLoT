@@ -7,6 +7,9 @@ from cogelot.structures.vima import SortedTaskList, Task
 from vima.utils import DataDict, any_to_datadict
 
 
+RawPromptTokenType = list[list[int]]
+
+
 class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
     """Preprocessed instance for the model.
 
@@ -16,7 +19,7 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
 
     task: Task
 
-    raw_prompts_token_type: list[list[int]]
+    raw_prompts_token_type: RawPromptTokenType
     word_batch: torch.Tensor
     image_batch: DataDict
 
