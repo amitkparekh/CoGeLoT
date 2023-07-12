@@ -261,9 +261,6 @@ def convert_to_hf_dataset(
     writer_batch_size: int = typer.Option(
         default=1000, help="Writer batch size when creating the split."
     ),
-    max_shard_size: str = typer.Option(
-        default="1GB", help="Maximum shard size when saving the dataset."
-    ),
 ) -> None:
     """Create a HuggingFace dataset from the preprocessed instances."""
     hf_dataset = create_hf_dataset(
@@ -279,7 +276,7 @@ def convert_to_hf_dataset(
         seed=seed,
         writer_batch_size=writer_batch_size,
     )
-    split_dataset.save_to_disk(hf_dataset_dir, max_shard_size=max_shard_size, num_proc=num_workers)
+    split_dataset.save_to_disk(hf_dataset_dir, num_proc=num_workers)
 
 
 if __name__ == "__main__":
