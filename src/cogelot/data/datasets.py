@@ -88,10 +88,10 @@ Features = datasets.Features(
 
 
 def generate_preprocess_instances_for_hf_dataset(
-    preprocessed_instance_paths: list[Path],
+    preprocessed_instances: list[Path],
 ) -> Iterator[dict[str, Any]]:
     """Generate preprocessed instances for HF dataset."""
-    for preprocessed_instance_path in preprocessed_instance_paths:
+    for preprocessed_instance_path in preprocessed_instances:
         preprocessed_instance = load_pickle(preprocessed_instance_path)
         yield preprocessed_instance.to_hf_dict()
 
