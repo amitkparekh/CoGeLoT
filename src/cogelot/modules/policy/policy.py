@@ -9,7 +9,10 @@ from vima.utils import DataDict
 
 
 class Policy(ABC, torch.nn.Module):
-    """Base class for policies."""
+    """Base class for policies.
+
+    This inherits straight from `torch.nn.Module`, so you can super to it.
+    """
 
     n_discrete_x_bins: int = 50
     n_discrete_y_bins: int = 100
