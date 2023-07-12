@@ -14,5 +14,5 @@ cd ./develop/VIMA || exit
 
 # Run the commands
 poetry run python src/cogelot/commands/preprocess.py normalize --num-workers 90
-poetry run python src/cogelot/commands/preprocess.py preprocess --num-workers 90
-poetry run python src/cogelot/commands/preprocess.py convert-to-hf --num-workers 90 --writer-batch-size 100000
+poetry run python src/cogelot/commands/preprocess.py preprocess --num-workers 30
+poetry run python src/cogelot/commands/preprocess.py convert-to-hf --num-workers 90 --writer-batch-size 10000
