@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 class PreprocessSettings(BaseSettings):
     """Settings for the preprocessing command."""
 
+    total_num_instances: int = 660103
+
     # Location of the configs relative to project root
     config_dir: Path = Path("configs/")
 
