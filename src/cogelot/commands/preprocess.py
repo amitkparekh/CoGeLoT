@@ -285,7 +285,7 @@ def upload_to_hub(
     hf_dataset_dir: Path = typer.Argument(
         settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASET_DIR"
     ),
-    repo_id: str = typer.Argument(..., help="Repository ID."),
+    repo_id: str = typer.Option(..., help="Repository ID."),
 ) -> None:
     """Upload the dataset to the HuggingFace Hub."""
     dataset = load_from_disk(str(hf_dataset_dir.resolve()))
