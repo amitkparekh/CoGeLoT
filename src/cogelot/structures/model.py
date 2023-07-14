@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, Self
+from typing import Any, Literal, NamedTuple, Self
 
 import torch
 from pydantic import BaseModel
@@ -7,7 +7,7 @@ from cogelot.structures.vima import SortedTaskList, Task
 from vima.utils import DataDict, any_to_datadict
 
 
-RawPromptTokenType = list[list[int]]
+RawPromptTokenType = list[list[Literal[0, 1]]]
 
 
 class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
