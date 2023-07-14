@@ -1,0 +1,82 @@
+_target_: ???
+
+embed_dim: 768
+
+obj_encoder:
+  _target_: vima.nn.ObjEncoder
+  transformer_emb_dim: 768
+  views: ["front", "top"]
+  vit_output_dim: 768
+  vit_resolution: 32
+  vit_patch_size: 16
+  vit_width: 768
+  vit_layers: 4
+  vit_heads: 24
+  bbox_mlp_hidden_dim: 768
+  bbox_mlp_num_layers: 2
+
+end_effector_encoder:
+  _target_: vima.nn.Embedding
+  num_embeddings: 2
+  embedding_dim: 2
+
+obs_fusion_layer:
+  _target_: torch.nn.Linear
+  in_features: 770
+  out_features: 768
+
+action_encoder:
+  _target_: vima.nn.ActionEmbedding
+  output_dim: 768
+  embed_dict:
+    pose0_position:
+      _target_: vima.nn.ContinuousActionEmbedding
+      output_dim: 256
+      input_dim: 2
+      hidden_dim: 256
+      hidden_depth: 1
+    pose1_position:
+      _target_: vima.nn.ContinuousActionEmbedding
+      output_dim: 256
+      input_dim: 2
+      hidden_dim: 256
+      hidden_depth: 1
+    pose0_rotation:
+      _target_: vima.nn.ContinuousActionEmbedding
+      output_dim: 256
+      input_dim: 4
+      hidden_dim: 256
+      hidden_depth: 1
+    pose1_rotation:
+      _target_: vima.nn.ContinuousActionEmbedding
+      output_dim: 256
+      input_dim: 4
+      hidden_dim: 256
+      hidden_depth: 1
+
+action_decoder:
+  _target_: vima.nn.ActionDecoder
+  input_dim: 768
+  action_dims:
+    pose0_position: [50, 100]
+    pose1_position: [50, 100]
+    pose0_rotation: [50, 50, 50, 50]
+    pose1_rotation: [50, 50, 50, 50]
+  hidden_dim: 512
+  hidden_depth: 2
+  activation: "relu"
+  norm_type: null
+  last_layer_gain: 0.01
+
+prompt_embedding:
+  _target_: vima.nn.WordEmbedding
+
+prompt_encoder:
+  _target_: vima.nn.T5PromptEncoder
+
+prompt_obj_post_layer:
+  _target_: vima.nn.build_mlp
+  input_dim: 768
+  hidden_dim: 768
+  output_dim: 768
+  hidden_depth: 2

@@ -1,8 +1,16 @@
-# @package _global_
-model:
-  policy:
-    _target_: cogelot.modules.policy.VIMAPolicy
-    embed_dim: 768
-    xf_n_layers: 11
-    sattn_n_heads: 24
-    xattn_n_heads: 24
+defaults:
+  - default.yaml
+  - _self_
+
+_target_: cogelot.modules.policy.VIMAPolicy
+
+xattn_gpt:
+  _target_: vima.nn.XAttnGPT
+  embed_dim: 768
+  n_layer: 11
+  n_head: 24
+  dropout: 0.1
+  xattn_n_heads: 24
+  xattn_ff_expanding: 4
+  xattn_n_positions: 256
+  use_geglu: True

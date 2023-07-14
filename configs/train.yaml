@@ -4,7 +4,7 @@ defaults:
   - _self_
   - trainer: cpu.yaml
     # The chosen policy will automatically be set to the model.policy
-  - policy: vima.yaml
+  - policy@model.policy: vima.yaml
   # If you want to debug, then just run like `python train.py debug=default`
   - debug: null
 
