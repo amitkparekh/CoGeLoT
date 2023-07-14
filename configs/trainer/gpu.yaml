@@ -1,0 +1,7 @@
+defaults:
+  - default.yaml
+
+accelerator: gpu
+devices: 1
+num_nodes: 1
+sync_batchnorm: True

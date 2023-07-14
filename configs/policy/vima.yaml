@@ -1,0 +1,8 @@
+# @package _global_
+model:
+  policy:
+    _target_: cogelot.modules.policy.VIMAPolicy
+    embed_dim: 768
+    xf_n_layers: 11
+    sattn_n_heads: 24
+    xattn_n_heads: 24

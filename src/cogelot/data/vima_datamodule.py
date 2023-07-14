@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Literal
 
 import datasets
@@ -18,12 +17,12 @@ class VIMADataModule(LightningDataModule):
     def __init__(
         self,
         *,
-        dataset_path: Path,
+        hf_datasets_repo_name: str,
         num_workers: int,
         batch_size: int,
     ) -> None:
         super().__init__()
-        self._dataset_path = dataset_path
+        self._hf_datasets_repo_name = hf_datasets_repo_name
         self._num_workers = num_workers
 
         self.batch_size = batch_size
@@ -34,13 +33,17 @@ class VIMADataModule(LightningDataModule):
     def setup(self, stage: SetupStage) -> None:
         """Setup each GPU to run the data."""
         if stage == "fit":
-            dataset = datasets.load_from_disk(str(self._dataset_path))
+            dataset = datasets.load_dataset(
+                self._hf_datasets_repo_name, num_proc=self._num_workers
+            )
             assert isinstance(dataset, datasets.DatasetDict)
             self.train_dataset = dataset["train"]
             self.valid_dataset = dataset["valid"]
 
         if stage == "validate":
-            dataset = datasets.load_from_disk(str(self._dataset_path))
+            dataset = datasets.load_dataset(
+                self._hf_datasets_repo_name, split="valid", num_proc=self._num_workers
+            )
             assert isinstance(dataset, datasets.DatasetDict)
             self.valid_dataset = dataset["valid"]
 

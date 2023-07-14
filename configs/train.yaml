@@ -1,24 +1,25 @@
+# @package _global_
+
 defaults:
   - _self_
+  - trainer: cpu.yaml
+    # The chosen policy will automatically be set to the model.policy
+  - policy: vima.yaml
+  # If you want to debug, then just run like `python train.py debug=default`
+  - debug: null
+
+task_name: "train"
 
 seed: 1000
 
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
-  preprocessed_data_dir: ./storage/data/preprocessed/
-  batch_size: 16
+  hf_datasets_repo_name: amitkparekh/vima
+  batch_size: 2
   num_workers: 4
-  num_validation_instances: 50000
 
 model:
   _target_: cogelot.models.vima.VIMALightningModule
-
-  vima_policy:
-    _target_: vima.policy.vima_policy.VIMAPolicy
-    embed_dim: 768
-    xf_n_layers: 11
-    sattn_n_heads: 24
-    xattn_n_heads: 24
 
   optimizer_partial_fn:
     _target_: torch.optim.AdamW
@@ -33,32 +34,3 @@ model:
     num_training_steps: 24000
     # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
     lr_end: 1e-7
-
-trainer:
-  _target_: lightning.pytorch.trainer.Trainer
-  default_root_dir: ./storage/
-  gradient_clip_val: 1.0
-
-  # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1622973970
-  max_epochs: 10
-
-  # logger:
-  #   - _target_: lightning.pytorch.loggers.CSVLogger
-  #     save_dir: ./storage/logs/
-  # - _target_: lightning.pytorch.loggers.CometLogger
-  #   api_key: ${oc.env:COMET_API_KEY}
-  #   project_name: ${oc.env:COMET_PROJECT_NAME}
-  #   workspace: ${oc.env:COMET_WORKSPACE}
-  #   offline: true
-
-  callbacks:
-    - _target_: lightning.pytorch.callbacks.RichModelSummary
-    - _target_: lightning.pytorch.callbacks.RichProgressBar
-    - _target_: lightning.pytorch.callbacks.DeviceStatsMonitor
-    # - _target_: lightning.pytorch.callbacks.ModelCheckpoint
-    #   dirpath: ./storage/models/
-    #   save_last: true
-    #   save_top_k: 1
-    #   monitor: val_loss
-    #   mode: min
-    #   filename: "{epoch:02d}-{val_loss:.2f}"

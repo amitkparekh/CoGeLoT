@@ -1,0 +1,44 @@
+_target_: lightning.pytorch.trainer.Trainer
+
+default_root_dir: ./storage/
+
+gradient_clip_val: 1.0
+
+min_epochs: 1 # prevents early stopping
+
+# https://github.com/vimalabs/VIMA/issues/16#issuecomment-1622973970
+max_epochs: 10
+
+accelerator: cpu
+devices: 1
+
+# mixed precision for extra speed-up
+# precision: 16
+
+# perform a validation loop every N training epochs
+check_val_every_n_epoch: 1
+
+# set True to to ensure deterministic results
+# makes training slower but gives more reproducibility than just setting seeds
+deterministic: False
+
+# logger:
+#   - _target_: lightning.pytorch.loggers.CSVLogger
+#     save_dir: ./storage/logs/
+# - _target_: lightning.pytorch.loggers.CometLogger
+#   api_key: ${oc.env:COMET_API_KEY}
+#   project_name: ${oc.env:COMET_PROJECT_NAME}
+#   workspace: ${oc.env:COMET_WORKSPACE}
+#   offline: true
+
+callbacks:
+  - _target_: lightning.pytorch.callbacks.RichModelSummary
+  - _target_: lightning.pytorch.callbacks.RichProgressBar
+  - _target_: lightning.pytorch.callbacks.DeviceStatsMonitor
+  # - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  #   dirpath: ./storage/models/
+  #   save_last: true
+  #   save_top_k: 1
+  #   monitor: val_loss
+  #   mode: min
+  #   filename: "{epoch:02d}-{val_loss:.2f}"
