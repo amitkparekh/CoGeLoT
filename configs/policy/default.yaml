@@ -1,4 +1,4 @@
-_target_: ???
+_target_: cogelot.modules.policy.Policy
 
 embed_dim: 768
 
@@ -80,3 +80,5 @@ prompt_obj_post_layer:
   hidden_dim: 768
   output_dim: 768
   hidden_depth: 2
+
+transformer_decoder: ???

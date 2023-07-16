@@ -8,10 +8,10 @@ transformer_decoder:
   n_layers: 11
 
   transformer_decoder_layer:
-    _target_: cogelot.nn.decoders.decoder_layers.GeGLUTransformerDecoderLayer
+    _target_: cogelot.nn.decoders.decoder_layers.VIMATransformerDecoderLayer
     embed_dim: 768
-    nhead: 24
-    dim_feedforward: 3072 # 4 * embed_dim
-    dropout: 0.1
+    sattn_n_heads: 24
+    xattn_n_heads: 24
+    dim_feedforward_multiplier: 4
     batch_first: True
     norm_first: True

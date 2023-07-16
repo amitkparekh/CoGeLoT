@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
 from typing import ClassVar, cast
 
 import torch
+from einops import rearrange
 
+from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
@@ -24,11 +25,8 @@ def get_max_length_of_prompt(raw_prompts_token_type: RawPromptTokenType, max_num
     return max_length
 
 
-class Policy(ABC, torch.nn.Module):
-    """Base class for policies.
-
-    This inherits straight from `torch.nn.Module`, so you can super to it.
-    """
+class Policy(torch.nn.Module):
+    """Common policy with compositional modules for easy swapping."""
 
     n_discrete_x_bins: int = 50
     n_discrete_y_bins: int = 100
@@ -48,6 +46,7 @@ class Policy(ABC, torch.nn.Module):
         prompt_embedding: vnn.WordEmbedding,
         prompt_encoder: vnn.T5PromptEncoder,
         prompt_obj_post_layer: torch.nn.Sequential,
+        transformer_decoder: TransformerDecoderProtocol,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -65,8 +64,8 @@ class Policy(ABC, torch.nn.Module):
             else torch.nn.Linear(self._prompt_encoder.output_dim, embed_dim, bias=False)
         )
         self._prompt_obj_post_layer = prompt_obj_post_layer
+        self._transformer_decoder = transformer_decoder
 
-    @abstractmethod
     def predict_action_token(
         self,
         encoded_prompt: torch.Tensor,
@@ -76,7 +75,19 @@ class Policy(ABC, torch.nn.Module):
         embedded_actions: torch.Tensor | None,
     ) -> torch.Tensor:
         """Predict the action token."""
-        ...  # noqa: WPS428
+        max_objects = self._get_max_num_objects(embedded_observations=embedded_observations)
+        tokens, masks = self._stitch_observations_with_actions(
+            embedded_observations, embedded_observations_mask, embedded_actions
+        )
+
+        transformer_output = self._transformer_decoder.forward(
+            tgt=tokens,
+            tgt_key_padding_mask=masks,
+            memory=encoded_prompt,
+            memory_key_padding_mask=encoded_prompt_mask,
+        )
+        predicted_action_tokens = transformer_output[max_objects - 1 :: max_objects + 1]
+        return predicted_action_tokens
 
     def assemble_prompt(  # noqa: WPS210
         self, prompts: tuple[RawPromptTokenType, torch.Tensor, DataDict]
@@ -267,3 +278,56 @@ class Policy(ABC, torch.nn.Module):
         )
         actions["pose1_rotation"] = actions["pose1_rotation"] / self.n_discrete_rot_bins
         return actions
+
+    def _stitch_observations_with_actions(
+        self,
+        embedded_observations: torch.Tensor,
+        embedded_observations_mask: torch.Tensor,
+        embedded_actions: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Stitch the observations together with actions for decoder input."""
+        # Rearrange the tensors to be in the right structure
+        # embedded_observations = rearrange(embedded_observations, "L B Q E -> B L Q E")
+        embedded_observations = rearrange(embedded_observations, "B L Q E -> B (L Q) E")
+        embedded_observations = rearrange(embedded_observations, "B L E -> L B E")
+
+        # embedded_observations_mask = rearrange(embedded_observations_mask, "L B Q -> B L Q")
+        embedded_observations_mask = rearrange(embedded_observations_mask, "B L Q -> B (L Q)")
+        embedded_observations_mask = rearrange(embedded_observations_mask, "B L -> L B")
+
+        # Create tensors which will we will use to put the various tokens into
+        batch_size, observation_seq_len = embedded_observations.shape[:2]
+        actions_seq_len = 0 if embedded_actions is None else embedded_actions.shape[1]
+        max_objects = self._get_max_num_objects(embedded_observations=embedded_observations)
+        total_seq_len = observation_seq_len * max_objects + actions_seq_len
+
+        tokens = torch.empty(
+            total_seq_len,
+            batch_size,
+            self.embed_dim,
+            dtype=torch.float32,
+            device=embedded_observations.device,
+        )
+        masks = torch.ones(
+            total_seq_len, batch_size, dtype=torch.bool, device=embedded_observations.device
+        )
+
+        # Fill in the tokens and masks properly
+        for obj_idx in range(max_objects):
+            tokens[obj_idx :: max_objects + 1] = embedded_observations[  # noqa: WPS362
+                obj_idx::max_objects
+            ]
+            masks[obj_idx :: max_objects + 1] = embedded_observations_mask[  # noqa: WPS362
+                obj_idx::max_objects
+            ]
+
+        if embedded_actions is not None:
+            tokens[max_objects :: max_objects + 1] = embedded_actions.transpose(  # noqa: WPS362
+                0, 1
+            )
+
+        return tokens, masks
+
+    def _get_max_num_objects(self, *, embedded_observations: torch.Tensor) -> int:
+        """Get the max number of objects."""
+        return embedded_observations.shape[-2]
