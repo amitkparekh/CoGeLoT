@@ -7,11 +7,11 @@ transformer_decoder:
   vima_xattn_gpt:
     _target_: vima.nn.XAttnGPT
     # Hyperparams taken from Table9 in the paper
-    embed_dim: 768
+    embd_dim: 768
     n_layer: 11
     n_head: 24
     dropout: 0.1
-    xattn_n_heads: 24
+    xattn_n_head: 24
     xattn_ff_expanding: 4
     xattn_n_positions: 256
     use_geglu: True

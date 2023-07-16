@@ -13,7 +13,7 @@ obj_encoder:
   vit_layers: 4
   vit_heads: 24
   bbox_mlp_hidden_dim: 768
-  bbox_mlp_num_layers: 2
+  bbox_mlp_hidden_depth: 2
 
 end_effector_encoder:
   _target_: vima.nn.Embedding
@@ -56,6 +56,7 @@ action_encoder:
 
 action_decoder:
   _target_: vima.nn.ActionDecoder
+  _convert_: all
   input_dim: 768
   action_dims:
     pose0_position: [50, 100]

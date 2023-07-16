@@ -25,16 +25,14 @@ deterministic: False
 # logger:
 #   - _target_: lightning.pytorch.loggers.CSVLogger
 #     save_dir: ./storage/logs/
-# - _target_: lightning.pytorch.loggers.CometLogger
-#   api_key: ${oc.env:COMET_API_KEY}
-#   project_name: ${oc.env:COMET_PROJECT_NAME}
-#   workspace: ${oc.env:COMET_WORKSPACE}
-#   offline: true
 
 callbacks:
   - _target_: lightning.pytorch.callbacks.RichModelSummary
   - _target_: lightning.pytorch.callbacks.RichProgressBar
   - _target_: lightning.pytorch.callbacks.DeviceStatsMonitor
+  - _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+
   # - _target_: lightning.pytorch.callbacks.ModelCheckpoint
   #   dirpath: ./storage/models/
   #   save_last: true
