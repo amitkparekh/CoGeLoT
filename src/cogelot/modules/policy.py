@@ -116,13 +116,12 @@ class Policy(torch.nn.Module):
             for raw_prompt_token in raw_prompt_tokens:
                 # If 0, means that the token is a word
                 if raw_prompt_token == 0:
-                    word_idx += 1
                     assembled_prompt.append(batch_word_emb[word_idx])
                     assembled_mask.append(True)
+                    word_idx += 1
 
                 # If 1, means that the token is an image
                 if raw_prompt_token == 1:
-                    img_idx += 1
                     obj_masks: list[bool] = [
                         image_batch["mask"][view][  # pyright: ignore[reportGeneralTypeIssues]
                             img_idx
@@ -132,6 +131,7 @@ class Policy(torch.nn.Module):
                     obj_embeddings = batch_image_emb[img_idx][:max_num_objs]
                     assembled_prompt.extend(obj_embeddings)
                     assembled_mask.extend(obj_masks[:max_num_objs])
+                    img_idx += 1
 
             additional_padding_for_prompt = max_prompt_length - len(assembled_prompt)
 
