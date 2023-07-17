@@ -4,7 +4,7 @@ import datasets
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
-from cogelot.data.datasets import dataloader_collate_fn
+from cogelot.data.datasets import dataloader_collate_fn, set_dataset_format
 from cogelot.structures.model import PreprocessedInstance
 
 
@@ -37,6 +37,7 @@ class VIMADataModule(LightningDataModule):
                 self._hf_datasets_repo_name, num_proc=self._num_workers
             )
             assert isinstance(dataset, datasets.DatasetDict)
+            dataset = set_dataset_format(dataset)
             self.train_dataset = dataset["train"]
             self.valid_dataset = dataset["valid"]
 
@@ -45,6 +46,7 @@ class VIMADataModule(LightningDataModule):
                 self._hf_datasets_repo_name, split="valid", num_proc=self._num_workers
             )
             assert isinstance(dataset, datasets.DatasetDict)
+            dataset = set_dataset_format(dataset)
             self.valid_dataset = dataset["valid"]
 
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
