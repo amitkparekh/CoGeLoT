@@ -86,7 +86,7 @@ class Policy(torch.nn.Module):
             memory=encoded_prompt,
             memory_key_padding_mask=encoded_prompt_mask,
         )
-        predicted_action_tokens = transformer_output[max_objects - 1 :: max_objects + 1]
+        predicted_action_tokens = transformer_output[:, max_objects - 1 :: max_objects + 1]
         return predicted_action_tokens
 
     def assemble_prompt(  # noqa: WPS210
@@ -288,6 +288,11 @@ class Policy(torch.nn.Module):
         embedded_actions: torch.Tensor | None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Stitch the observations together with actions for decoder input."""
+        batch_size, observation_seq_len = embedded_observations.shape[:2]
+        actions_seq_len = 0 if embedded_actions is None else embedded_actions.shape[1]
+        max_objects = self._get_max_num_objects(embedded_observations=embedded_observations)
+        total_seq_len = observation_seq_len * max_objects + actions_seq_len
+
         # Rearrange the tensors to be in the right structure
         # embedded_observations = rearrange(embedded_observations, "L B Q E -> B L Q E")
         embedded_observations = rearrange(embedded_observations, "B L Q E -> B (L Q) E")
@@ -298,11 +303,6 @@ class Policy(torch.nn.Module):
         embedded_observations_mask = rearrange(embedded_observations_mask, "B L -> L B")
 
         # Create tensors which will we will use to put the various tokens into
-        batch_size, observation_seq_len = embedded_observations.shape[:2]
-        actions_seq_len = 0 if embedded_actions is None else embedded_actions.shape[1]
-        max_objects = self._get_max_num_objects(embedded_observations=embedded_observations)
-        total_seq_len = observation_seq_len * max_objects + actions_seq_len
-
         tokens = torch.empty(
             total_seq_len,
             batch_size,
@@ -327,6 +327,10 @@ class Policy(torch.nn.Module):
             tokens[max_objects :: max_objects + 1] = embedded_actions.transpose(  # noqa: WPS362
                 0, 1
             )
+
+        # Put the batch first
+        tokens = rearrange(tokens, "L B E -> B L E")
+        masks = rearrange(masks, "L B -> B L")
 
         return tokens, masks
 
