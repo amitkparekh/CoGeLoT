@@ -51,27 +51,20 @@ class VIMADataModule(LightningDataModule):
 
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the training set."""
-        return self._create_dataloader(self.train_dataset)
+        return DataLoader[list[PreprocessedInstance]](
+            self.train_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+            batch_size=self.batch_size,
+            num_workers=self._num_workers,
+            shuffle=True,
+            collate_fn=dataloader_collate_fn,
+        )
 
     def val_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the validation set."""
-        return self._create_dataloader(self.valid_dataset)
-
-    def _create_dataloader(
-        self, dataset: datasets.Dataset
-    ) -> DataLoader[list[PreprocessedInstance]]:
-        """Create a dataloader from a datapipe."""
-        try:
-            dataloader = DataLoader[list[PreprocessedInstance]](
-                dataset,  # pyright: ignore[reportGeneralTypeIssues]
-                batch_size=self.batch_size,
-                num_workers=self._num_workers,
-                shuffle=True,
-                collate_fn=dataloader_collate_fn,
-            )
-        except (UnboundLocalError, AttributeError) as err:
-            raise RuntimeError(
-                "The dataset has not been initialized. Was setup() called?"
-            ) from err
-
-        return dataloader
+        return DataLoader[list[PreprocessedInstance]](
+            self.valid_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+            batch_size=self.batch_size,
+            num_workers=self._num_workers,
+            shuffle=False,
+            collate_fn=dataloader_collate_fn,
+        )
