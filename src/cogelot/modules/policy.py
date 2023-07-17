@@ -140,7 +140,9 @@ class Policy(torch.nn.Module):
                 dtype=torch.float32,
                 device=assembled_prompt[0].device,
             )
-            token_tensor_for_prompt = torch.stack(tensors=[*assembled_prompt, padding], dim=0)
+            token_tensor_for_prompt = torch.cat(
+                tensors=[torch.stack(assembled_prompt), padding], dim=0
+            )
             prompt_tokens.append(token_tensor_for_prompt)
 
             prompt_masks.append(
