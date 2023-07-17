@@ -30,9 +30,8 @@ trainer:
   callbacks: null
   logger: null
 
-  limit_train_batches: 10
-  limit_val_batches: 0
-  limit_test_batches: 0
+  # Predict 2 batches
+  fast_dev_run: 2
 
 datamodule:
   num_workers: 0 # debuggers don't like multiprocessing
