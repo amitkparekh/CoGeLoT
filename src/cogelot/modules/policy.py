@@ -128,6 +128,9 @@ class Policy(torch.nn.Module):
                         ]
                         for view in sorted(self._views)
                     ]
+                    # Make sure that the masks are a single flattened list
+                    obj_masks = torch.tensor(obj_masks).flatten().tolist()
+
                     obj_embeddings = batch_image_emb[img_idx][:max_num_objs]
                     assembled_prompt.extend(obj_embeddings)
                     assembled_mask.extend(obj_masks[:max_num_objs])
