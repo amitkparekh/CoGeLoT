@@ -39,17 +39,18 @@ class VIMATransformerDecoder(TransformerDecoderProtocol):
             )
 
         # Create the position ids from the mask (just how they do in the Policy)
-        position_ids = torch.cumsum(tgt_key_padding_mask, dim=0) - 1
+        position_ids = torch.cumsum(tgt_key_padding_mask, dim=1) - 1
         position_ids = position_ids.long()
         prompt_position_ids = torch.cumsum(memory_key_padding_mask, dim=1) - 1
 
         tokens_out = self._vima_xattn_gpt(
             obs_action_tokens=tgt,
-            prompt_tokens=memory.transpose(0, 1),
+            prompt_tokens=memory,
             prompt_mask=memory_key_padding_mask,
-            obs_action_masks=tgt_key_padding_mask.transpose(0, 1),
-            obs_action_position_ids=position_ids.transpose(0, 1),
+            obs_action_masks=tgt_key_padding_mask,
+            obs_action_position_ids=position_ids,
             prompt_position_ids=prompt_position_ids,
+            batch_first=True,
         )
 
         return tokens_out
