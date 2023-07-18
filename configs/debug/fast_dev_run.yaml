@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - default.yaml
+
+trainer:
+  # Send 2 batches
+  fast_dev_run: 2
