@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import Any, cast, get_args
+from typing import Any, LiteralString, cast, get_args
 
 import torch
 from lightning import pytorch as pl
@@ -12,6 +12,7 @@ from cogelot.modules.preprocessors.their_instance_batcher import (
 )
 from cogelot.structures.model import ModelInstance, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
+from cogelot.training.metrics import create_pose_accuracy_metric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
@@ -41,6 +42,14 @@ class VIMALightningModule(pl.LightningModule):
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
+
+        self._accuracy = create_pose_accuracy_metric(
+            max_num_pose_position_classes=max(
+                policy.n_discrete_x_bins, policy.n_discrete_y_bins, policy.n_discrete_z_bins
+            ),
+            max_num_pose_rotation_classes=policy.n_discrete_rot_bins,
+            ignore_index=self.ignore_target_index,
+        )
 
     def forward(
         self, instances: list[PreprocessedInstance]
@@ -75,7 +84,8 @@ class VIMALightningModule(pl.LightningModule):
 
         loss = self._compute_loss(predicted_actions, target_actions)
 
-        self.log("train_loss", loss, on_step=True, prog_bar=True, logger=True)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
+        self.log("train_acc", self._accuracy, prog_bar=True, logger=True)
 
         return loss
 
@@ -88,7 +98,8 @@ class VIMALightningModule(pl.LightningModule):
 
         loss = self._compute_loss(predicted_actions, target_actions)
 
-        self.log("val_loss", loss, on_step=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss, prog_bar=True, logger=True)
+        self.log("val_acc", self._accuracy, prog_bar=True, logger=True)
 
         return loss
 
@@ -136,3 +147,15 @@ class VIMALightningModule(pl.LightningModule):
         # Return the average loss for the batch
         average_loss = torch.mean(stacked_loss)
         return average_loss
+
+    def _update_accuracy(
+        self,
+        predicted_actions: dict[LiteralString, MultiCategorical],
+        target_actions: dict[LiteralString, torch.Tensor],
+    ) -> None:
+        """Update the accuracy metric for all the pose action types."""
+        predicted_action_tokens = {
+            pose_action_type: action_distribution.mode()
+            for pose_action_type, action_distribution in predicted_actions.items()
+        }
+        self._accuracy.update(predicted_action_tokens, target_actions)
