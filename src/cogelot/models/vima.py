@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import TYPE_CHECKING, Any, cast, get_args
+from typing import Any, cast, get_args
 
 import torch
 from lightning import pytorch as pl
@@ -13,10 +13,6 @@ from cogelot.modules.preprocessors.their_instance_batcher import (
 from cogelot.structures.model import ModelInstance, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
 from vima.nn.action_decoder.dists import MultiCategorical
-
-
-if TYPE_CHECKING:
-    from jaxtyping import Float
 
 
 OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
@@ -58,21 +54,21 @@ class VIMALightningModule(pl.LightningModule):
             prepared_batch.embedded_prompt, prepared_batch.embedded_prompt_mask
         )
 
-        encoded_predicted_actions: Float[torch.Tensor, "num_obs batch dim"] = (
-            self.policy.predict_action_token(
-                encoded_prompt=encoded_prompt,
-                encoded_prompt_mask=prepared_batch.embedded_prompt_mask,
-                embedded_observations=prepared_batch.embedded_observations,
-                embedded_observations_mask=prepared_batch.embedded_observations_mask,
-                embedded_actions=prepared_batch.embedded_actions,
-            )
+        encoded_predicted_actions = self.policy.predict_action_token(
+            encoded_prompt=encoded_prompt,
+            encoded_prompt_mask=prepared_batch.embedded_prompt_mask,
+            embedded_observations=prepared_batch.embedded_observations,
+            embedded_observations_mask=prepared_batch.embedded_observations_mask,
+            embedded_actions=prepared_batch.embedded_actions,
         )
 
         predicted_actions_dists = self.policy.decode_action_token(encoded_predicted_actions)
 
         return predicted_actions_dists
 
-    def training_step(self, batch: list[PreprocessedInstance]) -> torch.Tensor:
+    def training_step(
+        self, batch: list[PreprocessedInstance], batch_idx: int  # noqa: ARG002
+    ) -> torch.Tensor:
         """Perform a training step."""
         predicted_actions = self.forward(batch)
         target_actions = collate_target_action_tokens(batch)
@@ -83,7 +79,9 @@ class VIMALightningModule(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch: list[PreprocessedInstance]) -> torch.Tensor:
+    def validation_step(
+        self, batch: list[PreprocessedInstance], batch_idx: int  # noqa: ARG002
+    ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
         predicted_actions = self.forward(batch)
         target_actions = collate_target_action_tokens(batch)

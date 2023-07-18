@@ -5,7 +5,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from cogelot.modules.policy import Policy
-from cogelot.structures.model import ModelInstance, PreprocessedInstance
+from cogelot.structures.model import ModelInstance, PreprocessedInstance, RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima.utils import DataDict
 
@@ -64,7 +64,7 @@ class TheirInstanceBatcher(torch.nn.Module):
         super().__init__()
         self.policy = policy
 
-    def forward(self, instances: list[PreprocessedInstance]) -> ModelInstance:
+    def forward(self, instances: list[PreprocessedInstance]) -> ModelInstance:  # noqa: WPS210
         """Prepare a batch of instances."""
         encoded_prompts, prompt_masks = [], []
         encoded_observations, observation_masks = [], []
@@ -106,7 +106,7 @@ class TheirInstanceBatcher(torch.nn.Module):
 
     def encode_multimodal_prompt(
         self,
-        raw_prompt_token_type: list[list[int]],
+        raw_prompt_token_type: RawPromptTokenType,
         word_batch: torch.Tensor,
         image_batch: DataDict,
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -132,7 +132,7 @@ class TheirInstanceBatcher(torch.nn.Module):
         #     encoded_actions = encoded_actions.squeeze(0)
         return encoded_actions
 
-    def batch_observations(
+    def batch_observations(  # noqa: WPS210
         self, observations: list[torch.Tensor], masks: list[torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Create a batch of observations."""
