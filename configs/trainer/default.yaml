@@ -1,6 +1,6 @@
 _target_: lightning.pytorch.trainer.Trainer
 
-default_root_dir: ./storage/
+default_root_dir: ${output_dir}
 
 gradient_clip_val: 1.0
 
