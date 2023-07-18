@@ -17,12 +17,20 @@ from transformers.models.t5.modeling_t5 import (
 
 
 class T5PromptEncoder(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, *, unfreeze_last_n_layers: int = 2) -> None:
         super().__init__()
 
         self.t5 = T5EncoderModel.from_pretrained("t5-base")
         self.output_dim = self.t5.config.d_model
         self.input_dim = self.t5.config.d_model
+
+        # Even though the VIMA paper claimed it, it was not included in their original code.
+        # Freeze all layers except the last n layers
+        if unfreeze_last_n_layers > 0:
+            blocks_to_freeze = self.t5.encoder.block[:-unfreeze_last_n_layers]
+            for block in blocks_to_freeze:
+                for param in block.parameters():
+                    param.requires_grad = False
 
     def forward(
         self,
