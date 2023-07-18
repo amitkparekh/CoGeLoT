@@ -17,8 +17,8 @@ output_dir: ${hydra:runtime.output_dir}
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
   hf_datasets_repo_name: amitkparekh/vima
-  batch_size: 2
-  num_workers: 4
+  batch_size: 16
+  num_workers: 64
 
 model:
   _target_: cogelot.models.vima.VIMALightningModule
