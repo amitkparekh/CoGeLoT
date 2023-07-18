@@ -111,26 +111,26 @@ class Policy(torch.nn.Module):
 
         for raw_prompt_tokens in raw_prompts_token_type:
             assembled_prompt: list[torch.Tensor] = []
-            assembled_mask: list[bool] = []
+            assembled_mask: list[torch.Tensor] = []
 
             for raw_prompt_token in raw_prompt_tokens:
                 # If 0, means that the token is a word
                 if raw_prompt_token == 0:
-                    assembled_prompt.append(batch_word_emb[word_idx])
-                    assembled_mask.append(True)
+                    embedded_token: torch.Tensor = batch_word_emb[word_idx]
+                    assembled_prompt.append(embedded_token)
+                    assembled_mask.append(
+                        torch.ones(1, dtype=torch.bool, device=embedded_token.device)
+                    )
                     word_idx += 1
 
                 # If 1, means that the token is an image
                 if raw_prompt_token == 1:
-                    obj_masks: list[bool] = [
+                    obj_masks = [
                         image_batch["mask"][view][  # pyright: ignore[reportGeneralTypeIssues]
                             img_idx
-                        ]
+                        ].flatten()
                         for view in sorted(self._views)
                     ]
-                    # Make sure that the masks are a single flattened list
-                    obj_masks = torch.tensor(obj_masks).flatten().tolist()
-
                     obj_embeddings = batch_image_emb[img_idx][:max_num_objs]
                     assembled_prompt.extend(obj_embeddings)
                     assembled_mask.extend(obj_masks[:max_num_objs])
@@ -148,23 +148,14 @@ class Policy(torch.nn.Module):
             )
             prompt_tokens.append(token_tensor_for_prompt)
 
-            prompt_masks.append(
-                torch.cat(
-                    [
-                        torch.tensor(
-                            assembled_mask,
-                            dtype=torch.bool,
-                            device=token_tensor_for_prompt.device,
-                        ),
-                        torch.zeros(
-                            additional_padding_for_prompt,
-                            dtype=torch.bool,
-                            device=token_tensor_for_prompt.device,
-                        ),
-                    ],
-                    dim=0,
-                )
+            mask_tensor_for_prompt = torch.cat(
+                [
+                    torch.cat(assembled_mask),
+                    torch.zeros(additional_padding_for_prompt, dtype=torch.bool),
+                ],
+                dim=0,
             )
+            prompt_masks.append(mask_tensor_for_prompt)
 
         prompt_tokens_tensor = torch.stack(prompt_tokens, dim=0)
         prompt_masks_tensor = torch.stack(prompt_masks, dim=0)
