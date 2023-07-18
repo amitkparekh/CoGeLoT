@@ -19,6 +19,11 @@ datamodule:
   hf_datasets_repo_name: amitkparekh/vima
   batch_size: 16
   num_workers: 64
+  dataloader_kwargs:
+    pin_memory: false
+    prefetch_factor: 8
+    # https://forums.fast.ai/t/last-training-batch-is-dropped/39321/2
+    drop_last: true
 
 model:
   _target_: cogelot.models.vima.VIMALightningModule

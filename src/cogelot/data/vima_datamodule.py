@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import datasets
 from lightning import LightningDataModule
@@ -20,10 +20,12 @@ class VIMADataModule(LightningDataModule):
         hf_datasets_repo_name: str,
         num_workers: int,
         batch_size: int,
+        dataloader_kwargs: dict[str, Any]
     ) -> None:
         super().__init__()
         self._hf_datasets_repo_name = hf_datasets_repo_name
         self._num_workers = num_workers
+        self._dataloader_kwargs = dataloader_kwargs or {}
 
         self.batch_size = batch_size
 
@@ -57,6 +59,7 @@ class VIMADataModule(LightningDataModule):
             num_workers=self._num_workers,
             shuffle=True,
             collate_fn=dataloader_collate_fn,
+            **self._dataloader_kwargs,
         )
 
     def val_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
@@ -67,4 +70,5 @@ class VIMADataModule(LightningDataModule):
             num_workers=self._num_workers,
             shuffle=False,
             collate_fn=dataloader_collate_fn,
+            **self._dataloader_kwargs,
         )

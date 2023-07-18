@@ -38,4 +38,7 @@ trainer:
 
 datamodule:
   num_workers: 0 # debuggers don't like multiprocessing
-  # pin_memory: False # disable gpu memory pin
+  batch_size: 2
+  dataloader_kwargs:
+    prefetch_factor: null
+    pin_memory: false
