@@ -22,21 +22,24 @@ check_val_every_n_epoch: 1
 # makes training slower but gives more reproducibility than just setting seeds
 deterministic: False
 
-# logger:
-#   - _target_: lightning.pytorch.loggers.CSVLogger
-#     save_dir: ./storage/logs/
+logger:
+  - _target_: lightning.pytorch.loggers.WandbLogger
+    save_dir: ${output_dir}
+    project: CoGeLoT
+    entity: pyop
+    log_model: True
 
 callbacks:
   - _target_: lightning.pytorch.callbacks.RichModelSummary
+    max_depth: -1
   - _target_: lightning.pytorch.callbacks.RichProgressBar
-  - _target_: lightning.pytorch.callbacks.DeviceStatsMonitor
   - _target_: lightning.pytorch.callbacks.LearningRateMonitor
     logging_interval: step
 
-  # - _target_: lightning.pytorch.callbacks.ModelCheckpoint
-  #   dirpath: ./storage/models/
-  #   save_last: true
-  #   save_top_k: 1
-  #   monitor: val_loss
-  #   mode: min
-  #   filename: "{epoch:02d}-{val_loss:.2f}"
+  - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: ${output_dir}/checkpoints
+    save_last: true
+    save_top_k: 1
+    monitor: val_loss
+    mode: min
+    filename: "{epoch:02d}-{val_loss:.2f}"
