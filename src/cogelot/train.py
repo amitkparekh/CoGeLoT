@@ -5,6 +5,8 @@ import lightning
 from loguru import logger
 from omegaconf import DictConfig
 
+from cogelot.common import log
+
 
 if TYPE_CHECKING:
     from lightning import pytorch as pl
@@ -17,11 +19,14 @@ def main(config: DictConfig) -> None:
     if seed:
         lightning.seed_everything(seed)
 
+    logger.info("Instantiating modules...")
     instantiated_modules = hydra.utils.instantiate(config)
 
     datamodule: pl.LightningDataModule = instantiated_modules["datamodule"]
     model: pl.LightningModule = instantiated_modules["model"]
     trainer: pl.Trainer = instantiated_modules["trainer"]
+
+    model.save_hyperparameters(log.flatten_config(config))
 
     logger.info("Starting training...")
     trainer.fit(model, datamodule=datamodule)
