@@ -20,10 +20,13 @@
 			"name": "Debug Run",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/src/cogelot/commands/debug_run.py",
+			"program": "${workspaceFolder}/src/cogelot/train.py",
 			"console": "integratedTerminal",
 			"justMyCode": false,
-			"subProcess": true
+			"subProcess": true,
+			"args": [
+				"debug=default"
+			]
 		},
 		{
 			"name": "Debug Tests",
