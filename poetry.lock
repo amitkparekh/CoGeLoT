@@ -812,7 +812,7 @@ files = [
 name = "einops"
 version = "0.6.1"
 description = "A new flavour of deep learning operations"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3894,6 +3894,22 @@ files = [
 dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [[package]]
+name = "x-transformers"
+version = "1.16.21"
+description = "X-Transformers - Pytorch"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "x-transformers-1.16.21.tar.gz", hash = "sha256:51d22e5634f0e8e0e39f11d608959f69e2f497165f202e509fee43d3400a2702"},
+    {file = "x_transformers-1.16.21-py3-none-any.whl", hash = "sha256:bfd89cec5120897d5352b04aede3636c7551c515b059a0a8d476c8db26e829f5"},
+]
+
+[package.dependencies]
+einops = ">=0.6.1"
+torch = ">=1.6"
+
+[[package]]
 name = "xxhash"
 version = "3.2.0"
 description = "Python binding for xxHash"
@@ -4092,4 +4108,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "b5379bec20d895c179ceb715cbc3ba9918dcd4980ca46ff6e83c149cec5858fb"
+content-hash = "db2129583b31b44df08e813fbbe75a3d781f85dc36e58ed031dd864b9ee218e6"

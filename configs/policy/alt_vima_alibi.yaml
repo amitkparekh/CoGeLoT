@@ -5,7 +5,7 @@ defaults:
 transformer_decoder:
   _target_: cogelot.nn.decoders.XTransformerDecoder
   max_seq_len: 512
-  use_abs_pos_emb: True
+  use_abs_pos_emb: false
 
   attn_layers:
     _target_: x_transformers.Decoder
@@ -82,3 +82,5 @@ transformer_decoder:
 
     # Use flash attention (default in pytorch 2.0+)
     attn_flash: true
+
+    use_alibi: true

@@ -5,7 +5,7 @@ defaults:
 transformer_decoder:
   _target_: cogelot.nn.decoders.XTransformerDecoder
   max_seq_len: 512
-  use_abs_pos_emb: True
+  use_abs_pos_emb: False
 
   attn_layers:
     _target_: x_transformers.Decoder
@@ -13,54 +13,6 @@ transformer_decoder:
     dim: ${..dim_in}
     depth: 11
     heads: 24
-
-    # Define the blocks within the layers just like the VIMA paper,
-    # with the alternating cross/self attention blocks for 11 layers
-    custom_layers:
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
-      - a
-      - f
-      - c
-      - f
 
     causal: true
     cross_attend: true
@@ -82,3 +34,7 @@ transformer_decoder:
 
     # Use flash attention (default in pytorch 2.0+)
     attn_flash: true
+
+    # Enable alibi
+    alibi_pos_bias: true
+    # alibi_num_heads: 4

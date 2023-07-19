@@ -33,6 +33,7 @@ hydra-core = "*"
 typer = "^0.9.0"
 datasets = "*"
 wandb = "*"
+x-transformers = "*"
 
 [tool.poetry.group.vima.dependencies]
 opencv-python = "*"
