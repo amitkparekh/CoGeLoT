@@ -4,15 +4,15 @@ embed_dim: 768
 
 obj_encoder:
   _target_: vima.nn.ObjEncoder
-  transformer_emb_dim: 768
+  transformer_emb_dim: ${..embed_dim}
   views: ["front", "top"]
-  vit_output_dim: 768
+  vit_output_dim: ${.transformer_emb_dim}
   vit_resolution: 32
   vit_patch_size: 16
-  vit_width: 768
+  vit_width: ${.transformer_emb_dim}
   vit_layers: 4
   vit_heads: 24
-  bbox_mlp_hidden_dim: 768
+  bbox_mlp_hidden_dim: ${.transformer_emb_dim}
   bbox_mlp_hidden_depth: 2
 
 end_effector_encoder:
@@ -22,12 +22,12 @@ end_effector_encoder:
 
 obs_fusion_layer:
   _target_: torch.nn.Linear
-  in_features: 770
-  out_features: 768
+  in_features: 770 # 768 + 2 = 770
+  out_features: ${..embed_dim}
 
 action_encoder:
   _target_: vima.nn.ActionEmbedding
-  output_dim: 768
+  output_dim: ${..embed_dim}
   embed_dict:
     pose0_position:
       _target_: vima.nn.ContinuousActionEmbedding
@@ -57,7 +57,7 @@ action_encoder:
 action_decoder:
   _target_: vima.nn.ActionDecoder
   _convert_: all
-  input_dim: 768
+  input_dim: ${..embed_dim}
   action_dims:
     pose0_position: [50, 100]
     pose1_position: [50, 100]
@@ -77,9 +77,9 @@ prompt_encoder:
 
 prompt_obj_post_layer:
   _target_: vima.nn.build_mlp
-  input_dim: 768
-  hidden_dim: 768
-  output_dim: 768
+  input_dim: ${..embed_dim}
+  hidden_dim: ${.input_dim}
+  output_dim: ${.hidden_dim}
   hidden_depth: 2
 
 transformer_decoder: ???
