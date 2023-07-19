@@ -86,7 +86,7 @@ class VIMALightningModule(pl.LightningModule):
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_accuracy(stage="train", batch_size=len(batch))
+        self._log_accuracy(stage="train", prog_bar=True, logger=True, batch_size=len(batch))
 
         return loss
 
@@ -101,7 +101,7 @@ class VIMALightningModule(pl.LightningModule):
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_accuracy(stage="val", batch_size=len(batch))
+        self._log_accuracy(stage="val", prog_bar=True, logger=True, batch_size=len(batch))
 
         return loss
 
@@ -175,4 +175,4 @@ class VIMALightningModule(pl.LightningModule):
         computed_acc = {
             f"{stage}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
         }
-        self.log_dict(computed_acc, prog_bar=True, logger=True, **log_dict_kwargs)
+        self.log_dict(computed_acc, **log_dict_kwargs)
