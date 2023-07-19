@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import Any, LiteralString, cast, get_args
+from typing import Any, Literal, cast, get_args
 
 import torch
 from lightning import pytorch as pl
@@ -83,9 +83,10 @@ class VIMALightningModule(pl.LightningModule):
         target_actions = collate_target_action_tokens(batch)
 
         loss = self._compute_loss(predicted_actions, target_actions)
+        self._update_accuracy(predicted_actions, target_actions)
 
-        self.log("train_loss", loss, prog_bar=True, logger=True)
-        self.log("train_acc", self._accuracy, prog_bar=True, logger=True)
+        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_accuracy(stage="train", batch_size=len(batch))
 
         return loss
 
@@ -97,9 +98,10 @@ class VIMALightningModule(pl.LightningModule):
         target_actions = collate_target_action_tokens(batch)
 
         loss = self._compute_loss(predicted_actions, target_actions)
+        self._update_accuracy(predicted_actions, target_actions)
 
-        self.log("val_loss", loss, prog_bar=True, logger=True)
-        self.log("val_acc", self._accuracy, prog_bar=True, logger=True)
+        self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_accuracy(stage="val", batch_size=len(batch))
 
         return loss
 
@@ -148,14 +150,29 @@ class VIMALightningModule(pl.LightningModule):
         average_loss = torch.mean(stacked_loss)
         return average_loss
 
+    @torch.no_grad()
     def _update_accuracy(
         self,
-        predicted_actions: dict[LiteralString, MultiCategorical],
-        target_actions: dict[LiteralString, torch.Tensor],
+        predicted_actions: dict[PoseActionType, MultiCategorical],
+        target_actions: dict[PoseActionType, torch.Tensor],
     ) -> None:
         """Update the accuracy metric for all the pose action types."""
-        predicted_action_tokens = {
+        predicted_action_tokens: dict[str, torch.Tensor] = {
             pose_action_type: action_distribution.mode()
             for pose_action_type, action_distribution in predicted_actions.items()
         }
-        self._accuracy.update(predicted_action_tokens, target_actions)
+        # Targets need to be reshaped to be batch first
+        target_action_tokens: dict[str, torch.Tensor] = {
+            pose_action_type: target_pose.transpose(0, 1)
+            for pose_action_type, target_pose in target_actions.items()
+        }
+        self._accuracy.update(predicted_action_tokens, target_action_tokens)
+
+    def _log_accuracy(
+        self, *, stage: Literal["train", "val", "test"], **log_dict_kwargs: Any
+    ) -> None:
+        """Log the accuracy for the given stage."""
+        computed_acc = {
+            f"{stage}_{pose_name}": acc for pose_name, acc in self._accuracy.compute().items()
+        }
+        self.log_dict(computed_acc, prog_bar=True, logger=True, **log_dict_kwargs)

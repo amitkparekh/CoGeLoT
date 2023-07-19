@@ -258,7 +258,7 @@ extend-ignore = [
 ]
 
 max-line-length = 99
-max-line-complexity = 15
+max-line-complexity = 18
 max-local-variables = 10
 max-function-expressions = 10
 max-module-expressions = 20
