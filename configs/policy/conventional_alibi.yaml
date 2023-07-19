@@ -1,40 +1,10 @@
 defaults:
-  - default.yaml
+  - conventional.yaml
   - _self_
 
 transformer_decoder:
-  _target_: cogelot.nn.decoders.XTransformerDecoder
-  max_seq_len: 512
-  use_abs_pos_emb: False
+  use_abs_pos_emb: false
 
   attn_layers:
-    _target_: x_transformers.Decoder
-
-    dim: ${..dim_in}
-    depth: 11
-    heads: 24
-
-    causal: true
-    cross_attend: true
-
-    pre_norm: true
-
-    layer_dropout: 0.1
-    ff_dropout: ${.layer_dropout}
-    attn_dropout: ${.layer_dropout}
-    cross_attn_tokens_dropout: ${.layer_dropout}
-
-    # Use GEGLU instead of ReLU in FFN
-    ff_glu: true
-
-    # Disable bias in FFN
-    ff_no_bias: true
-    # Inner dimension of FFN = 4 * 768 = 3072
-    ff_mult: 4
-
-    # Use flash attention (default in pytorch 2.0+)
-    attn_flash: true
-
     # Enable alibi
     alibi_pos_bias: true
-    # alibi_num_heads: 4

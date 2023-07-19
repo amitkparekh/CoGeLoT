@@ -21,12 +21,11 @@ transformer_decoder:
   attn_layers:
     _target_: x_transformers.Decoder
 
-    dim: ${..dim_in}
+    cross_attend: true
+
+    dim: ${policy.embed_dim}
     depth: 11
     heads: 24
-
-    causal: true
-    cross_attend: true
 
     pre_norm: true
 
