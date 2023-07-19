@@ -8,16 +8,16 @@ def create_pose_accuracy_metric(
     """Create a pose accuracy metric."""
     return MultitaskWrapper(
         {
-            "pose0_position_acc": MulticlassAccuracy(
+            "pose0_position": MulticlassAccuracy(
                 num_classes=max_num_pose_position_classes, ignore_index=ignore_index
             ),
-            "pose1_position_acc": MulticlassAccuracy(
+            "pose1_position": MulticlassAccuracy(
                 num_classes=max_num_pose_position_classes, ignore_index=ignore_index
             ),
-            "pose0_rotation_acc": MulticlassAccuracy(
+            "pose0_rotation": MulticlassAccuracy(
                 num_classes=max_num_pose_rotation_classes, ignore_index=ignore_index
             ),
-            "pose1_rotation_acc": MulticlassAccuracy(
+            "pose1_rotation": MulticlassAccuracy(
                 num_classes=max_num_pose_rotation_classes, ignore_index=ignore_index
             ),
         }

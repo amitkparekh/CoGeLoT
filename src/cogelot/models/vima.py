@@ -173,6 +173,6 @@ class VIMALightningModule(pl.LightningModule):
     ) -> None:
         """Log the accuracy for the given stage."""
         computed_acc = {
-            f"{stage}_{pose_name}": acc for pose_name, acc in self._accuracy.compute().items()
+            f"{stage}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
         }
         self.log_dict(computed_acc, prog_bar=True, logger=True, **log_dict_kwargs)
