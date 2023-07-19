@@ -26,8 +26,7 @@ trainer:
   devices: 1 # debuggers don't like multiprocessing
   detect_anomaly: true # raise exception if NaN or +/-inf is detected in any tensor
 
-  # disable callbacks and loggers during debugging
-  callbacks: null
+  # disable loggers during debugging
   logger: null
 
   log_every_n_steps: 1
