@@ -8,11 +8,12 @@ defaults:
   # If you want to debug, then just run like `python train.py debug=default`
   - debug: null
 
+  # Set defaults for Hydra's logging and outputs
+  - hydra: default.yaml
+
 task_name: "train"
 
 seed: 1000
-
-output_dir: ${hydra:runtime.output_dir}
 
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
