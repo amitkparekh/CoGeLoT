@@ -44,9 +44,6 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >>~/.bashrc
 # https://github.com/python-poetry/poetry/issues/1917#issuecomment-1251667047
 echo 'export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring' >>~/.bashrc
 
-# Add poethepoet for all the poetry hooks
-/home/ubuntu/.local/bin/poetry self add 'poethepoet[poetry_plugin]'
-
 # ------------------------------- Install CUDA ------------------------------- #
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin &&
 	sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 &&
@@ -78,6 +75,7 @@ echo 'export HF_HOME=/home/ubuntu/data/huggingface' >>~/.bashrc
 # --------------------------------- Do things -------------------------------- #
 # Login to GH
 echo "$GITHUB_PAT" | gh auth login --with-token
+gh auth setup-git
 
 # Clone the repo
 gh repo clone amitkparekh/vima
@@ -88,7 +86,7 @@ cd VIMA || exit 1
 # Install python and deps
 pyenv install
 poetry env use "$(pyenv which python)"
-poetry install
+poetry install --without lint,test
 poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 # Create the output dir on the storage drive
