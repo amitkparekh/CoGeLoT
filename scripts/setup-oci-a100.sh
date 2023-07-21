@@ -77,17 +77,25 @@ echo 'export HF_HOME=/home/ubuntu/data/huggingface' >>~/.bashrc
 
 # --------------------------------- Do things -------------------------------- #
 # Login to GH
-echo "$GITHUT_PAT" | gh auth login --with-token
+echo "$GITHUB_PAT" | gh auth login --with-token
 
 # Clone the repo
 gh repo clone amitkparekh/vima
+
+# cd into the repo
+cd VIMA || exit 1
+
+# Install python and deps
+pyenv install
+poetry env use "$(pyenv which python)"
+poetry install
+poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 # Create the output dir on the storage drive
 mkdir /home/ubuntu/data/outputs
 
 # symlink the outputs dir to the repo
-cd VIMA || exit 1
-ln -s /home/ubuntu/data/outputs ./
+ln -s /home/ubuntu/data/outputs ./storage/
 
 # ------------------------------- Restart shell ------------------------------ #
 exec "$SHELL"
