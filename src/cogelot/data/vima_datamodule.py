@@ -1,6 +1,7 @@
 from typing import Any, Literal
 
 import datasets
+import torch
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
@@ -72,3 +73,13 @@ class VIMADataModule(LightningDataModule):
             collate_fn=dataloader_collate_fn,
             **self._dataloader_kwargs,
         )
+
+    def transfer_batch_to_device(
+        self,
+        batch: list[PreprocessedInstance],
+        device: torch.device,
+        dataloader_idx: int,  # noqa: ARG002
+    ) -> list[PreprocessedInstance]:
+        """Transfer all the tensors within a batch to the given device."""
+        batch = [instance.transfer_to_device(device) for instance in batch]
+        return batch

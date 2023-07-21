@@ -49,6 +49,26 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
             actions=any_to_datadict(instance["actions"]),
         )
 
+    def transfer_to_device(self, device: torch.device) -> "PreprocessedInstance":
+        """Transfer any tensors to the given device."""
+        word_batch = self.word_batch.to(device)
+        image_batch = self.image_batch.to_torch_tensor(device=device)
+        observations = self.observations.to_torch_tensor(device=device)
+        actions = self.actions.to_torch_tensor(device=device)
+
+        assert isinstance(image_batch, DataDict)
+        assert isinstance(observations, DataDict)
+        assert isinstance(actions, DataDict)
+
+        return PreprocessedInstance(
+            task=self.task,
+            raw_prompts_token_type=self.raw_prompts_token_type,
+            word_batch=word_batch,
+            image_batch=image_batch,
+            observations=observations,
+            actions=actions,
+        )
+
 
 class ModelInstance(NamedTuple):
     """Instance directly given to the model."""
