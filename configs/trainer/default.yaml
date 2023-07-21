@@ -1,6 +1,6 @@
 _target_: lightning.pytorch.trainer.Trainer
 
-default_root_dir: ${hydra:runtime.output_dir}
+default_root_dir: ${output_dir}
 
 gradient_clip_val: 1.0
 
@@ -24,7 +24,7 @@ deterministic: False
 
 logger:
   - _target_: lightning.pytorch.loggers.WandbLogger
-    save_dir: ${..default_root_dir}
+    save_dir: ${output_dir}
     project: CoGeLoT
     entity: pyop
     log_model: True
@@ -37,7 +37,7 @@ callbacks:
     logging_interval: step
 
   - _target_: lightning.pytorch.callbacks.ModelCheckpoint
-    dirpath: ${..default_root_dir}/checkpoints
+    dirpath: ${output_dir}/checkpoints
     save_top_k: 1
     monitor: val_loss
     mode: min

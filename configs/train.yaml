@@ -13,6 +13,8 @@ defaults:
 
 task_name: "train"
 
+output_dir: ${hydra:runtime.output_dir}
+
 seed: 1000
 
 datamodule:
