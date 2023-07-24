@@ -34,6 +34,7 @@ typer = "^0.9.0"
 datasets = "*"
 wandb = "*"
 x-transformers = "*"
+pillow = "*"
 
 [tool.poetry.group.vima.dependencies]
 opencv-python = "*"
