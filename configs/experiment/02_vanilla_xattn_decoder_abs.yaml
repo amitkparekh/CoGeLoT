@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - override /transformer_decoder@model.policy.transformer_decoder:
+      - encoder_decoder.yaml
+      - attn_layers/default.yaml
+      - positional/absolute.yaml
+
+wandb_config:
+  architecture: encoder_decoder
+  attn_layers: default
+  positional_encoding: absolute
+  source: x-transformers

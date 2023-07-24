@@ -1,0 +1,9 @@
+# @package _global_
+
+# This is for when it is run on my local mac
+defaults:
+  - override /trainer: cpu.yaml
+
+datamodule:
+  batch_size: 2
+  num_workers: 2

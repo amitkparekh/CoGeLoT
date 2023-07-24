@@ -1,0 +1,52 @@
+defaults:
+  - default.yaml
+  - _self_
+
+attn_layers:
+  # Define the blocks within the layers just like the VIMA paper,
+  # with the alternating cross/self attention blocks for 11 layers
+  custom_layers:
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f
+    - c
+    - f
+    - a
+    - f

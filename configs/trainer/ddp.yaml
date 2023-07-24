@@ -1,9 +1,9 @@
 defaults:
   - default.yaml
+  - gpu.yaml
+  - _self_
 
 strategy: ddp
 
-accelerator: gpu
 devices: 8
 num_nodes: 1
-sync_batchnorm: True

@@ -1,0 +1,15 @@
+# @package _global_
+
+# This is for when it is run on OCI with A100s
+defaults:
+  - override /trainer: ddp.yaml
+
+datamodule:
+  batch_size: 16
+  num_workers: 64
+  dataloader_kwargs:
+    pin_memory: True
+    prefetch_factor: 8
+
+trainer:
+  devices: 8

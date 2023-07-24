@@ -28,6 +28,7 @@ logger:
     project: CoGeLoT
     entity: pyop
     log_model: True
+    config: ${wandb_config}
 
 callbacks:
   - _target_: lightning.pytorch.callbacks.RichModelSummary

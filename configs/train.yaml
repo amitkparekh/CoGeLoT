@@ -3,13 +3,19 @@
 defaults:
   - _self_
   - trainer: cpu.yaml
-    # The chosen policy will automatically be set to the model.policy
-  - policy@model.policy: vima.yaml
+
+  # The chosen policy will automatically be set to the model.policy
+  - transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
+
   # If you want to debug, then just run like `python train.py debug=default`
   - debug: null
 
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
+  - hardware: local.yaml
+
+  # For experiments
+  - experiment: null
 
 task_name: "train"
 
@@ -17,14 +23,15 @@ output_dir: ${hydra:runtime.output_dir}
 
 seed: 1000
 
+# For logging additional hyperparameters to wandb in the config
+wandb_config: null
+
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
   hf_datasets_repo_name: amitkparekh/vima
   batch_size: 16
   num_workers: 64
   dataloader_kwargs:
-    pin_memory: false
-    prefetch_factor: 8
     # https://forums.fast.ai/t/last-training-batch-is-dropped/39321/2
     drop_last: true
 
@@ -44,3 +51,89 @@ model:
     num_training_steps: 24000
     # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
     lr_end: 1e-7
+
+  policy:
+    _target_: cogelot.modules.policy.Policy
+    embed_dim: 768
+
+    transformer_decoder: ???
+
+    obj_encoder:
+      _target_: vima.nn.ObjEncoder
+      transformer_emb_dim: ${..embed_dim}
+      views: ["front", "top"]
+      vit_output_dim: ${.transformer_emb_dim}
+      vit_resolution: 32
+      vit_patch_size: 16
+      vit_width: ${.transformer_emb_dim}
+      vit_layers: 4
+      vit_heads: 24
+      bbox_mlp_hidden_dim: ${.transformer_emb_dim}
+      bbox_mlp_hidden_depth: 2
+
+    end_effector_encoder:
+      _target_: vima.nn.Embedding
+      num_embeddings: 2
+      embedding_dim: 2
+
+    obs_fusion_layer:
+      _target_: torch.nn.Linear
+      in_features: 770 # 768 + 2 = 770
+      out_features: ${..embed_dim}
+
+    action_encoder:
+      _target_: vima.nn.ActionEmbedding
+      output_dim: ${..embed_dim}
+      embed_dict:
+        pose0_position:
+          _target_: vima.nn.ContinuousActionEmbedding
+          output_dim: 256
+          input_dim: 2
+          hidden_dim: 256
+          hidden_depth: 1
+        pose1_position:
+          _target_: vima.nn.ContinuousActionEmbedding
+          output_dim: 256
+          input_dim: 2
+          hidden_dim: 256
+          hidden_depth: 1
+        pose0_rotation:
+          _target_: vima.nn.ContinuousActionEmbedding
+          output_dim: 256
+          input_dim: 4
+          hidden_dim: 256
+          hidden_depth: 1
+        pose1_rotation:
+          _target_: vima.nn.ContinuousActionEmbedding
+          output_dim: 256
+          input_dim: 4
+          hidden_dim: 256
+          hidden_depth: 1
+
+    action_decoder:
+      _target_: vima.nn.ActionDecoder
+      _convert_: all
+      input_dim: ${..embed_dim}
+      action_dims:
+        pose0_position: [50, 100]
+        pose1_position: [50, 100]
+        pose0_rotation: [50, 50, 50, 50]
+        pose1_rotation: [50, 50, 50, 50]
+      hidden_dim: 512
+      hidden_depth: 2
+      activation: "relu"
+      norm_type: null
+      last_layer_gain: 0.01
+
+    prompt_embedding:
+      _target_: vima.nn.WordEmbedding
+
+    prompt_encoder:
+      _target_: vima.nn.T5PromptEncoder
+
+    prompt_obj_post_layer:
+      _target_: vima.nn.build_mlp
+      input_dim: ${..embed_dim}
+      hidden_dim: ${.input_dim}
+      output_dim: ${.hidden_dim}
+      hidden_depth: 2

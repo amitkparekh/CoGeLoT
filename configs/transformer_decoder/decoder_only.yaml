@@ -1,0 +1,5 @@
+defaults:
+  - encoder_decoder.yaml
+  - _self_
+
+_target_: cogelot.nn.decoders.XTransformerDecoderOnly

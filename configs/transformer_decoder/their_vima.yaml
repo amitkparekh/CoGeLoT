@@ -1,13 +1,13 @@
 defaults:
-  - default.yaml
   - _self_
 
+# This is their implementation of their VIMA transformer decoder
 transformer_decoder:
   _target_: cogelot.nn.decoders.VIMATransformerDecoder
   vima_xattn_gpt:
     _target_: vima.nn.XAttnGPT
     # Hyperparams taken from Table9 in the paper
-    embd_dim: ${...embed_dim}
+    embd_dim: ${model.policy.embed_dim}
     n_layer: 11
     n_head: 24
     dropout: 0.1

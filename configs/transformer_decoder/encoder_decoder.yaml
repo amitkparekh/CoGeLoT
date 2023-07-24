@@ -1,0 +1,4 @@
+_target_: cogelot.nn.decoders.XTransformerEncoderDecoder
+max_seq_len: 512
+
+attn_layers: ???

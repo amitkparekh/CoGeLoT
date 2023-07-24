@@ -1,0 +1,4 @@
+use_abs_pos_emb: false
+
+attn_layers:
+  alibi_pos_bias: true
