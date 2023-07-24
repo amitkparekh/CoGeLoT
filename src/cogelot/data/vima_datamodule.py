@@ -21,7 +21,7 @@ class VIMADataModule(LightningDataModule):
         hf_datasets_repo_name: str,
         num_workers: int,
         batch_size: int,
-        dataloader_kwargs: dict[str, Any]
+        dataloader_kwargs: dict[str, Any] | None = None
     ) -> None:
         super().__init__()
         self._hf_datasets_repo_name = hf_datasets_repo_name
