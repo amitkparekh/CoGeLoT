@@ -1,9 +1,0 @@
-defaults:
-  - default.yaml
-  - gpu.yaml
-  - _self_
-
-strategy: ddp
-
-devices: 8
-num_nodes: 1

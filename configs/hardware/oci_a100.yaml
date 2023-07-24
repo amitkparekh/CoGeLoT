@@ -2,7 +2,7 @@
 
 # This is for when it is run on OCI with A100s
 defaults:
-  - override /trainer: ddp.yaml
+  - override /trainer: gpu.yaml
 
 datamodule:
   batch_size: 16
@@ -12,4 +12,6 @@ datamodule:
     prefetch_factor: 8
 
 trainer:
+  strategy: ddp
   devices: 8
+  num_nodes: 1
