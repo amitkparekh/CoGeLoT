@@ -3,4 +3,4 @@ from cogelot.nn.decoders.interfaces import (
     TransformerDecoderProtocol,
 )
 from cogelot.nn.decoders.vima import VIMATransformerDecoder
-from cogelot.nn.decoders.x_transformer import XTransformerDecoder
+from cogelot.nn.decoders.x_transformer import XTransformerDecoderOnly, XTransformerEncoderDecoder
