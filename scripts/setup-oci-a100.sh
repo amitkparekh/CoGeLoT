@@ -78,10 +78,10 @@ echo "$GITHUB_PAT" | gh auth login --with-token
 gh auth setup-git
 
 # Clone the repo
-gh repo clone amitkparekh/vima
+gh repo clone amitkparekh/CoGeLoT
 
 # cd into the repo
-cd VIMA || exit 1
+cd CoGeLoT || exit 1
 
 # Install python and deps
 pyenv install
