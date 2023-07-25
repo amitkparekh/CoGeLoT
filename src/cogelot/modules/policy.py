@@ -151,7 +151,11 @@ class Policy(torch.nn.Module):
             mask_tensor_for_prompt = torch.cat(
                 [
                     torch.cat(assembled_mask),
-                    torch.zeros(additional_padding_for_prompt, dtype=torch.bool),
+                    torch.zeros(
+                        additional_padding_for_prompt,
+                        dtype=torch.bool,
+                        device=assembled_prompt[0].device,
+                    ),
                 ],
                 dim=0,
             )
