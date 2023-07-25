@@ -85,8 +85,12 @@ class VIMALightningModule(pl.LightningModule):
         loss = self._compute_loss(predicted_actions, target_actions)
         self._update_accuracy(predicted_actions, target_actions)
 
-        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_accuracy(stage="train", prog_bar=True, logger=True, batch_size=len(batch))
+        self.log(
+            "train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_accuracy(
+            stage="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
 
         return loss
 
@@ -100,8 +104,12 @@ class VIMALightningModule(pl.LightningModule):
         loss = self._compute_loss(predicted_actions, target_actions)
         self._update_accuracy(predicted_actions, target_actions)
 
-        self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_accuracy(stage="val", prog_bar=True, logger=True, batch_size=len(batch))
+        self.log(
+            "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_accuracy(
+            stage="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
 
         return loss
 
