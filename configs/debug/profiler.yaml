@@ -1,12 +1,15 @@
 # @package _global_
-
-# Run an epoch with the profiler
-
 defaults:
   - default.yaml
+  - overfit_batches.yaml
+  - _self_
 
+# Run with the profiler
 trainer:
-  max_epochs: 1
-  profiler: "simple"
-  # profiler: "advanced"
+  # profiler: "simple"
+  profiler: "advanced"
   # profiler: "pytorch"
+
+  # Only put 3 batches through during profiling
+  max_epochs: 1
+  overfit_batches: 3

@@ -3,17 +3,27 @@ defaults:
   - default.yaml
   - _self_
 
+# Set the batch size to 2
+datamodule:
+  batch_size: 2
+
 # Overfit the model to 3 batches
 trainer:
-  max_epochs: 50
-  overfit_batches: 3
-
-  enable_checkpointing: false
+  max_epochs: 500
+  overfit_batches: 1
 
   # Also disable any checkpointing or early stopping
+  enable_checkpointing: false
   callbacks:
     - _target_: lightning.pytorch.callbacks.RichModelSummary
       max_depth: -1
     - _target_: lightning.pytorch.callbacks.RichProgressBar
     - _target_: lightning.pytorch.callbacks.LearningRateMonitor
       logging_interval: step
+
+model:
+  # Make the LRs similar so it drops faster
+  optimizer_partial_fn:
+    lr: 0.001
+  lr_scheduler_partial_fn:
+    lr_end: 0.0001
