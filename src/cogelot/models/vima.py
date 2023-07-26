@@ -17,7 +17,7 @@ from vima.nn.action_decoder.dists import MultiCategorical
 
 
 OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
-LRSchedulerPartialFn = Callable[[torch.optim.Optimizer], torch.optim.lr_scheduler.LRScheduler]
+LRSchedulerPartialFn = Callable[..., torch.optim.lr_scheduler.LRScheduler]
 
 _default_optimizer = torch.optim.Adam
 _default_lr_scheduler = partial(torch.optim.lr_scheduler.ConstantLR, factor=1)
@@ -115,8 +115,9 @@ class VIMALightningModule(pl.LightningModule):
 
     def configure_optimizers(self) -> Any:
         """Configure the optimizer and scheduler."""
+        num_steps = self.trainer.estimated_stepping_batches
         optimizer = self._optimizer_partial_fn(self.parameters())
-        scheduler = self._lr_scheduler_partial_fn(optimizer)
+        scheduler = self._lr_scheduler_partial_fn(optimizer, total_steps=num_steps)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
