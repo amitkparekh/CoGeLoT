@@ -44,7 +44,7 @@ model:
     weight_decay: 0
 
   lr_scheduler_partial_fn:
-    _target_: cogelot.training.lr_scheduler.get_cosine_schedule_with_warmup_and_lr_end
+    _target_: cogelot.training.lr_scheduler.get_cosine_schedule_with_ratio_warmup_and_lr_end
     _partial_: true
     warmup_ratio: 0.15
     annealing_ratio: 0.36
