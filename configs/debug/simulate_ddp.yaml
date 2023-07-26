@@ -4,5 +4,6 @@ defaults:
   - default.yaml
 
 trainer:
-  # Send 3 batches
-  fast_dev_run: 3
+  accelerator: cpu
+  devices: 2
+  strategy: ddp_spawn

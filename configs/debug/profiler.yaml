@@ -1,0 +1,12 @@
+# @package _global_
+
+# Run an epoch with the profiler
+
+defaults:
+  - default.yaml
+
+trainer:
+  max_epochs: 1
+  profiler: "simple"
+  # profiler: "advanced"
+  # profiler: "pytorch"

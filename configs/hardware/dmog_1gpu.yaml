@@ -1,0 +1,13 @@
+# @package _global_
+
+# For debugging on DMOG (HWU cluster) with A40s
+defaults:
+  - override /trainer: gpu.yaml
+
+datamodule:
+  batch_size: 16
+  num_workers: 2
+
+trainer:
+  devices: 1
+  num_nodes: 1

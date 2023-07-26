@@ -7,12 +7,14 @@ defaults:
   # The chosen policy will automatically be set to the model.policy
   - transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
 
-  # If you want to debug, then just run like `python train.py debug=default`
-  - debug: null
-
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
+
+  # Update with hardware-specific changes
   - hardware: local.yaml
+
+  # If you want to debug, then just run like `python train.py debug=default`
+  - debug: null
 
   # For experiments
   - experiment: null
@@ -22,9 +24,6 @@ task_name: "train"
 output_dir: ${hydra:runtime.output_dir}
 
 seed: 1000
-
-# For logging additional hyperparameters to wandb in the config
-wandb_config: null
 
 datamodule:
   _target_: cogelot.data.vima_datamodule.VIMADataModule
@@ -47,8 +46,8 @@ model:
   lr_scheduler_partial_fn:
     _target_: cogelot.training.lr_scheduler.get_cosine_schedule_with_warmup_and_lr_end
     _partial_: true
-    num_warmup_steps: 7000
-    num_training_steps: 24000
+    warmup_ratio: 0.15
+    annealing_ratio: 0.36
     # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
     lr_end: 1e-7
 

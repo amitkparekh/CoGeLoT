@@ -2,9 +2,6 @@
 
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
-
-wandb_config:
-  architecture: encoder_decoder
-  attn_layers: vima
-  positional_encoding: absolute
-  source: VIMA
+  - override /debug: overfit_batches.yaml
+  - override /hardware: dmog_2gpu.yaml
+  - override /trainer: gpu.yaml
