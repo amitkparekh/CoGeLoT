@@ -75,6 +75,7 @@ external = [
 	"WPS",
 	"WPS*",
 	"WPS110",
+	"WPS118",
 	"WPS210",
 	"WPS213",
 	"WPS221",
