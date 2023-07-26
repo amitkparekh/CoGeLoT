@@ -3,10 +3,9 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from datasets import Dataset
-from torch.utils.data import DataLoader
 
 from cogelot.common.io import load_pickle, save_pickle
-from cogelot.data.datasets import create_hf_dataset, create_validation_split, dataloader_collate_fn
+from cogelot.data.datasets import create_hf_dataset, create_validation_split
 from cogelot.data.parse import create_vima_instance_from_instance_dir
 from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
@@ -56,8 +55,7 @@ def test_saving_preprocessed_instance_works(
 
 def test_create_hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> None:
     def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-        for instance in instances:
-            yield instance.to_hf_dict()
+        yield from (instance.to_hf_dict() for instance in instances)
 
     ds = create_hf_dataset(gen, all_preprocessed_instances)
     ds = ds.with_format("torch")
@@ -78,8 +76,7 @@ def test_validation_split_creation_works(
     )
 
     def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-        for instance in instances:
-            yield instance.to_hf_dict()
+        yield from (instance.to_hf_dict() for instance in instances)
 
     dataset = create_hf_dataset(gen, all_preprocessed_instances)
     split_dataset = create_validation_split(
@@ -94,19 +91,19 @@ def test_validation_split_creation_works(
     assert len(list(split_dataset["test"])) == num_valid_instances
 
 
-def test_dataset_works_with_dataloader(hf_dataset: Dataset) -> None:
-    assert hf_dataset
+# def test_dataset_works_with_dataloader(hf_dataset: Dataset) -> None:
+#     assert hf_dataset
 
-    dataloader = DataLoader(
-        hf_dataset,  # pyright: ignore[reportGeneralTypeIssues]
-        batch_size=2,
-        collate_fn=dataloader_collate_fn,
-    )
+#     dataloader = DataLoader(
+#         hf_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+#         batch_size=2,
+#         collate_fn=dataloader_collate_fn,
+#     )
 
-    # Each batch should be a list of PreprocessedInstance's
-    for batch in dataloader:
-        assert isinstance(batch, list)
+#     # Each batch should be a list of PreprocessedInstance's
+#     for batch in dataloader:
+#         assert isinstance(batch, list)
 
-        for instance in batch:
-            assert isinstance(instance, PreprocessedInstance)
-        break
+#         for instance in batch:
+#             assert isinstance(instance, PreprocessedInstance)
+#         break

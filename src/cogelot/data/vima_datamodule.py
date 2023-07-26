@@ -1,11 +1,11 @@
 from typing import Any, Literal
 
 import datasets
-import torch
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
-from cogelot.data.datasets import dataloader_collate_fn, set_dataset_format
+from cogelot.data.collate import collate_preprocessed_instances
+from cogelot.data.datasets import set_dataset_format
 from cogelot.structures.model import PreprocessedInstance
 
 
@@ -59,7 +59,7 @@ class VIMADataModule(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self._num_workers,
             shuffle=True,
-            collate_fn=dataloader_collate_fn,
+            collate_fn=collate_preprocessed_instances,
             **self._dataloader_kwargs,
         )
 
@@ -70,16 +70,6 @@ class VIMADataModule(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self._num_workers,
             shuffle=False,
-            collate_fn=dataloader_collate_fn,
+            collate_fn=collate_preprocessed_instances,
             **self._dataloader_kwargs,
         )
-
-    def transfer_batch_to_device(
-        self,
-        batch: list[PreprocessedInstance],
-        device: torch.device,
-        dataloader_idx: int,  # noqa: ARG002
-    ) -> list[PreprocessedInstance]:
-        """Transfer all the tensors within a batch to the given device."""
-        batch = [instance.transfer_to_device(device) for instance in batch]
-        return batch

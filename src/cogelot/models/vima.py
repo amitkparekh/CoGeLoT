@@ -6,11 +6,8 @@ import torch
 from lightning import pytorch as pl
 
 from cogelot.modules.policy import Policy
-from cogelot.modules.preprocessors.their_instance_batcher import (
-    TheirInstanceBatcher,
-    collate_target_action_tokens,
-)
-from cogelot.structures.model import ModelInstance, PreprocessedInstance
+from cogelot.modules.preprocessors.their_instance_batcher import InstancePreprocessor
+from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
 from cogelot.training.metrics import create_pose_accuracy_metric
 from vima.nn.action_decoder.dists import MultiCategorical
@@ -38,7 +35,7 @@ class VIMALightningModule(pl.LightningModule):
         super().__init__()
 
         self.policy = policy
-        self.instance_batcher = TheirInstanceBatcher(self.policy)
+        self.instance_batcher = InstancePreprocessor(self.policy)
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
@@ -51,12 +48,10 @@ class VIMALightningModule(pl.LightningModule):
             ignore_index=self.ignore_target_index,
         )
 
-    def forward(
-        self, instances: list[PreprocessedInstance]
-    ) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, batch: PreprocessedBatch) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
         # Embed and batch the instances
-        prepared_batch: ModelInstance = self.instance_batcher(instances)
+        prepared_batch: ModelInstance = self.instance_batcher(batch)
 
         # Encode the prompt
         encoded_prompt = self.policy.encode_prompt(
@@ -76,11 +71,11 @@ class VIMALightningModule(pl.LightningModule):
         return predicted_actions_dists
 
     def training_step(
-        self, batch: list[PreprocessedInstance], batch_idx: int  # noqa: ARG002
+        self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a training step."""
         predicted_actions = self.forward(batch)
-        target_actions = collate_target_action_tokens(batch)
+        target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
         loss = self._compute_loss(predicted_actions, target_actions)
         self._update_accuracy(predicted_actions, target_actions)
@@ -95,11 +90,11 @@ class VIMALightningModule(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: list[PreprocessedInstance], batch_idx: int  # noqa: ARG002
+        self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
         predicted_actions = self.forward(batch)
-        target_actions = collate_target_action_tokens(batch)
+        target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
         loss = self._compute_loss(predicted_actions, target_actions)
         self._update_accuracy(predicted_actions, target_actions)
@@ -171,11 +166,8 @@ class VIMALightningModule(pl.LightningModule):
             for pose_action_type, action_distribution in predicted_actions.items()
         }
         # Targets need to be reshaped to be batch first
-        target_action_tokens: dict[str, torch.Tensor] = {
-            pose_action_type: target_pose.transpose(0, 1)
-            for pose_action_type, target_pose in target_actions.items()
-        }
-        self._accuracy.update(predicted_action_tokens, target_action_tokens)
+        # target_action_tokens: dict[str, torch.Tensor] = dict(target_actions.items())
+        self._accuracy.update(predicted_action_tokens, target_actions)
 
     def _log_accuracy(
         self, *, stage: Literal["train", "val", "test"], **log_dict_kwargs: Any

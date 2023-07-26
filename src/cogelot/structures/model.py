@@ -70,6 +70,19 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
         )
 
 
+class PreprocessedBatch(NamedTuple):
+    """Preprocessed Batch that will get made by the collate fn."""
+
+    task: list[Task]
+
+    raw_prompts_token_type: RawPromptTokenType
+    word_batch: torch.Tensor
+    image_batch: DataDict
+
+    observations: DataDict
+    actions: DataDict
+
+
 class ModelInstance(NamedTuple):
     """Instance directly given to the model."""
 

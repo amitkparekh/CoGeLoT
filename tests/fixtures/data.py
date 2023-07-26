@@ -65,8 +65,8 @@ def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datase
         itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
     )
 
-    def gen(instances) -> Iterator[dict[str, Any]]:
-        generator = (instance.to_hf_dict() for instance in instances)
+    def gen(preprocessed_instances) -> Iterator[dict[str, Any]]:
+        generator = (instance.to_hf_dict() for instance in preprocessed_instances)
         yield from generator
 
     dataset = create_hf_dataset(gen, all_preprocessed_instances)

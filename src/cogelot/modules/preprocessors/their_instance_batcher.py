@@ -5,7 +5,12 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from cogelot.modules.policy import Policy
-from cogelot.structures.model import ModelInstance, PreprocessedInstance, RawPromptTokenType
+from cogelot.structures.model import (
+    ModelInstance,
+    PreprocessedBatch,
+    PreprocessedInstance,
+    RawPromptTokenType,
+)
 from cogelot.structures.vima import PoseActionType
 from vima.utils import DataDict
 
@@ -52,6 +57,31 @@ def stitch_observations_with_actions(
     stitched = torch.cat(zip_list, dim=0)
 
     return stitched
+
+
+class InstancePreprocessor(torch.nn.Module):
+    """Embed and prepare batches of instances."""
+
+    def __init__(self, policy: Policy) -> None:
+        super().__init__()
+        self.policy = policy
+
+    def forward(self, batch: PreprocessedBatch) -> ModelInstance:  # noqa: WPS210
+        """Prepare a batch of instances."""
+        embedded_prompt, embedded_prompt_mask = self.policy.assemble_prompt(
+            (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
+        )
+        embedded_observations, embedded_observations_mask = self.policy.embed_observation_token(
+            batch.observations
+        )
+        embedded_actions = self.policy.embed_action_token(batch.actions)
+        return ModelInstance(
+            embedded_prompt=embedded_prompt,
+            embedded_prompt_mask=embedded_prompt_mask,
+            embedded_observations=embedded_observations,
+            embedded_observations_mask=embedded_observations_mask,
+            embedded_actions=embedded_actions,
+        )
 
 
 class TheirInstanceBatcher(torch.nn.Module):

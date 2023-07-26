@@ -1,3 +1,4 @@
+from operator import itemgetter
 from typing import ClassVar, cast
 
 import torch
@@ -94,75 +95,89 @@ class Policy(torch.nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Assemble and embed the prompt.
 
-        Taken from vima.policy.VIMAPolicy. Refactored with ChatGPT to be more efficient and
-        readable.
+        Taken from vima.policy.VIMAPolicy. Refactored with to work with batched prompts.
         """
+        device = prompts[1].device
+
         raw_prompts_token_type, word_batch, image_batch = prompts
         batch_word_emb = self._prompt_embedding(word_batch)
         batch_image_emb = self._obj_encoder(**image_batch)
         batch_image_emb = self._prompt_obj_post_layer(batch_image_emb)
 
-        max_num_objs: int = batch_image_emb.shape[-2]
-        max_prompt_length = get_max_length_of_prompt(raw_prompts_token_type, max_num_objs)
-
         prompt_tokens: list[torch.Tensor] = []
         prompt_masks: list[torch.Tensor] = []
-        word_idx, img_idx = 0, 0
 
-        for raw_prompt_tokens in raw_prompts_token_type:
-            assembled_prompt: list[torch.Tensor] = []
-            assembled_mask: list[torch.Tensor] = []
+        for batch_idx, raw_prompt_tokens in enumerate(raw_prompts_token_type):
+            word_positions: list[int] = (
+                torch.tensor(raw_prompt_tokens).eq(0).nonzero().flatten().tolist()
+            )
+            num_words = len(word_positions)
+            word_embedded_per_position = batch_word_emb[batch_idx, :num_words]
+            word_embedding_with_positions: list[tuple[int, torch.Tensor]] = list(
+                zip(word_positions, word_embedded_per_position.split(1), strict=True)
+            )
+            word_masks_with_positions: list[tuple[int, torch.Tensor]] = list(
+                zip(
+                    word_positions,
+                    torch.ones(len(word_positions), dtype=torch.bool, device=device).split(1),
+                    strict=True,
+                )
+            )
 
-            for raw_prompt_token in raw_prompt_tokens:
-                # If 0, means that the token is a word
-                if raw_prompt_token == 0:
-                    embedded_token: torch.Tensor = batch_word_emb[word_idx]
-                    assembled_prompt.append(embedded_token)
-                    assembled_mask.append(
-                        torch.ones(1, dtype=torch.bool, device=embedded_token.device)
+            image_positions: list[int] = (
+                torch.tensor(raw_prompt_tokens, device=device).eq(1).nonzero().flatten().tolist()
+            )
+            num_images = len(image_positions)
+            embedded_images = batch_image_emb[batch_idx, :num_images]
+
+            image_embedding_with_positions: list[tuple[int, torch.Tensor]] = list(
+                zip(
+                    image_positions,
+                    embedded_images.reshape(-1, self.embed_dim).chunk(num_images),
+                    strict=True,
+                )
+            )
+
+            image_mask_with_positions = list(
+                zip(
+                    image_positions,
+                    torch.cat(
+                        list(map(itemgetter(1), sorted(image_batch[batch_idx]["mask"].items()))),
+                        dim=-1,
+                    )[:num_images]
+                    .reshape(-1)
+                    .chunk(num_images),
+                    strict=True,
+                )
+            )
+
+            # Merge the two lists together, and sort them by position, and just get the embeddings
+            # (removing the index)
+            assembled_prompt = torch.cat(
+                list(
+                    map(
+                        itemgetter(1),
+                        sorted([*word_embedding_with_positions, *image_embedding_with_positions]),
                     )
-                    word_idx += 1
-
-                # If 1, means that the token is an image
-                if raw_prompt_token == 1:
-                    obj_masks = [
-                        image_batch["mask"][view][  # pyright: ignore[reportGeneralTypeIssues]
-                            img_idx
-                        ].flatten()
-                        for view in sorted(self._views)
-                    ]
-                    obj_embeddings = batch_image_emb[img_idx][:max_num_objs]
-                    assembled_prompt.extend(obj_embeddings)
-                    assembled_mask.extend(obj_masks[:max_num_objs])
-                    img_idx += 1
-
-            additional_padding_for_prompt = max_prompt_length - len(assembled_prompt)
-
-            padding = torch.zeros(
-                size=(additional_padding_for_prompt, assembled_prompt[0].shape[0]),
-                dtype=torch.float32,
-                device=assembled_prompt[0].device,
-            )
-            token_tensor_for_prompt = torch.cat(
-                tensors=[torch.stack(assembled_prompt), padding], dim=0
-            )
-            prompt_tokens.append(token_tensor_for_prompt)
-
-            mask_tensor_for_prompt = torch.cat(
-                [
-                    torch.cat(assembled_mask),
-                    torch.zeros(
-                        additional_padding_for_prompt,
-                        dtype=torch.bool,
-                        device=assembled_prompt[0].device,
-                    ),
-                ],
+                ),
                 dim=0,
             )
-            prompt_masks.append(mask_tensor_for_prompt)
 
-        prompt_tokens_tensor = torch.stack(prompt_tokens, dim=0)
-        prompt_masks_tensor = torch.stack(prompt_masks, dim=0)
+            assembled_mask = torch.cat(
+                list(
+                    map(
+                        itemgetter(1),
+                        sorted([*word_masks_with_positions, *image_mask_with_positions]),
+                    )
+                ),
+                dim=0,
+            )
+
+            prompt_tokens.append(assembled_prompt)
+            prompt_masks.append(assembled_mask)
+
+        prompt_tokens_tensor = torch.nn.utils.rnn.pad_sequence(prompt_tokens, batch_first=True)
+        prompt_masks_tensor = torch.nn.utils.rnn.pad_sequence(prompt_masks, batch_first=True)
         return prompt_tokens_tensor, prompt_masks_tensor
 
     def embed_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
@@ -176,7 +191,7 @@ class Policy(torch.nn.Module):
 
         # Get the features for each image/obj/obs
         obs_objects = obs_objects.map_structure(
-            func=lambda x: x.reshape(-1, *x.shape[2:]),
+            func=lambda x: x.reshape(-1, *x.shape[3:]),
         )
         # I know the type from manual inspection
         obs_objects = cast(dict[str, dict[str, torch.Tensor]], obs_objects)
@@ -185,7 +200,7 @@ class Policy(torch.nn.Module):
 
         # Get EE features
         ee_feats: torch.Tensor = self._end_effector_encoder(ee)
-        ee_feats = ee_feats.unsqueeze(2).repeat(1, 1, img_feats.shape[-2], 1)  # noqa: WPS221
+        ee_feats = ee_feats.repeat(1, 1, img_feats.shape[-2], 1)  # noqa: WPS221
 
         # Create obs features
         obs_feats: torch.Tensor = self._obs_fusion_layer(torch.cat([img_feats, ee_feats], dim=-1))

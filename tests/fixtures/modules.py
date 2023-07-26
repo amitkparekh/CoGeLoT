@@ -2,6 +2,7 @@ from pytest_cases import fixture
 
 from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.models.vima import VIMALightningModule
+from cogelot.modules.policy import Policy
 from cogelot.modules.preprocessors.their_instance_batcher import TheirInstanceBatcher
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
@@ -12,6 +13,7 @@ from cogelot.modules.tokenizers import (
     PoseActionTokenizer,
     TextTokenizer,
 )
+from cogelot.nn.decoders.vima import VIMATransformerDecoder
 from cogelot.structures.common import View
 from vima.policy import VIMAPolicy
 
@@ -86,15 +88,27 @@ def instance_preprocessor(
 
 
 @fixture(scope="session")
-def vima_policy() -> VIMAPolicy:
-    return VIMAPolicy(embed_dim=768, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
+def vima_policy() -> Policy:
+    vima = VIMAPolicy(embed_dim=768, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
+    return Policy(
+        embed_dim=vima.embed_dim,
+        obj_encoder=vima.obj_encoder,
+        end_effector_encoder=vima.end_effector_encoder,
+        obs_fusion_layer=vima.obs_fusion_layer,
+        action_encoder=vima.action_encoder,
+        action_decoder=vima.action_decoder,
+        prompt_embedding=vima.prompt_embedding,
+        prompt_encoder=vima.t5_prompt_encoder,
+        prompt_obj_post_layer=vima.prompt_obj_post_layer,
+        transformer_decoder=VIMATransformerDecoder(vima.xattn_gpt),
+    )
 
 
 @fixture(scope="session")
-def their_instance_batcher(vima_policy: VIMAPolicy) -> TheirInstanceBatcher:
-    return TheirInstanceBatcher(vima_policy=vima_policy)
+def their_instance_batcher(vima_policy: Policy) -> TheirInstanceBatcher:
+    return TheirInstanceBatcher(policy=vima_policy)
 
 
 @fixture(scope="session")
-def vima_lightning_module(vima_policy: VIMAPolicy) -> VIMALightningModule:
-    return VIMALightningModule(vima_policy=vima_policy)
+def vima_lightning_module(vima_policy: Policy) -> VIMALightningModule:
+    return VIMALightningModule(policy=vima_policy)

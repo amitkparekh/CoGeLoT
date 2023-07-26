@@ -150,12 +150,3 @@ def create_validation_split(
     )
     dataset_dict = set_dataset_format(dataset_dict)
     return dataset_dict
-
-
-def dataloader_collate_fn(batch: list[dict[str, Any]]) -> list[PreprocessedInstance]:
-    """Collate function for dataloader.
-
-    For a list of instances from the HF dataset, we want to convert back to a
-    list[PreprocessedInstance] because we need the DataDict's for modelling.
-    """
-    return list(map(PreprocessedInstance.from_hf_dict, batch))
