@@ -118,6 +118,16 @@ class VIMALightningModule(pl.LightningModule):
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
         }
 
+    def on_train_epoch_end(self) -> None:
+        """Reset the accuracy metric at the end of the epoch."""
+        self._accuracy.reset()
+        return super().on_train_epoch_end()
+
+    def on_validation_epoch_end(self) -> None:
+        """Reset the accuracy metric at the end of the epoch."""
+        self._accuracy.reset()
+        return super().on_validation_epoch_end()
+
     def _compute_loss(
         self,
         predicted_actions: dict[PoseActionType, MultiCategorical],
