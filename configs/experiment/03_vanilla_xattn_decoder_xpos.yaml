@@ -6,8 +6,7 @@ defaults:
       - attn_layers/default.yaml
       - positional/xpos.yaml
 
-wandb_config:
-  architecture: encoder_decoder
-  attn_layers: default
-  positional_encoding: xpos
-  source: x-transformers
+architecture: encoder_decoder
+attn_layers: default
+positional_encoding: xpos
+source: x-transformers

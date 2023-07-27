@@ -1,8 +1,0 @@
-# @package _global_
-
-# Limit the number of batches to just 10 for training and 5 for validation
-
-trainer:
-  max_epochs: 3
-  limit_train_batches: 10
-  limit_val_batches: 5

@@ -6,8 +6,7 @@ defaults:
       - attn_layers/default.yaml
       - positional/alibi.yaml
 
-wandb_config:
-  architecture: decoder_only
-  attn_layers: default
-  positional_encoding: alibi
-  source: x-transformers
+architecture: decoder_only
+attn_layers: default
+positional_encoding: alibi
+source: x-transformers

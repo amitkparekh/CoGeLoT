@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
-  - override /debug: overfit_batches.yaml
-  - override /hardware: dmog_2gpu.yaml
-  - override /trainer: gpu.yaml

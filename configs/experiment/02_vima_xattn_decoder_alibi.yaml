@@ -6,8 +6,7 @@ defaults:
       - attn_layers/vima.yaml
       - positional/alibi.yaml
 
-wandb_config:
-  architecture: encoder_decoder
-  attn_layers: vima
-  positional_encoding: alibi
-  source: x-transformers
+architecture: encoder_decoder
+attn_layers: vima
+positional_encoding: alibi
+source: x-transformers

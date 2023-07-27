@@ -3,7 +3,6 @@
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
 
-# Additional hyperparameters
 architecture: encoder_decoder
 attn_layers: vima
 positional_encoding: absolute

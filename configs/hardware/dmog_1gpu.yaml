@@ -6,7 +6,7 @@ defaults:
 
 datamodule:
   batch_size: 16
-  num_workers: 2
+  num_workers: 10
 
 trainer:
   devices: 1

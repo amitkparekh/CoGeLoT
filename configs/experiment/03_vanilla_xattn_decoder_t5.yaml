@@ -6,8 +6,7 @@ defaults:
       - attn_layers/default.yaml
       - positional/t5.yaml
 
-wandb_config:
-  architecture: encoder_decoder
-  attn_layers: default
-  positional_encoding: t5
-  source: x-transformers
+architecture: encoder_decoder
+attn_layers: default
+positional_encoding: t5
+source: x-transformers
