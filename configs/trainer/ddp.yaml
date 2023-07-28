@@ -1,0 +1,7 @@
+defaults:
+  - default.yaml
+  - gpu.yaml
+  - _self_
+
+strategy: ddp
+sync_batchnorm: True
