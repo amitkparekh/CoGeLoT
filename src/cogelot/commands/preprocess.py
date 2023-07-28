@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 import hydra
 import typer
-from datasets import load_from_disk
+from datasets import DatasetDict, load_from_disk
 from loguru import logger
 from omegaconf import DictConfig
 from pydantic import BaseSettings
@@ -262,7 +262,7 @@ def convert_to_hf_dataset(
     writer_batch_size: int = typer.Option(
         default=1000, help="Writer batch size when creating the split."
     ),
-    max_shard_size: str = typer.Option("1GB", help="Maximum shard size for the dataset."),
+    max_shard_size: str = typer.Option("2GB", help="Maximum shard size for the dataset."),
 ) -> None:
     """Create a HuggingFace dataset from the preprocessed instances."""
     hf_dataset = create_hf_dataset(
@@ -286,12 +286,26 @@ def upload_to_hub(
     hf_dataset_dir: Path = typer.Argument(
         settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASET_DIR"
     ),
-    repo_id: str = typer.Option(..., help="Repository ID."),
-    max_shard_size: str = typer.Option("1GB", help="Maximum shard size for the dataset."),
+    repo_id: str = typer.Option("amitkparekh/vima", help="Repository ID."),
+    max_shard_size: str = typer.Option("2GB", help="Maximum shard size for the dataset."),
+    debug_dataset_size: int = typer.Option(
+        default=100, help="Num. instances in the debug dataset."
+    ),
 ) -> None:
     """Upload the dataset to the HuggingFace Hub."""
     dataset = load_from_disk(str(hf_dataset_dir.resolve()))
     dataset.push_to_hub(repo_id, max_shard_size=max_shard_size)
+
+    # Also upload a small version of the dataset for debugging
+    assert isinstance(dataset, DatasetDict)
+    small_dataset = DatasetDict(
+        {split: dataset[split].select(range(debug_dataset_size)) for split in dataset}
+    )
+    small_dataset.push_to_hub(
+        f"{repo_id}",
+        branch="debug",
+        max_shard_size=max_shard_size,
+    )
 
 
 if __name__ == "__main__":

@@ -8,10 +8,6 @@
 #SBATCH --output=job.%J.out
 #SBATCH -p nodes
 
-# Activate environment
-flight env activate conda@cogelot
-cd ./develop/VIMA || exit
-
 # Run the commands
 poetry run python src/cogelot/commands/preprocess.py normalize --num-workers 90
 poetry run python src/cogelot/commands/preprocess.py preprocess --num-workers 30

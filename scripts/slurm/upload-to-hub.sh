@@ -7,8 +7,5 @@
 #SBATCH --error=job.%J.err
 #SBATCH --output=job.%J.out
 
-# Activate environment
-flight env activate conda@cogelot
-
 # Run the commands
-poetry run python src/cogelot/commands/preprocess.py upload-to-hub ./storage/data/hf2 --repo-id amitkparekh/vima
+poetry run python src/cogelot/commands/preprocess.py upload-to-hub ./storage/data/hf --repo-id amitkparekh/vima
