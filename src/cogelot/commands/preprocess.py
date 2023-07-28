@@ -301,11 +301,7 @@ def upload_to_hub(
     small_dataset = DatasetDict(
         {split: dataset[split].select(range(debug_dataset_size)) for split in dataset}
     )
-    small_dataset.push_to_hub(
-        f"{repo_id}",
-        branch="debug",
-        max_shard_size=max_shard_size,
-    )
+    small_dataset.push_to_hub(f"{repo_id}-small", max_shard_size=max_shard_size)
 
 
 if __name__ == "__main__":
