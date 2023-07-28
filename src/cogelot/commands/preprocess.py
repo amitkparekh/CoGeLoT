@@ -262,6 +262,7 @@ def convert_to_hf_dataset(
     writer_batch_size: int = typer.Option(
         default=1000, help="Writer batch size when creating the split."
     ),
+    max_shard_size: str = typer.Option("1GB", help="Maximum shard size for the dataset."),
 ) -> None:
     """Create a HuggingFace dataset from the preprocessed instances."""
     hf_dataset = create_hf_dataset(
@@ -277,7 +278,7 @@ def convert_to_hf_dataset(
         seed=seed,
         writer_batch_size=writer_batch_size,
     )
-    split_dataset.save_to_disk(hf_dataset_dir, num_proc=num_workers)
+    split_dataset.save_to_disk(hf_dataset_dir, num_proc=num_workers, max_shard_size=max_shard_size)
 
 
 @app.command(name="upload-to-hub")
@@ -286,10 +287,11 @@ def upload_to_hub(
         settings.hf_dataset_dir, help="Output directory.", envvar="HF_DATASET_DIR"
     ),
     repo_id: str = typer.Option(..., help="Repository ID."),
+    max_shard_size: str = typer.Option("1GB", help="Maximum shard size for the dataset."),
 ) -> None:
     """Upload the dataset to the HuggingFace Hub."""
     dataset = load_from_disk(str(hf_dataset_dir.resolve()))
-    dataset.push_to_hub(repo_id)
+    dataset.push_to_hub(repo_id, max_shard_size=max_shard_size)
 
 
 if __name__ == "__main__":
