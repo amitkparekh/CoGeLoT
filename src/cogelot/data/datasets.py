@@ -195,7 +195,7 @@ def load_dataset_from_parquet_files(
     data_dir: Path, *, num_proc: int | None = None
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
-    all_parquet_files = data_dir.glob("*.parquet")
+    all_parquet_files = data_dir.rglob("*.parquet")
     # We need to provide the absolute path to the parquet files
     resolved_paths = [str(path.resolve(strict=True)) for path in all_parquet_files]
     dataset_dict = datasets.load_dataset("parquet", data_files=resolved_paths, num_proc=num_proc)
