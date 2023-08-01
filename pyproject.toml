@@ -266,6 +266,7 @@ max-local-variables = 10
 max-function-expressions = 10
 max-module-expressions = 20
 max-annotation-complexity = 4
+max-name-length = 50
 min-name-length = 1
 max-methods = 9
 max-string-usages = 10
