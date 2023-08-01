@@ -7,7 +7,7 @@ from torch.utils.data import default_collate
 from cogelot.modules.tokenizers import EndEffectorTokenizer, TextTokenizer
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.structures.common import ImageType, Observation, View
-from cogelot.structures.model import PreprocessedInstance
+from cogelot.structures.model import PreprocessedInstance, RawPromptTokenType
 from cogelot.structures.vima import PoseAction, VIMAInstance
 from vima.prepare_obs import ObsDict, prepare_obs
 from vima.prepare_prompt import prepare_prompt
@@ -92,7 +92,7 @@ class InstancePreprocessor:
         prompt: str,
         prompt_assets: dict[str, dict[str, Any]],
         object_ids_from_prompt_assets: set[int],
-    ) -> tuple[list[list[int]], torch.Tensor, DataDict]:
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
         """Prepare the prompt for the model.
 
         Just take what VIMA does. This does not do any encoding, so it doesn't update any of the
@@ -106,7 +106,7 @@ class InstancePreprocessor:
             placeholders=list(self.text_tokenizer.all_placeholders),
             all_object_ids=object_ids_from_prompt_assets,
         )
-        return prepared_prompt
+        return cast(tuple[RawPromptTokenType, torch.Tensor, DataDict], prepared_prompt)
 
     def prepare_observations(
         self, observations: list[Observation], object_ids: set[int], end_effector: str

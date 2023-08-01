@@ -1,3 +1,5 @@
+"""Handling HF Datasets."""
+
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -9,14 +11,14 @@ from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import SortedTaskList
 
 
-Task = datasets.ClassLabel(names=cast(list[str], SortedTaskList))
-Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
-CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
-Mask = datasets.Value("bool")
-PosePosition = datasets.Sequence(id="pose_position", length=2, feature=datasets.Value("int32"))
-PoseRotation = datasets.Sequence(id="pose_rotation", length=4, feature=datasets.Value("int32"))
-RawPromptsTokenType = datasets.Sequence(datasets.Value("int8"))
-WordTokens = datasets.Sequence(id="tokens", feature=datasets.Value("int64"))
+_Task = datasets.ClassLabel(names=cast(list[str], SortedTaskList))
+_Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
+_CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
+_Mask = datasets.Value("bool")
+_PosePosition = datasets.Sequence(id="pose_position", length=2, feature=datasets.Value("int32"))
+_PoseRotation = datasets.Sequence(id="pose_rotation", length=4, feature=datasets.Value("int32"))
+_RawPromptsTokenType = datasets.Sequence(datasets.Value("int8"))
+_WordTokens = datasets.Sequence(id="tokens", feature=datasets.Value("int64"))
 
 
 def _wrap_feature_in_batch_sequence(feature: Any, *, length: int = 1) -> datasets.Sequence:
@@ -43,45 +45,45 @@ def _observation_feature_wrapper(feature: Any) -> datasets.Sequence:
 
 Features = datasets.Features(
     {
-        "task": Task,
-        "raw_prompts_token_type": _wrap_feature_in_batch_sequence(RawPromptsTokenType),
-        "word_batch": WordTokens,
+        "task": _Task,
+        "raw_prompts_token_type": _wrap_feature_in_batch_sequence(_RawPromptsTokenType),
+        "word_batch": _WordTokens,
         "image_batch": {
             "bbox": {
-                "front": _image_batch_feature_wrapper(Bbox),
-                "top": _image_batch_feature_wrapper(Bbox),
+                "front": _image_batch_feature_wrapper(_Bbox),
+                "top": _image_batch_feature_wrapper(_Bbox),
             },
             "cropped_img": {
-                "front": _image_batch_feature_wrapper(CroppedImg),
-                "top": _image_batch_feature_wrapper(CroppedImg),
+                "front": _image_batch_feature_wrapper(_CroppedImg),
+                "top": _image_batch_feature_wrapper(_CroppedImg),
             },
             "mask": {
-                "front": _image_batch_feature_wrapper(Mask),
-                "top": _image_batch_feature_wrapper(Mask),
+                "front": _image_batch_feature_wrapper(_Mask),
+                "top": _image_batch_feature_wrapper(_Mask),
             },
         },
         "observations": {
             "ee": datasets.Sequence(datasets.Sequence(datasets.Value("int8"))),
             "objects": {
                 "bbox": {
-                    "front": _observation_feature_wrapper(Bbox),
-                    "top": _observation_feature_wrapper(Bbox),
+                    "front": _observation_feature_wrapper(_Bbox),
+                    "top": _observation_feature_wrapper(_Bbox),
                 },
                 "cropped_img": {
-                    "front": _observation_feature_wrapper(CroppedImg),
-                    "top": _observation_feature_wrapper(CroppedImg),
+                    "front": _observation_feature_wrapper(_CroppedImg),
+                    "top": _observation_feature_wrapper(_CroppedImg),
                 },
                 "mask": {
-                    "front": _observation_feature_wrapper(Mask),
-                    "top": _observation_feature_wrapper(Mask),
+                    "front": _observation_feature_wrapper(_Mask),
+                    "top": _observation_feature_wrapper(_Mask),
                 },
             },
         },
         "actions": {
-            "pose0_position": _wrap_feature_in_observation_sequence(PosePosition),
-            "pose1_position": _wrap_feature_in_observation_sequence(PosePosition),
-            "pose0_rotation": _wrap_feature_in_observation_sequence(PoseRotation),
-            "pose1_rotation": _wrap_feature_in_observation_sequence(PoseRotation),
+            "pose0_position": _wrap_feature_in_observation_sequence(_PosePosition),
+            "pose1_position": _wrap_feature_in_observation_sequence(_PosePosition),
+            "pose0_rotation": _wrap_feature_in_observation_sequence(_PoseRotation),
+            "pose1_rotation": _wrap_feature_in_observation_sequence(_PoseRotation),
         },
     }
 )
