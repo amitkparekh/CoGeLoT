@@ -32,7 +32,7 @@ class VIMADataModule(LightningDataModule):
     ) -> None:
         super().__init__()
         self._hf_datasets_repo_name = hf_datasets_repo_name
-        self._dataset_data_dir = dataset_data_dir.joinpath(
+        self._dataset_data_dir = Path(dataset_data_dir).joinpath(
             self._hf_datasets_repo_name.replace("/", "__")
         )
 
