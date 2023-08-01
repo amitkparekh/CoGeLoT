@@ -1,10 +1,10 @@
-"""Handling HF Datasets."""
-
+import os
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
 import datasets
+from datasets.distributed import split_dataset_by_node
 
 from cogelot.common.io import load_pickle
 from cogelot.structures.model import PreprocessedInstance
@@ -152,3 +152,20 @@ def create_validation_split(
     )
     dataset_dict = set_dataset_format(dataset_dict)
     return dataset_dict
+
+
+S = TypeVar("S", datasets.Dataset, datasets.IterableDataset)
+
+
+def maybe_split_dataset_by_node(dataset: S) -> S:
+    """Maybe split the dataset per node, if that's a thing that needs doing.
+
+    If not, do nothing.
+    """
+    current_rank = os.environ.get("RANK", None)
+    world_size = os.environ.get("WORLD_SIZE", None)
+
+    if current_rank is None or world_size is None:
+        return dataset
+
+    return split_dataset_by_node(dataset, rank=int(current_rank), world_size=int(world_size))
