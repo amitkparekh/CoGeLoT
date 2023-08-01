@@ -3,5 +3,5 @@ defaults:
   - gpu.yaml
   - _self_
 
-strategy: ddp
+strategy: ddp_find_unused_parameters_true
 sync_batchnorm: True
