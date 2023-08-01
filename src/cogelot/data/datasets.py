@@ -183,6 +183,7 @@ def download_parquet_files_from_hub(
     """
     snapshot_download(
         repo_id,
+        repo_type="dataset",
         local_dir=output_dir,
         local_dir_use_symlinks=True,
         allow_patterns="*.parquet",
