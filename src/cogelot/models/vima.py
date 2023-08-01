@@ -6,7 +6,6 @@ import torch
 from lightning import pytorch as pl
 
 from cogelot.modules.policy import Policy
-from cogelot.modules.preprocessors.their_instance_batcher import InstancePreprocessor
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
 from cogelot.training.metrics import create_pose_accuracy_metric
@@ -35,7 +34,6 @@ class VIMALightningModule(pl.LightningModule):
         super().__init__()
 
         self.policy = policy
-        self.instance_batcher = InstancePreprocessor(self.policy)
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
@@ -51,7 +49,7 @@ class VIMALightningModule(pl.LightningModule):
     def forward(self, batch: PreprocessedBatch) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
         # Embed and batch the instances
-        prepared_batch: ModelInstance = self.instance_batcher(batch)
+        prepared_batch: ModelInstance = self._embed_inputs(batch)
 
         # Encode the prompt
         encoded_prompt = self.policy.encode_prompt(
@@ -175,9 +173,9 @@ class VIMALightningModule(pl.LightningModule):
             pose_action_type: action_distribution.mode()
             for pose_action_type, action_distribution in predicted_actions.items()
         }
-        # Targets need to be reshaped to be batch first
-        # target_action_tokens: dict[str, torch.Tensor] = dict(target_actions.items())
-        self._accuracy.update(predicted_action_tokens, target_actions)
+        self._accuracy.update(
+            predicted_action_tokens, cast(dict[str, torch.Tensor], target_actions)
+        )
 
     def _log_accuracy(
         self, *, stage: Literal["train", "val", "test"], **log_dict_kwargs: Any
@@ -187,3 +185,20 @@ class VIMALightningModule(pl.LightningModule):
             f"{stage}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
         }
         self.log_dict(computed_acc, **log_dict_kwargs)
+
+    def _embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
+        """Embed a batch of instances and convert to the ModelInstance."""
+        embedded_prompt, embedded_prompt_mask = self.policy.assemble_prompt(
+            (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
+        )
+        embedded_observations, embedded_observations_mask = self.policy.embed_observation_token(
+            batch.observations
+        )
+        embedded_actions = self.policy.embed_action_token(batch.actions)
+        return ModelInstance(
+            embedded_prompt=embedded_prompt,
+            embedded_prompt_mask=embedded_prompt_mask,
+            embedded_observations=embedded_observations,
+            embedded_observations_mask=embedded_observations_mask,
+            embedded_actions=embedded_actions,
+        )
