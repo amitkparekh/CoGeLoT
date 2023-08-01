@@ -5,6 +5,7 @@ from typing import Any, TypeVar, cast
 
 import datasets
 from datasets.distributed import split_dataset_by_node
+from huggingface_hub import snapshot_download
 
 from cogelot.common.io import load_pickle
 from cogelot.structures.model import PreprocessedInstance
@@ -154,10 +155,10 @@ def create_validation_split(
     return dataset_dict
 
 
-S = TypeVar("S", datasets.Dataset, datasets.IterableDataset)
+U = TypeVar("U", datasets.Dataset, datasets.IterableDataset)
 
 
-def maybe_split_dataset_by_node(dataset: S) -> S:
+def maybe_split_dataset_by_node(dataset: U) -> U:
     """Maybe split the dataset per node, if that's a thing that needs doing.
 
     If not, do nothing.
@@ -169,3 +170,33 @@ def maybe_split_dataset_by_node(dataset: S) -> S:
         return dataset
 
     return split_dataset_by_node(dataset, rank=int(current_rank), world_size=int(world_size))
+
+
+def download_parquet_files_from_hub(
+    repo_id: str, output_dir: Path, *, max_workers: int = 8
+) -> None:
+    """Download the parquet data files from the dataset on the hub.
+
+    This is faster than using `datasets.load_dataset`. `datasets.load_dataset` doesn't download as
+    fast as it could do. Even if we are not being rate limited, it is only downloading one SPLIT at
+    a time. Not one file, not one shard, but per split.
+    """
+    snapshot_download(
+        repo_id,
+        local_dir=output_dir,
+        local_dir_use_symlinks=True,
+        allow_patterns="*.parquet",
+        max_workers=max_workers,
+    )
+
+
+def load_dataset_from_parquet_files(
+    data_dir: Path, *, num_proc: int | None = None
+) -> datasets.DatasetDict:
+    """Load the dataset from the parquet files."""
+    all_parquet_files = data_dir.glob("*.parquet")
+    # We need to provide the absolute path to the parquet files
+    resolved_paths = [str(path.resolve(strict=True)) for path in all_parquet_files]
+    dataset_dict = datasets.load_dataset("parquet", data_files=resolved_paths, num_proc=num_proc)
+    assert isinstance(dataset_dict, datasets.DatasetDict)
+    return dataset_dict
