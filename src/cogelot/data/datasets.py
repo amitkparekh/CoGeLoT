@@ -199,11 +199,19 @@ def load_dataset_from_parquet_files(
     data_dir: Path, *, num_proc: int | None = None
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
-    all_parquet_files = data_dir.rglob("*.parquet")
+    # Get the parquet files per split
+    train_parquet_files = data_dir.rglob("train*.parquet")
+    valid_parquet_files = data_dir.rglob("valid*.parquet")
+
     # We need to provide the absolute path to the parquet files
-    resolved_paths = [str(path.resolve(strict=True)) for path in all_parquet_files]
-    # TODO: The paths being resolved here do not exist. This also needs checking.
-    dataset_dict = datasets.load_dataset("parquet", data_files=resolved_paths, num_proc=num_proc)
+    resolved_train_paths = [str(path.resolve(strict=True)) for path in train_parquet_files]
+    resolved_valid_paths = [str(path.resolve(strict=True)) for path in valid_parquet_files]
+    data_files = {
+        "train": resolved_train_paths,
+        "valid": resolved_valid_paths,
+    }
+
+    # Load the dataset with the splits
+    dataset_dict = datasets.load_dataset("parquet", data_files=data_files, num_proc=num_proc)
     assert isinstance(dataset_dict, datasets.DatasetDict)
-    # TODO: The output dataset here does not have the two splits?
     return dataset_dict
