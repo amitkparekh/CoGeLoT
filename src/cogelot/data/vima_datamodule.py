@@ -90,7 +90,11 @@ class VIMADataModule(LightningDataModule):
         )
 
     def _load_dataset(self) -> datasets.DatasetDict:
-        """Load the dataset from HF."""
+        """Load the dataset from the parquet files.
+
+        This is not using `datasets.load_dataset` because doing it this separate way is much
+        faster, but does have some complexity overhead.
+        """
         dataset = load_dataset_from_parquet_files(
             self._dataset_data_dir, num_proc=self._num_workers
         )

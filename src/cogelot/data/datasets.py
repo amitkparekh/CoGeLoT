@@ -180,6 +180,10 @@ def download_parquet_files_from_hub(
     This is faster than using `datasets.load_dataset`. `datasets.load_dataset` doesn't download as
     fast as it could do. Even if we are not being rate limited, it is only downloading one SPLIT at
     a time. Not one file, not one shard, but per split.
+
+    However, doing it this way does not automatically fill the cache, so you cannot use
+    `load_dataset` when loading the dataset. The `load_dataset_from_parquet_files` function (below)
+    is there to load the dataset from the parquet files and returns the `DatasetDict`.
     """
     snapshot_download(
         repo_id,
@@ -198,6 +202,8 @@ def load_dataset_from_parquet_files(
     all_parquet_files = data_dir.rglob("*.parquet")
     # We need to provide the absolute path to the parquet files
     resolved_paths = [str(path.resolve(strict=True)) for path in all_parquet_files]
+    # TODO: The paths being resolved here do not exist. This also needs checking.
     dataset_dict = datasets.load_dataset("parquet", data_files=resolved_paths, num_proc=num_proc)
     assert isinstance(dataset_dict, datasets.DatasetDict)
+    # TODO: The output dataset here does not have the two splits?
     return dataset_dict
