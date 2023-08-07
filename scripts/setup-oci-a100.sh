@@ -91,9 +91,11 @@ poetry run pip install torch torchvision --index-url https://download.pytorch.or
 
 # Create the output dir on the storage drive
 mkdir /home/ubuntu/data/outputs
+mkdir /home/ubuntu/data/data
 
 # symlink the outputs dir to the repo
 ln -s /home/ubuntu/data/outputs ./storage/
+ln -s /home/ubuntu/data/data ./storage/
 
 # ------------------------------- Restart shell ------------------------------ #
 exec "$SHELL"
