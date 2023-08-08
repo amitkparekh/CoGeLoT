@@ -208,7 +208,7 @@ def _resolve_symlink_within_symlinked_dir(
         data_dir=symlinked_dir, path=symlinked_file_within_dir
     )
     resolved_path_to_file = (
-        symlinked_dir.resolve().joinpath(file_path_without_symlinked_dir).resolve()
+        symlinked_dir.resolve().joinpath(file_path_without_symlinked_dir).resolve(strict=True)
     )
     return resolved_path_to_file
 
