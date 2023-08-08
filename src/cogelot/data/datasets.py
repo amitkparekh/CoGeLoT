@@ -1,5 +1,6 @@
 import os
 from collections.abc import Callable, Iterator
+from functools import partial
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -195,6 +196,23 @@ def download_parquet_files_from_hub(
     )
 
 
+def _remove_data_dir_from_path(*, data_dir: Path, path: Path) -> str:
+    return str(path).replace(str(data_dir), "").lstrip("/")
+
+
+def _resolve_symlink_within_symlinked_dir(
+    symlinked_file_within_dir: Path, symlinked_dir: Path
+) -> Path:
+    """Resolve the correct path to the file within a symlinked directory."""
+    file_path_without_symlinked_dir = _remove_data_dir_from_path(
+        data_dir=symlinked_dir, path=symlinked_file_within_dir
+    )
+    resolved_path_to_file = (
+        symlinked_dir.resolve().joinpath(file_path_without_symlinked_dir).resolve()
+    )
+    return resolved_path_to_file
+
+
 def load_dataset_from_parquet_files(
     data_dir: Path, *, num_proc: int | None = None
 ) -> datasets.DatasetDict:
@@ -203,12 +221,15 @@ def load_dataset_from_parquet_files(
     train_parquet_files = data_dir.rglob("train*.parquet")
     valid_parquet_files = data_dir.rglob("valid*.parquet")
 
+    path_resolve_fn = partial(_resolve_symlink_within_symlinked_dir, symlinked_dir=data_dir)
+
     # We need to provide the absolute path to the parquet files
-    resolved_train_paths = [str(path.resolve(strict=True)) for path in train_parquet_files]
-    resolved_valid_paths = [str(path.resolve(strict=True)) for path in valid_parquet_files]
+    resolved_train_paths = map(str, map(path_resolve_fn, train_parquet_files))
+    resolved_valid_paths = map(str, map(path_resolve_fn, valid_parquet_files))
+
     data_files = {
-        "train": resolved_train_paths,
-        "valid": resolved_valid_paths,
+        "train": list(resolved_train_paths),
+        "valid": list(resolved_valid_paths),
     }
 
     # Load the dataset with the splits
