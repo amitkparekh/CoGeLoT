@@ -4,7 +4,7 @@ from cogelot.nn.decoders.interfaces import TransformerDecoderProtocol
 from vima import nn as vnn
 
 
-class VIMATransformerDecoder(TransformerDecoderProtocol):
+class VIMADecoder(TransformerDecoderProtocol):
     """Their XAttnGPT Decoder but wrapped in our interface.
 
     We are abstracting out the logic from their Policy so we can more easily swap between different

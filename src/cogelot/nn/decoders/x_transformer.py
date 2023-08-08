@@ -4,8 +4,17 @@ from x_transformers import ContinuousTransformerWrapper
 from cogelot.nn.decoders.interfaces import TransformerDecoderProtocol
 
 
-class XTransformerEncoderDecoder(TransformerDecoderProtocol, ContinuousTransformerWrapper):  # type: ignore[misc]
-    """XTransformers wrapper for the encoder-decoder.
+def _create_padding_mask_from_tensor(tensor: torch.Tensor) -> torch.Tensor:
+    """Create a padding mask from a tensor."""
+    return torch.ones(
+        size=tensor.shape[:-1],
+        dtype=torch.bool,
+        device=tensor.device,
+    )
+
+
+class PromptEncoderHistoryDecoder(TransformerDecoderProtocol, ContinuousTransformerWrapper):  # type: ignore[misc]
+    """XTransformers wrapper for the encoder-decoder, with the prompt in the encoder.
 
     This is a wrapper around the `ContinuousTransformerWrapper` from the `x-transformers` library,
     so that the signature of the forward is the same.
@@ -22,17 +31,9 @@ class XTransformerEncoderDecoder(TransformerDecoderProtocol, ContinuousTransform
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
         if tgt_key_padding_mask is None:
-            tgt_key_padding_mask = torch.ones(
-                size=tgt.shape[:-1],
-                dtype=torch.bool,
-                device=tgt.device,
-            )
+            tgt_key_padding_mask = _create_padding_mask_from_tensor(tgt)
         if memory_key_padding_mask is None:
-            memory_key_padding_mask = torch.ones(
-                size=memory.shape[:-1],
-                dtype=torch.bool,
-                device=memory.device,
-            )
+            memory_key_padding_mask = _create_padding_mask_from_tensor(memory)
 
         # Create the position ids from the mask (just how they do in the Policy)
         position_ids = (torch.cumsum(tgt_key_padding_mask, dim=1) - 1).long()
@@ -49,7 +50,15 @@ class XTransformerEncoderDecoder(TransformerDecoderProtocol, ContinuousTransform
         return model_output
 
 
-class XTransformerDecoderOnly(TransformerDecoderProtocol, ContinuousTransformerWrapper):  # type: ignore[misc]
+class ConventionalEncoderDecoder(TransformerDecoderProtocol, ContinuousTransformerWrapper):
+    """XTransformers wrapper for an encoder-decoder model, with the prompt in the encoder.
+
+    This is the more conventional way of doing it: by putting the prompt and all the history as
+    input from cross-attention, and just decoding the outputs.
+    """
+
+
+class DecoderOnly(TransformerDecoderProtocol, ContinuousTransformerWrapper):  # type: ignore[misc]
     """XTransformers wrapper for the decoder-only model.
 
     For any given input, the memory is prepended to the target sequence so that it all goes in the
@@ -70,17 +79,9 @@ class XTransformerDecoderOnly(TransformerDecoderProtocol, ContinuousTransformerW
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
         if tgt_key_padding_mask is None:
-            tgt_key_padding_mask = torch.ones(
-                size=tgt.shape[:-1],
-                dtype=torch.bool,
-                device=tgt.device,
-            )
+            tgt_key_padding_mask = _create_padding_mask_from_tensor(tgt)
         if memory_key_padding_mask is None:
-            memory_key_padding_mask = torch.ones(
-                size=memory.shape[:-1],
-                dtype=torch.bool,
-                device=memory.device,
-            )
+            memory_key_padding_mask = _create_padding_mask_from_tensor(memory)
 
         # Prepend the memory to the target sequence
         tgt = torch.cat([memory, tgt], dim=1)

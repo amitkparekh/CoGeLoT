@@ -2,7 +2,7 @@
 
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
-      - encoder_decoder.yaml
+      - prompt_encoder_history_decoder.yaml
       - attn_layers/default.yaml
       - positional/absolute.yaml
 
@@ -10,3 +10,5 @@ architecture: encoder_decoder
 attn_layers: default
 positional_encoding: absolute
 source: x-transformers
+prompt_input: encoder
+observation_input: decoder

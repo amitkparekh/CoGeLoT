@@ -2,7 +2,7 @@
 
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
-      - encoder_decoder.yaml
+      - prompt_encoder_history_decoder.yaml
       - attn_layers/vima.yaml
       - positional/t5.yaml
 
@@ -10,3 +10,5 @@ architecture: encoder_decoder
 attn_layers: vima
 positional_encoding: t5
 source: x-transformers
+prompt_input: encoder
+observation_input: decoder
