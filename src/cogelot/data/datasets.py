@@ -1,6 +1,5 @@
 import os
 from collections.abc import Callable, Iterator
-from functools import partial
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -213,6 +212,11 @@ def _resolve_symlink_within_symlinked_dir(
     return resolved_path_to_file
 
 
+def _manual_hack_parquet_paths(path: Path) -> Path:
+    """Hack to fix the parquet paths."""
+    return Path(str(path.readlink()).replace("../../../../../", "/home/ubuntu/"))
+
+
 def load_dataset_from_parquet_files(
     data_dir: Path, *, num_proc: int | None = None
 ) -> datasets.DatasetDict:
@@ -221,11 +225,9 @@ def load_dataset_from_parquet_files(
     train_parquet_files = data_dir.rglob("train*.parquet")
     valid_parquet_files = data_dir.rglob("valid*.parquet")
 
-    path_resolve_fn = partial(_resolve_symlink_within_symlinked_dir, symlinked_dir=data_dir)
-
     # We need to provide the absolute path to the parquet files
-    resolved_train_paths = map(str, map(path_resolve_fn, train_parquet_files))
-    resolved_valid_paths = map(str, map(path_resolve_fn, valid_parquet_files))
+    resolved_train_paths = map(str, map(_manual_hack_parquet_paths, train_parquet_files))
+    resolved_valid_paths = map(str, map(_manual_hack_parquet_paths, valid_parquet_files))
 
     data_files = {
         "train": list(resolved_train_paths),
