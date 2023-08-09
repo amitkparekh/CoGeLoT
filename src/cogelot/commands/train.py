@@ -1,7 +1,9 @@
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 import hydra
 import lightning
+import torch
 from loguru import logger
 from omegaconf import DictConfig
 
@@ -18,6 +20,11 @@ def main(config: DictConfig) -> None:
     seed = config.get("seed")
     if seed:
         lightning.seed_everything(seed)
+
+    # Try to set the sharing sharing strategy to file system, but don't fail if it's not supported.
+    # This is an alternative to running `ulimit -S -n unlimited` in the shell.
+    with suppress(AssertionError):
+        torch.multiprocessing.set_sharing_strategy("file_system")
 
     logger.info("Instantiating modules...")
     instantiated_modules = hydra.utils.instantiate(config)
