@@ -58,10 +58,10 @@ class ObservationTokenizer:
 
         for _, tokens_iterator in itertools.groupby(token_sequence, key=lambda token: token.index):
             tokens = list(tokens_iterator)
-            image_token = [token for token in tokens if isinstance(token, ImageToken)][0]
-            end_effector_token = [
+            image_token = next(token for token in tokens if isinstance(token, ImageToken))
+            end_effector_token = next(
                 token for token in tokens if isinstance(token, EndEffectorToken)
-            ][0]
+            )
             yield ObservationToken.from_tokens(
                 image_token=image_token, end_effector_token=end_effector_token
             )
