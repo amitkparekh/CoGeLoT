@@ -4,7 +4,7 @@ from typing import Literal, Self, get_args
 import numpy as np
 import orjson
 import torch
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 from pydantic_numpy import NDArray
 
 from cogelot.common.io import load_json, orjson_dumps, save_json
@@ -114,8 +114,8 @@ class VIMAInstance(BaseModel):
     end_effector_type: EndEffector
 
     action_bounds: ActionBounds
-    pose_actions: list[PoseAction]
-    observations: list[Observation]
+    observations: list[Observation] = Field(default_factory=list)
+    pose_actions: list[PoseAction] = Field(default_factory=list)
 
     prompt: str
     prompt_assets: Assets
