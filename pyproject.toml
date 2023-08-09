@@ -10,6 +10,8 @@ readme = "README.md"
 license = "MIT"
 packages = [
 	{ include = "vima", from = "src" },
+	{ include = "vima_bench", from = "src" },
+	{ include = "vimasim", from = "src" },
 	{ include = "cogelot", from = "src" },
 ]
 
@@ -42,6 +44,16 @@ dm-tree = "*"
 kornia = "*"
 einops = "*"
 pandas = "*"
+
+[tool.poetry.group.environment.dependencies]
+gym = "^0.26.2"
+imageio = "^2.31.1"
+matplotlib = "^3.7.2"
+kornia = "^0.6.12"
+psutil = "^5.9.5"
+torchvision = "^0.15.2"
+pybullet = "^3.2.5"
+av = "^10.0.0"
 
 [tool.poetry.group.lint.dependencies]
 black = "*"
@@ -145,7 +157,7 @@ convention = "google"
 [tool.ruff.isort]
 combine-as-imports = true
 lines-after-imports = 2
-known-first-party = ["vima", "cogelot"]
+known-first-party = ["vima", "cogelot", "vima_bench"]
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -162,7 +174,12 @@ runtime-evaluated-base-classes = [
 "src/**/__init__.py" = ["D", "F401", "I002"]
 
 [tool.pyright]
-ignore = ["src/vima/**", "scripts/example.py"]
+ignore = [
+	"src/vima/**",
+	"src/vima_bench/**",
+	"src/vimasim/**",
+	"scripts/example.py",
+]
 
 typeCheckingMode = "basic"
 strictListInference = true
@@ -186,7 +203,13 @@ reportShadowedImports = "error"
 
 [tool.mypy]
 python_version = 3.11
-exclude = ["configs", "docs", "logs", "storage", "src/vima"]
+exclude = [
+	'^src\/vima',
+	'^src\/vima_bench',
+	'^src\/vimasim',
+	'^scripts\/example.py',
+	'^tests',
+]
 
 # Import discovery
 namespace_packages = true

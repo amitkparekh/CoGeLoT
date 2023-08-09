@@ -1,0 +1,4 @@
+extend = "../../pyproject.toml"
+
+# Ignore things to let ruff leave it alone.
+ignore = ["F405", "F403", "E722", "F841"]
