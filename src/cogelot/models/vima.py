@@ -46,22 +46,14 @@ class VIMALightningModule(pl.LightningModule):
             ignore_index=self.ignore_target_index,
         )
 
-    def forward(self, batch: PreprocessedBatch) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
-        # Embed and batch the instances
-        prepared_batch: ModelInstance = self._embed_inputs(batch)
-
-        # Encode the prompt
-        encoded_prompt = self.policy.encode_prompt(
-            prepared_batch.embedded_prompt, prepared_batch.embedded_prompt_mask
-        )
-
         encoded_predicted_actions = self.policy.predict_action_token(
-            encoded_prompt=encoded_prompt,
-            encoded_prompt_mask=prepared_batch.embedded_prompt_mask,
-            embedded_observations=prepared_batch.embedded_observations,
-            embedded_observations_mask=prepared_batch.embedded_observations_mask,
-            embedded_actions=prepared_batch.embedded_actions,
+            encoded_prompt=batch.encoded_prompt,
+            encoded_prompt_mask=batch.encoded_prompt_mask,
+            embedded_observations=batch.embedded_observations,
+            embedded_observations_mask=batch.embedded_observations_mask,
+            embedded_actions=batch.embedded_actions,
         )
 
         predicted_actions_dists = self.policy.decode_action_token(encoded_predicted_actions)
@@ -72,7 +64,8 @@ class VIMALightningModule(pl.LightningModule):
         self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a training step."""
-        predicted_actions = self.forward(batch)
+        prepared_batch = self.embed_inputs(batch)
+        predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
         loss = self._compute_loss(predicted_actions, target_actions)
@@ -91,7 +84,8 @@ class VIMALightningModule(pl.LightningModule):
         self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
-        predicted_actions = self.forward(batch)
+        prepared_batch = self.embed_inputs(batch)
+        predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
         loss = self._compute_loss(predicted_actions, target_actions)
@@ -125,6 +119,24 @@ class VIMALightningModule(pl.LightningModule):
         """Reset the accuracy metric at the end of the epoch."""
         self._accuracy.reset()
         return super().on_validation_epoch_end()
+
+    def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
+        """Embed a batch of instances and convert to the ModelInstance."""
+        embedded_prompt, embedded_prompt_mask = self.policy.assemble_prompt(
+            (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
+        )
+        encoded_prompt = self.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
+        embedded_observations, embedded_observations_mask = self.policy.embed_observation_token(
+            batch.observations
+        )
+        embedded_actions = self.policy.embed_action_token(batch.actions)
+        return ModelInstance(
+            encoded_prompt=encoded_prompt,
+            encoded_prompt_mask=embedded_prompt_mask,
+            embedded_observations=embedded_observations,
+            embedded_observations_mask=embedded_observations_mask,
+            embedded_actions=embedded_actions,
+        )
 
     def _compute_loss(
         self,
@@ -177,6 +189,7 @@ class VIMALightningModule(pl.LightningModule):
             predicted_action_tokens, cast(dict[str, torch.Tensor], target_actions)
         )
 
+    @torch.no_grad()
     def _log_accuracy(
         self, *, stage: Literal["train", "val", "test"], **log_dict_kwargs: Any
     ) -> None:
@@ -185,20 +198,3 @@ class VIMALightningModule(pl.LightningModule):
             f"{stage}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
         }
         self.log_dict(computed_acc, **log_dict_kwargs)
-
-    def _embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
-        """Embed a batch of instances and convert to the ModelInstance."""
-        embedded_prompt, embedded_prompt_mask = self.policy.assemble_prompt(
-            (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
-        )
-        embedded_observations, embedded_observations_mask = self.policy.embed_observation_token(
-            batch.observations
-        )
-        embedded_actions = self.policy.embed_action_token(batch.actions)
-        return ModelInstance(
-            embedded_prompt=embedded_prompt,
-            embedded_prompt_mask=embedded_prompt_mask,
-            embedded_observations=embedded_observations,
-            embedded_observations_mask=embedded_observations_mask,
-            embedded_actions=embedded_actions,
-        )

@@ -86,8 +86,8 @@ class PreprocessedBatch(NamedTuple):
 class ModelInstance(NamedTuple):
     """Instance directly given to the model."""
 
-    embedded_prompt: torch.Tensor
-    embedded_prompt_mask: torch.Tensor
+    encoded_prompt: torch.Tensor
+    encoded_prompt_mask: torch.Tensor
 
     embedded_observations: torch.Tensor
     embedded_observations_mask: torch.Tensor

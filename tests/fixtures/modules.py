@@ -13,7 +13,7 @@ from cogelot.modules.tokenizers import (
     PoseActionTokenizer,
     TextTokenizer,
 )
-from cogelot.nn.decoders.vima import VIMATransformerDecoder
+from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.structures.common import View
 from vima.policy import VIMAPolicy
 
@@ -100,7 +100,7 @@ def vima_policy() -> Policy:
         prompt_embedding=vima.prompt_embedding,
         prompt_encoder=vima.t5_prompt_encoder,
         prompt_obj_post_layer=vima.prompt_obj_post_layer,
-        transformer_decoder=VIMATransformerDecoder(vima.xattn_gpt),
+        transformer_decoder=VIMADecoder(vima.xattn_gpt),
     )
 
 
