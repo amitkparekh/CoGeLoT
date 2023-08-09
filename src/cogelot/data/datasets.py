@@ -195,25 +195,9 @@ def download_parquet_files_from_hub(
     )
 
 
-def _remove_data_dir_from_path(*, data_dir: Path, path: Path) -> str:
-    return str(path).replace(str(data_dir), "").lstrip("/")
-
-
-def _resolve_symlink_within_symlinked_dir(
-    symlinked_file_within_dir: Path, symlinked_dir: Path
-) -> Path:
-    """Resolve the correct path to the file within a symlinked directory."""
-    file_path_without_symlinked_dir = _remove_data_dir_from_path(
-        data_dir=symlinked_dir, path=symlinked_file_within_dir
-    )
-    resolved_path_to_file = (
-        symlinked_dir.resolve().joinpath(file_path_without_symlinked_dir).resolve(strict=True)
-    )
-    return resolved_path_to_file
-
-
 def _manual_hack_parquet_paths(path: Path) -> Path:
     """Hack to fix the parquet paths."""
+    # TODO: This needs to be fixed somehow, because it is a hack that only works on OCI
     return Path(str(path.readlink()).replace("../../../../../", "/home/ubuntu/"))
 
 
