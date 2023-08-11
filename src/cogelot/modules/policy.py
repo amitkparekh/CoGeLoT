@@ -17,12 +17,11 @@ def get_max_length_of_prompt(raw_prompts_token_type: RawPromptTokenType, max_num
 
     Refactored by ChatGPT to be more efficient and readable.
     """
-    max_length = 0
-
-    for raw_prompt in raw_prompts_token_type:
-        current_length = sum([1 if token_type == 0 else max_num_objs for token_type in raw_prompt])
-        max_length = max(max_length, current_length)
-
+    length_per_prompt = (
+        sum([1 if token_type == 0 else max_num_objs for token_type in raw_prompt])
+        for raw_prompt in raw_prompts_token_type
+    )
+    max_length = max(length_per_prompt)
     return max_length
 
 
