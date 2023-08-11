@@ -27,7 +27,8 @@ Partition = Literal[
     "novel_task_generalization",
 ]
 
-PARTITION_PER_LEVEL: Mapping[Literal[1, 2, 3, 4], Partition] = MappingProxyType(
+
+PARTITION_PER_LEVEL: Mapping[int, Partition] = MappingProxyType(
     {
         1: "placement_generalization",
         2: "combinatorial_generalization",
@@ -36,7 +37,7 @@ PARTITION_PER_LEVEL: Mapping[Literal[1, 2, 3, 4], Partition] = MappingProxyType(
     }
 )
 
-LEVEL_PER_PARTITION: Mapping[Partition, Literal[1, 2, 3, 4]] = MappingProxyType(
+LEVEL_PER_PARTITION: Mapping[Partition, int] = MappingProxyType(
     {partition: index for index, partition in PARTITION_PER_LEVEL.items()}
 )
 

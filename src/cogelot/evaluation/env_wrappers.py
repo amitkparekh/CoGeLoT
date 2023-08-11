@@ -9,10 +9,13 @@ from cogelot.structures.common import Assets, Observation
 from cogelot.structures.vima import (
     MODALITIES,
     PARTITION_PER_LEVEL,
+    TASK_PER_INDEX,
     ActionBounds,
     EndEffector,
     Partition,
+    PartitionIndex,
     Task,
+    TaskIndex,
     VIMAInstance,
 )
 from vima_bench import make
@@ -52,8 +55,8 @@ class VIMAEnvironment(Wrapper):
     @classmethod
     def from_config(
         cls,
-        task: Task,
-        partition: Partition | Literal[1, 2, 3, 4],
+        task: Task | TaskIndex,
+        partition: Partition | PartitionIndex,
         seed: int,
         *,
         should_render_prompt: bool = True,
@@ -63,6 +66,9 @@ class VIMAEnvironment(Wrapper):
         """Create the VIMA environment."""
         if isinstance(partition, int):
             partition = PARTITION_PER_LEVEL[partition]
+
+        if isinstance(task, int):
+            task = TASK_PER_INDEX[task]
 
         task_kwargs = PARTITION_TO_SPECS["test"][partition][task]  # type: ignore[reportOptionalSubscript]
         assert isinstance(task_kwargs, dict)
