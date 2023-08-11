@@ -97,3 +97,4 @@ class ModelInstance(NamedTuple):
     embedded_observations_mask: torch.Tensor
 
     # [batch, actions, dim]
+    embedded_actions: torch.Tensor | None
