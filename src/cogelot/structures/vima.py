@@ -1,4 +1,6 @@
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Literal, Self, get_args
 
 import numpy as np
@@ -10,6 +12,33 @@ from pydantic_numpy import NDArray
 from cogelot.common.io import load_json, orjson_dumps, save_json
 from cogelot.structures.common import Action, Assets, Observation, Timestep
 
+
+SEED = 42
+MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
+VIDEO_FPS = 60
+OUTPUT_VIDEO_NAME = "gui_record.mp4"
+VIDEO_HEIGHT = 480
+VIDEO_WIDTH = 640
+
+Partition = Literal[
+    "placement_generalization",
+    "combinatorial_generalization",
+    "novel_object_generalization",
+    "novel_task_generalization",
+]
+
+PARTITION_PER_LEVEL: Mapping[Literal[1, 2, 3, 4], Partition] = MappingProxyType(
+    {
+        1: "placement_generalization",
+        2: "combinatorial_generalization",
+        3: "novel_object_generalization",
+        4: "novel_task_generalization",
+    }
+)
+
+LEVEL_PER_PARTITION: Mapping[Partition, Literal[1, 2, 3, 4]] = MappingProxyType(
+    {partition: index for index, partition in PARTITION_PER_LEVEL.items()}
+)
 
 Task = Literal[
     "follow_motion",
@@ -34,6 +63,57 @@ Task = Literal[
     "twist",
     "visual_manipulation",
 ]
+
+TASK_PER_INDEX: Mapping[int, Task] = MappingProxyType(
+    {
+        1: "visual_manipulation",
+        2: "scene_understanding",
+        3: "rotate",
+        4: "rearrange",
+        5: "rearrange_then_restore",
+        6: "novel_adj",
+        7: "novel_noun",
+        8: "novel_adj_and_noun",
+        9: "twist",
+        10: "follow_motion",
+        11: "follow_order",
+        12: "sweep_without_exceeding",
+        13: "sweep_without_touching",
+        14: "same_texture",
+        15: "same_shape",
+        16: "manipulate_old_neighbor",
+        17: "pick_in_order_then_restore",
+    }
+)
+
+INDEX_PER_TASK: Mapping[Task, int] = MappingProxyType(
+    {task: index for index, task in TASK_PER_INDEX.items()}
+)
+
+TaskGroup = Literal[
+    "instruction_following",
+    "constraint_satisfaction",
+    "novel_concept_grounding",
+    "one_shot_imitation",
+    "rearrangement",
+    "require_memory",
+    "require_reasoning",
+]
+
+TaskPerGroup: Mapping[TaskGroup, list[Task]] = {
+    "instruction_following": ["visual_manipulation", "scene_understanding", "rotate"],
+    "constraint_satisfaction": ["sweep_without_exceeding", "sweep_without_touching"],
+    "novel_concept_grounding": ["novel_adj_and_noun", "novel_adj", "novel_noun", "twist"],
+    "one_shot_imitation": ["follow_motion", "follow_order"],
+    "rearrangement": ["rearrange"],
+    "require_memory": [
+        "manipulate_old_neighbor",
+        "pick_in_order_then_restore",
+        "rearrange_then_restore",
+    ],
+    "require_reasoning": ["same_texture", "same_shape"],
+}
+
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
