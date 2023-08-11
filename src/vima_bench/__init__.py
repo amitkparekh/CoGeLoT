@@ -9,7 +9,7 @@ from .tasks import ALL_PARTITIONS, ALL_TASKS, PARTITION_TO_SPECS
 
 __all__ = ["make", "ALL_TASKS", "ALL_PARTITIONS", "PARTITION_TO_SPECS"]
 
-print(f"[INFO] {len(ALL_TASKS)} tasks loaded")
+
 ALL_TASKS = list(ALL_TASKS.keys())
 
 
