@@ -8,7 +8,7 @@ from lightning import pytorch as pl
 from cogelot.modules.policy import Policy
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
-from cogelot.training.metrics import create_pose_accuracy_metric
+from cogelot.training.metrics import PoseAccuracyMetric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
@@ -38,7 +38,7 @@ class VIMALightningModule(pl.LightningModule):
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
-        self._accuracy = create_pose_accuracy_metric(
+        self._accuracy = PoseAccuracyMetric.from_config(
             max_num_pose_position_classes=max(
                 policy.n_discrete_x_bins, policy.n_discrete_y_bins, policy.n_discrete_z_bins
             ),
