@@ -13,9 +13,7 @@ from cogelot.structures.vima import (
     ActionBounds,
     EndEffector,
     Partition,
-    PartitionIndex,
     Task,
-    TaskIndex,
     VIMAInstance,
 )
 from vima_bench import make
@@ -55,8 +53,8 @@ class VIMAEnvironment(Wrapper):
     @classmethod
     def from_config(
         cls,
-        task: Task | TaskIndex,
-        partition: Partition | PartitionIndex,
+        task: Task | int,
+        partition: Partition | int,
         seed: int,
         *,
         should_render_prompt: bool = True,
