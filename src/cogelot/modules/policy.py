@@ -304,6 +304,12 @@ class Policy(torch.nn.Module):
         """Stitch the observations together with actions for decoder input."""
         batch_size, observation_seq_len = embedded_observations.shape[:2]
         actions_seq_len = 0 if embedded_actions is None else embedded_actions.shape[1]
+
+        if observation_seq_len != actions_seq_len + 1:
+            raise AssertionError(
+                "The number of observations must be one more than the number of actions"
+            )
+
         max_objects = self._get_max_num_objects(embedded_observations=embedded_observations)
         total_seq_len = observation_seq_len * max_objects + actions_seq_len
 
