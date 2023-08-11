@@ -216,7 +216,9 @@ class Policy(torch.nn.Module):
 
         return obs_feats, obj_mask_tensor
 
-    def embed_action_token(self, actions: DataDict) -> torch.Tensor:
+    def embed_action_token(
+        self, actions: DataDict | dict[PoseActionType, torch.Tensor]
+    ) -> torch.Tensor:
         """Embed the actions into a tensor."""
         return self._action_encoder(
             self.de_discretize_actions(cast(dict[PoseActionType, torch.Tensor], actions))
