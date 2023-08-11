@@ -18,6 +18,5 @@ def test_model_training_step_does_not_error(
     all_preprocessed_instances: list[PreprocessedInstance],
 ) -> None:
     batch = collate_preprocessed_instances(all_preprocessed_instances)
-    prepared_batch = vima_lightning_module.embed_inputs(batch)
-    loss = vima_lightning_module.training_step(prepared_batch, 0)
+    loss = vima_lightning_module.training_step(batch, 0)
     assert loss
