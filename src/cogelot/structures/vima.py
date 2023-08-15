@@ -1,7 +1,7 @@
 from collections.abc import Mapping
+from enum import Enum
 from pathlib import Path
-from types import MappingProxyType
-from typing import Literal, Self, get_args
+from typing import Literal, Self
 
 import numpy as np
 import orjson
@@ -20,105 +20,95 @@ OUTPUT_VIDEO_NAME = "gui_record.mp4"
 VIDEO_HEIGHT = 480
 VIDEO_WIDTH = 640
 
-Partition = Literal[
-    "placement_generalization",
-    "combinatorial_generalization",
-    "novel_object_generalization",
-    "novel_task_generalization",
-]
+N_DISCRETE_X_BINS: int = 50
+N_DISCRETE_Y_BINS: int = 100
+N_DISCRETE_Z_BINS: int = 50
+N_DISCRETE_ROT_BINS: int = 50
 
 
-PARTITION_PER_LEVEL: Mapping[int, Partition] = MappingProxyType(
-    {
-        1: "placement_generalization",
-        2: "combinatorial_generalization",
-        3: "novel_object_generalization",
-        4: "novel_task_generalization",
-    }
-)
+class Partition(Enum):
+    """Different levels of difficulty for the tasks."""
 
-LEVEL_PER_PARTITION: Mapping[Partition, int] = MappingProxyType(
-    {partition: index for index, partition in PARTITION_PER_LEVEL.items()}
-)
+    placement_generalization = 1
+    combinatorial_generalization = 2
+    novel_object_generalization = 3
+    novel_task_generalization = 4
 
-Task = Literal[
-    "follow_motion",
-    "follow_order",
-    "manipulate_old_neighbor",
-    "novel_adj_and_noun",
-    "novel_adj",
-    "novel_noun",
-    "pick_in_order_then_restore",
-    "rearrange_then_restore",
-    "rearrange",
-    "rotate",
-    "same_color",
-    "same_profile",
-    "same_shape",
-    "same_texture",
-    "scene_understanding",
-    "simple_manipulation",
-    "sweep_without_exceeding",
-    "sweep_without_touching",
-    "sweep",
-    "twist",
-    "visual_manipulation",
-]
+    @classmethod
+    def from_index(cls, index: int) -> Self:
+        """Get the partition from the index."""
+        return cls(index)
 
-TASK_PER_INDEX: Mapping[int, Task] = MappingProxyType(
-    {
-        1: "visual_manipulation",
-        2: "scene_understanding",
-        3: "rotate",
-        4: "rearrange",
-        5: "rearrange_then_restore",
-        6: "novel_adj",
-        7: "novel_noun",
-        8: "novel_adj_and_noun",
-        9: "twist",
-        10: "follow_motion",
-        11: "follow_order",
-        12: "sweep_without_exceeding",
-        13: "sweep_without_touching",
-        14: "same_texture",
-        15: "same_shape",
-        16: "manipulate_old_neighbor",
-        17: "pick_in_order_then_restore",
-    }
-)
 
-INDEX_PER_TASK: Mapping[Task, int] = MappingProxyType(
-    {task: index for index, task in TASK_PER_INDEX.items()}
-)
+class Task(Enum):
+    """Tasks in the VIMA dataset."""
 
-TaskGroup = Literal[
-    "instruction_following",
-    "constraint_satisfaction",
-    "novel_concept_grounding",
-    "one_shot_imitation",
-    "rearrangement",
-    "require_memory",
-    "require_reasoning",
-]
+    visual_manipulation = 1
+    scene_understanding = 2
+    rotate = 3
+    rearrange = 4
+    rearrange_then_restore = 5
+    novel_adj = 6
+    novel_noun = 7
+    novel_adj_and_noun = 8
+    twist = 9
+    follow_motion = 10
+    follow_order = 11
+    sweep_without_exceeding = 12
+    sweep_without_touching = 13
+    same_texture = 14
+    same_shape = 15
+    manipulate_old_neighbor = 16
+    pick_in_order_then_restore = 17
+
+    # Old names that existed in the dataset and can cause issues, but are just the same as others.
+    # Putting them below the others means that trying to refer to them will automatically redirect
+    # to the correct one.
+    same_color = 14  # noqa: PIE796
+    same_profile = 15  # noqa: PIE796
+    sweep = 12  # noqa: PIE796
+    simple_manipulation = 1  # noqa: PIE796
+
+
+class TaskGroup(Enum):
+    """Grouping of tasks."""
+
+    instruction_following = 1
+    constraint_satisfaction = 2
+    novel_concept_grounding = 3
+    one_shot_imitation = 4
+    rearrangement = 5
+    require_memory = 6
+    require_reasoning = 7
+
 
 TaskPerGroup: Mapping[TaskGroup, list[Task]] = {
-    "instruction_following": ["visual_manipulation", "scene_understanding", "rotate"],
-    "constraint_satisfaction": ["sweep_without_exceeding", "sweep_without_touching"],
-    "novel_concept_grounding": ["novel_adj_and_noun", "novel_adj", "novel_noun", "twist"],
-    "one_shot_imitation": ["follow_motion", "follow_order"],
-    "rearrangement": ["rearrange"],
-    "require_memory": [
-        "manipulate_old_neighbor",
-        "pick_in_order_then_restore",
-        "rearrange_then_restore",
+    TaskGroup.instruction_following: [
+        Task.visual_manipulation,
+        Task.scene_understanding,
+        Task.rotate,
     ],
-    "require_reasoning": ["same_texture", "same_shape"],
+    TaskGroup.constraint_satisfaction: [Task.sweep_without_exceeding, Task.sweep_without_touching],
+    TaskGroup.novel_concept_grounding: [
+        Task.novel_adj_and_noun,
+        Task.novel_adj,
+        Task.novel_noun,
+        Task.twist,
+    ],
+    TaskGroup.one_shot_imitation: [Task.follow_motion, Task.follow_order],
+    TaskGroup.rearrangement: [Task.rearrange],
+    TaskGroup.require_memory: [
+        Task.manipulate_old_neighbor,
+        Task.pick_in_order_then_restore,
+        Task.rearrange_then_restore,
+    ],
+    TaskGroup.require_reasoning: [Task.same_texture, Task.same_shape],
 }
 
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
-SortedTaskList: list[Task] = sorted(get_args(Task))
+SortedTaskList: list[str] = sorted(task.name for task in Task)
 
 
 class ObjectMetadata(BaseModel):

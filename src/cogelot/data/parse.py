@@ -3,7 +3,7 @@ import shutil
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal, cast, get_args
+from typing import Any, Literal, get_args
 
 import numpy as np
 from PIL import Image
@@ -136,7 +136,7 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
 
     return VIMAInstance(
         index=int(instance_dir.stem),
-        task=cast(Task, instance_dir.parent.stem),
+        task=Task[instance_dir.parent.stem],
         total_steps=trajectory_metadata["steps"],
         prompt=trajectory_metadata["prompt"],
         prompt_assets=Assets.parse_obj(trajectory_metadata["prompt_assets"]),

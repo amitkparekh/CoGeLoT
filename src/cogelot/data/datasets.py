@@ -12,7 +12,7 @@ from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import SortedTaskList
 
 
-_Task = datasets.ClassLabel(names=cast(list[str], SortedTaskList))
+_Task = datasets.ClassLabel(names=SortedTaskList)
 _Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
 _CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
 _Mask = datasets.Value("bool")

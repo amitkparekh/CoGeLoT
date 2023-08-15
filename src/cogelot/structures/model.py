@@ -29,7 +29,7 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
     def to_hf_dict(self) -> dict[str, Any]:
         """To a dictionary for HF datasets."""
         return {
-            "task": self.task,
+            "task": self.task.name,
             "raw_prompts_token_type": self.raw_prompts_token_type,
             "word_batch": self.word_batch,
             "image_batch": self.image_batch.to_container(),
@@ -41,7 +41,7 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
     def from_hf_dict(cls, instance: dict[str, Any]) -> Self:
         """From a dictionary outputted by the HF datasets."""
         return cls(
-            task=SortedTaskList[instance["task"]],
+            task=Task[SortedTaskList[instance["task"]]],
             raw_prompts_token_type=instance["raw_prompts_token_type"],
             word_batch=instance["word_batch"],
             image_batch=any_to_datadict(instance["image_batch"]),
