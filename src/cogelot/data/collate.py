@@ -82,14 +82,14 @@ def collate_image_features(image_batches: list[ImageFeatures]) -> ImageFeatures:
 
 
 def collate_action_batch(
-    batches: list[dict[PoseActionType, torch.Tensor]]
+    batches: list[dict[PoseActionType, torch.Tensor]], padding_value: int = -100
 ) -> dict[PoseActionType, torch.Tensor]:
     """Collate the actions across an entire batch."""
     output: dict[PoseActionType, torch.Tensor] = {}
 
     for pose_action_type in get_args(PoseActionType):
         output[pose_action_type] = collate_variable_ndim_batch(
-            [batch[pose_action_type] for batch in batches]
+            [batch[pose_action_type] for batch in batches], padding_value=padding_value
         )
     return output
 
