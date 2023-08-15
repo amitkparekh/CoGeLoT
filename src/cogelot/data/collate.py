@@ -21,7 +21,9 @@ class Observation(TypedDict):
     objects: ImageFeatures
 
 
-def collate_variable_ndim_batch(batch: list[torch.Tensor]) -> torch.Tensor:
+def collate_variable_ndim_batch(
+    batch: list[torch.Tensor], padding_value: float = 0
+) -> torch.Tensor:
     """Collate tensors with multiple dimensions of variable lengths into a single tensor.
 
     All the tensors need to have the same number of dims, otherwise it will throw an error.
@@ -58,7 +60,7 @@ def collate_variable_ndim_batch(batch: list[torch.Tensor]) -> torch.Tensor:
         ).tolist()
 
         # Pad the tensor
-        padded_tensor = torch.nn.functional.pad(tensor, padding)
+        padded_tensor = torch.nn.functional.pad(tensor, padding, value=padding_value)
         padded_tensors.append(padded_tensor)
 
     # Stack the padded tensors
