@@ -6,10 +6,10 @@ import torch
 from lightning import pytorch as pl
 
 from cogelot.modules.policy import Policy
-from cogelot.nn.loss import compute_loss
+from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
-from cogelot.training.metrics import PoseAccuracyMetric
+from cogelot.training.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
@@ -46,6 +46,7 @@ class VIMALightningModule(pl.LightningModule):
             max_num_pose_rotation_classes=policy.n_discrete_rot_bins,
             ignore_index=self.ignore_target_index,
         )
+        self._loss_per_axis = LossPerAxisPerActionMetric()
 
     def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
@@ -69,16 +70,22 @@ class VIMALightningModule(pl.LightningModule):
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
-        loss = compute_loss(
+        fine_grained_loss = compute_fine_grained_loss(
             predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
         )
+        loss = reduce_fine_grained_loss(fine_grained_loss)
+
+        self._loss_per_axis.update(fine_grained_loss)
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log(
             "train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
         self._log_accuracy(
-            stage="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+            split="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_loss_per_axis(
+            split="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
 
         return loss
@@ -91,16 +98,22 @@ class VIMALightningModule(pl.LightningModule):
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
-        loss = compute_loss(
+        fine_grained_loss = compute_fine_grained_loss(
             predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
         )
+        loss = reduce_fine_grained_loss(fine_grained_loss)
+
+        self._loss_per_axis.update(fine_grained_loss)
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log(
             "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
         self._log_accuracy(
-            stage="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_loss_per_axis(
+            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
 
         return loss
@@ -159,11 +172,20 @@ class VIMALightningModule(pl.LightningModule):
         )
 
     @torch.no_grad()
-    def _log_accuracy(
-        self, *, stage: Literal["train", "val", "test"], **log_dict_kwargs: Any
-    ) -> None:
-        """Log the accuracy for the given stage."""
+    def _log_accuracy(self, *, split: Literal["train", "val"], **log_dict_kwargs: Any) -> None:
+        """Log the accuracy for the given split."""
         computed_acc = {
-            f"{stage}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
+            f"{split}_{pose_name}_acc": acc for pose_name, acc in self._accuracy.compute().items()
         }
         self.log_dict(computed_acc, **log_dict_kwargs)
+
+    @torch.no_grad()
+    def _log_loss_per_axis(
+        self, *, split: Literal["train", "val"], **log_dict_kwargs: Any
+    ) -> None:
+        """Log the loss per axis."""
+        computed_loss = {
+            f"{split}_{loss_name}_loss": loss
+            for loss_name, loss in self._loss_per_axis.compute().items()
+        }
+        self.log_dict(computed_loss, **log_dict_kwargs)

@@ -6,6 +6,7 @@ from cogelot.models.training import VIMALightningModule
 from cogelot.nn.loss import PerActionPerAxis, compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
+from cogelot.training.metrics import LossPerAxisPerActionMetric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
@@ -107,3 +108,21 @@ def test_using_masked_tensors_with_loss_calc_is_okay(
     ).mean(dim=-1)
 
     assert loss_from_masked_tensors == loss_from_other_way
+
+
+def test_loss_per_axis_metric_tracking_works(
+    target_actions: dict[PoseActionType, torch.Tensor],
+    predicted_action_dists: dict[PoseActionType, MultiCategorical],
+) -> None:
+    fine_grained_loss = compute_fine_grained_loss(predicted_action_dists, target_actions)
+
+    metric = LossPerAxisPerActionMetric()
+    metric.update(fine_grained_loss)
+
+    computed_metric = metric.compute()
+    expected_computed_metric = {
+        key: tensor.mean().get_data() for key, tensor in fine_grained_loss.items()
+    }
+
+    for expected, actual in zip(expected_computed_metric.values(), computed_metric.values()):
+        torch.testing.assert_close(actual, expected)

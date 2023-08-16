@@ -1,12 +1,14 @@
-from typing import ClassVar, Self
+from typing import ClassVar, Self, get_args
 
 import torch
 from loguru import logger
-from torchmetrics import MeanMetric, SumMetric
+from torch.masked import MaskedTensor
+from torchmetrics import MeanMetric, Metric, SumMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from torchmetrics.wrappers import MultitaskWrapper
 
-from cogelot.structures.vima import Partition, Task
+from cogelot.nn.loss import LOSS_KEY_TEMPLATE
+from cogelot.structures.vima import AxesPerPoseActionType, Partition, Task
 
 
 class PoseAccuracyMetric(MultitaskWrapper):
@@ -37,6 +39,38 @@ class PoseAccuracyMetric(MultitaskWrapper):
                 ),
             }
         )
+
+
+class LossPerAxisPerActionMetric(Metric):
+    """Track the loss per axis per action."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        # Get all of the keys that exist for the loss
+        loss_keys = [
+            LOSS_KEY_TEMPLATE.format(pose_action_type=pose_action_type, axis=axis)
+            for pose_action_type, axis_literal in AxesPerPoseActionType.items()
+            for axis in get_args(axis_literal)
+        ]
+        # And create the metric for each of them
+        self.metrics = torch.nn.ModuleDict({key: MeanMetric() for key in loss_keys})
+
+    def update(self, fine_grained_loss: dict[str, MaskedTensor]) -> None:
+        """Update the metric with the result of a batch."""
+        # Convert the masked tensors to regular tensors
+        loss_tensors = {
+            key: tensor.get_data()[tensor.get_mask()]  # pyright: ignore[reportOptionalSubscript]
+            for key, tensor in fine_grained_loss.items()
+        }
+        for key, loss in loss_tensors.items():
+            self.metrics[key](loss)
+
+    def compute(self) -> dict[str, torch.Tensor]:
+        """Compute the metric."""
+        return {
+            key: metric.compute()  # pyright: ignore[reportGeneralTypeIssues]
+            for key, metric in self.metrics.items()
+        }
 
 
 class EvaluationMetrics:
