@@ -1,11 +1,12 @@
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import Any, Literal, cast, get_args
+from typing import Any, Literal, cast
 
 import torch
 from lightning import pytorch as pl
 
 from cogelot.modules.policy import Policy
+from cogelot.nn.loss import compute_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
 from cogelot.training.metrics import PoseAccuracyMetric
@@ -20,7 +21,7 @@ _default_lr_scheduler = partial(torch.optim.lr_scheduler.ConstantLR, factor=1)
 
 
 class VIMALightningModule(pl.LightningModule):
-    """Lighting module for a VIMA model."""
+    """Lighting module for training the VIMA model offline."""
 
     ignore_target_index: int = -100
 
@@ -68,7 +69,9 @@ class VIMALightningModule(pl.LightningModule):
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
-        loss = self._compute_loss(predicted_actions, target_actions)
+        loss = compute_loss(
+            predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
+        )
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log(
@@ -88,7 +91,9 @@ class VIMALightningModule(pl.LightningModule):
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
 
-        loss = self._compute_loss(predicted_actions, target_actions)
+        loss = compute_loss(
+            predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
+        )
         self._update_accuracy(predicted_actions, target_actions)
 
         self.log(
@@ -137,42 +142,6 @@ class VIMALightningModule(pl.LightningModule):
             embedded_observations_mask=embedded_observations_mask,
             embedded_actions=embedded_actions,
         )
-
-    def _compute_loss(
-        self,
-        predicted_actions: dict[PoseActionType, MultiCategorical],
-        target_actions: dict[PoseActionType, torch.Tensor],
-    ) -> torch.Tensor:
-        """Compute the loss across all the poses."""
-        losses = []
-
-        for pose_action_type in get_args(PoseActionType):
-            target_for_pose = target_actions[pose_action_type]
-            predicted_dist_for_pose = predicted_actions[pose_action_type]
-
-            # We need to split the targets by the number of axes and zip with the various
-            # categorical distributions.
-            iterator = zip(
-                target_for_pose.split(1, dim=-1), predicted_dist_for_pose.dists, strict=True
-            )
-
-            # Then we get the loss per axis and add to the list
-            for target_axis, predicted_dist_axis in iterator:
-                predicted_logits: torch.Tensor = cast(torch.Tensor, predicted_dist_axis.logits)
-                predicted_logits = predicted_logits.reshape(-1, predicted_logits.shape[-1])
-                losses.append(
-                    torch.nn.functional.cross_entropy(
-                        predicted_logits,
-                        target_axis.reshape(-1),
-                        ignore_index=self.ignore_target_index,
-                    )
-                )
-
-        # Convert loss list to tensor
-        stacked_loss = torch.stack(losses)
-        # Return the average loss for the batch
-        average_loss = torch.mean(stacked_loss)
-        return average_loss
 
     @torch.no_grad()
     def _update_accuracy(
