@@ -7,6 +7,10 @@ from einops import rearrange
 from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import (
+    N_DISCRETE_ROT_BINS,
+    N_DISCRETE_X_BINS,
+    N_DISCRETE_Y_BINS,
+    N_DISCRETE_Z_BINS,
     ActionBounds,
     PoseActionType,
 )
@@ -175,10 +179,10 @@ def stitch_observations_with_actions(  # noqa: WPS210
 class Policy(torch.nn.Module):
     """Common policy with compositional modules for easy swapping."""
 
-    n_discrete_x_bins: int = 50
-    n_discrete_y_bins: int = 100
-    n_discrete_z_bins: int = 50
-    n_discrete_rot_bins: int = 50
+    n_discrete_x_bins: int = N_DISCRETE_X_BINS
+    n_discrete_y_bins: int = N_DISCRETE_Y_BINS
+    n_discrete_z_bins: int = N_DISCRETE_Z_BINS
+    n_discrete_rot_bins: int = N_DISCRETE_ROT_BINS
     _views: ClassVar[list[str]] = ["front", "top"]
 
     def __init__(
