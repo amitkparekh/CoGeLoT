@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, Literal
 
 import datasets
@@ -8,6 +7,7 @@ from torch.utils.data import DataLoader
 from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
 from cogelot.data.datasets import (
     download_parquet_files_from_hub,
+    get_location_of_parquet_files,
     load_dataset_from_parquet_files,
     maybe_split_dataset_by_node,
     set_dataset_format,
@@ -25,16 +25,12 @@ class VIMATrainingDataModule(LightningDataModule):
         self,
         *,
         hf_datasets_repo_name: str,
-        dataset_data_dir: Path,
         num_workers: int,
         batch_size: int,
         dataloader_kwargs: dict[str, Any] | None = None
     ) -> None:
         super().__init__()
         self._hf_datasets_repo_name = hf_datasets_repo_name
-        self._dataset_data_dir = Path(dataset_data_dir).joinpath(
-            self._hf_datasets_repo_name.replace("/", "__")
-        )
 
         self._num_workers = num_workers
         self._dataloader_kwargs = dataloader_kwargs or {}
@@ -49,12 +45,7 @@ class VIMATrainingDataModule(LightningDataModule):
 
         This is just making sure the dataset has already been downloaded.
         """
-        self._dataset_data_dir.mkdir(parents=True, exist_ok=True)
-        download_parquet_files_from_hub(
-            self._hf_datasets_repo_name,
-            output_dir=self._dataset_data_dir,
-            max_workers=self._num_workers,
-        )
+        download_parquet_files_from_hub(self._hf_datasets_repo_name, max_workers=self._num_workers)
 
     def setup(self, stage: SetupStage) -> None:
         """Setup each GPU to run the data."""
@@ -95,8 +86,7 @@ class VIMATrainingDataModule(LightningDataModule):
         This is not using `datasets.load_dataset` because doing it this separate way is much
         faster, but does have some complexity overhead.
         """
-        dataset = load_dataset_from_parquet_files(
-            self._dataset_data_dir, num_proc=self._num_workers
-        )
+        dataset_data_dir = get_location_of_parquet_files(self._hf_datasets_repo_name)
+        dataset = load_dataset_from_parquet_files(dataset_data_dir, num_proc=self._num_workers)
         dataset = set_dataset_format(dataset)
         return dataset
