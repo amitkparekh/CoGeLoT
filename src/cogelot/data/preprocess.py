@@ -111,7 +111,10 @@ class InstancePreprocessor:
     def prepare_observations(
         self, observations: list[Observation], object_ids: set[int], end_effector: str
     ) -> DataDict:
-        """Prepare observations for the model."""
+        """Prepare observations for the model.
+
+        Note: Does not need GPU.
+        """
         tokenized_end_effector = self.tokenize_end_effector(end_effector, len(observations))
         their_observations = convert_observations_to_their_format(
             observations=observations, tokenized_end_effector=tokenized_end_effector
