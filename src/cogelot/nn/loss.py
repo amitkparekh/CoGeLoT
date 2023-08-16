@@ -13,6 +13,9 @@ from cogelot.structures.vima import (
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
+LOSS_KEY_TEMPLATE = "{pose_action_type}_{axis}"
+
+
 class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
     """Dictionary allowing a tensor to be split per axis per action.
 
@@ -75,7 +78,7 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
     def to_flattened_dict(self) -> dict[str, torch.Tensor]:
         """Flatten the dict into a single dict."""
         return {
-            f"{pose_action_type}_{axis}": tensor
+            LOSS_KEY_TEMPLATE.format(pose_action_type=pose_action_type, axis=axis): tensor
             for pose_action_type, tensor_per_axis in self.dict().items()
             for axis, tensor in tensor_per_axis.items()
         }
