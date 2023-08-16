@@ -9,10 +9,10 @@ from huggingface_hub import snapshot_download
 
 from cogelot.common.io import load_pickle
 from cogelot.structures.model import PreprocessedInstance
-from cogelot.structures.vima import SortedTaskList
+from cogelot.structures.vima import Task
 
 
-_Task = datasets.ClassLabel(names=SortedTaskList)
+_Task = datasets.ClassLabel(names=Task.as_sorted_task_list())
 _Bbox = datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
 _CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
 _Mask = datasets.Value("bool")

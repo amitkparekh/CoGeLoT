@@ -69,6 +69,17 @@ class Task(Enum):
     sweep = 12  # noqa: PIE796
     simple_manipulation = 1  # noqa: PIE796
 
+    @classmethod
+    def as_sorted_task_list(cls) -> list[str]:
+        """Get the sorted task list."""
+        return sorted(cls.__members__.keys())
+
+    @classmethod
+    def from_sorted_task_list_index(cls, index: int) -> Self:
+        """Create by indexing from the sorted task list."""
+        task_name = cls.as_sorted_task_list()[index]
+        return cls[task_name]
+
 
 class TaskGroup(Enum):
     """Grouping of tasks."""
@@ -105,7 +116,6 @@ TaskPerGroup: Mapping[TaskGroup, list[Task]] = {
     TaskGroup.require_reasoning: [Task.same_texture, Task.same_shape],
 }
 
-SortedTaskList: list[str] = sorted(task.name for task in Task)
 
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
