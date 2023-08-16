@@ -2,7 +2,6 @@ from typing import Self, cast, get_args
 
 import torch
 from pydantic import BaseModel
-from torch.masked import MaskedTensor, as_masked_tensor
 
 from cogelot.structures.vima import (
     AxesPerPoseActionType,
@@ -98,7 +97,7 @@ def compute_fine_grained_loss(
     target_actions: dict[PoseActionType, torch.Tensor],
     *,
     ignore_target_index: int = -100,
-) -> dict[str, MaskedTensor]:
+) -> dict[str, torch.Tensor]:
     """Compute a fine-grained loss across all the poses and the axes per pose.
 
     Since a trajectory can be made of more than one action, we need to average the loss across the
@@ -109,9 +108,10 @@ def compute_fine_grained_loss(
     multiple separate losses to compute and compare.
 
     On top of calculating the loss, we need a way to ensure the mask from the targets are kept as
-    we will need these when reducing the loss. If we don't, the loss will be incorrect. ALthough
-    torch's masked tensors are currently in prototype stage, they support autograd and the
-    reduction operators what we will be needing, so we _should_ be able to use them without issue.
+    we will need these when reducing the loss. If we don't, the loss will be incorrect. To get
+    around this, any masked values are replaces with NaN's. This is because torch's reduction
+    operators support NaN's, so we can just use those to reduce the loss. (See
+    `reduce_fine_grained_loss()` for how that's done.)
     """
     predicted_logits_per_pose_per_axis = PerActionPerAxis.from_action_logits(
         cast(
@@ -130,14 +130,14 @@ def compute_fine_grained_loss(
         strict=True,
     )
 
-    loss_per_action_per_axis: dict[str, MaskedTensor] = {}
+    loss_per_action_per_axis: dict[str, torch.Tensor] = {}
 
-    # When calculating the loss itself, we need to reshape we to be 2-dimensional (not sure why
-    # but it's needed). Afterwards, we can reshape it to the target shape, as we are now in the
-    # shape of (batch, num_timesteps, 1). This seems excessive but it's the only way I know how
-    # right now because torch docs say that providing class indices to the targets is more
-    # performative, and performance is good.
     for (loss_key, predicted_logits), (_, targets) in iterator:
+        # When calculating the loss itself, we need to reshape we to be 2-dimensional (not sure why
+        # but it's needed). Afterwards, we can reshape it to the target shape, as we are now in the
+        # shape of (batch, num_timesteps, 1). This seems excessive but it's the only way I know how
+        # right now because torch docs say that providing class indices to the targets is more
+        # performative, and performance is good.
         loss = torch.nn.functional.cross_entropy(
             predicted_logits.reshape(-1, predicted_logits.size(-1)),
             targets.reshape(-1),
@@ -145,15 +145,15 @@ def compute_fine_grained_loss(
             reduction="none",
         ).reshape(targets.shape)
 
-        # To make sure we mask out the ignored target indices when reducing the loss, we turn the
-        # loss tensor into a masked tensor.
-        loss = cast(MaskedTensor, as_masked_tensor(loss, mask=targets != ignore_target_index))
+        # To make sure we mask out the ignored target indices when reducing the loss, we turn every
+        # masked loss into a nan. This is because torch's reduction operators support nan's.
+        loss[targets == ignore_target_index] = float("nan")
         loss_per_action_per_axis[loss_key] = loss
 
     return loss_per_action_per_axis
 
 
-def reduce_fine_grained_loss(fine_grained_loss: dict[str, MaskedTensor]) -> torch.Tensor:
+def reduce_fine_grained_loss(fine_grained_loss: dict[str, torch.Tensor]) -> torch.Tensor:
     """Reduce the fine-grained loss into a single number for backprop.
 
     Every single tensor should have the exact same shape: [batch_size, max_timesteps, 1]. This
@@ -162,6 +162,9 @@ def reduce_fine_grained_loss(fine_grained_loss: dict[str, MaskedTensor]) -> torc
 
     To reduce the loss, we need to sum across the axes for a given timestep, and then we average
     across all the timesteps within a batch, and then across all batches.
+
+    Since the fine-grained loss will likely have NaN's in it (due to the use of it in the mask
+    calculation before), we need to use the nan versions of the reduction operators.
 
     The mean-ing must be performed in two steps since it is not identical to doing it in a single
     step. For example, I ran the following during debugging and they are not identical:
@@ -175,12 +178,35 @@ def reduce_fine_grained_loss(fine_grained_loss: dict[str, MaskedTensor]) -> torc
     ```
     """
     # Shape: [batch_size, max_timesteps, total_axes_across_actions]
-    loss_per_batch_per_timestep_per_axis = cast(
-        MaskedTensor, torch.cat(list(fine_grained_loss.values()), dim=-1)
+    loss_per_batch_per_timestep_per_axis = torch.cat(list(fine_grained_loss.values()), dim=-1)
+
+    # We need to make sure we timesteps that should not contribute to the loss whatsoever are
+    # masked out properly. However, we can't just assume all zero-elements are maskd out because
+    # the loss could be zero for those timesteps (as in the case where the model is _that good_, or
+    # drastically overfit on the data). Instead, we need to check if the number of NaN's for the
+    # given timestep is equal to the number of axes across all actions. If it is, then we know that
+    # that timestep can be ignored.
+    # Shape: [batch_size, max_timesteps]
+    mask_per_batch_per_timestep = (
+        torch.isnan(loss_per_batch_per_timestep_per_axis).sum(dim=-1).ge(len(fine_grained_loss))
     )
 
-    # Reduce the loss to a single number
-    reduced_loss = loss_per_batch_per_timestep_per_axis.sum(dim=-1).mean(dim=-1).mean(dim=-1)
-    assert isinstance(reduced_loss, MaskedTensor)
-    assert reduced_loss.ndim == 0
-    return reduced_loss.get_data()  # pyright: ignore[reportGeneralTypeIssues]
+    # All nan's get turned into 0's when summing, so we can just sum across the axes to get the
+    # loss per timestep for each element in the batch. This will make sure that if, for some
+    # reason, a single timestep does not have NaN's for the entire axis, it will contribute to the
+    # loss for that timestep, which it should do. While unlikely to happen, we do things right here
+    # dammit!
+    loss_per_batch_per_timestep = loss_per_batch_per_timestep_per_axis.nansum(dim=-1)
+
+    # Now that we have the loss per timestep, we can mask out the timesteps that should not
+    # contribute to the loss when we average over all the timesteps. Then we can use nanmean to get
+    # the loss per batch element
+    loss_per_batch = loss_per_batch_per_timestep.masked_fill(
+        mask_per_batch_per_timestep, float("nan")
+    ).nanmean(dim=-1)
+
+    # Finally, we can average across all the batches to get the loss
+    loss = loss_per_batch.mean()
+
+    assert loss.ndim == 0
+    return loss

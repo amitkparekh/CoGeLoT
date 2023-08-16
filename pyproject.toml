@@ -279,6 +279,8 @@ extend-ignore = [
 	"WPS348",
 	# Allow logic in __init__ modules
 	"WPS412",
+	# Allow `float("nan")` because it's a thing that happens in ML stuff
+	"WPS456",
 	# Naming things is difficult, let the developer choose to use properties or methods
 	"WPS615",
 ]

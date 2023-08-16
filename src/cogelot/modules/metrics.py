@@ -2,7 +2,6 @@ from typing import ClassVar, Self, get_args
 
 import torch
 from loguru import logger
-from torch.masked import MaskedTensor
 from torchmetrics import MeanMetric, Metric, SumMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from torchmetrics.wrappers import MultitaskWrapper
@@ -55,15 +54,11 @@ class LossPerAxisPerActionMetric(Metric):
         # And create the metric for each of them
         self.metrics = torch.nn.ModuleDict({key: MeanMetric() for key in loss_keys})
 
-    def update(self, fine_grained_loss: dict[str, MaskedTensor]) -> None:
+    def update(self, fine_grained_loss: dict[str, torch.Tensor]) -> None:
         """Update the metric with the result of a batch."""
-        # Convert the masked tensors to regular tensors
-        loss_tensors = {
-            key: tensor.get_data()[tensor.get_mask()]  # pyright: ignore[reportOptionalSubscript]
-            for key, tensor in fine_grained_loss.items()
-        }
-        for key, loss in loss_tensors.items():
-            self.metrics[key](loss)
+        for key, loss in fine_grained_loss.items():
+            loss_without_nans = loss[~torch.isnan(loss)]
+            self.metrics[key](loss_without_nans)
 
     def compute(self) -> dict[str, torch.Tensor]:
         """Compute the metric."""
