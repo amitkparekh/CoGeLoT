@@ -39,9 +39,9 @@ def test_create_hf_dataset_from_vima_instance_works(fixture_storage_dir: Path) -
 
 
 def test_preprocessing_data_works(
-    normalized_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
+    vima_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
 ) -> None:
-    preprocessed_instance = instance_preprocessor.preprocess(normalized_instance)
+    preprocessed_instance = instance_preprocessor.preprocess(vima_instance)
     assert preprocessed_instance is not None
 
 
@@ -54,8 +54,8 @@ def test_saving_preprocessed_instance_works(
 
 
 def test_create_hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> None:
-    def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-        yield from (instance.to_hf_dict() for instance in instances)
+    def gen(preprocessed_instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
+        yield from (instance.to_hf_dict() for instance in preprocessed_instances)
 
     ds = create_hf_dataset(gen, all_preprocessed_instances)
     ds = ds.with_format("torch")
@@ -75,8 +75,8 @@ def test_validation_split_creation_works(
         itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
     )
 
-    def gen(instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-        yield from (instance.to_hf_dict() for instance in instances)
+    def gen(preprocessed_instances: list[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
+        yield from (instance.to_hf_dict() for instance in preprocessed_instances)
 
     dataset = create_hf_dataset(gen, all_preprocessed_instances)
     split_dataset = create_validation_split(
@@ -84,11 +84,8 @@ def test_validation_split_creation_works(
     )
 
     assert split_dataset
-    assert (
-        len(list(split_dataset["train"]))
-        == (num_cycles * len(all_preprocessed_instances)) - num_valid_instances
-    )
-    assert len(list(split_dataset["test"])) == num_valid_instances
+    assert len(split_dataset["train"]) == len(all_preprocessed_instances) - num_valid_instances
+    assert len(split_dataset["valid"]) == num_valid_instances
 
 
 # def test_dataset_works_with_dataloader(hf_dataset: Dataset) -> None:
