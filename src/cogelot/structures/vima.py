@@ -105,10 +105,20 @@ TaskPerGroup: Mapping[TaskGroup, list[Task]] = {
     TaskGroup.require_reasoning: [Task.same_texture, Task.same_shape],
 }
 
+SortedTaskList: list[str] = sorted(task.name for task in Task)
+
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
-SortedTaskList: list[str] = sorted(task.name for task in Task)
+PositionAxes = Literal["x", "y"]  # 'z' is not modelled and therefore not included here
+RotationAxes = Literal["x", "y", "z", "w"]
+
+AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] = {
+    "pose0_position": PositionAxes,
+    "pose0_rotation": RotationAxes,
+    "pose1_position": PositionAxes,
+    "pose1_rotation": RotationAxes,
+}
 
 
 class ObjectMetadata(BaseModel):
