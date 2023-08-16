@@ -17,7 +17,7 @@ class PoseAccuracyMetric(MultitaskWrapper):
         *,
         max_num_pose_position_classes: int,
         max_num_pose_rotation_classes: int,
-        ignore_index: int
+        ignore_index: int,
     ) -> Self:
         """Create the pose accuracy metric from some hyperparams."""
         return cls(
