@@ -2,7 +2,7 @@ from typing import ClassVar, Self, get_args
 
 import torch
 from loguru import logger
-from torchmetrics import MeanMetric, Metric, SumMetric
+from torchmetrics import MeanMetric, SumMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from torchmetrics.wrappers import MultitaskWrapper
 
@@ -40,11 +40,14 @@ class PoseAccuracyMetric(MultitaskWrapper):
         )
 
 
-class LossPerAxisPerActionMetric(Metric):
-    """Track the loss per axis per action."""
+class LossPerAxisPerActionMetric(MultitaskWrapper):
+    """Track the loss per axis per action.
+
+    If there are NaN's in the loss, they get ignored. This is because of how NaN's are used to aid
+    with masking the loss during reduction.
+    """
 
     def __init__(self) -> None:
-        super().__init__()
         # Get all of the keys that exist for the loss
         loss_keys = [
             LOSS_KEY_TEMPLATE.format(pose_action_type=pose_action_type, axis=axis)
@@ -52,20 +55,19 @@ class LossPerAxisPerActionMetric(Metric):
             for axis in get_args(axis_literal)
         ]
         # And create the metric for each of them
-        self.metrics = torch.nn.ModuleDict({key: MeanMetric() for key in loss_keys})
+        metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
+        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
 
     def update(self, fine_grained_loss: dict[str, torch.Tensor]) -> None:
         """Update the metric with the result of a batch."""
-        for key, loss in fine_grained_loss.items():
-            loss_without_nans = loss[~torch.isnan(loss)]
-            self.metrics[key](loss_without_nans)
+        if self.task_metrics.keys() != fine_grained_loss.keys():
+            raise ValueError(
+                f"Keys for loss ({fine_grained_loss.keys()}) do not match keys for metrics "
+                f"({self.task_metrics.keys()})"
+            )
 
-    def compute(self) -> dict[str, torch.Tensor]:
-        """Compute the metric."""
-        return {
-            key: metric.compute()  # pyright: ignore[reportGeneralTypeIssues]
-            for key, metric in self.metrics.items()
-        }
+        for key, loss in fine_grained_loss.items():
+            self.task_metrics[key](loss)
 
 
 class EvaluationMetrics:
