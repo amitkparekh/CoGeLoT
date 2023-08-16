@@ -131,11 +131,13 @@ class VIMALightningModule(pl.LightningModule):
     def on_train_epoch_end(self) -> None:
         """Reset the accuracy metric at the end of the epoch."""
         self._accuracy.reset()
+        self._loss_per_axis.reset()
         return super().on_train_epoch_end()
 
     def on_validation_epoch_end(self) -> None:
         """Reset the accuracy metric at the end of the epoch."""
         self._accuracy.reset()
+        self._loss_per_axis.reset()
         return super().on_validation_epoch_end()
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
