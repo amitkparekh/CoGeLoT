@@ -1,15 +1,12 @@
-from typing import Any, Literal, Self, cast
+from typing import Any, Self, cast
 
-from gym import Env, Wrapper
-from gym.wrappers import TimeLimit as _TimeLimit
-from loguru import logger
+from gym import Wrapper
 
 from cogelot.data.parse import parse_object_metadata
+from cogelot.environment.wrappers import ResetFaultToleranceWrapper, TimeLimitWrapper
 from cogelot.structures.common import Assets, Observation
 from cogelot.structures.vima import (
     MODALITIES,
-    PARTITION_PER_LEVEL,
-    TASK_PER_INDEX,
     ActionBounds,
     EndEffector,
     Partition,
@@ -19,30 +16,6 @@ from cogelot.structures.vima import (
 from vima_bench import make
 from vima_bench.env.base import VIMAEnvBase
 from vima_bench.tasks import PARTITION_TO_SPECS
-
-
-class ResetFaultToleranceWrapper(Wrapper):
-    """Ensure the environment is reset successfully."""
-
-    max_retries = 10
-
-    def reset(self, **kwargs: Any) -> Any:
-        """Reset the environment."""
-        for _ in range(self.max_retries):
-            try:
-                return self.env.reset(**kwargs)
-            except Exception:  # noqa: BLE001
-                logger.error("Failed to reset environment, trying a different seed")
-                current_seed = self.env.unwrapped.task.seed  # type: ignore  # noqa: PGH003
-                self.env.global_seed = current_seed + 1  # type: ignore  # noqa: PGH003
-        raise RuntimeError(f"Failed to reset environment after {self.max_retries} retries")
-
-
-class TimeLimitWrapper(_TimeLimit):
-    """Limit the number of steps allowed in the environment."""
-
-    def __init__(self, env: Env, bonus_steps: int = 0) -> None:  # type: ignore  # noqa: PGH003
-        super().__init__(env, env.task.oracle_max_steps + bonus_steps)  # type: ignore  # noqa: PGH003
 
 
 class VIMAEnvironment(Wrapper):
@@ -63,15 +36,15 @@ class VIMAEnvironment(Wrapper):
     ) -> Self:
         """Create the VIMA environment."""
         if isinstance(partition, int):
-            partition = PARTITION_PER_LEVEL[partition]
+            partition = Partition(partition)
 
         if isinstance(task, int):
-            task = TASK_PER_INDEX[task]
+            task = Task(task)
 
-        task_kwargs = PARTITION_TO_SPECS["test"][partition][task]  # type: ignore[reportOptionalSubscript]
+        task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
         assert isinstance(task_kwargs, dict)
         vima_env = make(
-            task_name=task,
+            task_name=task.name,
             task_kwargs=task_kwargs,
             modalities=list(MODALITIES),
             seed=seed,
@@ -107,14 +80,11 @@ class VIMAEnvironment(Wrapper):
             prompt_assets=prompt_assets,
         )
 
-    def set_task(self, task: Task, partition: Partition | Literal[1, 2, 3, 4]) -> None:
+    def set_task(self, task: Task, partition: Partition) -> None:
         """Set the task of the environment."""
-        if isinstance(partition, int):
-            partition = PARTITION_PER_LEVEL[partition]
-
-        task_kwargs = PARTITION_TO_SPECS["test"][partition][task]  # type: ignore[reportOptionalSubscript]
+        task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
         assert isinstance(task_kwargs, dict)
-        self.env.set_task(task, task_kwargs)
+        self.env.set_task(task.name, task_kwargs)
 
     def reset(self, **kwargs: Any) -> Observation:
         """Reset the environment and return the first observation."""
