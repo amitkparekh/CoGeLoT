@@ -18,7 +18,7 @@ from cogelot.structures.model import PreprocessedInstance
 SetupStage = Literal["fit", "validate", "test", "predict"]
 
 
-class VIMADataModule(LightningDataModule):
+class VIMATrainingDataModule(LightningDataModule):
     """Datamodule for the VIMA dataset."""
 
     def __init__(

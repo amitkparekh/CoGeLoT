@@ -1,7 +1,7 @@
 import pytest
 from pytest_cases import parametrize
 
-from cogelot.training.lr_scheduler import get_cosine_with_warmup_and_lr_end_lambda
+from cogelot.nn.lr_scheduler import get_cosine_with_warmup_and_lr_end_lambda
 
 
 @parametrize("lr_end", [0, 1e-4, 1e-7])

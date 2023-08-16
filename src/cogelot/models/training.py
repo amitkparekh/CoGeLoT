@@ -5,11 +5,11 @@ from typing import Any, Literal, cast
 import torch
 from lightning import pytorch as pl
 
+from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
 from cogelot.modules.policy import Policy
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import PoseActionType
-from cogelot.training.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 

@@ -1,0 +1,1 @@
+from cogelot.datamodules.training import VIMATrainingDataModule

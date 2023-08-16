@@ -3,10 +3,10 @@ from pytest import fixture
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
+from cogelot.modules.metrics import LossPerAxisPerActionMetric
 from cogelot.nn.loss import PerActionPerAxis, compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
-from cogelot.training.metrics import LossPerAxisPerActionMetric
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
