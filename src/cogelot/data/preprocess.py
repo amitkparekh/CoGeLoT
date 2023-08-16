@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal, cast, overload
 
 import numpy as np
 import torch
@@ -6,7 +6,7 @@ from torch.utils.data import default_collate
 
 from cogelot.modules.tokenizers import EndEffectorTokenizer, TextTokenizer
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
-from cogelot.structures.common import ImageType, Observation, View
+from cogelot.structures.common import Assets, ImageType, Observation, View
 from cogelot.structures.model import PreprocessedInstance, RawPromptTokenType
 from cogelot.structures.vima import PoseAction, VIMAInstance
 from vima.prepare_obs import ObsDict, prepare_obs
@@ -86,6 +86,7 @@ class InstancePreprocessor:
             actions=actions,
         )
 
+    @overload
     def prepare_prompt(
         self,
         *,
@@ -93,11 +94,39 @@ class InstancePreprocessor:
         prompt_assets: dict[str, dict[str, Any]],
         object_ids_from_prompt_assets: set[int],
     ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
+        ...  # noqa: WPS428
+
+    @overload
+    def prepare_prompt(
+        self,
+        *,
+        prompt: str,
+        prompt_assets: Assets,
+        object_ids_from_prompt_assets: None,
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
+        ...  # noqa: WPS428
+
+    def prepare_prompt(
+        self,
+        *,
+        prompt: str,
+        prompt_assets: dict[str, dict[str, Any]] | Assets,
+        object_ids_from_prompt_assets: set[int] | None,
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
         """Prepare the prompt for the model.
 
         Just take what VIMA does. This does not do any encoding, so it doesn't update any of the
         gradients or anything.
         """
+        if object_ids_from_prompt_assets is None and isinstance(prompt_assets, Assets):
+            object_ids_from_prompt_assets = prompt_assets.all_object_ids
+
+        if isinstance(prompt_assets, Assets):
+            prompt_assets = prompt_assets.dict()["__root__"]
+
+        assert isinstance(prompt_assets, dict)
+        assert isinstance(object_ids_from_prompt_assets, set)
+
         prepared_prompt = prepare_prompt(
             prompt=prompt,
             prompt_assets=prompt_assets,
