@@ -1,9 +1,8 @@
 from pytest_cases import fixture
 
 from cogelot.data.preprocess import InstancePreprocessor
-from cogelot.models.vima import VIMALightningModule
+from cogelot.models.training import VIMALightningModule
 from cogelot.modules.policy import Policy
-from cogelot.modules.preprocessors.their_instance_batcher import TheirInstanceBatcher
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
     ImageTokenizer,
@@ -102,11 +101,6 @@ def vima_policy() -> Policy:
         prompt_obj_post_layer=vima.prompt_obj_post_layer,
         transformer_decoder=VIMADecoder(vima.xattn_gpt),
     )
-
-
-@fixture(scope="session")
-def their_instance_batcher(vima_policy: Policy) -> TheirInstanceBatcher:
-    return TheirInstanceBatcher(policy=vima_policy)
 
 
 @fixture(scope="session")
