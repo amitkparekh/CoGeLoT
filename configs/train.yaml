@@ -28,7 +28,6 @@ seed: 1000
 datamodule:
   _target_: cogelot.datamodules.VIMATrainingDataModule
   hf_datasets_repo_name: amitkparekh/vima
-  dataset_data_dir: ./storage/data/
   batch_size: 16
   num_workers: 64
   dataloader_kwargs:

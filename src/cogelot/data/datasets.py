@@ -172,9 +172,7 @@ def maybe_split_dataset_by_node(dataset: U) -> U:
     return split_dataset_by_node(dataset, rank=int(current_rank), world_size=int(world_size))
 
 
-def download_parquet_files_from_hub(
-    repo_id: str, output_dir: Path, *, max_workers: int = 8
-) -> None:
+def download_parquet_files_from_hub(repo_id: str, *, max_workers: int = 8) -> None:
     """Download the parquet data files from the dataset on the hub.
 
     This is faster than using `datasets.load_dataset`. `datasets.load_dataset` doesn't download as
@@ -186,39 +184,44 @@ def download_parquet_files_from_hub(
     is there to load the dataset from the parquet files and returns the `DatasetDict`.
     """
     snapshot_download(
-        repo_id,
+        repo_id=repo_id,
         repo_type="dataset",
-        local_dir=output_dir,
-        local_dir_use_symlinks=True,
+        local_dir=None,
+        library_name=repo_id,
         allow_patterns="*.parquet",
         max_workers=max_workers,
+        resume_download=True,
     )
 
 
-def _manual_hack_parquet_paths(path: Path) -> Path:
-    """Hack to fix the parquet paths."""
-    # TODO: This needs to be fixed somehow, because it is a hack that only works on OCI
-    return Path(str(path.readlink()).replace("../../../../../", "/home/ubuntu/"))
+def get_location_of_parquet_files(repo_id: str) -> Path:
+    """Get the path to the location where the parquet files were downloaded."""
+    return Path(
+        snapshot_download(
+            repo_id=repo_id,
+            repo_type="dataset",
+            library_name=repo_id,
+            local_files_only=True,
+            local_dir=None,
+        )
+    )
 
 
 def load_dataset_from_parquet_files(
-    data_dir: Path, *, num_proc: int | None = None
+    data_dir: Path,
+    *,
+    num_proc: int | None = None,
+    dataset_splits: tuple[str, ...] = ("train", "valid"),
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
     # Get the parquet files per split
-    train_parquet_files = data_dir.rglob("train*.parquet")
-    valid_parquet_files = data_dir.rglob("valid*.parquet")
-
-    # We need to provide the absolute path to the parquet files
-    resolved_train_paths = map(str, map(_manual_hack_parquet_paths, train_parquet_files))
-    resolved_valid_paths = map(str, map(_manual_hack_parquet_paths, valid_parquet_files))
-
-    data_files = {
-        "train": list(resolved_train_paths),
-        "valid": list(resolved_valid_paths),
+    parquet_files_per_split = {
+        split: list(map(str, data_dir.rglob(f"{split}*.parquet"))) for split in dataset_splits
     }
 
     # Load the dataset with the splits
-    dataset_dict = datasets.load_dataset("parquet", data_files=data_files, num_proc=num_proc)
+    dataset_dict = datasets.load_dataset(
+        "parquet", data_files=parquet_files_per_split, num_proc=num_proc
+    )
     assert isinstance(dataset_dict, datasets.DatasetDict)
     return dataset_dict
