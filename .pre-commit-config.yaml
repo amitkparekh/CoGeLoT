@@ -37,7 +37,7 @@ repos:
         types: [python]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.24.0
+    rev: 0.24.1
     hooks:
       - id: check-github-workflows
         types: [yaml]
@@ -71,7 +71,7 @@ repos:
         args: [--in-place, --wrap-summaries=99, --wrap-descriptions=99]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.283"
+    rev: "v0.0.284"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
