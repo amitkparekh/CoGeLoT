@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 import datasets
+from pyparsing import Iterable
 from pytest_cases import fixture
 
 from cogelot.data.datasets import create_hf_dataset, set_dataset_format
@@ -11,6 +12,7 @@ from cogelot.data.parse import (
     get_all_raw_instance_directories,
 )
 from cogelot.data.preprocess import InstancePreprocessor
+from cogelot.datamodules.training import VIMATrainingDataModule
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
@@ -65,7 +67,7 @@ def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datase
         itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
     )
 
-    def gen(preprocessed_instances) -> Iterator[dict[str, Any]]:
+    def gen(preprocessed_instances: Iterable[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
         generator = (instance.to_hf_dict() for instance in preprocessed_instances)
         yield from generator
 
@@ -74,29 +76,12 @@ def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datase
     return dataset
 
 
-# @fixture(scope="session")
-# def vima_datamodule(
-#     instance_preprocessor: InstancePreprocessor, fixture_storage_dir: Path, tmp_path: Path
-# ) -> VIMADataModule:
-#     """VIMA datamodule."""
-#     raw_data_dir = fixture_storage_dir
-#     normalized_data_dir = tmp_path.joinpath("normalized")
-#     preprocessed_data_dir = tmp_path.joinpath("preprocessed")
-#     datamodule = VIMADataModule(
-#         instance_preprocessor=instance_preprocessor,
-#         raw_data_dir=raw_data_dir,
-#         normalized_data_dir=normalized_data_dir,
-#         preprocessed_data_dir=preprocessed_data_dir,
-#         num_workers=1,
-#         batch_size=1,
-#         num_validation_instances=0,
-#     )
-#     datamodule.prepare_data()
-#     # TODO: Increase the total number of instances
-
-#     datamodule.setup(stage="fit")
-
-#     assert datamodule.training_datapipe is not None
-#     assert datamodule.validation_datapipe is not None
-
-#     return datamodule
+@fixture(scope="session")
+def vima_training_datamodule() -> VIMATrainingDataModule:
+    """VIMA datamodule."""
+    datamodule = VIMATrainingDataModule(
+        hf_datasets_repo_name="amitkparekh/vima-small",
+        num_workers=1,
+        batch_size=1,
+    )
+    return datamodule
