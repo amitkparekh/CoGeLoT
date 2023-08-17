@@ -1,7 +1,7 @@
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import Any, Protocol, TypeVar, cast
 
 import datasets
 from datasets.distributed import split_dataset_by_node
@@ -89,6 +89,16 @@ Features = datasets.Features(
     }
 )
 
+S = TypeVar("S", Path, PreprocessedInstance)
+
+
+class PreprocessedInstanceGeneratorProtocol(Protocol):
+    """Protocol for the generator that creates preprocessed instances for HF dataset."""
+
+    def __call__(self, preprocessed_instances: list[S]) -> Iterator[dict[str, Any]]:
+        """Yield instances for the HF dataset."""
+        ...  # noqa: WPS428
+
 
 def generate_preprocess_instances_for_hf_dataset(
     preprocessed_instances: list[Path],
@@ -99,11 +109,8 @@ def generate_preprocess_instances_for_hf_dataset(
         yield preprocessed_instance.to_hf_dict()
 
 
-S = TypeVar("S", Path, PreprocessedInstance)
-
-
 def create_hf_dataset(
-    preprocessed_instance_generator: Callable[[list[S]], Iterator[dict[str, Any]]],
+    preprocessed_instance_generator: PreprocessedInstanceGeneratorProtocol,
     preprocessed_instances: list[S],
     *,
     num_workers: int | None = None,
