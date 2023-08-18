@@ -1,1 +1,2 @@
+from cogelot.models.evaluation import EvaluationLightningModule
 from cogelot.models.training import VIMALightningModule

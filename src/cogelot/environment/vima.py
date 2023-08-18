@@ -1,4 +1,4 @@
-from typing import Any, Self, cast
+from typing import Any, NamedTuple, Self
 
 from gym import Wrapper
 
@@ -16,6 +16,16 @@ from cogelot.structures.vima import (
 from vima_bench import make
 from vima_bench.env.base import VIMAEnvBase
 from vima_bench.tasks import PARTITION_TO_SPECS
+
+
+class EnvironmentStepResult(NamedTuple):
+    """Result of taking a step in the environment."""
+
+    observation: dict[str, Any]
+    reward: float
+    done: bool
+    truncated: bool
+    task_info: dict[str, Any]
 
 
 class VIMAEnvironment(Wrapper):
@@ -66,7 +76,7 @@ class VIMAEnvironment(Wrapper):
         prompt_assets = Assets.parse_obj(self.env.prompt_assets)
         object_metadata = parse_object_metadata(self.env.meta_info)
         end_effector: EndEffector = self.env.meta_info["end_effector_type"]
-        task_name: Task = cast(Task, self.env.task_name)
+        task_name: Task = Task[self.env.task_name]
         action_bounds = ActionBounds.parse_obj(self.env.meta_info["action_bounds"])
 
         return VIMAInstance(
@@ -92,9 +102,6 @@ class VIMAEnvironment(Wrapper):
         assert isinstance(observation, dict)
         return Observation.parse_obj({"index": 0, **observation})
 
-    def step(
-        self, *args: Any, **kwargs: Any
-    ) -> tuple[dict[str, Any], float, bool, dict[str, Any]]:
+    def step(self, *args: Any, **kwargs: Any) -> EnvironmentStepResult:
         """Take a step in the environment."""
-        observation, reward, done, task_info = self.env.step(*args, **kwargs)
-        return observation, reward, done, task_info
+        return EnvironmentStepResult(*self.env.step(*args, **kwargs))

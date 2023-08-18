@@ -368,7 +368,7 @@ class VIMAEnvBase(gym.Env):
 
         self.meta_info["obj_id_to_info"] = self.obj_id_reverse_mapping
 
-        obs, _, _, _ = self.step()
+        obs, *_ = self.step()
 
         return obs
 
@@ -380,7 +380,7 @@ class VIMAEnvBase(gym.Env):
           skip_oracle: boolean variable that indicates whether to update oracle-only goals
 
         Returns:
-          (obs, reward, done, info) tuple containing MDP step data.
+          (obs, reward, done, truncated, info) tuple containing MDP step data.
         """
         if action is not None:
             assert self.action_space.contains(
@@ -403,7 +403,7 @@ class VIMAEnvBase(gym.Env):
             # so that we don't break the Gym API contract.
             if timeout:
                 obs = self._get_obs()
-                return obs, 0.0, True, self._get_info()
+                return obs, 0, True, True, self._get_info()
 
         # Step simulator asynchronously until objects settle.
         counter = 0
@@ -435,7 +435,7 @@ class VIMAEnvBase(gym.Env):
         done = result_tuple.success or result_tuple.failure
         obs = self._get_obs()
 
-        return obs, reward, done, self._get_info()
+        return obs, reward, done, False, self._get_info()
 
     def oracle_action_to_env_actions(self, oracle_action: dict):
         if isinstance(self.ee, Suction):  # we use MoveEndEffector Primitive

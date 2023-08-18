@@ -18,6 +18,8 @@ class ResetFaultToleranceWrapper(Wrapper):
             except Exception:  # noqa: BLE001
                 logger.error("Failed to reset environment, trying a different seed")
                 current_seed = self.env.unwrapped.task.seed  # type: ignore  # noqa: PGH003
+                if not current_seed:
+                    current_seed = 0
                 self.env.global_seed = current_seed + 1  # type: ignore  # noqa: PGH003
         raise RuntimeError(f"Failed to reset environment after {self.max_retries} retries")
 

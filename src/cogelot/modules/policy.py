@@ -250,10 +250,6 @@ class Policy(torch.nn.Module):
         device = prompts[1].device
         raw_prompts_token_type, word_batch, image_batch = prompts
 
-        # Need to add the batch dimension to the word batch
-        if word_batch.ndim == 1:
-            word_batch = word_batch.unsqueeze(0)
-
         batch_word_emb = self._prompt_embedding(word_batch)
         batch_image_emb = self._obj_encoder(**image_batch)
         batch_image_emb = self._prompt_obj_post_layer(batch_image_emb)

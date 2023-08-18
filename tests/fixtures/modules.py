@@ -1,7 +1,8 @@
 from pytest_cases import fixture
 
 from cogelot.data.preprocess import InstancePreprocessor
-from cogelot.models.training import VIMALightningModule
+from cogelot.environment.vima import VIMAEnvironment
+from cogelot.models import EvaluationLightningModule, VIMALightningModule
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
@@ -106,3 +107,21 @@ def vima_policy() -> Policy:
 @fixture(scope="session")
 def vima_lightning_module(vima_policy: Policy) -> VIMALightningModule:
     return VIMALightningModule(policy=vima_policy)
+
+
+@fixture(scope="session")
+def vima_environment() -> VIMAEnvironment:
+    return VIMAEnvironment.from_config(task=1, partition=1, seed=10)
+
+
+@fixture(scope="session")
+def evaluation_module(
+    instance_preprocessor: InstancePreprocessor,
+    vima_lightning_module: VIMALightningModule,
+    vima_environment: VIMAEnvironment,
+) -> EvaluationLightningModule:
+    return EvaluationLightningModule(
+        environment=vima_environment,
+        model=vima_lightning_module,
+        preprocessor=instance_preprocessor,
+    )
