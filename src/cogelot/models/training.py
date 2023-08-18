@@ -114,7 +114,7 @@ class VIMALightningModule(pl.LightningModule):
         # prevent the thing resetting every epoch)
         self._examples_seen.update(len(batch))
         self.log(
-            "trainer/total_examples",
+            "trainer/num_examples",
             self._examples_seen.compute(),
             prog_bar=True,
             logger=True,
