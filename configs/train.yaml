@@ -72,7 +72,12 @@ model:
 
     obs_fusion_layer:
       _target_: torch.nn.Linear
-      in_features: 770 # 768 + 2 = 770
+      in_features:
+        _target_: builtins.sum
+        _convert_: all
+        _args_:
+          - - ${model.policy.obj_encoder.transformer_emb_dim}
+            - ${model.policy.end_effector_encoder.embedding_dim}
       out_features: ${..embed_dim}
 
     action_encoder:
