@@ -46,7 +46,7 @@ model:
     wandb_entity: ${wandb.entity}
     wandb_project: ${wandb.project}
     wandb_run_id: ${wandb.run_id}
-    checkpoint_save_dir: ${output_dir}
+    checkpoint_save_dir: "./storage/data/models"
 
   environment:
     _target_: cogelot.environment.VIMAEnvironment.from_config
