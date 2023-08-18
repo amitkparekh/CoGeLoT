@@ -6,13 +6,13 @@ import datasets
 from pyparsing import Iterable
 from pytest_cases import fixture
 
+from cogelot.data.datamodule import VIMADataModule
 from cogelot.data.datasets import create_hf_dataset, set_dataset_format
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
 )
 from cogelot.data.preprocess import InstancePreprocessor
-from cogelot.datamodules.training import VIMATrainingDataModule
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
@@ -77,11 +77,9 @@ def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datase
 
 
 @fixture(scope="session")
-def vima_training_datamodule() -> VIMATrainingDataModule:
+def vima_datamodule() -> VIMADataModule:
     """VIMA datamodule."""
-    datamodule = VIMATrainingDataModule(
-        hf_datasets_repo_name="amitkparekh/vima-small",
-        num_workers=1,
-        batch_size=1,
+    datamodule = VIMADataModule(
+        hf_datasets_repo_name="amitkparekh/vima-small", num_workers=1, batch_size=1
     )
     return datamodule

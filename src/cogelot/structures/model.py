@@ -3,11 +3,18 @@ from typing import Any, Literal, NamedTuple, Self
 import torch
 from pydantic import BaseModel
 
-from cogelot.structures.vima import Task
+from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
 
 
 RawPromptTokenType = list[list[Literal[0, 1]]]
+
+
+class EvaluationEpisode(NamedTuple):
+    """Single instance of the evaluation dataset."""
+
+    partition: Partition
+    task: Task
 
 
 class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):

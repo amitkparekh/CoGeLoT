@@ -1,7 +1,7 @@
 import datasets
 
 from cogelot.data.collate import collate_preprocessed_instances
-from cogelot.datamodules import VIMATrainingDataModule
+from cogelot.data.datamodule import VIMADataModule
 from cogelot.structures.model import PreprocessedInstance
 
 
@@ -12,7 +12,5 @@ def test_collate_preprocessed_instances_works(hf_dataset: datasets.Dataset) -> N
     assert batch
 
 
-def test_vima_training_datamodule_loads_without_error(
-    vima_training_datamodule: VIMATrainingDataModule,
-) -> None:
-    assert vima_training_datamodule
+def test_vima_datamodule_loads_without_error(vima_datamodule: VIMADataModule) -> None:
+    assert vima_datamodule

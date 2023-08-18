@@ -12,13 +12,14 @@ from cogelot.data.datasets import (
     maybe_split_dataset_by_node,
     set_dataset_format,
 )
-from cogelot.structures.model import PreprocessedInstance
+from cogelot.data.evaluation import VIMAEvaluationDataset
+from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
 
 
 SetupStage = Literal["fit", "validate", "test", "predict"]
 
 
-class VIMATrainingDataModule(LightningDataModule):
+class VIMADataModule(LightningDataModule):
     """Datamodule for the VIMA dataset."""
 
     def __init__(
@@ -39,6 +40,7 @@ class VIMATrainingDataModule(LightningDataModule):
 
         self.train_dataset: datasets.Dataset
         self.valid_dataset: datasets.Dataset
+        self.eval_dataset: VIMAEvaluationDataset
 
     def prepare_data(self) -> None:
         """Prepare any data before starting training.
@@ -57,6 +59,9 @@ class VIMATrainingDataModule(LightningDataModule):
         if stage == "validate":
             dataset = self._load_dataset()
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
+
+        if stage == "predict":
+            self.eval_dataset = VIMAEvaluationDataset.from_partition_to_specs()
 
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the training set."""
@@ -78,6 +83,18 @@ class VIMATrainingDataModule(LightningDataModule):
             shuffle=False,
             collate_fn=collate_preprocessed_instances_from_hf_dataset,
             **self._dataloader_kwargs,
+        )
+
+    def predict_dataloader(self) -> DataLoader[EvaluationEpisode]:
+        """Get a dataloader to use for predicting during evaluation.
+
+        Disable the `batch_size` and `batch_sampler` to ensure that we get a single instance at a time.
+        """
+        return DataLoader[EvaluationEpisode](
+            self.eval_dataset,
+            batch_size=None,
+            shuffle=False,
+            batch_sampler=None,
         )
 
     def _load_dataset(self) -> datasets.DatasetDict:
