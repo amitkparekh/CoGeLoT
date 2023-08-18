@@ -1,10 +1,12 @@
 from collections.abc import Callable, Iterator
 from functools import partial
-from typing import Any, Literal, cast
+from pathlib import Path
+from typing import Any, Literal, Self, cast
 
 import torch
 from lightning import pytorch as pl
 
+from cogelot.common.wandb import download_model_from_wandb
 from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
 from cogelot.modules.policy import Policy
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
@@ -47,6 +49,24 @@ class VIMALightningModule(pl.LightningModule):
             ignore_index=self.ignore_target_index,
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
+
+    @classmethod
+    def from_wandb_run(
+        cls,
+        wandb_entity: str,
+        wandb_project: str,
+        wandb_run_id: str,
+        checkpoint_save_dir: Path | str,
+    ) -> Self:
+        """Instantiate the model by getting the checkpoint from a wandb run."""
+        checkpoint_save_dir = Path(checkpoint_save_dir)
+        model_checkpoint_path = download_model_from_wandb(
+            entity=wandb_entity,
+            project=wandb_project,
+            run_id=wandb_run_id,
+            save_dir=checkpoint_save_dir,
+        )
+        return cls.load_from_checkpoint(model_checkpoint_path)
 
     def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
