@@ -5,6 +5,7 @@ from typing import Any, Literal, Self, cast
 
 import torch
 from lightning import pytorch as pl
+from torchmetrics import SumMetric
 
 from cogelot.common.wandb import download_model_from_wandb
 from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
@@ -49,6 +50,7 @@ class VIMALightningModule(pl.LightningModule):
             ignore_index=self.ignore_target_index,
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
+        self._examples_seen = SumMetric()
 
     @classmethod
     def from_wandb_run(
@@ -106,6 +108,19 @@ class VIMALightningModule(pl.LightningModule):
         )
         self._log_loss_per_axis(
             split="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+
+        # Log the total number of examples seen across all epochs (and doing it this way will
+        # prevent the thing resetting every epoch)
+        self._examples_seen.update(len(batch))
+        self.log(
+            "trainer/total_examples",
+            self._examples_seen.compute(),
+            prog_bar=True,
+            logger=True,
+            on_step=True,
+            on_epoch=False,
+            sync_dist=True,
         )
 
         return loss
