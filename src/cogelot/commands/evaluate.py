@@ -33,3 +33,7 @@ def main(config: DictConfig) -> None:
 
     logger.info("Starting evaluation...")
     trainer.test(model, datamodule=datamodule)
+
+
+if __name__ == "__main__":
+    main()
