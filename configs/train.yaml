@@ -2,6 +2,10 @@
 
 defaults:
   - _self_
+
+  # Get the datamodule from the other config file
+  - /datamodule.yaml
+
   - trainer: cpu.yaml
 
   # The chosen policy will automatically be set to the model.policy
@@ -24,15 +28,6 @@ task_name: "train"
 output_dir: ${hydra:runtime.output_dir}
 
 seed: 1000
-
-datamodule:
-  _target_: cogelot.datamodules.VIMATrainingDataModule
-  hf_datasets_repo_name: amitkparekh/vima
-  batch_size: 16
-  num_workers: 64
-  dataloader_kwargs:
-    # https://forums.fast.ai/t/last-training-batch-is-dropped/39321/2
-    drop_last: true
 
 model:
   _target_: cogelot.models.VIMALightningModule
