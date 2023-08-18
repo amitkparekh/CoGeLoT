@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-set -e
+
+# ------------------------------- Disable IOMMU ------------------------------ #
+sudo bash -c 'echo GRUB_CMDLINE_LINUX="amd_iommu=off" >> /etc/default/grub'
+sudo grub-mkconfig -o /boot/efi/EFI/ubuntu/grub.cfg
+sudo reboot
 
 # ------------------------------ Install gh cli ------------------------------ #
 type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
@@ -72,6 +76,10 @@ sudo chown ubuntu:ubuntu ~/data
 # Put HF cache in data dir
 echo 'export HF_HOME=/home/ubuntu/data/huggingface' >>~/.bashrc
 
+# ------------------------------- Restart shell ------------------------------ #
+# shellcheck disable=SC2093
+exec "$SHELL"
+
 # --------------------------------- Do things -------------------------------- #
 # Login to GH
 echo "$GITHUB_PAT" | gh auth login --with-token
@@ -86,7 +94,7 @@ cd CoGeLoT || exit 1
 # Install python and deps
 pyenv install
 poetry env use "$(pyenv which python)"
-poetry install --without lint,test
+poetry install --without lint,test,environment
 poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 # Create the output dir on the storage drive
@@ -96,6 +104,3 @@ mkdir /home/ubuntu/data/data
 # symlink the outputs dir to the repo
 ln -s /home/ubuntu/data/outputs ./storage/
 ln -s /home/ubuntu/data/data ./storage/
-
-# ------------------------------- Restart shell ------------------------------ #
-exec "$SHELL"
