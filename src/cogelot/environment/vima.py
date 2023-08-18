@@ -40,7 +40,7 @@ class VIMAEnvironment(Wrapper):
         partition: Partition | int,
         seed: int,
         *,
-        should_render_prompt: bool = True,
+        should_render_prompt: bool = False,
         should_display_debug_window: bool = False,
         should_hide_arm_rgb: bool = True,
     ) -> Self:
