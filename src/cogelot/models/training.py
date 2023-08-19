@@ -121,6 +121,7 @@ class VIMALightningModule(pl.LightningModule):
             on_step=True,
             on_epoch=False,
             sync_dist=True,
+            reduce_fx=torch.sum,
         )
 
         return loss
