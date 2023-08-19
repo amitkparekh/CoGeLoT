@@ -89,6 +89,10 @@ class PreprocessedBatch(NamedTuple):
     observations: DataDict
     actions: DataDict
 
+    def __len__(self) -> int:
+        """Length of the batch."""
+        return len(self.task)
+
 
 class ModelInstance(NamedTuple):
     """Instance directly given to the model."""
