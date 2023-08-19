@@ -100,29 +100,14 @@ class VIMALightningModule(pl.LightningModule):
         self._loss_per_axis.update(fine_grained_loss)
         self._update_accuracy(predicted_actions, target_actions)
 
-        self.log(
-            "train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        self._log_accuracy(
-            split="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        self._log_loss_per_axis(
-            split="train", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
+        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_accuracy(split="train", prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_loss_per_axis(split="train", prog_bar=True, logger=True, batch_size=len(batch))
 
         # Log the total number of examples seen across all epochs (and doing it this way will
         # prevent the thing resetting every epoch)
         self._examples_seen.update(len(batch))
-        self.log(
-            "trainer/num_examples",
-            self._examples_seen.compute(),
-            prog_bar=True,
-            logger=True,
-            on_step=True,
-            on_epoch=False,
-            sync_dist=True,
-            reduce_fx=torch.sum,
-        )
+        self.log("trainer/num_examples", self._examples_seen.compute(), prog_bar=True, logger=True)
 
         return loss
 
@@ -142,15 +127,9 @@ class VIMALightningModule(pl.LightningModule):
         self._loss_per_axis.update(fine_grained_loss)
         self._update_accuracy(predicted_actions, target_actions)
 
-        self.log(
-            "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        self._log_accuracy(
-            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        self._log_loss_per_axis(
-            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
+        self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_accuracy(split="val", prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_loss_per_axis(split="val", prog_bar=True, logger=True, batch_size=len(batch))
 
         return loss
 
