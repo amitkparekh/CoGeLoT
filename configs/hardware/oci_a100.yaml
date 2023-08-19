@@ -5,7 +5,8 @@ defaults:
   - override /trainer: ddp.yaml
 
 datamodule:
-  batch_size: 54
+  # batch_size: 54
+  batch_size: 16
   num_workers: 64
 
 trainer:
