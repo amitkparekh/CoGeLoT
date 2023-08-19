@@ -94,7 +94,7 @@ cd CoGeLoT || exit 1
 # Install python and deps
 pyenv install
 poetry env use "$(pyenv which python)"
-poetry install --without lint,test,environment
+poetry install --without lint,test
 poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 # Create the output dir on the storage drive
