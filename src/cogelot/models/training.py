@@ -127,6 +127,10 @@ class VIMALightningModule(pl.LightningModule):
         self._loss_per_axis.update(fine_grained_loss)
         self._update_accuracy(predicted_actions, target_actions)
 
+        # There may be a PossibleUserWarning about needing to use `sync_dist=True` here. However,
+        # as we are using torchmetrics, we should not/do not need to be adding that flag. For more,
+        # see: https://github.com/Lightning-AI/lightning/discussions/6501#discussioncomment-553152
+        # and https://lightning.ai/docs/pytorch/stable/accelerators/accelerator_prepare.html#synchronize-validation-and-test-logging
         self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
         self._log_accuracy(split="val", prog_bar=True, logger=True, batch_size=len(batch))
         self._log_loss_per_axis(split="val", prog_bar=True, logger=True, batch_size=len(batch))
