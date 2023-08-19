@@ -50,7 +50,7 @@ class VIMALightningModule(pl.LightningModule):
             ignore_index=self.ignore_target_index,
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
-        self._examples_seen = SumMetric()
+        self._examples_seen = SumMetric(compute_on_cpu=True)
 
     @classmethod
     def from_wandb_run(
