@@ -7,6 +7,7 @@ import torch
 from lightning import pytorch as pl
 from torchmetrics import SumMetric
 
+from cogelot.common.checkpoint import create_hparams_for_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
 from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
 from cogelot.modules.policy import Policy
@@ -51,6 +52,7 @@ class VIMALightningModule(pl.LightningModule):
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
         self._examples_seen = SumMetric(compute_on_cpu=True)
+        self.save_hyperparameters(logger=False)
 
     @classmethod
     def from_wandb_run(
@@ -68,7 +70,12 @@ class VIMALightningModule(pl.LightningModule):
             run_id=wandb_run_id,
             save_dir=checkpoint_save_dir,
         )
-        return cls.load_from_checkpoint(model_checkpoint_path)
+        try:
+            return cls.load_from_checkpoint(model_checkpoint_path)
+        except TypeError:
+            return cls.load_from_checkpoint(
+                model_checkpoint_path, **create_hparams_for_checkpoint(model_checkpoint_path)
+            )
 
     def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
