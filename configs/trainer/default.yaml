@@ -7,7 +7,10 @@ gradient_clip_val: 1.0
 min_epochs: 1 # prevents early stopping
 
 # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1622973970
-max_epochs: 10
+# max_epochs: 10
+# Although they ran for 10 epochs, experiments have shown that nothing interesting happens after 6
+# epochs, because the LR rate has plummeted to 1e-7 by then.
+max_epochs: 6
 
 accelerator: cpu
 devices: 1
