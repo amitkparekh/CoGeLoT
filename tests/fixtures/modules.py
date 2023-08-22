@@ -2,7 +2,7 @@ from pytest_cases import fixture
 
 from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.environment.vima import VIMAEnvironment
-from cogelot.models import EvaluationLightningModule, VIMALightningModule
+from cogelot.models import VIMALightningModule
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
@@ -32,12 +32,7 @@ def end_effector_tokenizer() -> EndEffectorTokenizer:
 
 @fixture(scope="session")
 def pose_action_tokenizer() -> PoseActionTokenizer:
-    return PoseActionTokenizer(
-        n_discrete_x_bins=50,
-        n_discrete_y_bins=100,
-        n_discrete_z_bins=50,
-        n_discrete_rotation_bins=50,
-    )
+    return PoseActionTokenizer()
 
 
 @fixture(scope="session")
@@ -89,14 +84,14 @@ def vima_environment() -> VIMAEnvironment:
     return VIMAEnvironment.from_config(task=1, partition=1, seed=10)
 
 
-@fixture(scope="session")
-def evaluation_module(
-    instance_preprocessor: InstancePreprocessor,
-    vima_lightning_module: VIMALightningModule,
-    vima_environment: VIMAEnvironment,
-) -> EvaluationLightningModule:
-    return EvaluationLightningModule(
-        environment=vima_environment,
-        model=vima_lightning_module,
-        preprocessor=instance_preprocessor,
-    )
+# @fixture(scope="session")
+# def evaluation_module(
+#     instance_preprocessor: InstancePreprocessor,
+#     vima_lightning_module: VIMALightningModule,
+#     vima_environment: VIMAEnvironment,
+# ) -> EvaluationLightningModule:
+#     return EvaluationLightningModule(
+#         environment=vima_environment,
+#         model=vima_lightning_module,
+#         preprocessor=instance_preprocessor,
+#     )

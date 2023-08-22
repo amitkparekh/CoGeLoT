@@ -1,21 +1,19 @@
 from operator import itemgetter
-from typing import ClassVar, cast
+from typing import ClassVar, Self, cast
 
 import torch
 from einops import rearrange
 
+from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.nn.decoders import TransformerDecoderProtocol
+from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import (
-    N_DISCRETE_ROT_BINS,
-    N_DISCRETE_X_BINS,
-    N_DISCRETE_Y_BINS,
-    N_DISCRETE_Z_BINS,
-    ActionBounds,
     PoseActionType,
 )
 from vima import nn as vnn
 from vima.nn.action_decoder.dists import MultiCategorical
+from vima.policy.vima_policy import VIMAPolicy
 from vima.utils import DataDict
 
 
@@ -35,87 +33,6 @@ def get_max_length_of_prompt(raw_prompts_token_type: RawPromptTokenType, max_num
 def get_max_num_objects_from_embedded_observations(embedded_observations: torch.Tensor) -> int:
     """Get the maximum number of objects from the embedded observations."""
     return embedded_observations.shape[-2]
-
-
-def discretize_action(
-    action: dict[PoseActionType, torch.Tensor],
-    *,
-    n_discrete_x_bins: int,
-    n_discrete_y_bins: int,
-    n_discrete_rot_bins: int,
-) -> dict[PoseActionType, torch.Tensor]:
-    """Discretize the action."""
-    device = action["pose0_position"].device
-    boundary_x = torch.linspace(start=0, end=1, steps=n_discrete_x_bins, device=device)
-    boundary_y = torch.linspace(start=0, end=1, steps=n_discrete_y_bins, device=device)
-    boundary_rot = torch.linspace(start=0, end=1, steps=n_discrete_rot_bins, device=device)
-
-    action["pose0_position"][..., 0] = torch.bucketize(
-        action["pose0_position"][..., 0].contiguous(), boundary_x
-    )
-    action["pose0_position"][..., 1] = torch.bucketize(
-        action["pose0_position"][..., 1].contiguous(), boundary_y
-    )
-    action["pose0_rotation"] = torch.bucketize(action["pose0_rotation"].contiguous(), boundary_rot)
-
-    action["pose1_position"][..., 0] = torch.bucketize(
-        action["pose1_position"][..., 0].contiguous(), boundary_x
-    )
-    action["pose1_position"][..., 1] = torch.bucketize(
-        action["pose1_position"][..., 1].contiguous(), boundary_y
-    )
-    action["pose1_rotation"] = torch.bucketize(action["pose1_rotation"].contiguous(), boundary_rot)
-    action = {k: v.long() for k, v in action.items()}
-    return action
-
-
-def de_discretize_actions(
-    actions: dict[PoseActionType, torch.Tensor],
-    *,
-    n_discrete_x_bins: int,
-    n_discrete_y_bins: int,
-    n_discrete_rot_bins: int,
-) -> dict[PoseActionType, torch.Tensor]:
-    """De-discretize the actions."""
-    actions = {k: v.float() for k, v in actions.items()}
-    actions["pose0_position"][..., 0] = actions["pose0_position"][..., 0] / n_discrete_x_bins
-    actions["pose0_position"][..., 1] = actions["pose0_position"][..., 1] / n_discrete_y_bins
-    actions["pose0_rotation"] = actions["pose0_rotation"] / n_discrete_rot_bins
-
-    actions["pose1_position"][..., 0] = actions["pose1_position"][..., 0] / n_discrete_x_bins
-    actions["pose1_position"][..., 1] = actions["pose1_position"][..., 1] / n_discrete_y_bins
-    actions["pose1_rotation"] = actions["pose1_rotation"] / n_discrete_rot_bins
-    return actions
-
-
-def clamp_actions_to_bounds(
-    actions: dict[PoseActionType, torch.Tensor], *, action_bounds: ActionBounds
-) -> dict[PoseActionType, torch.Tensor]:
-    """Clamp the actions to the bounds of the action space."""
-    device = actions["pose0_position"].device
-
-    # Clamp the continuous actions to the action bounds
-    action_bounds_low = torch.from_numpy(action_bounds.low).to(device)
-    action_bounds_high = torch.from_numpy(action_bounds.high).to(device)
-
-    actions["pose0_position"] = (
-        actions["pose0_position"] * (action_bounds_high - action_bounds_low) + action_bounds_low
-    )
-    actions["pose1_position"] = (
-        actions["pose1_position"] * (action_bounds_high - action_bounds_low) + action_bounds_low
-    )
-    actions["pose0_position"] = torch.clamp(
-        actions["pose0_position"], min=action_bounds_low, max=action_bounds_high
-    )
-    actions["pose1_position"] = torch.clamp(
-        actions["pose1_position"], min=action_bounds_low, max=action_bounds_high
-    )
-    actions["pose0_rotation"] = actions["pose0_rotation"] * 2 - 1
-    actions["pose1_rotation"] = actions["pose1_rotation"] * 2 - 1
-    actions["pose0_rotation"] = torch.clamp(actions["pose0_rotation"], min=-1, max=1)
-    actions["pose1_rotation"] = torch.clamp(actions["pose1_rotation"], min=-1, max=1)
-
-    return actions
 
 
 def stitch_observations_with_actions(  # noqa: WPS210
@@ -179,10 +96,6 @@ def stitch_observations_with_actions(  # noqa: WPS210
 class Policy(torch.nn.Module):
     """Common policy with compositional modules for easy swapping."""
 
-    n_discrete_x_bins: int = N_DISCRETE_X_BINS
-    n_discrete_y_bins: int = N_DISCRETE_Y_BINS
-    n_discrete_z_bins: int = N_DISCRETE_Z_BINS
-    n_discrete_rot_bins: int = N_DISCRETE_ROT_BINS
     _views: ClassVar[list[str]] = ["front", "top"]
 
     def __init__(
@@ -216,6 +129,34 @@ class Policy(torch.nn.Module):
         )
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
+
+        self._pose_action_tokenizer = PoseActionTokenizer()
+
+    @classmethod
+    def from_their_policy(cls, their_policy: VIMAPolicy) -> Self:
+        """Instantiate our policy from their policy.
+
+        This is what we need when we are going to run from their checkpoint.
+        """
+        policy = cls(
+            embed_dim=their_policy.embed_dim,
+            obj_encoder=their_policy.obj_encoder,
+            end_effector_encoder=their_policy.end_effector_encoder,
+            obs_fusion_layer=their_policy.obs_fusion_layer,
+            action_encoder=their_policy.action_encoder,
+            action_decoder=their_policy.action_decoder,
+            prompt_embedding=their_policy.prompt_embedding,
+            prompt_encoder=their_policy.t5_prompt_encoder,
+            prompt_obj_post_layer=their_policy.prompt_obj_post_layer,
+            transformer_decoder=VIMADecoder(their_policy.xattn_gpt),
+        )
+        # Take their prompt encoder post layer and replace whatever we have, otherwise it's not
+        # identical. I made a mistake when originally preparing the class, however I don't know how
+        # else to do it because Hydra/OmegaConf doesn't support conditionals.
+        policy._prompt_encoder_post_layer = (  # noqa: SLF001
+            their_policy.t5_prompt_encoder_post_layer
+        )
+        return policy
 
     def predict_action_token(
         self,
@@ -370,13 +311,17 @@ class Policy(torch.nn.Module):
     def embed_action_token(
         self, actions: DataDict | dict[PoseActionType, torch.Tensor]
     ) -> torch.Tensor:
-        """Embed the actions into a tensor."""
+        """Embed the actions into a tensor.
+
+        So this takes the action tokens, and converts them back into a continuous form, and then
+        provides that straight into the encoder, which are just MLPs that convert from the list of
+        2/4 coordinates (given the pose action type), into a N-dimensional tensor.
+
+        I don't understand why they did this, but okay.
+        """
         embedded_actions = self._action_encoder(
-            de_discretize_actions(
+            self._pose_action_tokenizer.convert_discrete_to_continuous(
                 cast(dict[PoseActionType, torch.Tensor], actions),
-                n_discrete_x_bins=self.n_discrete_x_bins,
-                n_discrete_y_bins=self.n_discrete_y_bins,
-                n_discrete_rot_bins=self.n_discrete_rot_bins,
             )
         )
         return embedded_actions

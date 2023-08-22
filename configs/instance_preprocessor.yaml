@@ -14,7 +14,3 @@ instance_preprocessor:
 
   pose_action_tokenizer:
     _target_: cogelot.modules.tokenizers.PoseActionTokenizer
-    n_discrete_x_bins: 50
-    n_discrete_y_bins: 100
-    n_discrete_z_bins: 50
-    n_discrete_rotation_bins: 50

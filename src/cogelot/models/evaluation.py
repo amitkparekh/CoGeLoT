@@ -10,37 +10,13 @@ from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.metrics import EvaluationMetrics
-from cogelot.modules.policy import clamp_actions_to_bounds, de_discretize_actions
-from cogelot.structures.common import Assets, Observation
+from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import (
-    N_DISCRETE_ROT_BINS,
-    N_DISCRETE_X_BINS,
-    N_DISCRETE_Y_BINS,
-    ActionBounds,
     EndEffector,
     PoseActionType,
 )
-from vima.utils import DataDict, add_batch_dim, any_slice
-
-
-def convert_pose_action_token_to_environment(
-    action_token: dict[PoseActionType, torch.Tensor], action_bounds: ActionBounds
-) -> dict[PoseActionType, npt.NDArray[np.float64]]:
-    """Convert the pose action tokens to the environment."""
-    actions = de_discretize_actions(
-        action_token,
-        n_discrete_x_bins=N_DISCRETE_X_BINS,
-        n_discrete_y_bins=N_DISCRETE_Y_BINS,
-        n_discrete_rot_bins=N_DISCRETE_ROT_BINS,
-    )
-    actions = clamp_actions_to_bounds(actions, action_bounds=action_bounds)
-
-    # Convert to numpy because it needs to be in numpy for the environment
-    actions_numpy = {k: v.cpu().numpy() for k, v in actions.items()}
-    actions_numpy = any_slice(actions_numpy, np.s_[0, 0])
-
-    return cast(dict[PoseActionType, npt.NDArray[np.float64]], actions_numpy)
+from vima.utils import DataDict, add_batch_dim
 
 
 class EvaluationLightningModule(pl.LightningModule):
@@ -50,12 +26,12 @@ class EvaluationLightningModule(pl.LightningModule):
         self,
         environment: VIMAEnvironment,
         model: VIMALightningModule,
-        preprocessor: InstancePreprocessor,
+        instance_preprocessor: InstancePreprocessor,
     ) -> None:
         super().__init__()
         self.environment = environment
         self.model = model
-        self.preprocessor = preprocessor
+        self.preprocessor = instance_preprocessor
         self.buffer = ReplayBuffer()
         self.metric = EvaluationMetrics()
 
@@ -100,8 +76,8 @@ class EvaluationLightningModule(pl.LightningModule):
             self.add_pose_action_token_to_buffer(pose_action_tokens=predicted_action_tokens)
 
             # Convert the pose action token to the environment
-            actions_for_env = convert_pose_action_token_to_environment(
-                action_token=predicted_action_tokens, action_bounds=vima_instance.action_bounds
+            actions_for_env = self.preprocessor.pose_action_tokenizer.convert_token_to_environment(
+                predicted_action_tokens
             )
 
             # Take a step in the environment
@@ -141,11 +117,15 @@ class EvaluationLightningModule(pl.LightningModule):
 
         return observation, step_result.done or step_result.truncated, is_successful
 
-    def add_prompt_to_buffer(self, prompt: str, prompt_assets: Assets) -> None:
+    def add_prompt_to_buffer(self, prompt: str, prompt_assets: PromptAssets) -> None:
         """Prepare and encode the prompt."""
         raw_prompts_token_type, word_batch, image_batch = self.preprocessor.prepare_prompt(
             prompt=prompt, prompt_assets=prompt_assets, object_ids_from_prompt_assets=None
         )
+
+        # Update devices
+        word_batch = word_batch.to(self.device)
+        image_batch = image_batch.to_torch_tensor(device=self.device)
 
         # The following functions assume that there is a batch dimension for the word and image
         # batch, therefore we are going to need to add one.
@@ -167,6 +147,11 @@ class EvaluationLightningModule(pl.LightningModule):
             observations=[observation],
             object_ids=object_ids,
             end_effector=end_effector,
+        )
+
+        # Update the device
+        prepared_observations = cast(
+            DataDict, prepared_observations.to_torch_tensor(device=self.device)
         )
 
         # For some reason, the batch dimension is not added to the observations, so we need to add
