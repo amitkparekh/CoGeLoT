@@ -7,14 +7,11 @@ from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
     ImageTokenizer,
-    MultimodalHistoryTokenizer,
-    MultimodalPromptTokenizer,
     ObservationTokenizer,
     PoseActionTokenizer,
     TextTokenizer,
 )
 from cogelot.nn.decoders.vima import VIMADecoder
-from cogelot.structures.common import View
 from vima.policy import VIMAPolicy
 
 
@@ -49,28 +46,6 @@ def observation_tokenizer(
 ) -> ObservationTokenizer:
     return ObservationTokenizer(
         image_tokenizer=image_tokenizer, end_effector_tokenizer=end_effector_tokenizer
-    )
-
-
-@fixture(scope="session")
-def multimodal_prompt_tokenizer(
-    text_tokenizer: TextTokenizer, image_tokenizer: ImageTokenizer
-) -> MultimodalPromptTokenizer:
-    return MultimodalPromptTokenizer(
-        text_tokenizer=text_tokenizer,
-        image_tokenizer=image_tokenizer,
-        views=[View.front, View.top],
-    )
-
-
-@fixture(scope="session")
-def multimodal_history_tokenizer(
-    observation_tokenizer: ObservationTokenizer,
-    pose_action_tokenizer: PoseActionTokenizer,
-) -> MultimodalHistoryTokenizer:
-    return MultimodalHistoryTokenizer(
-        observation_tokenizer=observation_tokenizer,
-        pose_action_tokenizer=pose_action_tokenizer,
     )
 
 
