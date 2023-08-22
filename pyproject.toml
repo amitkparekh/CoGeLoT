@@ -27,8 +27,7 @@ torchmetrics = "*"
 loguru = "*"
 tqdm = "*"
 rich = "*"
-pydantic = "^1"
-pydantic-numpy = "*"
+pydantic = "^2.2.1"
 orjson = "*"
 dill = "*"
 hydra-core = "*"
@@ -273,6 +272,8 @@ extend-ignore = [
 	"WPS306",
 	# Defer to RUFF's SIM117 for this one
 	"WPS316",
+	# Allow multi-line type annotations
+	"WPS320",
 	# Do not flag implicit string concatenation since this is something Black does
 	"WPS326",
 	# Allow return statement that simply returns a prior statement
@@ -281,6 +282,8 @@ extend-ignore = [
 	"WPS348",
 	# Allow logic in __init__ modules
 	"WPS412",
+	# Defer to Ruff's SLF001
+	"WPS437",
 	# Allow `float("nan")` because it's a thing that happens in ML stuff
 	"WPS456",
 	# Naming things is difficult, let the developer choose to use properties or methods
