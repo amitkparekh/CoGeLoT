@@ -1,16 +1,19 @@
 from collections.abc import Mapping
 from enum import Enum
-from pathlib import Path
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
-import numpy as np
-import orjson
+import datasets
 import torch
-from pydantic import BaseModel, Field, validator
-from pydantic_numpy import NDArray
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator
 
-from cogelot.common.io import load_json, orjson_dumps, save_json
-from cogelot.structures.common import Action, Assets, Observation, Timestep
+from cogelot.structures.common import (
+    Action,
+    Observation,
+    PromptAsset,
+    PromptAssets,
+    PydanticHFDatasetMixin,
+    Timestep,
+)
 
 
 SEED = 42
@@ -18,12 +21,6 @@ MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60
 OUTPUT_VIDEO_NAME = "gui_record.mp4"
 VIDEO_HEIGHT = 480
-VIDEO_WIDTH = 640
-
-N_DISCRETE_X_BINS: int = 50
-N_DISCRETE_Y_BINS: int = 100
-N_DISCRETE_Z_BINS: int = 50
-N_DISCRETE_ROT_BINS: int = 50
 
 
 class Partition(Enum):
@@ -131,7 +128,7 @@ AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] =
 }
 
 
-class ObjectMetadata(BaseModel):
+class ObjectMetadata(BaseModel, PydanticHFDatasetMixin):
     """Metadata for a given object."""
 
     obj_id: int
@@ -139,64 +136,65 @@ class ObjectMetadata(BaseModel):
     obj_asset_name: str
     texture_name: str
 
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "obj_id": datasets.Value("int64"),
+                "obj_name": datasets.Value("string"),
+                "obj_asset_name": datasets.Value("string"),
+                "texture_name": datasets.Value("string"),
+            }
+        )
 
-class PoseAction(Action, arbitrary_types_allowed=True):
+
+class PoseAction(Action, PydanticHFDatasetMixin):
     """Actions which are taken by the agent in the environment."""
 
-    pose0_position: NDArray
-    pose1_position: NDArray
-    pose0_rotation: NDArray
-    pose1_rotation: NDArray
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    pose0_position: torch.Tensor
+    pose1_position: torch.Tensor
+    pose0_rotation: torch.Tensor
+    pose1_rotation: torch.Tensor
 
     def __len__(self) -> int:
         """Return the number of actions."""
         return self.pose0_position.shape[0]
 
-    @property
-    def is_continuous(self) -> bool:
-        """Determine if the actions are currently continuous or not."""
-        array_is_continuous_tracker: list[bool] = []
+    @field_validator("pose0_position", "pose1_position")
+    @classmethod
+    def check_shape_of_pose_position(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Verify the shape of the pose position."""
+        assert tensor.shape == (2,), f"Expected shape (2,), got {tensor.shape}"
+        return tensor
 
-        # For every value in the class, make sure its a numpy array, and then check if its
-        # a float or not.
-        for possible_array in dict(self).values():
-            if isinstance(possible_array, np.ndarray):
-                is_float = np.issubdtype(possible_array.dtype, np.floating)
-                cast_to_float_is_identical_to_original = bool(
-                    np.all(possible_array.astype(float) == possible_array)
-                )
-                array_is_continuous_tracker.append(
-                    cast_to_float_is_identical_to_original and is_float
-                )
+    @field_validator("pose0_rotation", "pose1_rotation")
+    @classmethod
+    def check_shape_of_pose_rotation(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Verify the shape of the pose rotation."""
+        assert tensor.shape == (4,), f"Expected shape (4,), got {tensor.shape}"
+        return tensor
 
-        # Make sure all are true
-        if sum(array_is_continuous_tracker) > 0 and not all(array_is_continuous_tracker):
-            raise ValueError("Some are continuous?")
-
-        return all(array_is_continuous_tracker)
-
-    def to_tensor(self) -> dict[PoseActionType, torch.Tensor]:
-        """Convert the actions to a tensor dict."""
-        return {
-            "pose0_position": torch.from_numpy(self.pose0_position),
-            "pose1_position": torch.from_numpy(self.pose1_position),
-            "pose0_rotation": torch.from_numpy(self.pose0_rotation),
-            "pose1_rotation": torch.from_numpy(self.pose1_rotation),
-        }
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                **Action.dataset_features(),
+                "pose0_position": datasets.Sequence(datasets.Value("float32"), length=2),
+                "pose0_rotation": datasets.Sequence(datasets.Value("float32"), length=4),
+                "pose1_position": datasets.Sequence(datasets.Value("float32"), length=2),
+                "pose1_rotation": datasets.Sequence(datasets.Value("float32"), length=4),
+            }
+        )
 
 
-class ActionBounds(BaseModel, arbitrary_types_allowed=True):
-    """Bounds for the actions."""
-
-    low: NDArray
-    high: NDArray
-
-
-class VIMAInstance(BaseModel):
+class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     """A single instance of the VIMA dataset, merging all the files into a single object."""
 
-    index: int
-    task: Task
+    task: Annotated[Task, PlainSerializer(lambda task: task.value, return_type=int)]
 
     total_steps: int
 
@@ -204,21 +202,13 @@ class VIMAInstance(BaseModel):
 
     end_effector_type: EndEffector
 
-    action_bounds: ActionBounds
     observations: list[Observation] = Field(default_factory=list)
     pose_actions: list[PoseAction] = Field(default_factory=list)
 
     prompt: str
-    prompt_assets: Assets
+    prompt_assets: PromptAssets
 
-    class Config:
-        """Pydantic config."""
-
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
-        arbitrary_types_allowed = True
-
-    @validator("pose_actions", "observations", allow_reuse=True)
+    @field_validator("pose_actions", "observations")
     @classmethod
     def sort_by_index(cls, indexed_steps: list[Timestep]) -> list[Timestep]:
         """Sort the steps by index."""
@@ -245,19 +235,18 @@ class VIMAInstance(BaseModel):
         """Get the object ids."""
         return {obj.obj_id for obj in self.object_metadata}
 
-    @property
-    def file_name(self) -> str:
-        """Get the file name."""
-        return f"{self.task}/{self.index}.json"
-
-    def save(self, output_dir: Path, *, compress: bool = False) -> Path:
-        """Save the file to the output dir."""
-        instance_path = output_dir.joinpath(self.file_name)
-        instance_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path = save_json(self.dict(), instance_path, compress=compress)
-        return output_path
-
     @classmethod
-    def load(cls, instance_path: Path) -> Self:
-        """Load the instance from the file."""
-        return cls.parse_obj(load_json(instance_path))
+    def dataset_features(cls) -> datasets.Features:
+        """Get the dataset features for a VIMA instance."""
+        return datasets.Features(
+            {
+                "task": datasets.ClassLabel(names=Task.as_sorted_task_list()),
+                "object_metadata": datasets.Sequence(ObjectMetadata.dataset_features()),
+                "total_steps": datasets.Value("int64"),
+                "end_effector_type": datasets.Value("string"),
+                "observations": datasets.Sequence(Observation.dataset_features()),
+                "pose_actions": datasets.Sequence(PoseAction.dataset_features()),
+                "prompt": datasets.Value("string"),
+                "prompt_assets": datasets.Sequence(PromptAsset.dataset_features()),
+            }
+        )

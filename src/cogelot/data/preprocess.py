@@ -6,7 +6,7 @@ from torch.utils.data import default_collate
 
 from cogelot.modules.tokenizers import EndEffectorTokenizer, TextTokenizer
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
-from cogelot.structures.common import Assets, ImageType, Observation, View
+from cogelot.structures.common import ImageType, Observation, PromptAssets, View
 from cogelot.structures.model import PreprocessedInstance, RawPromptTokenType
 from cogelot.structures.vima import PoseAction, VIMAInstance
 from vima.prepare_obs import ObsDict, prepare_obs
@@ -101,7 +101,7 @@ class InstancePreprocessor:
         self,
         *,
         prompt: str,
-        prompt_assets: Assets,
+        prompt_assets: PromptAssets,
         object_ids_from_prompt_assets: None,
     ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
         ...  # noqa: WPS428
@@ -110,7 +110,7 @@ class InstancePreprocessor:
         self,
         *,
         prompt: str,
-        prompt_assets: dict[str, dict[str, Any]] | Assets,
+        prompt_assets: dict[str, dict[str, Any]] | PromptAssets,
         object_ids_from_prompt_assets: set[int] | None,
     ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
         """Prepare the prompt for the model.
@@ -118,10 +118,10 @@ class InstancePreprocessor:
         Just take what VIMA does. This does not do any encoding, so it doesn't update any of the
         gradients or anything.
         """
-        if object_ids_from_prompt_assets is None and isinstance(prompt_assets, Assets):
+        if object_ids_from_prompt_assets is None and isinstance(prompt_assets, PromptAssets):
             object_ids_from_prompt_assets = prompt_assets.all_object_ids
 
-        if isinstance(prompt_assets, Assets):
+        if isinstance(prompt_assets, PromptAssets):
             prompt_assets = prompt_assets.dict()["__root__"]
 
         assert isinstance(prompt_assets, dict)

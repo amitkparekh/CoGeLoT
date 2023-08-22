@@ -1,13 +1,12 @@
-from typing import Any, NamedTuple, Self
+from typing import Any, NamedTuple, Self, cast
 
 from gym import Wrapper
 
 from cogelot.data.parse import parse_object_metadata
 from cogelot.environment.wrappers import ResetFaultToleranceWrapper, TimeLimitWrapper
-from cogelot.structures.common import Assets, Observation
+from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.vima import (
     MODALITIES,
-    ActionBounds,
     EndEffector,
     Partition,
     Task,
@@ -73,19 +72,18 @@ class VIMAEnvironment(Wrapper):
         prompt = self.env.prompt
         assert isinstance(prompt, str)
 
-        prompt_assets = Assets.parse_obj(self.env.prompt_assets)
+        prompt_assets = PromptAssets.from_raw_prompt_assets(
+            cast(dict[str, Any], self.env.prompt_assets)
+        )
         object_metadata = parse_object_metadata(self.env.meta_info)
         end_effector: EndEffector = self.env.meta_info["end_effector_type"]
         task_name: Task = Task[self.env.task_name]
-        action_bounds = ActionBounds.parse_obj(self.env.meta_info["action_bounds"])
 
         return VIMAInstance(
-            index=0,
             total_steps=0,
             task=task_name,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
-            action_bounds=action_bounds,
             prompt=prompt,
             prompt_assets=prompt_assets,
         )
@@ -93,7 +91,6 @@ class VIMAEnvironment(Wrapper):
     def set_task(self, task: Task, partition: Partition) -> None:
         """Set the task of the environment."""
         task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
-        assert isinstance(task_kwargs, dict)
         self.env.set_task(task.name, task_kwargs)
 
     def reset(self, **kwargs: Any) -> Observation:

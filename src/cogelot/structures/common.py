@@ -1,11 +1,23 @@
+import abc
 from collections.abc import ItemsView, KeysView, ValuesView
 from enum import Enum
-from typing import Self
+from functools import cached_property
+from typing import Annotated, Any, Self
 
+import datasets
 import numpy as np
 import torch
-from pydantic import BaseModel
-from pydantic_numpy import NDArray
+from pydantic import BaseModel, BeforeValidator, ConfigDict, RootModel, field_validator
+
+
+class PydanticHFDatasetMixin(abc.ABC):
+    """Mixin for Pydantic models that will be used in/as/by HF datasets."""
+
+    @classmethod
+    @abc.abstractmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        raise NotImplementedError
 
 
 class View(Enum):
@@ -121,30 +133,83 @@ class Rotation(BaseModel):
         return torch.tensor([self.x, self.y, self.z, self.w])
 
 
-class Frame(BaseModel, arbitrary_types_allowed=True):
+FRAME_SHAPE: tuple[int, int, int] = (3, 128, 256)
+FrameTensor = Annotated[
+    torch.Tensor,
+    BeforeValidator(
+        lambda frame: torch.from_numpy(frame) if isinstance(frame, np.ndarray) else frame
+    ),
+]
+
+
+class Frame(BaseModel, PydanticHFDatasetMixin):
     """Get the output of a given modality for the various views."""
 
-    front: NDArray
-    top: NDArray
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def get_view(self, view: View) -> np.ndarray:
+    front: FrameTensor
+    top: FrameTensor
+
+    def get_view(self, view: View) -> torch.Tensor:
         """Get the perspective of the asset."""
         return getattr(self, view.value)
 
+    @field_validator("front", "top")
+    @classmethod
+    def check_shape_of_frame(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Verify the shape of the frame."""
+        expected_frame_shape = FRAME_SHAPE[-tensor.ndim :]
+        if tensor.shape != expected_frame_shape:
+            raise AssertionError(f"Expected shape {expected_frame_shape}, got {tensor.shape}")
+        return tensor
 
-class Timestep(BaseModel):
+
+class RGBFrame(Frame):
+    """Frame for an RGB image."""
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "front": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
+                "top": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
+            }
+        )
+
+
+class SegmentationFrame(Frame):
+    """Frame for a segmentation image."""
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "front": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
+                "top": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
+            }
+        )
+
+
+class Timestep(BaseModel, PydanticHFDatasetMixin):
     """Something that has an index to track time."""
 
     index: int
 
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features({"index": datasets.Value("int64")})
 
-class Asset(BaseModel):
+
+class Asset(BaseModel, PydanticHFDatasetMixin):
     """A single observation within the envirnment."""
 
     _obj_ids_to_ignore: set[int] = {0, 1}
 
-    rgb: Frame
-    segm: Frame
+    rgb: RGBFrame
+    segm: SegmentationFrame
 
     @property
     def object_ids(self) -> set[int]:
@@ -156,19 +221,60 @@ class Asset(BaseModel):
         unique_ids = set(get_unique_ids_from_segmentation) - self._obj_ids_to_ignore
         return unique_ids
 
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "rgb": RGBFrame.dataset_features(),
+                "segm": SegmentationFrame.dataset_features(),
+            }
+        )
 
-class Assets(BaseModel):
+
+class PromptAsset(Asset):
+    """A single prompt asset within the environment."""
+
+    name: str
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "name": datasets.Value("string"),
+                **Asset.dataset_features(),
+            }
+        )
+
+
+class PromptAssets(RootModel[list[PromptAsset]]):
     """Structure to group all the assets."""
 
-    __root__: dict[str, Asset]
+    root: list[PromptAsset]
 
-    def __getitem__(self, item: str) -> Asset:  # noqa: WPS110
+    @classmethod
+    def from_raw_prompt_assets(cls, raw_prompt_assets: dict[str, Any]) -> Self:
+        """Instantiate from the raw trajectory metadata, from the environment."""
+        return cls(
+            root=[
+                PromptAsset.model_validate({"name": asset_name, **asset_data})
+                for asset_name, asset_data in raw_prompt_assets.items()
+            ]
+        )
+
+    @cached_property
+    def as_dict(self) -> dict[str, PromptAsset]:
+        """Convert the assets to a dictionary."""
+        return {asset.name: asset for asset in self.root}
+
+    def __getitem__(self, item: str) -> PromptAsset:  # noqa: WPS110
         """Let the Assets class be subscriptable like a dictionary."""
-        return self.__root__[item]
+        return self.as_dict[item]
 
     def __len__(self) -> int:
         """Get the number of assets."""
-        return len(self.__root__)
+        return len(self.root)
 
     @property
     def all_object_ids(self) -> set[int]:
@@ -180,38 +286,38 @@ class Assets(BaseModel):
 
     def keys(self) -> KeysView[str]:
         """Get the keys of the assets."""
-        return self.__root__.keys()
+        return self.as_dict.keys()
 
-    def values(self) -> ValuesView[Asset]:  # noqa: WPS110
+    def values(self) -> ValuesView[PromptAsset]:  # noqa: WPS110
         """Get the values of the assets."""
-        return self.__root__.values()
+        return self.as_dict.values()
 
-    def items(self) -> ItemsView[str, Asset]:  # noqa: WPS110
+    def items(self) -> ItemsView[str, PromptAsset]:  # noqa: WPS110
         """Get the items of the assets."""
-        return self.__root__.items()
+        return self.as_dict.items()
 
     def get_asset_names(self) -> list[str]:
         """Get all the asset names."""
-        return list(self.__root__.keys())
+        return list(self.as_dict.keys())
 
-    def get_asset_from_name(self, name: str) -> Asset:
+    def get_asset_from_name(self, name: str) -> PromptAsset:
         """Get the asset from the asset name."""
         # Ensure that the asset name is in the assets dict
-        if name not in self.__root__:
+        if name not in self.as_dict:
             raise KeyError(f"Asset with name {name} not found!")
         return self[name]
 
-    def get_asset_from_placeholder(self, placeholder: str) -> Asset:
+    def get_asset_from_placeholder(self, placeholder: str) -> PromptAsset:
         """Get the asset using the placeholder."""
         # Get the name of the asset by removing the left/right synbols
         asset_name = placeholder[1:-1]
         return self.get_asset_from_name(asset_name)
 
 
-class Observation(Timestep, Asset):
+class Observation(Timestep, Asset, PydanticHFDatasetMixin):
     """A single observation within the envirnment."""
 
-    def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, np.ndarray]]:
+    def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, torch.Tensor]]:
         """Convert the observation to a dictionary of images per view."""
         return {
             view: {
@@ -221,13 +327,23 @@ class Observation(Timestep, Asset):
             for view in View
         }
 
-    def to_image_per_view_per_type(self) -> dict[ImageType, dict[View, np.ndarray]]:
+    def to_image_per_view_per_type(self) -> dict[ImageType, dict[View, torch.Tensor]]:
         """Convert the observation to a dictionary of images per view."""
         return {
             image_type: {view: getattr(self, image_type.value).get_view(view) for view in View}
             for image_type in (ImageType.rgb, ImageType.segmentation)
         }
 
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                **Timestep.dataset_features(),
+                **Asset.dataset_features(),
+            }
+        )
 
-class Action(Timestep, arbitrary_types_allowed=True):
+
+class Action(Timestep):
     """A single action taken by the agent in the environment."""
