@@ -90,7 +90,7 @@ class EvaluationMetrics:
         self, partition: Partition, task: Task, *, is_successful: bool, num_steps_taken: int
     ) -> None:
         """Update the metric with the result of an episode."""
-        logger.debug(f"Updating metric for Partition {partition}/Task {task}")
+        logger.debug(f"Updating metric for {partition}/{task}")
 
         self.success_rate[partition][task](int(is_successful))
         self.steps_taken[partition][task](num_steps_taken)
