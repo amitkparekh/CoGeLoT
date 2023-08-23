@@ -1,13 +1,7 @@
-import itertools
 from pathlib import Path
-from typing import Any, Iterator
 
-import datasets
-from pyparsing import Iterable
 from pytest_cases import fixture
 
-from cogelot.data.datamodule import VIMADataModule
-from cogelot.data.datasets import create_hf_dataset, set_dataset_format
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
@@ -58,28 +52,28 @@ def all_preprocessed_instances(
     return list(preprocessed_instances)
 
 
-@fixture(scope="session")
-def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datasets.Dataset:
-    num_cycles = 5
+# @fixture(scope="session")
+# def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datasets.Dataset:
+#     num_cycles = 5
 
-    # Repeat the input data multiple times
-    all_preprocessed_instances = list(
-        itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
-    )
+#     # Repeat the input data multiple times
+#     all_preprocessed_instances = list(
+#         itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
+#     )
 
-    def gen(preprocessed_instances: Iterable[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-        generator = (instance.to_hf_dict() for instance in preprocessed_instances)
-        yield from generator
+#     def gen(preprocessed_instances: Iterable[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
+#         generator = (instance.to_hf_dict() for instance in preprocessed_instances)
+#         yield from generator
 
-    dataset = create_hf_dataset(gen, all_preprocessed_instances)
-    dataset = set_dataset_format(dataset)
-    return dataset
+#     dataset = create_hf_dataset(gen, all_preprocessed_instances)
+#     dataset = set_dataset_format(dataset)
+#     return dataset
 
 
-@fixture(scope="session")
-def vima_datamodule() -> VIMADataModule:
-    """VIMA datamodule."""
-    datamodule = VIMADataModule(
-        hf_datasets_repo_name="amitkparekh/vima-small", num_workers=1, batch_size=1
-    )
-    return datamodule
+# @fixture(scope="session")
+# def vima_datamodule() -> VIMADataModule:
+#     """VIMA datamodule."""
+#     datamodule = VIMADataModule(
+#         hf_datasets_repo_name="amitkparekh/vima-small", num_workers=1, batch_size=1
+#     )
+#     return datamodule

@@ -4,14 +4,14 @@ import datasets
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
-from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
-from cogelot.data.datasets import (
+from cogelot.common.hf_datasets import (
     download_parquet_files_from_hub,
     get_location_of_parquet_files,
     load_dataset_from_parquet_files,
     maybe_split_dataset_by_node,
-    set_dataset_format,
 )
+from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
+from cogelot.data.datasets import set_dataset_format
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
 
