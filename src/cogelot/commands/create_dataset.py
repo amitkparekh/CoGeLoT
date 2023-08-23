@@ -4,6 +4,7 @@ from typing import Annotated, Any, cast
 
 import datasets
 import typer
+from loguru import logger
 from rich.progress import track
 
 from cogelot.data.parse import (
@@ -13,6 +14,8 @@ from cogelot.data.parse import (
 from cogelot.structures.vima import VIMAInstance
 
 
+NUM_VALIDATION_INSTANCES = 50000
+WRITER_BATCH_SIZE = 10000
 STORAGE_DATA_DIR = Path("storage/data/")
 RAW_DATA_DIR = STORAGE_DATA_DIR.joinpath("raw/vima_v6/")
 
@@ -40,8 +43,9 @@ def create_hf_dataset_from_vima_instance_paths(
         datasets.Dataset.from_generator(
             parse_vima_instances_from_path,
             features=VIMAInstance.dataset_features(),
-            num_proc=num_workers,
+            num_proc=num_workers if num_workers else None,
             gen_kwargs={"paths": paths},
+            writer_batch_size=WRITER_BATCH_SIZE,
         ),
     )
     return hf_dataset
@@ -52,7 +56,7 @@ def create_validation_split(
     *,
     max_num_validation_instances: int,
     seed: int = 0,
-    writer_batch_size: int = 1000,
+    writer_batch_size: int = WRITER_BATCH_SIZE,
     stratify_column: str = "task",
 ) -> datasets.DatasetDict:
     """Create the validation split for the dataset."""
@@ -73,13 +77,13 @@ def convert_raw_dataset_to_hf(
     raw_data_root: Annotated[
         Path, typer.Argument(help="Root directory for the raw data")
     ] = RAW_DATA_DIR,
-    num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
+    num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 2,
     num_validation_instances: Annotated[
         int,
         typer.Option(
             help="Maximum number of validation instances, created using stratefied sampling"
         ),
-    ] = 50000,
+    ] = NUM_VALIDATION_INSTANCES,
     hf_repo_id: Annotated[str, typer.Option(help="Repository ID on HF")] = "amitkparekh/vima",
     max_shard_size: Annotated[
         str,
@@ -92,11 +96,17 @@ def convert_raw_dataset_to_hf(
     That means parsing, validating, constructing the thing, and then uploading it to HF.
     """
     all_raw_instance_paths = get_raw_instance_directories(raw_data_root)
+    logger.info("Creating the HF dataset...")
     dataset = create_hf_dataset_from_vima_instance_paths(
         all_raw_instance_paths, num_workers=num_workers
     )
+    logger.info("Creating the train-valid split...")
     dataset_with_split = create_validation_split(
         dataset, max_num_validation_instances=num_validation_instances, seed=seed
+    )
+    logger.info("Pushing the dataset to the hub...")
+    logger.info(
+        "This will take a while. It might look like it's doing nothing, but it is taking a while."
     )
     dataset_with_split.push_to_hub(hf_repo_id, max_shard_size=max_shard_size)
 
