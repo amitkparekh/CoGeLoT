@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Self, TypeVar
+from typing import Self
 
 import torch
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from cogelot.structures.common import Bbox, View
 from cogelot.structures.vima import PoseAction, PoseActionType
@@ -18,8 +18,10 @@ class TokenType(Enum):
     action = "action"
 
 
-class VisualObject(BaseModel, arbitrary_types_allowed=True):
+class VisualObject(BaseModel):
     """A single object in the visual token."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     bbox: Bbox
     cropped_image: torch.Tensor
@@ -96,8 +98,10 @@ class ObservationToken(EndEffectorToken, ImageToken):
         )
 
 
-class PoseActionToken(Token, arbitrary_types_allowed=True):
+class PoseActionToken(Token):
     """Token for the agent action."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     token_type: TokenType = TokenType.action
 
@@ -125,19 +129,3 @@ class PoseActionToken(Token, arbitrary_types_allowed=True):
             "pose0_rotation": self.pose0_rotation,
             "pose1_rotation": self.pose1_rotation,
         }
-
-
-T = TypeVar("T", bound=Token)
-S = TypeVar("S", bound=Token)
-
-
-class TokenSequence(list[T]):
-    """Container for a sequence of tokens."""
-
-    def __len__(self) -> int:
-        """Get the number of tokens in the sequence."""
-        return sum(len(token) for token in self)
-
-    def get_tokens_of_class(self, token_class: type[S]) -> list[S]:
-        """Get all tokens of a given class."""
-        return [token for token in self if isinstance(token, token_class)]
