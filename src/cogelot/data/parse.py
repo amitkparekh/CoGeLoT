@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from cogelot.structures.common import Observation, PromptAssets
+from cogelot.structures.common import NumpyImage, Observation, PromptAssets
 from cogelot.structures.vima import (
     ObjectMetadata,
     PoseAction,
@@ -32,12 +32,11 @@ def get_all_raw_instance_directories(raw_data_dir: Path) -> Iterator[Path]:
 
 def load_rgb_observation_image(
     *, instance_dir: Path, view: Literal["top", "front"], frame_idx: int
-) -> torch.Tensor:
+) -> NumpyImage:
     """Load the RGB image of the observation for the given view."""
     image_path = instance_dir.joinpath(RGB_PATH_PER_VIEW[view], f"{frame_idx}.jpg")
     with Image.open(image_path) as image:
-        # Also move the axes to be in the same structure as the prompt assets
-        return torch.from_numpy(np.array(image)).moveaxis(-1, 0).contiguous()
+        return np.array(image)
 
 
 def load_data_from_pickle(pickled_file: Path) -> Any:
@@ -103,8 +102,8 @@ def parse_observations(instance_dir: Path) -> list[Observation]:
                     ),
                 },
                 "segm": {
-                    "front": torch.from_numpy(raw_segmentation_data["front"][obs_idx]),
-                    "top": torch.from_numpy(raw_segmentation_data["top"][obs_idx]),
+                    "front": raw_segmentation_data["front"][obs_idx],
+                    "top": raw_segmentation_data["top"][obs_idx],
                 },
             }
         )
