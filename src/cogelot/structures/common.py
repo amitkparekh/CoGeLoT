@@ -85,6 +85,11 @@ class Bbox(BaseModel):
         """Return as a tuple of (xc, yc, h, w), which is what they use."""
         return (self.x_center, self.y_center, self.height, self.width)
 
+    @classmethod
+    def dataset_feature(cls) -> datasets.Sequence:
+        """Feature for the HF dataset."""
+        return datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
+
 
 class Position(BaseModel):
     """Position of a pose."""
