@@ -77,6 +77,11 @@ class Task(Enum):
         task_name = cls.as_sorted_task_list()[index]
         return cls[task_name]
 
+    @classmethod
+    def dataset_feature(cls) -> datasets.ClassLabel:
+        """Export the feature for the HF dataset."""
+        return datasets.ClassLabel(names=cls.as_sorted_task_list())
+
 
 class TaskGroup(Enum):
     """Grouping of tasks."""
@@ -240,7 +245,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         """Get the dataset features for a VIMA instance."""
         return datasets.Features(
             {
-                "task": datasets.ClassLabel(names=Task.as_sorted_task_list()),
+                "task": Task.dataset_feature(),
                 "object_metadata": datasets.Sequence(ObjectMetadata.dataset_features()),
                 "total_steps": datasets.Value("int64"),
                 "end_effector_type": datasets.Value("string"),
