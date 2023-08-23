@@ -1,8 +1,11 @@
-from typing import Any, Literal, NamedTuple, Self
+from typing import Any, ClassVar, Literal, NamedTuple, Self
 
+import datasets
 import torch
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
+from cogelot.structures.common import Bbox, PydanticHFDatasetMixin
+from cogelot.structures.token import EndEffectorToken, PoseActionToken, TextToken
 from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
 
@@ -10,19 +13,48 @@ from vima.utils import DataDict, any_to_datadict
 RawPromptTokenType = list[list[Literal[0, 1]]]
 
 
-class EvaluationEpisode(NamedTuple):
-    """Single instance of the evaluation dataset."""
-
-    partition: Partition
-    task: Task
+_RawPromptsTokenType = datasets.Sequence(datasets.Value("int8"))
+_CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
+_Mask = datasets.Value("bool")
 
 
-class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
+def _wrap_feature_in_batch_sequence(feature: Any, *, length: int = 1) -> datasets.Sequence:
+    return datasets.Sequence(id="batch", length=length, feature=feature)
+
+
+def _wrap_feature_in_objects_sequence(feature: Any) -> datasets.Sequence:
+    return datasets.Sequence(id="objects", feature=feature)
+
+
+def _wrap_feature_in_observation_sequence(feature: Any) -> datasets.Sequence:
+    return datasets.Sequence(id="obs", feature=feature)
+
+
+def _image_batch_feature_wrapper(feature: Any) -> datasets.Sequence:
+    return datasets.Sequence(id="tokens", feature=_wrap_feature_in_objects_sequence(feature))
+
+
+def _observation_feature_wrapper(feature: Any) -> datasets.Sequence:
+    return _wrap_feature_in_observation_sequence(
+        _wrap_feature_in_batch_sequence(_wrap_feature_in_objects_sequence(feature))
+    )
+
+
+class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
     """Preprocessed instance for the model.
 
     Given a prompt and a history, the model should be able to produce the target. Since
     tokenization is only ever needed once, we just do this aspect once.
     """
+
+    hf_tensor_fields: ClassVar[list[str]] = [
+        "word_batch",
+        "image_batch",
+        "observations",
+        "actions",
+    ]
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     task: Task
 
@@ -75,6 +107,56 @@ class PreprocessedInstance(BaseModel, arbitrary_types_allowed=True):
             observations=observations,
             actions=actions,
         )
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Features for the HF dataset."""
+        return datasets.Features(
+            {
+                "task": Task.dataset_feature(),
+                "raw_prompts_token_type": _wrap_feature_in_batch_sequence(_RawPromptsTokenType),
+                "word_batch": datasets.Sequence(id="tokens", feature=TextToken.dataset_feature()),
+                "image_batch": {
+                    "bbox": {
+                        "front": _image_batch_feature_wrapper(Bbox.dataset_feature()),
+                        "top": _image_batch_feature_wrapper(Bbox.dataset_feature()),
+                    },
+                    "cropped_img": {
+                        "front": _image_batch_feature_wrapper(_CroppedImg),
+                        "top": _image_batch_feature_wrapper(_CroppedImg),
+                    },
+                    "mask": {
+                        "front": _image_batch_feature_wrapper(_Mask),
+                        "top": _image_batch_feature_wrapper(_Mask),
+                    },
+                },
+                "observations": {
+                    "ee": datasets.Sequence(datasets.Sequence(EndEffectorToken.dataset_feature())),
+                    "objects": {
+                        "bbox": {
+                            "front": _observation_feature_wrapper(Bbox.dataset_feature()),
+                            "top": _observation_feature_wrapper(Bbox.dataset_feature()),
+                        },
+                        "cropped_img": {
+                            "front": _observation_feature_wrapper(_CroppedImg),
+                            "top": _observation_feature_wrapper(_CroppedImg),
+                        },
+                        "mask": {
+                            "front": _observation_feature_wrapper(_Mask),
+                            "top": _observation_feature_wrapper(_Mask),
+                        },
+                    },
+                },
+                "actions": PoseActionToken.dataset_features(),
+            }
+        )
+
+
+class EvaluationEpisode(NamedTuple):
+    """Single instance of the evaluation dataset."""
+
+    partition: Partition
+    task: Task
 
 
 class PreprocessedBatch(NamedTuple):
