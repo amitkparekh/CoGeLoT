@@ -2,13 +2,12 @@ import abc
 from collections.abc import ItemsView, KeysView, ValuesView
 from enum import Enum
 from functools import cached_property
-from typing import Any, Self
+from typing import Annotated, Any, Self
 
 import datasets
 import numpy as np
 import torch
-from numpy import typing as npt
-from pydantic import BaseModel, ConfigDict, RootModel, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, RootModel, field_validator
 
 
 class PydanticHFDatasetMixin(abc.ABC):
@@ -139,8 +138,13 @@ class Rotation(BaseModel):
         return torch.tensor([self.x, self.y, self.z, self.w])
 
 
-FRAME_SHAPE = (128, 256, 3)
-NumpyImage = npt.NDArray[np.uint8]
+FRAME_SHAPE: tuple[int, int, int] = (3, 128, 256)
+FrameTensor = Annotated[
+    torch.Tensor,
+    BeforeValidator(
+        lambda frame: torch.from_numpy(frame) if isinstance(frame, np.ndarray) else frame
+    ),
+]
 
 
 class Frame(BaseModel, PydanticHFDatasetMixin):
@@ -148,17 +152,49 @@ class Frame(BaseModel, PydanticHFDatasetMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    front: NumpyImage
-    top: NumpyImage
+    front: FrameTensor
+    top: FrameTensor
 
-    def get_view(self, view: View) -> NumpyImage:
+    def get_view(self, view: View) -> torch.Tensor:
         """Get the perspective of the asset."""
         return getattr(self, view.value)
+
+    @field_validator("front", "top")
+    @classmethod
+    def check_shape_of_frame(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Verify the shape of the frame."""
+        expected_frame_shape = FRAME_SHAPE[-tensor.ndim :]
+        if tensor.shape != expected_frame_shape:
+            raise AssertionError(f"Expected shape {expected_frame_shape}, got {tensor.shape}")
+        return tensor
+
+
+class RGBFrame(Frame):
+    """Frame for an RGB image."""
 
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Export the features schema for the HF dataset."""
-        return datasets.Features({"front": datasets.Image(), "top": datasets.Image()})
+        return datasets.Features(
+            {
+                "front": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
+                "top": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
+            }
+        )
+
+
+class SegmentationFrame(Frame):
+    """Frame for a segmentation image."""
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "front": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
+                "top": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
+            }
+        )
 
 
 class Timestep(BaseModel, PydanticHFDatasetMixin):
@@ -177,8 +213,8 @@ class Asset(BaseModel, PydanticHFDatasetMixin):
 
     _obj_ids_to_ignore: set[int] = {0, 1}
 
-    rgb: Frame
-    segm: Frame
+    rgb: RGBFrame
+    segm: SegmentationFrame
 
     @property
     def object_ids(self) -> set[int]:
@@ -195,8 +231,8 @@ class Asset(BaseModel, PydanticHFDatasetMixin):
         """Export the features schema for the HF dataset."""
         return datasets.Features(
             {
-                "rgb": Frame.dataset_features(),
-                "segm": Frame.dataset_features(),
+                "rgb": RGBFrame.dataset_features(),
+                "segm": SegmentationFrame.dataset_features(),
             }
         )
 
@@ -205,20 +241,6 @@ class PromptAsset(Asset):
     """A single prompt asset within the environment."""
 
     name: str
-
-    @field_validator("rgb")
-    @classmethod
-    def check_shape_is_correct(cls, frame: Frame) -> Frame:
-        """Ensure that the shape of the frame is correct."""
-        if frame.front.shape != FRAME_SHAPE:
-            frame.front = np.moveaxis(frame.front, 0, -1)
-
-        if frame.top.shape != FRAME_SHAPE:
-            frame.top = np.moveaxis(frame.top, 0, -1)
-
-        assert frame.front.shape == FRAME_SHAPE
-        assert frame.top.shape == FRAME_SHAPE
-        return frame
 
     @classmethod
     def dataset_features(cls) -> datasets.Features:
@@ -300,7 +322,7 @@ class PromptAssets(RootModel[list[PromptAsset]]):
 class Observation(Timestep, Asset, PydanticHFDatasetMixin):
     """A single observation within the envirnment."""
 
-    def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, NumpyImage]]:
+    def to_image_per_type_per_view(self) -> dict[View, dict[ImageType, torch.Tensor]]:
         """Convert the observation to a dictionary of images per view."""
         return {
             view: {
@@ -310,7 +332,7 @@ class Observation(Timestep, Asset, PydanticHFDatasetMixin):
             for view in View
         }
 
-    def to_image_per_view_per_type(self) -> dict[ImageType, dict[View, NumpyImage]]:
+    def to_image_per_view_per_type(self) -> dict[ImageType, dict[View, torch.Tensor]]:
         """Convert the observation to a dictionary of images per view."""
         return {
             image_type: {view: getattr(self, image_type.value).get_view(view) for view in View}

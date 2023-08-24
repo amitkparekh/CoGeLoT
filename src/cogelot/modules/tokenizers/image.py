@@ -11,55 +11,55 @@ DEFAULT_IMAGE_SIZE = 32
 MIN_DIMENSION_SIZE = 2
 
 
-def pad_image_to_square(image: np.ndarray, *, padding_value: int = 0) -> np.ndarray:
+def pad_image_to_square(image: torch.Tensor, *, padding_value: int = 0) -> torch.Tensor:
     """Pad the image to ensure it is a square."""
     # If the image is already square, return it
     if image.shape[1] == image.shape[2]:
         return image
 
-    dimension_to_pad = 1 if image.shape[1] < image.shape[2] else 2
+    dimension_to_pad = 1 if image.shape[1] < image.shape[2] else 0
 
     # Calculate the padding that needs to go before and after the image
     difference = abs(image.shape[1] - image.shape[2])
     padding_before = difference // 2
     padding_after = difference - padding_before
 
+    # Specify the padding for each dimension
     padding: list[tuple[int, int]] = [(0, 0), (0, 0), (0, 0)]
     padding[dimension_to_pad] = (padding_before, padding_after)
 
-    # Pad the image
-    padded_image = np.pad(
+    padded_image = torch.nn.functional.pad(
         image,
-        tuple(padding),
+        tuple(torch.tensor(padding).flatten().tolist()),
         mode="constant",
-        constant_values=padding_value,
+        value=padding_value,
     )
 
     return padded_image
 
 
-def crop_to_bounding_box(image: np.ndarray, bbox: Bbox) -> np.ndarray:
+def crop_to_bounding_box(image: torch.Tensor, bbox: Bbox) -> torch.Tensor:
     """Crop the image to the bounding box."""
     return image[:, bbox.y_min : bbox.y_max + 1, bbox.x_min : bbox.x_max + 1]  # noqa: WPS221
 
 
-def resize_image(image: np.ndarray, *, image_size: int = DEFAULT_IMAGE_SIZE) -> np.ndarray:
+def resize_image(image: torch.Tensor, *, image_size: int = DEFAULT_IMAGE_SIZE) -> torch.Tensor:
     """Resize the image."""
     image = rearrange(image, "c h w -> h w c")
-    image = np.asarray(image).astype(np.float32)
-    image = cv2.resize(
-        src=image,  # pyright: ignore[reportGeneralTypeIssues]
+    image = image.to(torch.float32)
+    resized_image = cv2.resize(
+        src=image.numpy(),  # pyright: ignore[reportGeneralTypeIssues]
         dsize=(image_size, image_size),
         interpolation=cv2.INTER_AREA,
     )
+    image = torch.from_numpy(resized_image)
     image = rearrange(image, "h w c -> c h w")
-    image = np.asarray(image)
     return image
 
 
 def extract_object_from_image(
-    image: np.ndarray, bbox: Bbox, *, image_size: int = DEFAULT_IMAGE_SIZE
-) -> np.ndarray:
+    image: torch.Tensor, bbox: Bbox, *, image_size: int = DEFAULT_IMAGE_SIZE
+) -> torch.Tensor:
     """Crop the object from the RGB image using the bounding box."""
     cropped_image = crop_to_bounding_box(image, bbox)
     # Make sure the cropped image is square
@@ -70,7 +70,10 @@ def extract_object_from_image(
 
 
 def create_bounding_box_from_segmentation_image(
-    object_id: int, segmentation_image: np.ndarray, *, min_dimension_size: int = MIN_DIMENSION_SIZE
+    object_id: int,
+    segmentation_image: torch.Tensor,
+    *,
+    min_dimension_size: int = MIN_DIMENSION_SIZE,
 ) -> Bbox:
     """Extract the bounding box for the object ID from the segmentation view."""
     # Get all the pixels that belong to the object
@@ -92,7 +95,7 @@ def create_bounding_box_from_segmentation_image(
 
 def extract_objects_from_images(
     *,
-    image_per_type_per_view: dict[View, dict[ImageType, np.ndarray]],
+    image_per_type_per_view: dict[View, dict[ImageType, torch.Tensor]],
     available_object_ids: set[int],
     image_size: int = DEFAULT_IMAGE_SIZE,
 ) -> list[VisualObject]:
@@ -136,7 +139,7 @@ def create_image_token_from_objects(
 def create_image_token_from_images(
     *,
     token_position_idx: int,
-    image_per_type_per_view: dict[View, dict[ImageType, np.ndarray]],
+    image_per_type_per_view: dict[View, dict[ImageType, torch.Tensor]],
     available_object_ids: set[int],
     token_value: str | None = None,
     image_size: int = DEFAULT_IMAGE_SIZE,
