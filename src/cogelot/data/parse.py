@@ -36,8 +36,9 @@ def load_rgb_observation_image(
     """Load the RGB image of the observation for the given view."""
     image_path = instance_dir.joinpath(RGB_PATH_PER_VIEW[view], f"{frame_idx}.jpg")
     with Image.open(image_path) as image:
+        image.draft(image.mode, image.size)
         # Also move the axes to be in the same structure as the prompt assets
-        return torch.from_numpy(np.array(image)).moveaxis(-1, 0).contiguous()
+        return torch.from_numpy(np.asarray(image).copy()).moveaxis(-1, 0).contiguous()
 
 
 def load_data_from_pickle(pickled_file: Path) -> Any:
