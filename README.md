@@ -1,64 +1,43 @@
-# VIMA: General Robot Manipulation with Multimodal Prompts
-## ICML 2023
+# Title go here
+
 <div align="center">
-
-[[Website]](https://vimalabs.github.io/)
-[[arXiv]](https://arxiv.org/abs/2210.03094)
-[[PDF]](https://vimalabs.github.io/assets/vima_paper.pdf)
-[[Pretrained Models]](#Pretrained-Models)
-[[Baselines Implementation]](#Baselines-Implementation)
-[[VIMA-Bench]](https://github.com/vimalabs/VimaBench)
-[[Training Data]](https://huggingface.co/datasets/VIMA/VIMA-Data)
-[[Model Card]](model-card.md)
-
-[![Python Version](https://img.shields.io/badge/Python-3.9-blue.svg)](https://github.com/vimalabs/VIMA)
-[<img src="https://img.shields.io/badge/Framework-PyTorch-red.svg"/>](https://pytorch.org/)
-[![GitHub license](https://img.shields.io/github/license/vimalabs/VIMA)](https://github.com/vimalabs/VIMA/blob/main/LICENSE)
-______________________________________________________________________
-![](images/pull.png)
+TODO: Put shields and links here.
 </div>
 
-Prompt-based learning has emerged as a successful paradigm in natural language processing, where a single general-purpose language model can be instructed to perform any task specified by input prompts. However, different robotics tasks are still tackled by specialized models. This work shows that we can express a wide spectrum of robot manipulation tasks with *multimodal prompts*, interleaving textual and visual tokens.
-We introduce VIMA (**Vi**suo**M**otor **A**ttention agent), a novel scalable multi-task robot learner with a uniform sequence IO interface achieved through multimodal prompts. The architecture follows the encoder-decoder transformer design proven to be effective and scalable in NLP. VIMA encodes an input sequence of interleaving textual and visual prompt tokens with a [pretrained](https://www.deepmind.com/publications/multimodal-few-shot-learning-with-frozen-language-models) [language model](https://ai.googleblog.com/2020/02/exploring-transfer-learning-with-t5.html), and decodes robot control actions autoregressively for each environment interaction step. The transformer decoder is conditioned on the prompt via cross-attention layers that alternate with the usual causal self-attention. Instead of operating on raw pixels, VIMA adopts an object-centric approach. We parse all images in the prompt or observation into objects by [off-the-shelf detectors](https://arxiv.org/abs/1703.06870), and flatten them into sequences of object tokens. All these design choices combined deliver a conceptually simple architecture with strong model and data scaling properties.
+## Abstract from the paper
 
-In this repo, we provide VIMA model code, pre-trained checkpoints covering a spectrum of model sizes, and demo and eval scripts. This codebase is under [MIT License](LICENSE).
 
-# Installation
-VIMA requires Python ≥ 3.9. We have tested on Ubuntu 20.04. Installing VIMA codebase is as simple as:
 
-```bash
-pip install git+https://github.com/vimalabs/VIMA
-```
+## Limitations on further development
 
-# Pretrained Models
-We host pretrained models covering a spectrum of model capacity on [HuggingFace](https://huggingface.co/VIMA/VIMA). Download links are listed below.
+This is a research project, and so the scope of it is limited to the paper it is attached to. It is unlikely that I will maintaining this repository to ensure it continues to work with the latest dependencies outside those pinned. That said, I've tried to be lax in my pinning of deps so that building on this project will not be overly restrictive.
 
-| [200M](https://huggingface.co/VIMA/VIMA/resolve/main/200M.ckpt) | [92M](https://huggingface.co/VIMA/VIMA/resolve/main/92M.ckpt) | [43M](https://huggingface.co/VIMA/VIMA/resolve/main/43M.ckpt) | [20M](https://huggingface.co/VIMA/VIMA/resolve/main/20M.ckpt) | [9M](https://huggingface.co/VIMA/VIMA/resolve/main/9M.ckpt) | [4M](https://huggingface.co/VIMA/VIMA/resolve/main/4M.ckpt) | [2M](https://huggingface.co/VIMA/VIMA/resolve/main/2M.ckpt)    |
-|-----------------------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------|-------------------------------------------------------------|-------------------------------------------------------------|-----|
+Additionally, I've tried to work in a constrainted, clean, and robust manner. I hope that helps you as much as it helped me.
 
-# Baselines Implementation
-Because there is no prior method that works out of the box with our multimodal prompting setup, we make our best effort to select a number of representative transformer-based agent architectures as baselines, and re-interpret them to be compatible with VIMA-Bench. They include ```VIMA-Gato```, ```VIMA-Flamingo```, and ```VIMA-GPT```. Their implementation can be found in the ```policy``` folder.
+## What is included?
 
-# Demo
-To run the live demonstration, first follow the [instruction](https://github.com/vimalabs/VimaBench/tree/main#installation) to install [VIMA-Bench](https://github.com/vimalabs/VimaBench).Then we can run a live demo through
+Everything. You should be able to run every single experiment from the paper. Datasets and models are hosted on HF. Logs and metrics from training are on WandB so if reproducing, you can check if your model follows mine.
+
+While I tried to bring everything front and centre, some thigns might be buried. If you think these things should be brought forward, feel free to open a PR and bring them forward! I'll definitely be taking opinions regarding this into consideration for future projects.
+
+## Installing this project
+
+Everything you need to know about the installing the dependencies for this project can be found in the `pyproject.toml`. To quickly install and get up and running, you can run the following:
 
 ```bash
-python3 scripts/example.py --ckpt={ckpt_path} --device={device} --partition={eval_level} --task={task}
+pyenv install
+(add commands for pdm)
 ```
 
-Here `eval_level` means one out of four evaluation levels and can be chosen from `placement_generalization`, `combinatorial_generalization`, `novel_object_generalization`, and `novel_task_generalization`. `task` means a specific task template. Please refer to [task suite](https://github.com/vimalabs/VimaBench/tree/main#task-suite) and [benchmark](https://github.com/vimalabs/VimaBench/tree/main#evaluation-benchmark) for more details.
 
-After running the above command, we should see a PyBullet GUI pop up, alongside a small window showing the multimodal prompt. Then a robot arm should move to complete the corresponding task. Note that this demo may not work on headless machines since the PyBullet GUI requires a display.
+## How to run things
 
-# Paper and Citation
+Everything that was run, in some shape or form, can be found using the command `python -m cogelot`. This is what was used to run the dataset creation, train models, evaluate models, and more. These commands are implemented using Typer, and can be found within `src/cogelot/entrypoints/__main__.py`.
 
-Our paper is posted on [arXiv](https://arxiv.org/abs/2210.03094). If you find our work useful, please consider citing us!
+Separately, I developed everything using tests to verify that each pieces works in isolation and together. You can find all the tests in the `tests/` folder. If you are using an IDE (like VSCode), it likely has support for pytest and the other test-related dependencies I used. While coverage is not going to be 100%, I used the tests with breakpoints to verify inner functions are working as expected and
 
-```bibtex
-@article{jiang2022vima,
-  title   = {VIMA: General Robot Manipulation with Multimodal Prompts},
-  author  = {Yunfan Jiang and Agrim Gupta and Zichen Zhang and Guanzhi Wang and Yongqiang Dou and Yanjun Chen and Li Fei-Fei and Anima Anandkumar and Yuke Zhu and Linxi Fan},
-  year    = {2022},
-  journal = {arXiv preprint arXiv: Arxiv-2210.03094}
-}
-```
+While there is no separate documentation site, I have tried to make sure that docstrings and comments are relevant and detailed. If you want more information on what a function is doing or why it is doing that, feel free to make an issue. If you figure out something that I haven't described enough off, feel free to make a PR improving my documentation so that you, me, _and_ future people can benefit from your insight.
+
+### Batch files with the commands I ran on SLURM
+
+It is very unlikely that I ran things in a tmux session and just stared at it. I don't like copy-pasting hundreds of commands. As experiments were often run on a compute cluster, I ran commands with SLURM. You can find these contained batch files in `./scripts/slurm/`. These were made for my system, so some adjustments are likely going to be needed, but I'm hoping it's obvious and not too complicated!
