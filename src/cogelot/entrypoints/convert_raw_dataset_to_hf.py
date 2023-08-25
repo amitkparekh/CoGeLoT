@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Annotated, Any, cast
 
 import datasets
+import psutil
 import typer
 from loguru import logger
 from rich.progress import track
@@ -19,7 +20,11 @@ WRITER_BATCH_SIZE = 10000
 STORAGE_DATA_DIR = Path("storage/data/")
 RAW_DATA_DIR = STORAGE_DATA_DIR.joinpath("raw/vima_v6/")
 
-app = typer.Typer(add_completion=False)
+
+def is_requested_more_workers_than_physical_cores(num_workers: int) -> bool:
+    """Check if the number of workers requested is greater than the number of physical cores."""
+    physical_core_count = psutil.cpu_count(logical=False)
+    return num_workers > physical_core_count
 
 
 def get_raw_instance_directories(raw_data_root: Path) -> list[Path]:
@@ -72,7 +77,6 @@ def create_validation_split(
     return dataset_dict
 
 
-@app.command("create-hf-dataset")
 def convert_raw_dataset_to_hf(
     raw_data_root: Annotated[
         Path, typer.Argument(help="Root directory for the raw data")
@@ -91,19 +95,36 @@ def convert_raw_dataset_to_hf(
     ] = "1GB",
     seed: Annotated[int, typer.Option(help="Seed for the stratified sampling.")] = 1000,
 ) -> None:
-    """Convert the raw dataset to a HF dataset.
+    """Convert the raw dataset to a dataset on HF.
 
     That means parsing, validating, constructing the thing, and then uploading it to HF.
+
+    Creating each VIMA instance from the raw data is an intensive task, but also a slow one that is
+    bottlenecked by the IOPS of your drive. Increasing the number of workers will help with this to
+    a point, but there will be a limit to this. You're just going to have to wait. During this,
+    watch the memory usage too. Too many workers will cause the system to run out of memory and
+    likely crash the running.
     """
     all_raw_instance_paths = get_raw_instance_directories(raw_data_root)
+
+    if is_requested_more_workers_than_physical_cores(num_workers):
+        logger.warning(
+            "You are requesting more workers than physical cores. This is not recommended. You"
+            " should use the number of physical cores in the system (so whatever it says in htop /"
+            " 2). If you don't heed this warning, then creation of the dataset will likely fail —"
+            " well that's what I've seen anyway."
+        )
+
     logger.info("Creating the HF dataset...")
     dataset = create_hf_dataset_from_vima_instance_paths(
         all_raw_instance_paths, num_workers=num_workers
     )
+
     logger.info("Creating the train-valid split...")
     dataset_with_split = create_validation_split(
         dataset, max_num_validation_instances=num_validation_instances, seed=seed
     )
+
     logger.info("Pushing the dataset to the hub...")
     logger.info(
         "This will take a while. It might look like it's doing nothing, but it is taking a while."
@@ -112,4 +133,4 @@ def convert_raw_dataset_to_hf(
 
 
 if __name__ == "__main__":
-    app()
+    convert_raw_dataset_to_hf()

@@ -1,15 +1,10 @@
 from pathlib import Path
 
-import typer
 from loguru import logger
 
 from cogelot.common.wandb import download_model_from_wandb
 
 
-app = typer.Typer()
-
-
-@app.command()
 def download_model(
     run_id: str,
     *,
@@ -26,7 +21,3 @@ def download_model(
     )
 
     logger.info(f"Model downloaded to {checkpoint_path}")
-
-
-if __name__ == "__main__":
-    app()
