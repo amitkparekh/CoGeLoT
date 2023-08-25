@@ -1,11 +1,11 @@
 #! /bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=90
+#SBATCH --ntasks-per-node=96
 #SBATCH --time=24:00:00
 #SBATCH --partition=nodes
-#SBATCH --job-name=convert-to-hf
-#SBATCH --error=job.%J.err
-#SBATCH --output=job.%J.out
+#SBATCH --job-name=create-dataset
+#SBATCH --error=jobs/create-dataset.%J.err
+#SBATCH --output=jobs/create-dataset.%J.out
 #SBATCH -p nodes
 
-poetry run python src/cogelot/commands/create_dataset.py --num-workers 90
+poetry run python src/cogelot/commands/create_dataset.py --num-workers 40
