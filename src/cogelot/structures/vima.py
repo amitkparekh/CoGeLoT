@@ -302,6 +302,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         """Get the dataset features for a VIMA instance."""
         return datasets.Features(
             {
+                "index": datasets.Value("int64"),
                 "task": Task.dataset_feature(),
                 "object_metadata": datasets.Sequence(ObjectMetadata.dataset_features()),
                 "total_steps": datasets.Value("int64"),
