@@ -7,7 +7,7 @@ default_install_hook_types: ["commit-msg", "pre-commit"]
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: 3.6.0
+    rev: v3.6.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -71,7 +71,7 @@ repos:
         args: [--in-place, --wrap-summaries=99, --wrap-descriptions=99]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.284"
+    rev: "v0.0.285"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

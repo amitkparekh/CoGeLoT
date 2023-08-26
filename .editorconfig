@@ -8,6 +8,9 @@ charset = utf-8
 indent_style = tab
 indent_size = 2
 
+[*.toml]
+indent_size = 4
+
 # YAML doesn't support hard tabs
 # Templates that will be weird with hard tabs in the website editor
 [*.{yml,yaml,md}]

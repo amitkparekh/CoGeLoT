@@ -1,78 +1,59 @@
-[tool.poetry]
+[project]
 name = "cogelot"
 version = "1.0.0"
 description = ""
 authors = [
-	"VIMA Team ",
-	"Amit Parekh <7276308+amitkparekh@users.noreply.github.com>",
+	{ name = "Amit Parekh", email = "7276308+amitkparekh@users.noreply.github.com" },
+	{ name = "VIMA Team" },
 ]
+requires-python = ">=3.11,<4.0"
 readme = "README.md"
-license = "MIT"
-packages = [
-	{ include = "vima", from = "src" },
-	{ include = "vima_bench", from = "src" },
-	{ include = "vimasim", from = "src" },
-	{ include = "cogelot", from = "src" },
+license = { text = "MIT" }
+
+dependencies = [
+    "torch<3.0.0,>=2.0.1",
+    "lightning<3,>=2",
+    "tokenizers>=0.13.3",
+    "transformers>=4.32.0",
+    "omegaconf>=2.3.0",
+    "numpy>=1.25.2",
+    "torchmetrics>=1.1.0",
+    "loguru>=0.7.0",
+    "tqdm>=4.66.1",
+    "rich>=13.5.2",
+    "pydantic>=2.3.0",
+    "orjson>=3.9.5",
+    "dill>=0.3.7",
+    "hydra-core>=1.3.2",
+    "typer>=0.9.0",
+    "datasets>=2.14.4",
+    "wandb>=0.15.8",
+    "x-transformers>=1.18.2",
+    "pillow>=10.0.0",
+    "opencv-python>=4.8.0.76",
+    "einops>=0.6.1",
+    "pandas>=2.0.3",
+    "pydantic-settings>=2.0.3",
 ]
 
-[tool.poetry.dependencies]
-python = "~3.11"
-torch = "^2.0.1"
-lightning = "^2"
-tokenizers = "*"
-transformers = "*"
-omegaconf = "*"
-numpy = "*"
-torchmetrics = "*"
-loguru = "*"
-tqdm = "*"
-rich = "*"
-pydantic = "^2.2.1"
-orjson = "*"
-dill = "*"
-hydra-core = "*"
-typer = "^0.9.0"
-datasets = "^2.14.0"
-wandb = "*"
-x-transformers = "*"
-pillow = "*"
-
-[tool.poetry.group.vima.dependencies]
-opencv-python = "*"
-dm-tree = "*"
-kornia = "*"
-einops = "*"
-pandas = "*"
-
-[tool.poetry.group.environment.dependencies]
-gym = "^0.26.2"
-imageio = "^2.31.1"
-matplotlib = "^3.7.2"
-kornia = "^0.6.12"
-psutil = "^5.9.5"
-torchvision = "^0.15.2"
-pybullet = "^3.2.5"
-av = "^10.0.0"
-importlib-resources = "^6.0.1"
-transforms3d = "^0.4.1"
-
-[tool.poetry.group.lint.dependencies]
-black = "*"
-pre-commit = "*"
-ruff = "*"
-mypy = "*"
-wemake-python-styleguide = "*"
-flake8-pyproject = "*"
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-cases = "*"
-pytest-xdist = "*"
-pytest-cov = "*"
+[project.optional-dependencies]
+environment = [
+	"gym>=0.26.2",
+	"imageio>=2.31.1",
+	"matplotlib>=3.7.2",
+	"kornia>=0.7.0",
+	"psutil>=5.9.5",
+	"torchvision>=0.15.2",
+	"pybullet>=3.2.5",
+	"av>=10.0.0",
+	"importlib-resources>=6.0.1",
+	"transforms3d>=0.4.1",
+	"dm-tree>=0.1.8",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [tool.black]
 line-length = 99
@@ -336,3 +317,23 @@ extend-exclude = [
 [tool.pytest.ini_options]
 # addopts = "--jaxtyping-packages=cogelot,beartype.beartype"
 testpaths = ["tests"]
+
+[tool.pdm.build]
+package-dir = "src"
+
+[tool.pdm.dev-dependencies]
+test = [
+	"pytest>=7.4.0",
+	"pytest-cov>=4.1.0",
+	"pytest-cases>=3.6.14",
+	"pytest-xdist>=3.3.1",
+]
+lint = [
+	"black>=23.7.0",
+	"ruff>=0.0.285",
+	"mypy>=1.5.1",
+	"pre-commit>=3.3.3",
+	"wemake-python-styleguide>=0.18.0",
+	"flake8-pyproject>=1.2.3",
+	"commitizen>=3.6.0",
+]
