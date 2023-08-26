@@ -1,10 +1,17 @@
 from collections.abc import Mapping
 from enum import Enum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self, TypeVar
 
 import datasets
 import torch
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    PlainSerializer,
+    field_validator,
+)
 
 from cogelot.structures.common import (
     Action,
@@ -196,22 +203,72 @@ class PoseAction(Action, PydanticHFDatasetMixin):
         )
 
 
+T = TypeVar("T")
+
+
+def maybe_convert_dict_list_to_list_dict(
+    maybe_dict_list: dict[str, list[T]] | list[dict[str, T]]
+) -> list[dict[str, Any]]:
+    """Convert a list of dicts to a dict of lists.
+
+    Taken from: https://stackoverflow.com/a/33046935.
+
+    This function goes from a dict of lists, to a list of dicts.
+    For example,
+    Before: `{'a': [0, 1], 'b': [2, 3]}`
+    After: `[{'a': 0, 'b': 2}, {'a': 1, 'b': 3}]`
+    """
+    if isinstance(maybe_dict_list, dict):
+        maybe_dict_list = [
+            dict(zip(maybe_dict_list, dict_values, strict=True))
+            for dict_values in zip(*maybe_dict_list.values(), strict=True)
+        ]
+    return maybe_dict_list
+
+
 class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
-    """A single instance of the VIMA dataset, merging all the files into a single object."""
+    """A single instance of the VIMA dataset, merging all the files into a single object.
 
-    task: Annotated[Task, PlainSerializer(lambda task: task.value, return_type=int)]
+    Yes, I know that this looks incredibly complicated at a glance, but I'm hoping that it doesn't
+    with some explanation. I have leaned heavily on Pydantic's Validators through typing's
+    Annotated to do a lot of the heavy lifting. If you know Pydantic v2, you'll be fine.
 
-    total_steps: int
+    The purpose of all these additional validators is to make it easier to parse the data from a HF
+    dataset.
+    """
 
-    object_metadata: list[ObjectMetadata]
+    task: Annotated[
+        Task,
+        BeforeValidator(lambda task: int(task.item()) if isinstance(task, torch.Tensor) else task),
+        BeforeValidator(
+            lambda task: Task.from_sorted_task_list_index(task) if isinstance(task, int) else task
+        ),
+        PlainSerializer(lambda task: task.value, return_type=int),
+    ]
+
+    # If the incoming data is a tensor, make sure to convert it to an integer
+    index: Annotated[int, BeforeValidator(int)]
+    total_steps: Annotated[int, BeforeValidator(int)]
 
     end_effector_type: EndEffector
 
-    observations: list[Observation] = Field(default_factory=list)
-    pose_actions: list[PoseAction] = Field(default_factory=list)
+    # If the incoming data is a dict, make sure to convert it to a list of dicts, essentially
+    # unwrapping the thing.
+    object_metadata: Annotated[
+        list[ObjectMetadata],
+        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+    ]
+    observations: Annotated[
+        list[Observation],
+        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+    ] = Field(default_factory=list)
+    pose_actions: Annotated[
+        list[PoseAction],
+        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+    ] = Field(default_factory=list)
 
     prompt: str
-    prompt_assets: PromptAssets
+    prompt_assets: Annotated[PromptAssets, BeforeValidator(maybe_convert_dict_list_to_list_dict)]
 
     @field_validator("pose_actions", "observations")
     @classmethod

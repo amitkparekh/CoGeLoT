@@ -273,6 +273,10 @@ class PromptAssets(RootModel[list[PromptAsset]]):
         """Convert the assets to a dictionary."""
         return {asset.name: asset for asset in self.root}
 
+    def as_python_dict(self) -> dict[str, dict[str, Any]]:
+        """Convert the assets to a python dictionary."""
+        return {asset.name: asset.model_dump() for asset in self.root}
+
     def __getitem__(self, item: str) -> PromptAsset:  # noqa: WPS110
         """Let the Assets class be subscriptable like a dictionary."""
         return self.as_dict[item]

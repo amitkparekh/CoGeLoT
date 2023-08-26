@@ -24,7 +24,9 @@ def maybe_split_dataset_by_node(dataset: U) -> U:
     return split_dataset_by_node(dataset, rank=int(current_rank), world_size=int(world_size))
 
 
-def download_parquet_files_from_hub(repo_id: str, *, max_workers: int = 8) -> None:
+def download_parquet_files_from_hub(
+    repo_id: str, *, name: str | None = None, max_workers: int = 8
+) -> None:
     """Download the parquet data files from the dataset on the hub.
 
     This is faster than using `datasets.load_dataset`. `datasets.load_dataset` doesn't download as
@@ -34,13 +36,22 @@ def download_parquet_files_from_hub(repo_id: str, *, max_workers: int = 8) -> No
     However, doing it this way does not automatically fill the cache, so you cannot use
     `load_dataset` when loading the dataset. The `load_dataset_from_parquet_files` function (below)
     is there to load the dataset from the parquet files and returns the `DatasetDict`.
+
+    If providing the `name`, then only the parquet files within that directory will be downloaded.
+    If no name is provided, then we just download all the parquet files.
     """
+    pattern = "*.parquet"
+    library_name = repo_id
+    if name:
+        pattern = f"**{name}/*.parquet"
+        library_name = f"{repo_id}/{name}"
+
     snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
         local_dir=None,
-        library_name=repo_id,
-        allow_patterns="*.parquet",
+        library_name=library_name,
+        allow_patterns=pattern,
         max_workers=max_workers,
         resume_download=True,
     )

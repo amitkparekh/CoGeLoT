@@ -1,8 +1,8 @@
 from pytest_cases import fixture
 
-from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
+from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
