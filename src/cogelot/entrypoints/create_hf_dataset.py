@@ -1,5 +1,4 @@
 from collections.abc import Iterator
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Annotated, Any, cast
 
@@ -22,21 +21,17 @@ def get_all_parsed_vima_instances_paths(parsed_data_dir: Path) -> list[Path]:
     return list(track(path_iterator, description="Getting all parsed VIMA instance paths"))
 
 
-def yield_vima_instance_from_path(path: Path) -> VIMAInstance:
+def _load_vima_instance_from_path_for_hf(path: Path) -> dict[str, Any]:
     """Load and yield the VIMA instance from the path."""
-    return VIMAInstance.model_validate(load_pickle(path))
+    return VIMAInstance.model_validate(load_pickle(path)).model_dump()
 
 
-def yield_vima_instances_for_hf_generator(
-    paths: list[Path], num_workers: int
-) -> Iterator[dict[str, Any]]:
+def yield_vima_instances_for_hf_generator(paths: list[Path]) -> Iterator[dict[str, Any]]:
     """Yield the VIMA instances for the HF generator.
 
     We return the model_dump because that's what the HF dataset wants.
     """
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = [executor.submit(yield_vima_instance_from_path, path) for path in paths]
-        yield from (future.result().model_dump() for future in as_completed(futures))
+    yield from map(_load_vima_instance_from_path_for_hf, paths)
 
 
 def create_hf_dataset_from_vima_instance_paths(
@@ -48,7 +43,8 @@ def create_hf_dataset_from_vima_instance_paths(
         datasets.Dataset.from_generator(
             yield_vima_instances_for_hf_generator,
             features=VIMAInstance.dataset_features(),
-            gen_kwargs={"paths": paths, "max_workers": num_workers},
+            gen_kwargs={"paths": paths},
+            num_proc=max(num_workers, 1),
             writer_batch_size=settings.writer_batch_size,
         ),
     )
@@ -88,10 +84,10 @@ def convert_vima_instance_to_hf_dataset(
         ),
     ] = settings.num_validation_instances,
     hf_repo_id: Annotated[
-        str, typer.Option("Repository ID for the dataset on HF")
+        str, typer.Option(help="Repository ID for the dataset on HF")
     ] = settings.hf_repo_id,
     max_shard_size: Annotated[
-        str, typer.Option("Maximum shard size for the dataset")
+        str, typer.Option(help="Maximum shard size for the dataset")
     ] = settings.max_shard_size,
     seed: Annotated[int, typer.Option(help="Seed for the stratified sampling.")] = 1000,
 ) -> None:

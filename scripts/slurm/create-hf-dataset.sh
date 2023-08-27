@@ -1,6 +1,7 @@
 #! /bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=96
+#SBATCH --ntasks-per-node=32
+#SBATCH --mem=200G
 #SBATCH --time=24:00:00
 #SBATCH --partition=nodes
 #SBATCH --job-name=create-dataset
@@ -8,4 +9,5 @@
 #SBATCH --output=jobs/create-dataset.%J.out
 #SBATCH -p nodes
 
-poetry run python src/cogelot/commands/create_dataset.py --num-workers 40
+pdm run python -m cogelot parse-raw-dataset --num-workers 30
+pdm run python -m cogelot create-hf-dataset --num-workers 30

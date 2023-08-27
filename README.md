@@ -30,7 +30,7 @@ pyenv install
 ```
 
 
-## How to run things
+## How to find out how I did things yourself
 
 Everything that was run, in some shape or form, can be found using the command `python -m cogelot`. This is what was used to run the dataset creation, train models, evaluate models, and more. These commands are implemented using Typer, and can be found within `src/cogelot/entrypoints/__main__.py`.
 
@@ -41,3 +41,18 @@ While there is no separate documentation site, I have tried to make sure that do
 ### Batch files with the commands I ran on SLURM
 
 It is very unlikely that I ran things in a tmux session and just stared at it. I don't like copy-pasting hundreds of commands. As experiments were often run on a compute cluster, I ran commands with SLURM. You can find these contained batch files in `./scripts/slurm/`. These were made for my system, so some adjustments are likely going to be needed, but I'm hoping it's obvious and not too complicated!
+
+
+## History
+
+### How I created the dataset
+
+The raw data was downloaded from VIMA. Each instance is a folder of multiple files. So that things can be run quickly, the dataset was loaded and parsed with Pydantic, and then converted into a [HF dataset](https://huggingface.co/datasets/amitkparekh/vima). There are unit tests showing how this was done in `tests/test_dataset_creation.py`.
+
+There were some errors when doing it all in one step, so the dataset creation needs to be done in two steps. First, the raw data is parsed and pickled into individual files because this takes the longest to do. Then, these files are loaded and converted into a HF dataset.
+
+The raw dataset is aronud 712GB.
+
+### Tokenising the instances, ready for modelling
+
+To make loading data efficient when modelling, all the instances were tokenized in advanced. Similarly, this is also available on HF, as a different config name.
