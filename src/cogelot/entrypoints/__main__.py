@@ -19,8 +19,13 @@ def override_sys_args_with_context(ctx: typer.Context) -> None:
     Override the args provides to the command by moving them all over. This is needed so that we
     can just call the various Hydra functions and all of the overrides (if they are used or not)
     are just automatically passed through by Hydra.
+
+    All the overrides need to be at index 1 and onwards. The first index is the command itself.
+    Therefore anything between those indices are going to be lost. But it's okay, it's not too
+    dire.
     """
-    sys.argv[1:] = sys.argv[len(ctx.command_path.split(" ")) :]
+    overrides = sys.argv[len(ctx.command_path.split(" ")) :]
+    sys.argv = [sys.argv[0], *overrides]
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
