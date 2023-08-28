@@ -2,7 +2,7 @@ defaults:
   - _self_
 
 instance_preprocessor:
-  _target_: cogelot.data.preprocess.InstancePreprocessor
+  _target_: cogelot.modules.instance_preprocessor.InstancePreprocessor
 
   text_tokenizer:
     _target_: cogelot.modules.tokenizers.TextTokenizer
