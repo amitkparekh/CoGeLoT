@@ -14,7 +14,6 @@ from vima.prepare_prompt import prepare_prompt
 from vima.utils import DataDict, any_to_datadict
 
 
-# TODO: Fix this function
 def convert_observations_to_their_format(
     *, observations: list[Observation], tokenized_end_effector: np.ndarray
 ) -> ObsDict:
@@ -22,7 +21,10 @@ def convert_observations_to_their_format(
     observation_dicts = [observation.to_image_per_view_per_type() for observation in observations]
     rgb_dict: dict[Literal["top", "front"], np.ndarray] = {
         view.value: np.stack(
-            [observation_dict[ImageType.rgb][view] for observation_dict in observation_dicts],
+            [
+                observation_dict[ImageType.rgb][view].numpy()
+                for observation_dict in observation_dicts
+            ],
             axis=0,
         )
         for view in (View.front, View.top)
@@ -30,7 +32,7 @@ def convert_observations_to_their_format(
     segm_dict: dict[Literal["top", "front"], np.ndarray] = {
         view.value: np.stack(
             [
-                observation_dict[ImageType.segmentation][view]
+                observation_dict[ImageType.segmentation][view].numpy()
                 for observation_dict in observation_dicts
             ],
             axis=0,
@@ -158,7 +160,6 @@ class InstancePreprocessor:
     def tokenize_end_effector(self, end_effector: str, num_observations: int) -> np.ndarray:
         """Tokenize the end effector for all the observations."""
         tokenized_end_effector = self.end_effector_tokenizer.encode(end_effector)
-        # TODO: Convert to tensor
         return np.array(tokenized_end_effector).repeat(num_observations)
 
     def prepare_actions(self, pose_actions: list[PoseAction]) -> DataDict:
