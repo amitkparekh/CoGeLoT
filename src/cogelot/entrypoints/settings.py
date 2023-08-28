@@ -19,9 +19,15 @@ class Settings(BaseSettings):
 
     # The repository ID on HF
     hf_repo_id: str = "amitkparekh/vima"
+    raw_config_name: str = "raw"
+    preprocessed_config_name: str = "preprocessed"
 
     # Directories
     storage_dir: Path = Path("storage/")
     storage_data_dir: Path = storage_dir.joinpath("data/")
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
+    preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
+
+    config_dir: Path = Path("configs/")
+    instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")

@@ -8,9 +8,13 @@ from cogelot.common.hydra import (
     pretty_print_hydra_config,
     run_task_function_with_hydra,
 )
-from cogelot.entrypoints.create_hf_dataset import convert_vima_instance_to_hf_dataset
-from cogelot.entrypoints.parse_raw_dataset import create_vima_instances_from_raw_dataset
+from cogelot.entrypoints.create_preprocessed_dataset import create_preprocessed_dataset
+from cogelot.entrypoints.create_raw_dataset import create_raw_dataset
 from cogelot.entrypoints.run_models import evaluate_model, train_model
+from cogelot.entrypoints.settings import Settings
+
+
+settings = Settings()
 
 
 def override_sys_args_with_context(ctx: typer.Context) -> None:
@@ -30,8 +34,8 @@ def override_sys_args_with_context(ctx: typer.Context) -> None:
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
-app.command("parse-raw-dataset")(create_vima_instances_from_raw_dataset)
-app.command("create-hf-dataset")(convert_vima_instance_to_hf_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset)
 
 
 @app.command(context_settings={"allow_extra_args": True})
@@ -44,7 +48,7 @@ def print_config(config_file: Path, ctx: typer.Context) -> None:
     pretty_print_hydra_config(config)
 
 
-@app.command(context_settings={"allow_extra_args": True})
+@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
 def train(ctx: typer.Context, config_file: Path = Path("configs/train.yaml")) -> None:
     """Run the training loop for the model."""
     override_sys_args_with_context(ctx)
@@ -54,7 +58,7 @@ def train(ctx: typer.Context, config_file: Path = Path("configs/train.yaml")) ->
     )
 
 
-@app.command(context_settings={"allow_extra_args": True})
+@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
 def evaluate(ctx: typer.Context, config_file: Path = Path("configs/evaluate.yaml")) -> None:
     """Run the evaluation loop for the model."""
     override_sys_args_with_context(ctx)
