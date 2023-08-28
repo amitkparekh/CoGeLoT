@@ -6,9 +6,9 @@ from lightning import pytorch as pl
 from loguru import logger
 from numpy import typing as npt
 
-from cogelot.data.preprocess import InstancePreprocessor
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.models.training import VIMALightningModule
+from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.metrics import EvaluationMetrics
 from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode

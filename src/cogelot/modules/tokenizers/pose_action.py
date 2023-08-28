@@ -124,9 +124,11 @@ class PoseActionTokenizer:
 
     def tokenize(self, actions: list[PoseAction]) -> list[PoseActionToken]:
         """Tokenize actions into discrete actions."""
+        # When dumping the model, we are explicitly excluding the index from the dump because that
+        # is something that should not get passed to the tokenizer
         discrete_actions = (
             self.convert_continuous_to_discrete(
-                cast(dict[PoseActionType, torch.Tensor], action.model_dump())
+                cast(dict[PoseActionType, torch.Tensor], action.model_dump(exclude={"index"}))
             )
             for action in actions
         )

@@ -7,7 +7,7 @@ from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
 )
-from cogelot.data.preprocess import InstancePreprocessor
+from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 

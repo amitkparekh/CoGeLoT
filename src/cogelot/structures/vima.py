@@ -19,6 +19,7 @@ from cogelot.structures.common import (
     PromptAsset,
     PromptAssets,
     PydanticHFDatasetMixin,
+    PydanticTensor,
     Timestep,
 )
 
@@ -166,10 +167,10 @@ class PoseAction(Action, PydanticHFDatasetMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    pose0_position: torch.Tensor
-    pose1_position: torch.Tensor
-    pose0_rotation: torch.Tensor
-    pose1_rotation: torch.Tensor
+    pose0_position: PydanticTensor
+    pose1_position: PydanticTensor
+    pose0_rotation: PydanticTensor
+    pose1_rotation: PydanticTensor
 
     def __len__(self) -> int:
         """Return the number of actions."""

@@ -139,8 +139,9 @@ class Rotation(BaseModel):
 
 
 FRAME_SHAPE: tuple[int, int, int] = (3, 128, 256)
-FrameTensor = Annotated[
+PydanticTensor = Annotated[
     torch.Tensor,
+    BeforeValidator(lambda frame: torch.tensor(frame) if isinstance(frame, list) else frame),
     BeforeValidator(
         lambda frame: torch.from_numpy(frame) if isinstance(frame, np.ndarray) else frame
     ),
@@ -152,8 +153,8 @@ class Frame(BaseModel, PydanticHFDatasetMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    front: FrameTensor
-    top: FrameTensor
+    front: PydanticTensor
+    top: PydanticTensor
 
     def get_view(self, view: View) -> torch.Tensor:
         """Get the perspective of the asset."""

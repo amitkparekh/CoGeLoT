@@ -50,8 +50,8 @@ def prepare_prompt(
                 "bbox": {view: [] for view in views},
             }
             for view in views:
-                rgb_this_view = asset["rgb"][view]
-                segm_this_view = asset["segm"][view]
+                rgb_this_view = asset["rgb"][view].numpy()
+                segm_this_view = asset["segm"][view].numpy()
                 bboxes = []
                 cropped_imgs = []
                 for obj_id in all_object_ids:

@@ -56,12 +56,6 @@ def test_preprocessing_vima_instances_does_not_error(
     assert preprocessed_instance is not None
 
 
-def test_preprocessing_instances_to_new_dataset_does_not_error(
-    vima_instances_dataset: datasets.Dataset, instance_preprocessor: InstancePreprocessor
-) -> None:
-    raise NotImplementedError
-
-
 # def test_saving_preprocessed_instance_works(
 #     preprocessed_instance: PreprocessedInstance, tmp_path: Path
 # ) -> None:
