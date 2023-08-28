@@ -41,16 +41,14 @@ def download_parquet_files_from_hub(
     If no name is provided, then we just download all the parquet files.
     """
     pattern = "*.parquet"
-    library_name = repo_id
     if name:
         pattern = f"**{name}/*.parquet"
-        library_name = f"{repo_id}/{name}"
 
     snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
         local_dir=None,
-        library_name=library_name,
+        library_name=repo_id,
         allow_patterns=pattern,
         max_workers=max_workers,
         resume_download=True,
@@ -73,18 +71,17 @@ def get_location_of_parquet_files(repo_id: str) -> Path:
 def load_dataset_from_parquet_files(
     data_dir: Path,
     *,
+    config_name: str | None = None,
     num_proc: int | None = None,
-    dataset_splits: tuple[str, ...] = ("train", "valid"),
+    split: str | None = None,
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
-    # Get the parquet files per split
-    parquet_files_per_split = {
-        split: list(map(str, data_dir.rglob(f"{split}*.parquet"))) for split in dataset_splits
-    }
-
-    # Load the dataset with the splits
     dataset_dict = datasets.load_dataset(
-        "parquet", data_files=parquet_files_per_split, num_proc=num_proc
+        "parquet",
+        name=config_name,
+        data_dir=str(data_dir),
+        num_proc=num_proc,
+        split=split,
     )
     assert isinstance(dataset_dict, datasets.DatasetDict)
     return dataset_dict
