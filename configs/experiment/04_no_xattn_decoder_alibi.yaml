@@ -5,10 +5,12 @@ defaults:
       - decoder_only.yaml
       - attn_layers/default.yaml
       - positional/alibi.yaml
+      - xattn_positional/none.yaml
 
 architecture: decoder_only
 attn_layers: default
 positional_encoding: alibi
+xattn_positional_encoding: none
 source: x-transformers
 prompt_input: decoder
 observation_input: decoder

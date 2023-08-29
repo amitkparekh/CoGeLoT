@@ -1,0 +1,2 @@
+xattn_embedder:
+  _target_: cogelot.nn.embedder.PassthroughEmbedder

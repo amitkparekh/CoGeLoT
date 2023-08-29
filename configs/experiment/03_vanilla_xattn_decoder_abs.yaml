@@ -5,10 +5,12 @@ defaults:
       - prompt_encoder_history_decoder.yaml
       - attn_layers/default.yaml
       - positional/absolute.yaml
+      - xattn_positional/none.yaml
 
 architecture: encoder_decoder
 attn_layers: default
 positional_encoding: absolute
+xattn_positional_encoding: absolute
 source: x-transformers
 prompt_input: encoder
 observation_input: decoder
