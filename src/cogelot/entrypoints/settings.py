@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
+    preprocessed_hf_dataset_dir: Path = storage_data_dir.joinpath("preprocessed_hf/")
 
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")

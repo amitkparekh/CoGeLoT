@@ -167,7 +167,7 @@ def create_and_cache_preprocessed_instances(
 
 def create_preprocessed_hf_dataset(
     preprocessed_instances_dir: Path,
-    hf_repo_id: str,
+    preprocessed_hf_dataset_dir: Path,
     num_workers: int,
     max_shard_size: str,
 ) -> None:
@@ -200,6 +200,21 @@ def create_preprocessed_hf_dataset(
         {"train": preprocessed_train_dataset, "valid": preprocessed_valid_dataset}
     )
 
+    logger.info("Saving to disk")
+    dataset_dict.save_to_disk(
+        dataset_dict_path=str(preprocessed_hf_dataset_dir.resolve()),
+        max_shard_size=max_shard_size,
+        num_proc=num_workers,
+    )
+
+
+def upload_preprocessed_dataset(
+    preprocessed_hf_dataset_dir: Path, hf_repo_id: str, max_shard_size: str
+) -> None:
+    """Upload the preprocessed dataset to HF."""
+    logger.info("Load dataset from disk...")
+    dataset_dict = datasets.load_from_disk(str(preprocessed_hf_dataset_dir))
+
     logger.info("Pushing the preprocessed dataset to the hub...")
     dataset_dict.push_to_hub(
         hf_repo_id, max_shard_size=max_shard_size, config_name=settings.preprocessed_config_name
@@ -213,6 +228,9 @@ def create_preprocessed_dataset(
     preprocessed_instances_dir: Annotated[
         Path, typer.Option(help="Directory to save the preprocessed instances to.")
     ] = settings.preprocessed_data_dir,
+    preprocessed_hf_dataset_dir: Annotated[
+        Path, typer.Option(help="Directory to save the preprocessed HF dataset.")
+    ] = settings.preprocessed_hf_dataset_dir,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
     hf_repo_id: Annotated[
         str, typer.Option(help="Repository ID for the dataset on HF")
@@ -234,8 +252,13 @@ def create_preprocessed_dataset(
     )
     create_preprocessed_hf_dataset(
         preprocessed_instances_dir=preprocessed_instances_dir,
-        hf_repo_id=hf_repo_id,
+        preprocessed_hf_dataset_dir=preprocessed_hf_dataset_dir,
         num_workers=num_workers,
+        max_shard_size=max_shard_size,
+    )
+    upload_preprocessed_dataset(
+        preprocessed_hf_dataset_dir=preprocessed_hf_dataset_dir,
+        hf_repo_id=hf_repo_id,
         max_shard_size=max_shard_size,
     )
 
