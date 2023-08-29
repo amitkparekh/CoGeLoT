@@ -139,9 +139,9 @@ def create_vima_instances_from_raw_dataset(
 
 def convert_vima_instance_to_hf_dataset(
     parsed_data_root: Path,
+    parsed_hf_dataset_dir: Path,
     num_workers: int,
     num_validation_instances: int,
-    hf_repo_id: str,
     max_shard_size: str,
     seed: int,
 ) -> None:
@@ -166,11 +166,10 @@ def convert_vima_instance_to_hf_dataset(
         dataset, max_num_validation_instances=num_validation_instances, seed=seed
     )
 
-    logger.info("Pushing the dataset to the hub...")
-    logger.info(
-        "This will take a while. It might look like it's doing nothing, but it is taking a while."
+    logger.info("Saving the dataset to disk.")
+    dataset_with_split.save_to_disk(
+        parsed_hf_dataset_dir, max_shard_size=max_shard_size, num_proc=num_workers
     )
-    dataset_with_split.push_to_hub(hf_repo_id, max_shard_size=max_shard_size, config_name="raw")
 
 
 def create_raw_dataset(
@@ -180,6 +179,9 @@ def create_raw_dataset(
     parsed_data_dir: Annotated[
         Path, typer.Argument(help="Where to save all of the parsed instances")
     ] = settings.parsed_data_dir,
+    parsed_hf_dataset_dir: Annotated[
+        Path, typer.Argument(help="Where to save the parsed HF dataset")
+    ] = settings.parsed_hf_dataset_dir,
     *,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
     replace_if_exists: Annotated[
@@ -191,9 +193,6 @@ def create_raw_dataset(
             help="Maximum number of validation instances, created using stratefied sampling"
         ),
     ] = settings.num_validation_instances,
-    hf_repo_id: Annotated[
-        str, typer.Option(help="Repository ID for the dataset on HF")
-    ] = settings.hf_repo_id,
     max_shard_size: Annotated[
         str, typer.Option(help="Maximum shard size for the dataset")
     ] = settings.max_shard_size,
@@ -216,9 +215,9 @@ def create_raw_dataset(
     )
     convert_vima_instance_to_hf_dataset(
         parsed_data_root=parsed_data_dir,
+        parsed_hf_dataset_dir=parsed_hf_dataset_dir,
         num_workers=num_workers,
         num_validation_instances=num_validation_instances,
-        hf_repo_id=hf_repo_id,
         max_shard_size=max_shard_size,
         seed=seed,
     )

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     storage_data_dir: Path = storage_dir.joinpath("data/")
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
+    parsed_hf_dataset_dir: Path = storage_data_dir.joinpath("parsed_hf/")
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
     preprocessed_hf_dataset_dir: Path = storage_data_dir.joinpath("preprocessed_hf/")
 

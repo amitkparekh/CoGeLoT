@@ -217,19 +217,6 @@ def create_preprocessed_hf_dataset(
     )
 
 
-def upload_preprocessed_dataset(
-    preprocessed_hf_dataset_dir: Path, hf_repo_id: str, max_shard_size: str
-) -> None:
-    """Upload the preprocessed dataset to HF."""
-    logger.info("Load dataset from disk...")
-    dataset_dict = datasets.load_from_disk(str(preprocessed_hf_dataset_dir))
-
-    logger.info("Pushing the preprocessed dataset to the hub...")
-    dataset_dict.push_to_hub(
-        hf_repo_id, max_shard_size=max_shard_size, config_name=settings.preprocessed_config_name
-    )
-
-
 def create_preprocessed_dataset(
     instance_preprocessor_hydra_config: Annotated[
         Path, typer.Option(help="Hydra config for the instance preprocessor.")
@@ -280,11 +267,6 @@ def create_preprocessed_dataset(
         preprocessed_instances_dir=preprocessed_instances_dir,
         preprocessed_hf_dataset_dir=preprocessed_hf_dataset_dir,
         num_workers=num_workers,
-        max_shard_size=max_shard_size,
-    )
-    upload_preprocessed_dataset(
-        preprocessed_hf_dataset_dir=preprocessed_hf_dataset_dir,
-        hf_repo_id=hf_repo_id,
         max_shard_size=max_shard_size,
     )
 

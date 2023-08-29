@@ -12,6 +12,7 @@ from cogelot.entrypoints.create_preprocessed_dataset import create_preprocessed_
 from cogelot.entrypoints.create_raw_dataset import create_raw_dataset
 from cogelot.entrypoints.run_models import evaluate_model, train_model
 from cogelot.entrypoints.settings import Settings
+from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
 
 
 settings = Settings()
@@ -36,6 +37,8 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)
 
 
 @app.command(context_settings={"allow_extra_args": True})

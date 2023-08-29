@@ -5,6 +5,7 @@ from typing import TypeVar
 import datasets
 from datasets.distributed import split_dataset_by_node
 from huggingface_hub import snapshot_download
+from loguru import logger
 
 
 U = TypeVar("U", datasets.Dataset, datasets.IterableDataset)
@@ -101,3 +102,15 @@ def load_dataset_from_parquet_files(
     )
     assert isinstance(dataset_dict, datasets.DatasetDict)
     return dataset_dict
+
+
+def upload_dataset_to_hub(
+    saved_hf_dataset_dir: Path, hf_repo_id: str, max_shard_size: str, config_name: str = "default"
+) -> None:
+    """Upload the dataset to the hub."""
+    logger.info("Load dataset from disk...")
+    dataset_dict = datasets.load_from_disk(str(saved_hf_dataset_dir))
+    assert isinstance(dataset_dict, datasets.DatasetDict)
+
+    logger.info("Pushing the preprocessed dataset to the hub...")
+    dataset_dict.push_to_hub(hf_repo_id, max_shard_size=max_shard_size, config_name=config_name)
