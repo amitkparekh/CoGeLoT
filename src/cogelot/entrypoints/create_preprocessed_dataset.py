@@ -118,17 +118,12 @@ def create_dataloader_to_preprocess_instances(
 
 
 def create_and_cache_preprocessed_instances(
+    raw_dataset: datasets.DatasetDict,
     instance_preprocessor_hydra_config: Path,
     preprocessed_instances_dir: Path,
     num_workers: int,
-    hf_repo_id: str,
 ) -> None:
     """Create the preprocessed instances from the raw instances, and save them to disk."""
-    logger.info("Downloading and loading the raw dataset...")
-    raw_dataset = download_and_load_raw_dataset(
-        hf_repo_id, max_workers=num_workers, config_name=settings.raw_config_name
-    )
-
     logger.info("Loading the instance preprocessor...")
     instance_preprocessor = instantiate_instance_preprocessor_from_config(
         instance_preprocessor_hydra_config
@@ -232,6 +227,15 @@ def create_preprocessed_dataset(
         Path, typer.Option(help="Directory to save the preprocessed HF dataset.")
     ] = settings.preprocessed_hf_dataset_dir,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
+    num_workers_for_loading_raw_dataset: Annotated[
+        int,
+        typer.Option(
+            help=(
+                "Num. workers for loading the raw dataset. If this is too high, then you'll likely"
+                " OOM."
+            )
+        ),
+    ] = 1,
     hf_repo_id: Annotated[
         str, typer.Option(help="Repository ID for the dataset on HF")
     ] = settings.hf_repo_id,
@@ -244,11 +248,18 @@ def create_preprocessed_dataset(
     Similar to creating the raw instances, we are doing this in steps because things can crash and
     we don't want to keep wasting time debugging an OOM error.
     """
+    logger.info("Downloading and loading the raw dataset...")
+    raw_dataset = download_and_load_raw_dataset(
+        hf_repo_id,
+        max_workers=num_workers_for_loading_raw_dataset,
+        config_name=settings.raw_config_name,
+    )
+
     create_and_cache_preprocessed_instances(
+        raw_dataset=raw_dataset,
         instance_preprocessor_hydra_config=instance_preprocessor_hydra_config,
         preprocessed_instances_dir=preprocessed_instances_dir,
         num_workers=num_workers,
-        hf_repo_id=hf_repo_id,
     )
     create_preprocessed_hf_dataset(
         preprocessed_instances_dir=preprocessed_instances_dir,
