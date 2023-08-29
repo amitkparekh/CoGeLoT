@@ -48,11 +48,13 @@ class InstancePreprocessorDataset(Dataset[None]):
         raw_dataset: datasets.Dataset,
         instance_preprocessor: InstancePreprocessor,
         output_dir: Path,
+        replace_if_exists: bool = False,
     ) -> None:
         self.raw_dataset = raw_dataset
         self.instance_preprocessor = instance_preprocessor
 
         self._output_dir = output_dir
+        self._replace_if_exists = replace_if_exists
 
     def __len__(self) -> int:
         """Total number of instances."""
@@ -62,13 +64,18 @@ class InstancePreprocessorDataset(Dataset[None]):
         """Preprocess and return the instance."""
         vima_instance = VIMAInstance.model_validate(self.raw_dataset[index])
 
-        # Preprocess the instance
-        preprocessed_instance = self.instance_preprocessor.preprocess(vima_instance)
-
         # Create the path for the preprocessed instance
         preprocessed_instance_path = self._output_dir.joinpath(
-            f"{vima_instance.task}/{vima_instance.task}_{index}.pkl"
+            f"{vima_instance.task.name}/{vima_instance.task.name}_{index}.pkl"
         )
+
+        # If the path exists, we don't need to preprocess it
+        if preprocessed_instance_path.exists() and not self._replace_if_exists:
+            return
+
+        # Preprocess the instance
+        preprocessed_instance = self.instance_preprocessor.preprocess(vima_instance)
+        # Save the preprocessed instance
         preprocessed_instance_path.parent.mkdir(parents=True, exist_ok=True)
         save_pickle(preprocessed_instance, preprocessed_instance_path, compress=True)
 
