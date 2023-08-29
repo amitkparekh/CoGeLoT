@@ -74,13 +74,20 @@ class InstancePreprocessorDataset(Dataset[None]):
 
 
 def download_and_load_raw_dataset(
-    repo_id: str, max_workers: int, config_name: str
+    repo_id: str, num_workers_for_downloading: int, num_workers_for_loading: int, config_name: str
 ) -> datasets.DatasetDict:
     """Download and load the raw dataset."""
-    download_parquet_files_from_hub(repo_id, max_workers=max_workers)
+    download_parquet_files_from_hub(repo_id, max_workers=num_workers_for_downloading)
     parquet_files_location = get_location_of_parquet_files(repo_id)
+
+    # TODO: Warn if num_workers_for_loading is too high
+    logger.warning(
+        "Assume each worker will use ~100GB of memory. Do you have enough memory to have"
+        f" {num_workers_for_loading} workers load the raw dataset?"
+    )
+
     return load_dataset_from_parquet_files(
-        parquet_files_location, num_proc=max_workers, name=config_name
+        parquet_files_location, num_proc=num_workers_for_loading, name=config_name
     )
 
 
@@ -251,7 +258,8 @@ def create_preprocessed_dataset(
     logger.info("Downloading and loading the raw dataset...")
     raw_dataset = download_and_load_raw_dataset(
         hf_repo_id,
-        max_workers=num_workers_for_loading_raw_dataset,
+        num_workers_for_downloading=num_workers,
+        num_workers_for_loading=num_workers_for_loading_raw_dataset,
         config_name=settings.raw_config_name,
     )
 
