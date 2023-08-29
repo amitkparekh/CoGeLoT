@@ -30,6 +30,22 @@ VIDEO_FPS = 60
 OUTPUT_VIDEO_NAME = "gui_record.mp4"
 VIDEO_HEIGHT = 480
 
+# Action decoder bins
+N_DISCRETE_X_BINS: int = 50
+N_DISCRETE_Y_BINS: int = 100
+N_DISCRETE_Z_BINS: int = 50
+N_DISCRETE_ROT_BINS: int = 50
+
+# Action space boundaries
+X_MIN = 0.25
+X_MAX = 0.75
+Y_MIN = -0.5
+Y_MAX = 0.5
+Z_MIN = 0
+Z_MAX = 0.32
+ROT_MIN = -1
+ROT_MAX = 1
+
 
 class Partition(Enum):
     """Different levels of difficulty for the tasks."""

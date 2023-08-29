@@ -13,7 +13,13 @@ from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetr
 from cogelot.modules.policy import Policy
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
-from cogelot.structures.vima import PoseActionType
+from cogelot.structures.vima import (
+    N_DISCRETE_ROT_BINS,
+    N_DISCRETE_X_BINS,
+    N_DISCRETE_Y_BINS,
+    N_DISCRETE_Z_BINS,
+    PoseActionType,
+)
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
@@ -45,9 +51,9 @@ class VIMALightningModule(pl.LightningModule):
 
         self._accuracy = PoseAccuracyMetric.from_config(
             max_num_pose_position_classes=max(
-                policy.n_discrete_x_bins, policy.n_discrete_y_bins, policy.n_discrete_z_bins
+                N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS
             ),
-            max_num_pose_rotation_classes=policy.n_discrete_rot_bins,
+            max_num_pose_rotation_classes=N_DISCRETE_ROT_BINS,
             ignore_index=self.ignore_target_index,
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
