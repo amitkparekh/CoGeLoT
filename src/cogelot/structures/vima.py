@@ -91,20 +91,9 @@ class Task(Enum):
     simple_manipulation = 1  # noqa: PIE796
 
     @classmethod
-    def as_sorted_task_list(cls) -> list[str]:
-        """Get the sorted task list."""
-        return sorted(cls.__members__.keys())
-
-    @classmethod
-    def from_sorted_task_list_index(cls, index: int) -> Self:
-        """Create by indexing from the sorted task list."""
-        task_name = cls.as_sorted_task_list()[index]
-        return cls[task_name]
-
-    @classmethod
     def dataset_feature(cls) -> datasets.ClassLabel:
         """Export the feature for the HF dataset."""
-        return datasets.ClassLabel(names=cls.as_sorted_task_list())
+        return datasets.ClassLabel(names=cls._member_names_)
 
 
 class TaskGroup(Enum):
@@ -257,9 +246,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     task: Annotated[
         Task,
         BeforeValidator(lambda task: int(task.item()) if isinstance(task, torch.Tensor) else task),
-        BeforeValidator(
-            lambda task: Task.from_sorted_task_list_index(task) if isinstance(task, int) else task
-        ),
+        BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
         PlainSerializer(lambda task: task.value, return_type=int),
     ]
 
