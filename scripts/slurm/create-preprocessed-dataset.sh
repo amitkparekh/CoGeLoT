@@ -9,4 +9,4 @@
 #SBATCH --output=jobs/preprocess-dataset.%J.out
 #SBATCH -p nodes
 
-pdm run python -m cogelot create-preprocessed-dataset --num-workers 62 --num-workers-for-loading-raw-data 5
+pdm run python -m cogelot create-preprocessed-dataset --num-workers 60 --num-workers-for-loading-raw-data 5
