@@ -64,31 +64,31 @@ class Partition(Enum):
 class Task(Enum):
     """Tasks in the VIMA dataset."""
 
-    visual_manipulation = 1
-    scene_understanding = 2
-    rotate = 3
-    rearrange = 4
-    rearrange_then_restore = 5
-    novel_adj = 6
-    novel_noun = 7
-    novel_adj_and_noun = 8
-    twist = 9
-    follow_motion = 10
-    follow_order = 11
-    sweep_without_exceeding = 12
-    sweep_without_touching = 13
-    same_texture = 14
-    same_shape = 15
-    manipulate_old_neighbor = 16
-    pick_in_order_then_restore = 17
+    visual_manipulation = 0
+    scene_understanding = 1
+    rotate = 2
+    rearrange = 3
+    rearrange_then_restore = 4
+    novel_adj = 5
+    novel_noun = 6
+    novel_adj_and_noun = 7
+    twist = 8
+    follow_motion = 9
+    follow_order = 10
+    sweep_without_exceeding = 11
+    sweep_without_touching = 12
+    same_texture = 13
+    same_shape = 14
+    manipulate_old_neighbor = 15
+    pick_in_order_then_restore = 16
 
     # Old names that existed in the dataset and can cause issues, but are just the same as others.
     # Putting them below the others means that trying to refer to them will automatically redirect
     # to the correct one.
-    same_color = 14  # noqa: PIE796
-    same_profile = 15  # noqa: PIE796
-    sweep = 12  # noqa: PIE796
-    simple_manipulation = 1  # noqa: PIE796
+    same_color = 13  # noqa: PIE796
+    same_profile = 14  # noqa: PIE796
+    sweep = 11  # noqa: PIE796
+    simple_manipulation = 0  # noqa: PIE796
 
     @classmethod
     def dataset_feature(cls) -> datasets.ClassLabel:
