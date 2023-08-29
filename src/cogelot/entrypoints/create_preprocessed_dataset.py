@@ -77,7 +77,7 @@ class InstancePreprocessorDataset(Dataset[None]):
         preprocessed_instance = self.instance_preprocessor.preprocess(vima_instance)
         # Save the preprocessed instance
         preprocessed_instance_path.parent.mkdir(parents=True, exist_ok=True)
-        save_pickle(preprocessed_instance, preprocessed_instance_path, compress=True)
+        save_pickle(preprocessed_instance.model_dump(), preprocessed_instance_path, compress=True)
 
 
 def download_and_load_raw_dataset(
