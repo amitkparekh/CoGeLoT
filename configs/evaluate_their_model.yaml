@@ -1,0 +1,73 @@
+# @package _global_
+
+defaults:
+  - trainer: cpu.yaml
+
+  # Import the instance_preprocessor.yaml config into the model
+  - /instance_preprocessor.yaml@model
+
+  # Get the datamodule from the other config file
+  - /datamodule.yaml
+
+  # Set defaults for Hydra's logging and outputs
+  - hydra: default.yaml
+
+  # Update with hardware-specific changes
+  - hardware: local.yaml
+
+  # If you want to debug, then just run like `python train.py debug=default`
+  - debug: null
+
+  # And override any of the other values with what is in this file
+  - _self_
+
+task_name: "evaluate"
+
+output_dir: ${hydra:runtime.output_dir}
+
+# This is the seed they used in their example script
+seed: 42
+
+datamodule:
+  batch_size: 1
+  num_workers: 1
+
+model:
+  _target_: cogelot.models.EvaluationLightningModule
+
+  model:
+    _target_: cogelot.models.VIMALightningModule
+
+    policy:
+      _target_: cogelot.modules.policy.Policy.from_their_policy
+      their_policy:
+        _target_: vima.create_policy_from_ckpt
+        ckpt_path: ./storage/data/models/them.ckpt
+        device: cpu
+
+  environment:
+    _target_: cogelot.environment.VIMAEnvironment.from_config
+    seed: ${seed}
+    # We're just giving it any task here, it will get changed during the steps
+    task: 1
+    partition: 1
+
+trainer:
+  # The evaluation runs each task 100 times, so we do that here.
+  max_epochs: 100
+
+  # The evaluation is going to be deterministic so it's consistent per run/model
+  deterministic: True
+
+  logger:
+    - _target_: lightning.pytorch.loggers.WandbLogger
+      save_dir: ${output_dir}
+      project: CoGeLoT
+      entity: pyop
+      log_model: False
+
+  # Override the callbacks with just the logging ones
+  callbacks:
+    - _target_: lightning.pytorch.callbacks.RichModelSummary
+      max_depth: -1
+    - _target_: lightning.pytorch.callbacks.RichProgressBar
