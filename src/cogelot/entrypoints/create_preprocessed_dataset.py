@@ -80,7 +80,7 @@ def download_and_load_raw_dataset(
     download_parquet_files_from_hub(repo_id, max_workers=max_workers)
     parquet_files_location = get_location_of_parquet_files(repo_id)
     return load_dataset_from_parquet_files(
-        parquet_files_location, num_proc=max_workers, config_name=config_name
+        parquet_files_location, num_proc=max_workers, name=config_name
     )
 
 

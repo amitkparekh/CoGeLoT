@@ -71,17 +71,33 @@ def get_location_of_parquet_files(repo_id: str) -> Path:
 def load_dataset_from_parquet_files(
     data_dir: Path,
     *,
-    config_name: str | None = None,
+    name: str | None = None,
     num_proc: int | None = None,
     split: str | None = None,
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
+    if name:
+        data_dir = data_dir.joinpath(name)
+
+    parquet_files = list(data_dir.rglob("*.parquet"))
+
+    # Determine the splits that we are loading, if not specified
+    if split:
+        data_splits = {split}
+    else:
+        # Each parquet file is in the form: `SPLIT-NNNNN-of-SSSSS-UUID.parquet`
+        data_splits = {parquet_file.name.split("-")[0] for parquet_file in parquet_files}
+
+    # Get the possible data splits from the parquet files
+    parquet_files_per_split = {
+        split: list(map(str, data_dir.rglob(f"{split}*.parquet"))) for split in data_splits
+    }
+
     dataset_dict = datasets.load_dataset(
         "parquet",
-        name=config_name,
-        data_dir=str(data_dir),
+        name=name,
+        data_files=parquet_files_per_split,
         num_proc=num_proc,
-        split=split,
     )
     assert isinstance(dataset_dict, datasets.DatasetDict)
     return dataset_dict
