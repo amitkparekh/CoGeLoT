@@ -1,19 +1,17 @@
-from typing import Any, ClassVar, Literal, NamedTuple, Self
+from typing import Annotated, Any, ClassVar, Literal, NamedTuple
 
 import datasets
 import torch
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, PlainSerializer
 
-from cogelot.structures.common import Bbox, PydanticHFDatasetMixin
-from cogelot.structures.token import EndEffectorToken, PoseActionToken, TextToken
+from cogelot.structures.common import PydanticHFDatasetMixin, PydanticTensor
 from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
 
 
 RawPromptTokenType = list[list[Literal[0, 1]]]
 
-
-_RawPromptsTokenType = datasets.Sequence(datasets.Value("int8"))
+_Bbox = datasets.Sequence(datasets.Value("int64"), length=4)
 _CroppedImg = datasets.Array3D(shape=(3, 32, 32), dtype="float32", id="cropped_img")
 _Mask = datasets.Value("bool")
 
@@ -56,37 +54,30 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    task: Task
+    task: Annotated[
+        Task,
+        BeforeValidator(lambda task: Task[task] if isinstance(task, str) else task),
+        BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
+        PlainSerializer(lambda task: task.name),
+    ]
 
     raw_prompts_token_type: RawPromptTokenType
-    word_batch: torch.Tensor
-    image_batch: DataDict
-
-    observations: DataDict
-    actions: DataDict
-
-    def to_hf_dict(self) -> dict[str, Any]:
-        """To a dictionary for HF datasets."""
-        return {
-            "task": self.task.name,
-            "raw_prompts_token_type": self.raw_prompts_token_type,
-            "word_batch": self.word_batch,
-            "image_batch": self.image_batch.to_container(),
-            "observations": self.observations.to_container(),
-            "actions": self.actions.to_container(),
-        }
-
-    @classmethod
-    def from_hf_dict(cls, instance: dict[str, Any]) -> Self:
-        """From a dictionary outputted by the HF datasets."""
-        return cls(
-            task=Task.from_sorted_task_list_index(instance["task"]),
-            raw_prompts_token_type=instance["raw_prompts_token_type"],
-            word_batch=instance["word_batch"],
-            image_batch=any_to_datadict(instance["image_batch"]),
-            observations=any_to_datadict(instance["observations"]),
-            actions=any_to_datadict(instance["actions"]),
-        )
+    word_batch: PydanticTensor
+    image_batch: Annotated[
+        DataDict,
+        BeforeValidator(any_to_datadict),
+        PlainSerializer(lambda batch: batch.to_container()),
+    ]
+    observations: Annotated[
+        DataDict,
+        BeforeValidator(any_to_datadict),
+        PlainSerializer(lambda observations: observations.to_container()),
+    ]
+    actions: Annotated[
+        DataDict,
+        BeforeValidator(any_to_datadict),
+        PlainSerializer(lambda actions: actions.to_container()),
+    ]
 
     def transfer_to_device(self, device: torch.device) -> "PreprocessedInstance":
         """Transfer any tensors to the given device."""
@@ -114,12 +105,14 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
         return datasets.Features(
             {
                 "task": Task.dataset_feature(),
-                "raw_prompts_token_type": _wrap_feature_in_batch_sequence(_RawPromptsTokenType),
-                "word_batch": datasets.Sequence(id="tokens", feature=TextToken.dataset_feature()),
+                "raw_prompts_token_type": datasets.Sequence(
+                    datasets.Sequence(datasets.Value("int8"))
+                ),
+                "word_batch": datasets.Sequence(datasets.Value("int64")),
                 "image_batch": {
                     "bbox": {
-                        "front": _image_batch_feature_wrapper(Bbox.dataset_feature()),
-                        "top": _image_batch_feature_wrapper(Bbox.dataset_feature()),
+                        "front": _image_batch_feature_wrapper(_Bbox),
+                        "top": _image_batch_feature_wrapper(_Bbox),
                     },
                     "cropped_img": {
                         "front": _image_batch_feature_wrapper(_CroppedImg),
@@ -131,11 +124,11 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
                     },
                 },
                 "observations": {
-                    "ee": datasets.Sequence(datasets.Sequence(EndEffectorToken.dataset_feature())),
+                    "ee": datasets.Sequence(datasets.Sequence(datasets.Value("int64"))),
                     "objects": {
                         "bbox": {
-                            "front": _observation_feature_wrapper(Bbox.dataset_feature()),
-                            "top": _observation_feature_wrapper(Bbox.dataset_feature()),
+                            "front": _observation_feature_wrapper(_Bbox),
+                            "top": _observation_feature_wrapper(_Bbox),
                         },
                         "cropped_img": {
                             "front": _observation_feature_wrapper(_CroppedImg),
@@ -147,7 +140,12 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
                         },
                     },
                 },
-                "actions": PoseActionToken.dataset_features(),
+                "actions": {
+                    "pose0_position": datasets.Array2D(shape=(None, 2), dtype="int64"),
+                    "pose0_rotation": datasets.Array2D(shape=(None, 4), dtype="int64"),
+                    "pose1_position": datasets.Array2D(shape=(None, 2), dtype="int64"),
+                    "pose1_rotation": datasets.Array2D(shape=(None, 4), dtype="int64"),
+                },
             }
         )
 

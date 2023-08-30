@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Self
 
-import datasets
 import torch
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,11 +46,6 @@ class TextToken(Token):
     token_type: TokenType = TokenType.text
     token_id: int
 
-    @classmethod
-    def dataset_feature(cls) -> datasets.Value:
-        """Get the dataset feature."""
-        return datasets.Value("int64")
-
 
 class ImageToken(Token):
     """A single token with visual information."""
@@ -86,11 +80,6 @@ class EndEffectorToken(TextToken):
     """Token for the end effector."""
 
     token_type: TokenType = TokenType.end_effector
-
-    @classmethod
-    def dataset_feature(cls) -> datasets.Value:
-        """Get the dataset feature."""
-        return datasets.Value("int8")
 
 
 class ObservationToken(EndEffectorToken, ImageToken):
@@ -140,22 +129,3 @@ class PoseActionToken(Token):
             "pose0_rotation": self.pose0_rotation,
             "pose1_rotation": self.pose1_rotation,
         }
-
-    @classmethod
-    def dataset_features(cls) -> datasets.Features:
-        """Get the dataset feature."""
-        pose_action_token = datasets.Value("int32")
-        pose_position_feature = datasets.Sequence(
-            id="pose_position", length=2, feature=pose_action_token
-        )
-        pose_rotation_feature = datasets.Sequence(
-            id="pose_rotation", length=4, feature=pose_action_token
-        )
-        return datasets.Features(
-            {
-                "pose0_position": pose_position_feature,
-                "pose0_rotation": pose_rotation_feature,
-                "pose1_position": pose_position_feature,
-                "pose1_rotation": pose_rotation_feature,
-            }
-        )

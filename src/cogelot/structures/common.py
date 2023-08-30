@@ -84,11 +84,6 @@ class Bbox(BaseModel):
         """Return as a tuple of (xc, yc, h, w), which is what they use."""
         return (self.x_center, self.y_center, self.height, self.width)
 
-    @classmethod
-    def dataset_feature(cls) -> datasets.Sequence:
-        """Feature for the HF dataset."""
-        return datasets.Sequence(id="bbox", length=4, feature=datasets.Value("int32"))
-
 
 class Position(BaseModel):
     """Position of a pose."""
@@ -141,9 +136,9 @@ class Rotation(BaseModel):
 FRAME_SHAPE: tuple[int, int, int] = (3, 128, 256)
 PydanticTensor = Annotated[
     torch.Tensor,
-    BeforeValidator(lambda frame: torch.tensor(frame) if isinstance(frame, list) else frame),
+    BeforeValidator(lambda tensor: torch.tensor(tensor) if isinstance(tensor, list) else tensor),
     BeforeValidator(
-        lambda frame: torch.from_numpy(frame) if isinstance(frame, np.ndarray) else frame
+        lambda tensor: torch.from_numpy(tensor) if isinstance(tensor, np.ndarray) else tensor
     ),
 ]
 
@@ -176,12 +171,17 @@ class RGBFrame(Frame):
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Export the features schema for the HF dataset."""
-        return datasets.Features(
-            {
-                "front": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
-                "top": datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8"),
-            }
+        array = datasets.Sequence(
+            length=FRAME_SHAPE[0],
+            feature=datasets.Sequence(
+                length=FRAME_SHAPE[1],
+                feature=datasets.Sequence(
+                    length=FRAME_SHAPE[2],
+                    feature=datasets.Value("uint8"),
+                ),
+            ),
         )
+        return datasets.Features({"front": array, "top": array})
 
 
 class SegmentationFrame(Frame):
@@ -190,12 +190,14 @@ class SegmentationFrame(Frame):
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Export the features schema for the HF dataset."""
-        return datasets.Features(
-            {
-                "front": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
-                "top": datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8"),
-            }
+        array = datasets.Sequence(
+            length=FRAME_SHAPE[1],
+            feature=datasets.Sequence(
+                length=FRAME_SHAPE[2],
+                feature=datasets.Value("uint8"),
+            ),
         )
+        return datasets.Features({"front": array, "top": array})
 
 
 class Timestep(BaseModel, PydanticHFDatasetMixin):
