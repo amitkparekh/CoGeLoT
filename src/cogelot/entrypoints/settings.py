@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     writer_batch_size: int = 10000
 
     # Maximum size for each shard that gets saved (by the HF dataset)
-    max_shard_size: str = "1GB"
+    max_shard_size: str = "2GB"
 
     # The repository ID on HF
     hf_repo_id: str = "amitkparekh/vima"
@@ -26,10 +26,16 @@ class Settings(BaseSettings):
     storage_dir: Path = Path("storage/")
     storage_data_dir: Path = storage_dir.joinpath("data/")
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
+
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
-    parsed_hf_dataset_dir: Path = storage_data_dir.joinpath("parsed_hf/")
+    parsed_instances_dir: Path = parsed_data_dir.joinpath("instances/")
+    parsed_hf_dataset_per_task_dir: Path = parsed_data_dir.joinpath("hf_per_task/")
+    parsed_hf_dataset_dir: Path = parsed_data_dir.joinpath("hf/")
+
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
-    preprocessed_hf_dataset_dir: Path = storage_data_dir.joinpath("preprocessed_hf/")
+    preprocessed_instances_dir: Path = preprocessed_data_dir.joinpath("instances/")
+    preprocessed_hf_dataset_per_task_dir: Path = preprocessed_data_dir.joinpath("hf_per_task/")
+    preprocessed_hf_dataset_dir: Path = preprocessed_data_dir.joinpath("hf/")
 
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")

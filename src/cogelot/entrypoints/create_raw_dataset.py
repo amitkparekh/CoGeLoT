@@ -6,11 +6,13 @@ from typing import Annotated
 import datasets
 import typer
 from loguru import logger
-from rich.progress import track
 
 from cogelot.common.io import load_pickle, save_pickle
 from cogelot.common.rich import create_progress_bar
-from cogelot.data.datasets import create_hf_dataset_from_paths, load_instance_from_pickled_path
+from cogelot.data.datasets import (
+    create_hf_dataset_from_pickled_instances,
+    load_instance_from_pickled_path,
+)
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
@@ -51,12 +53,6 @@ def parse_and_save_instance(
     save_pickle(instance.model_dump(), output_file, compress=True)
 
 
-def get_all_parsed_vima_instances_paths(parsed_data_dir: Path) -> list[Path]:
-    """Get all the parsed VIMA instance paths."""
-    path_iterator = parsed_data_dir.rglob("*.pkl.gz")
-    return list(track(path_iterator, description="Getting all parsed VIMA instance paths"))
-
-
 load_vima_instance_from_path_fn = partial(
     load_instance_from_pickled_path,
     instance=VIMAInstance,
@@ -85,7 +81,7 @@ def create_validation_split(
 
 def create_vima_instances_from_raw_dataset(
     raw_data_root: Path,
-    parsed_data_dir: Path,
+    parsed_instances_dir: Path,
     *,
     num_workers: int,
     replace_if_exists: bool = False,
@@ -102,7 +98,7 @@ def create_vima_instances_from_raw_dataset(
     submit_instance_task = progress_bar.add_task("Submit instances for processing", total=None)
     parsing_instance_task = progress_bar.add_task("Parsing and saving instances", total=None)
 
-    parsed_data_dir.mkdir(parents=True, exist_ok=True)
+    parsed_instances_dir.mkdir(parents=True, exist_ok=True)
 
     with progress_bar:
         logger.info("Get all the raw instance directories")
@@ -123,7 +119,7 @@ def create_vima_instances_from_raw_dataset(
                 executor.submit(
                     parse_and_save_instance,
                     path,
-                    output_dir=parsed_data_dir,
+                    output_dir=parsed_instances_dir,
                     replace_if_exists=replace_if_exists,
                 )
                 for path in progress_bar.track(
@@ -138,7 +134,8 @@ def create_vima_instances_from_raw_dataset(
 
 
 def convert_vima_instance_to_hf_dataset(
-    parsed_data_root: Path,
+    parsed_instances_dir: Path,
+    parsed_hf_dataset_per_task_dir: Path,
     parsed_hf_dataset_dir: Path,
     num_workers: int,
     num_validation_instances: int,
@@ -150,15 +147,14 @@ def convert_vima_instance_to_hf_dataset(
     We load all the pickled files, parse them to ensure they're correct, turn them into the HF
     dataset, and upload it to HF.
     """
-    all_instance_paths = get_all_parsed_vima_instances_paths(parsed_data_root)
-
-    logger.info("Creating the HF dataset...")
-    dataset = create_hf_dataset_from_paths(
-        all_instance_paths,
-        load_instance_from_path_fn=load_vima_instance_from_path_fn,
-        dataset_features=VIMAInstance.dataset_features(),
+    dataset = create_hf_dataset_from_pickled_instances(
+        parsed_instances_dir,
+        temp_output_dir=parsed_hf_dataset_per_task_dir,
         num_workers=num_workers,
+        max_shard_size=max_shard_size,
         writer_batch_size=settings.writer_batch_size,
+        dataset_features=VIMAInstance.dataset_features(),
+        load_instance_from_path_fn=load_vima_instance_from_path_fn,
     )
 
     logger.info("Creating the train-valid split...")
@@ -166,9 +162,9 @@ def convert_vima_instance_to_hf_dataset(
         dataset, max_num_validation_instances=num_validation_instances, seed=seed
     )
 
-    logger.info("Saving the dataset to disk.")
+    logger.info("Saving the dataset to disk...")
     dataset_with_split.save_to_disk(
-        parsed_hf_dataset_dir, max_shard_size=max_shard_size, num_proc=num_workers
+        parsed_hf_dataset_dir, max_shard_size=max_shard_size, num_proc=None
     )
 
 
@@ -182,6 +178,9 @@ def create_raw_dataset(
     parsed_hf_dataset_dir: Annotated[
         Path, typer.Argument(help="Where to save the parsed HF dataset")
     ] = settings.parsed_hf_dataset_dir,
+    parsed_hf_dataset_per_task_dir: Annotated[
+        Path, typer.Argument(help="Where to save the HF dataset for each task")
+    ] = settings.parsed_hf_dataset_per_task_dir,
     *,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
     replace_if_exists: Annotated[
@@ -209,12 +208,13 @@ def create_raw_dataset(
     """
     create_vima_instances_from_raw_dataset(
         raw_data_root=raw_data_root,
-        parsed_data_dir=parsed_data_dir,
+        parsed_instances_dir=parsed_data_dir,
         num_workers=num_workers,
         replace_if_exists=replace_if_exists,
     )
     convert_vima_instance_to_hf_dataset(
-        parsed_data_root=parsed_data_dir,
+        parsed_instances_dir=parsed_data_dir,
+        parsed_hf_dataset_per_task_dir=parsed_hf_dataset_per_task_dir,
         parsed_hf_dataset_dir=parsed_hf_dataset_dir,
         num_workers=num_workers,
         num_validation_instances=num_validation_instances,
