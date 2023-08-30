@@ -20,7 +20,7 @@ from cogelot.data.datasets import create_hf_dataset_from_paths, load_instance_fr
 from cogelot.entrypoints.settings import Settings
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
-from cogelot.structures.vima import VIMAInstance
+from cogelot.structures.vima import Task, VIMAInstance
 
 
 settings = Settings()
@@ -62,19 +62,23 @@ class InstancePreprocessorDataset(Dataset[None]):
 
     def __getitem__(self, index: int) -> None:
         """Preprocess and return the instance."""
-        vima_instance = VIMAInstance.model_validate(self.raw_dataset[index])
-
+        raw_instance = self.raw_dataset[index]
         # Create the path for the preprocessed instance
+        task = Task(raw_instance["task"])
+        instance_index = raw_instance["index"]
         preprocessed_instance_path = self._output_dir.joinpath(
-            f"{vima_instance.task.name}/{vima_instance.task.name}_{index}.pkl"
+            f"{task.name}/{task.name}_{instance_index}.pkl"
         )
 
         # If the path exists, we don't need to preprocess it
         if preprocessed_instance_path.exists() and not self._replace_if_exists:
             return
 
+        vima_instance = VIMAInstance.model_validate(raw_instance)
+
         # Preprocess the instance
         preprocessed_instance = self.instance_preprocessor.preprocess(vima_instance)
+
         # Save the preprocessed instance
         preprocessed_instance_path.parent.mkdir(parents=True, exist_ok=True)
         save_pickle(preprocessed_instance.model_dump(), preprocessed_instance_path, compress=True)
