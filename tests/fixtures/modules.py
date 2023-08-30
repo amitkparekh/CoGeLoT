@@ -6,8 +6,6 @@ from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
-    ImageTokenizer,
-    ObservationTokenizer,
     PoseActionTokenizer,
     TextTokenizer,
 )
@@ -21,11 +19,6 @@ def text_tokenizer(pretrained_model: str) -> TextTokenizer:
 
 
 @fixture(scope="session")
-def image_tokenizer() -> ImageTokenizer:
-    return ImageTokenizer()
-
-
-@fixture(scope="session")
 def end_effector_tokenizer() -> EndEffectorTokenizer:
     return EndEffectorTokenizer()
 
@@ -33,15 +26,6 @@ def end_effector_tokenizer() -> EndEffectorTokenizer:
 @fixture(scope="session")
 def pose_action_tokenizer() -> PoseActionTokenizer:
     return PoseActionTokenizer()
-
-
-@fixture(scope="session")
-def observation_tokenizer(
-    image_tokenizer: ImageTokenizer, end_effector_tokenizer: EndEffectorTokenizer
-) -> ObservationTokenizer:
-    return ObservationTokenizer(
-        image_tokenizer=image_tokenizer, end_effector_tokenizer=end_effector_tokenizer
-    )
 
 
 @fixture(scope="session")
