@@ -19,6 +19,11 @@ from cogelot.structures.vima import Task, VIMAInstance
 
 settings = Settings()
 
+
+def _get_config_name_for_task(task: Task) -> str:
+    return f"{settings.raw_config_name}--{task.name}"
+
+
 load_vima_instance_from_path_fn = partial(
     load_instance_from_pickled_path,
     instance=VIMAInstance,
@@ -71,7 +76,10 @@ def create_hf_dataset_for_each_task(
             dataset_features=VIMAInstance.dataset_features(),
             num_workers=num_workers,
             writer_batch_size=writer_batch_size,
-            dataset_builder_kwargs={"dataset_name": settings.hf_repo_id, "config_name": task.name},
+            dataset_builder_kwargs={
+                "dataset_name": settings.safe_hf_repo_id,
+                "config_name": _get_config_name_for_task(task),
+            },
         )
 
         all_datasets.append(dataset_for_task)
@@ -99,7 +107,7 @@ def save_dataset_for_task(
 
     # Manually update the config name for the dataset so that it includes the task name
     for dataset_split in task_dataset_with_split.values():
-        dataset_split._info.config_name = f"raw-{task.name}"  # noqa: SLF001
+        dataset_split._info.config_name = _get_config_name_for_task(task)  # noqa: SLF001
 
     task_dataset_with_split.save_to_disk(
         parsed_hf_dataset_dir.joinpath(task.name),
@@ -126,7 +134,7 @@ def create_raw_dataset_per_task(
     max_shard_size: Annotated[
         str, typer.Option(help="Maximum shard size for the dataset")
     ] = settings.max_shard_size,
-    seed: Annotated[int, typer.Option(help="Seed for the stratified sampling.")] = 1000,
+    seed: Annotated[int, typer.Option(help="Seed for the stratified sampling.")] = settings.seed,
 ) -> None:
     """Convert the parsed VIMA instances for each task into a HF dataset.
 
@@ -151,7 +159,7 @@ def create_raw_dataset_per_task(
     logger.info("Concatenating datasets together...")
     dataset = datasets.concatenate_datasets(
         task_datasets,
-        info=datasets.DatasetInfo(dataset_name="amitkparekh/vima", config_name="raw"),
+        info=datasets.DatasetInfo(dataset_name=settings.safe_hf_repo_id, config_name="raw"),
     )
 
     logger.info("Creating the train-valid split...")

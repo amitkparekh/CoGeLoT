@@ -39,3 +39,11 @@ class Settings(BaseSettings):
 
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")
+
+    @property
+    def safe_hf_repo_id(self) -> str:
+        """Return file-safe HF repo id.
+
+        Basically, replace the `/` with `--`.
+        """
+        return self.hf_repo_id.replace("/", "--")
