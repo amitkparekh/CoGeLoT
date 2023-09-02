@@ -159,7 +159,9 @@ def create_raw_dataset_per_task(
     logger.info("Concatenating datasets together...")
     dataset = datasets.concatenate_datasets(
         task_datasets,
-        info=datasets.DatasetInfo(dataset_name=settings.safe_hf_repo_id, config_name="raw"),
+        info=datasets.DatasetInfo(
+            dataset_name=settings.safe_hf_repo_id, config_name=settings.raw_config_name
+        ),
     )
 
     logger.info("Creating the train-valid split...")

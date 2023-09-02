@@ -29,12 +29,10 @@ class Settings(BaseSettings):
 
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
     parsed_instances_dir: Path = parsed_data_dir.joinpath("instances/")
-    parsed_hf_dataset_per_task_dir: Path = parsed_data_dir.joinpath("hf_per_task/")
     parsed_hf_dataset_dir: Path = parsed_data_dir.joinpath("hf/")
 
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
     preprocessed_instances_dir: Path = preprocessed_data_dir.joinpath("instances/")
-    preprocessed_hf_dataset_per_task_dir: Path = preprocessed_data_dir.joinpath("hf_per_task/")
     preprocessed_hf_dataset_dir: Path = preprocessed_data_dir.joinpath("hf/")
 
     config_dir: Path = Path("configs/")
