@@ -35,6 +35,7 @@ def create_validation_split(
     dataset: datasets.Dataset,
     *,
     max_num_validation_instances: int,
+    writer_batch_size: int,
     seed: int = 0,
     stratify_column: str = "task",
 ) -> datasets.DatasetDict:
@@ -43,6 +44,7 @@ def create_validation_split(
         test_size=max_num_validation_instances,
         stratify_by_column=stratify_column,
         seed=seed,
+        writer_batch_size=writer_batch_size,
     )
     dataset_dict = datasets.DatasetDict(
         {"train": dataset_split["train"], "valid": dataset_split["test"]}
@@ -166,7 +168,10 @@ def create_raw_dataset_per_task(
 
     logger.info("Creating the train-valid split...")
     dataset_with_split = create_validation_split(
-        dataset, max_num_validation_instances=num_validation_instances, seed=seed
+        dataset,
+        max_num_validation_instances=num_validation_instances,
+        seed=seed,
+        writer_batch_size=settings.writer_batch_size,
     )
 
     task_identifiers_in_dataset_per_split: dict[str, list[int]] = dataset_with_split.unique("task")
