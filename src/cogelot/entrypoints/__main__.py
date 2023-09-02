@@ -8,7 +8,9 @@ from cogelot.common.hydra import (
     pretty_print_hydra_config,
     run_task_function_with_hydra,
 )
-from cogelot.entrypoints.create_preprocessed_dataset import create_preprocessed_dataset
+from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
+    create_preprocessed_dataset_per_task,
+)
 from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_per_task
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
@@ -40,8 +42,8 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 app.command(rich_help_panel="Dataset Creation Commands")(parse_original_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset_per_task)
 app.command(rich_help_panel="Dataset Creation Commands")(preprocess_instances)
+app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset_per_task)
 
-app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)
 
