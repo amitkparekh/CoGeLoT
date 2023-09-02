@@ -113,6 +113,7 @@ def create_preprocessed_dataset_per_task(
     instance_dir_per_task = _get_preprocessed_instances_dir_per_task(preprocessed_instances_dir)
 
     # Create the HF dataset for each task and save to disk
+    logger.info("Creating the preprocessed HF dataset for each task...")
     for task, task_instances_dir in instance_dir_per_task.items():
         create_preprocessed_hf_dataset_for_task(
             task=task,
