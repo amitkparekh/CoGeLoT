@@ -9,7 +9,8 @@ from cogelot.common.hydra import (
     run_task_function_with_hydra,
 )
 from cogelot.entrypoints.create_preprocessed_dataset import create_preprocessed_dataset
-from cogelot.entrypoints.create_raw_dataset import create_raw_dataset
+from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_per_task
+from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.run_models import evaluate_model, train_model
 from cogelot.entrypoints.settings import Settings
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
@@ -35,7 +36,9 @@ def override_sys_args_with_context(ctx: typer.Context) -> None:
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
-app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(parse_original_dataset)
+app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset_per_task)
+
 app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)
