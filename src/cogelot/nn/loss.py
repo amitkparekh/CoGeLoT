@@ -53,7 +53,7 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
             )
             for pose_action_type, tensor in actions.items()
         }
-        return cls.parse_obj(per_action_per_axis)
+        return cls.model_validate(per_action_per_axis)
 
     @classmethod
     def from_action_logits(cls, actions: dict[PoseActionType, list[torch.Tensor]]) -> Self:
@@ -72,13 +72,13 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
             )
             for pose_action_type, tensors in actions.items()
         }
-        return cls.parse_obj(per_action_per_axis)
+        return cls.model_validate(per_action_per_axis)
 
     def to_flattened_dict(self) -> dict[str, torch.Tensor]:
         """Flatten the dict into a single dict."""
         return {
             LOSS_KEY_TEMPLATE.format(pose_action_type=pose_action_type, axis=axis): tensor
-            for pose_action_type, tensor_per_axis in self.dict().items()
+            for pose_action_type, tensor_per_axis in self.model_dump().items()
             for axis, tensor in tensor_per_axis.items()
         }
 
