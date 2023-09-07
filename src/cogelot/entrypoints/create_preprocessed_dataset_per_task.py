@@ -96,8 +96,8 @@ def create_preprocessed_hf_dataset_for_task(
 
 def create_preprocessed_dataset_per_task(
     preprocessed_instances_dir: Annotated[
-        Path, typer.Option(help="Directory to save the preprocessed instances to.")
-    ] = settings.preprocessed_data_dir,
+        Path, typer.Option(help="Directory of all the preprocessed pickled instances per task.")
+    ] = settings.preprocessed_instances_dir,
     preprocessed_hf_dataset_dir: Annotated[
         Path, typer.Option(help="Directory to save the preprocessed HF dataset.")
     ] = settings.preprocessed_hf_dataset_dir,
