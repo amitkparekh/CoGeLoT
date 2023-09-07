@@ -48,10 +48,9 @@ def create_preprocessed_hf_dataset_for_task(
     num_workers: int,
     dataset_name: str,
     writer_batch_size: int,
-    max_shard_size: str,
 ) -> None:
     """Convert the preprocessed instances into a HF dataset for the given task."""
-    logger.info(f"Get all the preprocessed instance paths for {task}...")
+    logger.info(f"Task {task}: Get all the preprocessed instance paths...")
     all_train_instance_paths = get_all_preprocessed_instance_paths(
         task_instances_dir.joinpath("train/")
     )
@@ -59,7 +58,7 @@ def create_preprocessed_hf_dataset_for_task(
         task_instances_dir.joinpath("valid/")
     )
 
-    logger.info("Creating the HF dataset for each split...")
+    logger.info(f"Task {task}: Creating the HF dataset for each split...")
     preprocessed_train_dataset = create_hf_dataset_from_paths(
         paths=all_train_instance_paths,
         load_instance_from_path_fn=load_preprocessed_instance_from_path_fn,
@@ -87,10 +86,10 @@ def create_preprocessed_hf_dataset_for_task(
         {"train": preprocessed_train_dataset, "valid": preprocessed_valid_dataset}
     )
 
-    logger.info(f"Saving HF dataset for {task} to disk...")
+    logger.info(f"Task {task}: Saving HF dataset to disk...")
     dataset_dict.save_to_disk(
         dataset_dict_path=str(output_dir.resolve()),
-        max_shard_size=max_shard_size,
+        num_shards=settings.num_shards,
         num_proc=num_workers,
     )
 
@@ -103,6 +102,10 @@ def create_preprocessed_dataset_per_task(
         Path, typer.Option(help="Directory to save the preprocessed HF dataset.")
     ] = settings.preprocessed_hf_dataset_dir,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
+    writer_batch_size: Annotated[
+        int,
+        typer.Option(help="Batch size when creating the dataset for each task."),
+    ] = 500,
 ) -> None:
     """Create a HF dataset for the preprocessed instances for each task.
 
@@ -121,8 +124,7 @@ def create_preprocessed_dataset_per_task(
             output_dir=preprocessed_hf_dataset_dir.joinpath(task.name),
             num_workers=num_workers,
             dataset_name=settings.safe_hf_repo_id,
-            writer_batch_size=settings.writer_batch_size,
-            max_shard_size=settings.max_shard_size,
+            writer_batch_size=writer_batch_size,
         )
 
 
