@@ -75,9 +75,7 @@ class InstancePreprocessorDataset(Dataset[None]):
         # Create the path for the preprocessed instance
         task = Task(raw_instance["task"])
         instance_index = raw_instance["index"]
-        preprocessed_instance_path = self._output_dir.joinpath(
-            f"{task.name}/{task.name}_{instance_index}.pkl"
-        )
+        preprocessed_instance_path = self._output_dir.joinpath(f"{task.name}_{instance_index}.pkl")
 
         # If the path exists, we don't need to preprocess it
         if preprocessed_instance_path.exists() and not self._replace_if_exists:
@@ -127,6 +125,8 @@ def preprocess_instances_for_task(
     Convert the parsed instances into the preprocessed ones, and pickle each preprocessed instance
     to disk.
     """
+    preprocessed_instances_output_dir = preprocessed_instances_output_dir.joinpath(task.name)
+
     logger.info(f"Creating dataloaders for each {task} split...")
     train_dataloader = create_dataloader_to_preprocess_instances(
         dataset_split=dataset["train"],
