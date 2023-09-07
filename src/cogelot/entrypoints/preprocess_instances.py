@@ -38,7 +38,7 @@ def _load_parsed_datasets_for_each_task(
     logger.info(f"Loading {len(dataset_dir_per_task)} datasets from {parsed_hf_datasets_dir}...")
 
     for task_dataset_dir in dataset_dir_per_task:
-        task = Task(task_dataset_dir.name)
+        task = Task[task_dataset_dir.name]
 
         logger.info(f"Loading dataset for {task} from {task_dataset_dir}...")
         dataset = datasets.load_from_disk(str(task_dataset_dir))
