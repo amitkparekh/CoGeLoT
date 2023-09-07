@@ -162,7 +162,7 @@ def preprocess_instances(
     ] = settings.parsed_hf_dataset_dir,
     preprocessed_instances_dir: Annotated[
         Path, typer.Option(help="Directory to save the preprocessed instances to.")
-    ] = settings.preprocessed_data_dir,
+    ] = settings.preprocessed_instances_dir,
     instance_preprocessor_hydra_config: Annotated[
         Path, typer.Option(help="Hydra config for the instance preprocessor.")
     ] = settings.instance_preprocessor_hydra_config,
