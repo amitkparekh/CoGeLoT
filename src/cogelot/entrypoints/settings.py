@@ -11,11 +11,9 @@ class Settings(BaseSettings):
     # The number of instances to hold out for the validation set, across all the tasks.
     num_validation_instances: int = 50000
 
-    # Things to help make the HF datasets go faster
-    writer_batch_size: int = 10000
-
-    # Maximum size for each shard that gets saved (by the HF dataset)
-    max_shard_size: str = "2GB"
+    # Max number of shards to use when saving/uploading the HF dataset
+    num_train_shards: int = 20
+    num_valid_shards: int = 5
 
     # The repository ID on HF
     hf_repo_id: str = "amitkparekh/vima"
@@ -45,3 +43,8 @@ class Settings(BaseSettings):
         Basically, replace the `/` with `--`.
         """
         return self.hf_repo_id.replace("/", "--")
+
+    @property
+    def num_shards(self) -> dict[str, int]:
+        """Get the number of shards per split."""
+        return {"train": self.num_train_shards, "valid": self.num_valid_shards}

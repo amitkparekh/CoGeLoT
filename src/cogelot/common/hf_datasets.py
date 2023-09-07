@@ -105,7 +105,10 @@ def load_dataset_from_parquet_files(
 
 
 def upload_dataset_to_hub(
-    saved_hf_dataset_dir: Path, hf_repo_id: str, max_shard_size: str, config_name: str = "default"
+    saved_hf_dataset_dir: Path,
+    *,
+    hf_repo_id: str,
+    num_shards: dict[str, int],
 ) -> None:
     """Upload the dataset to the hub."""
     logger.info("Load dataset from disk...")
@@ -113,4 +116,4 @@ def upload_dataset_to_hub(
     assert isinstance(dataset_dict, datasets.DatasetDict)
 
     logger.info("Pushing the preprocessed dataset to the hub...")
-    dataset_dict.push_to_hub(hf_repo_id, max_shard_size=max_shard_size, config_name=config_name)
+    dataset_dict.push_to_hub(hf_repo_id, num_shards=num_shards)

@@ -175,7 +175,7 @@ def create_raw_dataset_per_task(
         logger.info(f"Task {idx+1}: Saving dataset for {task}...")
         dataset.save_to_disk(
             parsed_hf_dataset_dir.joinpath(task.name),
-            num_shards={"train": 20, "valid": 5},
+            num_shards=settings.num_shards,
             num_proc=num_workers,
         )
 
