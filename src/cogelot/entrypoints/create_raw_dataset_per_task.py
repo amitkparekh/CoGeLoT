@@ -176,7 +176,6 @@ def create_raw_dataset_per_task(
         dataset.save_to_disk(
             parsed_hf_dataset_dir.joinpath(task.name),
             num_shards={"train": 20, "valid": 5},
-            max_shard_size=settings.max_shard_size,
             num_proc=num_workers,
         )
 
