@@ -1,4 +1,3 @@
-import itertools
 from functools import partial
 from pathlib import Path
 from typing import Annotated
@@ -34,25 +33,13 @@ load_vima_instance_from_path_fn = partial(
 def create_validation_split(
     dataset: datasets.Dataset,
     *,
-    max_num_validation_instances: int,
-    num_workers: int,
+    num_validation_instances: int,
     writer_batch_size: int,
     seed: int = 0,
-    stratify_column: str = "task",
 ) -> datasets.DatasetDict:
-    """Create the validation split for the dataset.
-
-    From the HF docs, it says that we need to flatten the indices for the dataset before shuffling,
-    otherwise it takes _forever_. When calling the `train_test_split` method, it doesn't allow us
-    to use a larger batch size or more workers for the indices flattening, and it then wants to
-    take 24 hour to do. To try make it go faster, we flatten it ourselves so it will create the
-    cache as fast as possible, so creating the splits are then faster (as they are just loading the
-    cache),
-    """
-    dataset = dataset.flatten_indices(writer_batch_size=writer_batch_size, num_proc=num_workers)
+    """Create the validation split for the dataset."""
     dataset_split = dataset.train_test_split(
-        test_size=max_num_validation_instances,
-        stratify_by_column=stratify_column,
+        test_size=num_validation_instances,
         seed=seed,
         writer_batch_size=writer_batch_size,
     )
@@ -66,13 +53,13 @@ def create_hf_dataset_for_each_task(
     parsed_instances_dir: Path,
     num_workers: int,
     writer_batch_size: int,
-) -> list[datasets.Dataset]:
+) -> dict[Task, datasets.Dataset]:
     """Create a HF dataset for each task.
 
     The dataset for each task is cached accordingly, so they can be easily loaded again if needing
     to re-run.
     """
-    all_datasets: list[datasets.Dataset] = []
+    all_datasets: dict[Task, datasets.Dataset] = {}
 
     for idx, task in enumerate(Task):
         data_root_for_task: Path = parsed_instances_dir.joinpath(task.name)
@@ -97,38 +84,29 @@ def create_hf_dataset_for_each_task(
             },
         )
 
-        all_datasets.append(dataset_for_task)
+        all_datasets[task] = dataset_for_task
 
     return all_datasets
 
 
-def save_dataset_for_task(
-    dataset_with_split: datasets.DatasetDict,
-    task_identifier: int,
-    parsed_hf_dataset_dir: Path,
-    num_workers: int,
-    max_shard_size: str,
-) -> None:
-    """Save the HF dataset for just the provided task.
+def calculate_num_validation_instances_per_task(
+    total_num_validation_instances: int,
+    num_examples_per_task: dict[Task, int],
+) -> dict[Task, int]:
+    """Calculate the number of validation instances to use per task.
 
-    Filter the main dataset across the splits and then make sure it works.
+    The number of validation instances to use per task is proportional to the number of examples
+    for that task.
+
+    Yes, this is stratified sampling, but we are implementing it ourselves because HF's
+    implementation was taking forever with everything else.
     """
-    task = Task(task_identifier)
-
-    logger.info(f"Task ID {task_identifier}: Saving dataset with task {task}...")
-    task_dataset_with_split = dataset_with_split.filter(
-        lambda example, task_identifier=task_identifier: example["task"] == task_identifier
-    )
-
-    # Manually update the config name for the dataset so that it includes the task name
-    for dataset_split in task_dataset_with_split.values():
-        dataset_split._info.config_name = _get_config_name_for_task(task)  # noqa: SLF001
-
-    task_dataset_with_split.save_to_disk(
-        parsed_hf_dataset_dir.joinpath(task.name),
-        max_shard_size=max_shard_size,
-        num_proc=num_workers,
-    )
+    total_num_examples = sum(num_examples_per_task.values())
+    num_validation_instances_per_task = {
+        task: int(total_num_validation_instances * (num_examples / total_num_examples))
+        for task, num_examples in num_examples_per_task.items()
+    }
+    return num_validation_instances_per_task
 
 
 def create_raw_dataset_per_task(
@@ -194,36 +172,32 @@ def create_stratified_splits_across_tasks(
         writer_batch_size=writer_batch_size,
     )
 
-    logger.info("Concatenating datasets together...")
-    dataset = datasets.concatenate_datasets(
-        task_datasets,
-        info=datasets.DatasetInfo(
-            dataset_name=settings.safe_hf_repo_id, config_name=settings.raw_config_name
-        ),
+    logger.info("Calculate the number of validation instances to use per task...")
+    num_examples_per_task = {task: len(dataset) for task, dataset in task_datasets.items()}
+
+    num_validation_instances_per_task = calculate_num_validation_instances_per_task(
+        total_num_validation_instances=settings.num_validation_instances,
+        num_examples_per_task=num_examples_per_task,
     )
 
-    logger.info("Creating the train-valid split...")
-    dataset_with_split = create_validation_split(
-        dataset,
-        max_num_validation_instances=settings.num_validation_instances,
-        seed=settings.seed,
-        num_workers=num_workers,
-        writer_batch_size=writer_batch_size,
-    )
+    logger.info("Creating the train-valid split for each task...")
+    task_datasets_with_split = {
+        task: create_validation_split(
+            dataset,
+            num_validation_instances=num_validation_instances_per_task[task],
+            seed=settings.seed,
+            writer_batch_size=writer_batch_size,
+        )
+        for task, dataset in task_datasets.items()
+    }
 
-    task_identifiers_in_dataset_per_split: dict[str, list[int]] = dataset_with_split.unique("task")
-    task_identifiers_in_dataset = set(
-        itertools.chain.from_iterable(task_identifiers_in_dataset_per_split.values())
-    )
-
-    logger.info("Sharding and saving dataset by task...")
-    for task_identifier in task_identifiers_in_dataset:
-        save_dataset_for_task(
-            dataset_with_split,
-            task_identifier,
-            parsed_hf_dataset_dir,
-            num_workers,
-            settings.max_shard_size,
+    logger.info("Saving dataset by task...")
+    for idx, (task, dataset) in enumerate(task_datasets_with_split.items()):
+        logger.info(f"Task {idx+1}: Saving dataset for {task}...")
+        dataset.save_to_disk(
+            parsed_hf_dataset_dir.joinpath(task.name),
+            max_shard_size=settings.max_shard_size,
+            num_proc=num_workers,
         )
 
 
