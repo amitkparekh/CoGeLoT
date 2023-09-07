@@ -113,6 +113,9 @@ def create_raw_dataset_per_task(
     parsed_instances_dir: Annotated[
         Path, typer.Argument(help="Where to save all of the parsed instances")
     ] = settings.parsed_instances_dir,
+    parsed_hf_dataset_dir: Annotated[
+        Path, typer.Argument(help="Where to save the HF datasets (for each task)")
+    ] = settings.parsed_hf_dataset_dir,
     num_workers: Annotated[
         int,
         typer.Option(help="Number of workers when creating the dataset for each task."),
@@ -124,7 +127,9 @@ def create_raw_dataset_per_task(
 ) -> None:
     """Convert the parsed VIMA instances for each task into a HF dataset.
 
-    For each task, we load the pickled files and turn them into a HF dataset.
+    For each task, we load the pickled files and turn them into a HF dataset. Once the dataset for
+    each task is made, we create the train-valid split using stratified sampling. Then, we save
+    each task separately.
 
     The reason we don't do it in a whole dataset is for two reasons:
         1. If we want to add more training tasks, then we would need to re-run the entire process,
@@ -132,40 +137,14 @@ def create_raw_dataset_per_task(
         2. There were issues when saving the entire dataset in one go, and I have no idea why. So
            just do it in parts which seems to work and was way faster since we can crank the
            num-workers up without needing to worry about blowing the memory.
+
+    When saving, it can take some time for the thing to start up. The larger the dataset and the
+    more workers you have, the longer it takes to get going. Unfortunately, there is no way or
+    knowing what it is doing or why it is taking so long, so we need to be a bit patient.    Anecdotally, when saving the dataset per task, it seems to take about 2-3 minutes to start 60
+    workers. This unknown time requirement is why we don't just save the entire dataset together,
+    because we have no clue what is actually happening and whether or not it has deadlocked.
     """
     logger.info("Creating dataset for each task...")
-    create_hf_dataset_for_each_task(
-        parsed_instances_dir=parsed_instances_dir,
-        num_workers=num_workers,
-        writer_batch_size=writer_batch_size,
-    )
-
-
-def create_stratified_splits_across_tasks(
-    parsed_instances_dir: Annotated[
-        Path, typer.Argument(help="Where to save all of the parsed instances")
-    ] = settings.parsed_instances_dir,
-    parsed_hf_dataset_dir: Annotated[
-        Path, typer.Argument(help="Where to save the HF datasets (for each task)")
-    ] = settings.parsed_hf_dataset_dir,
-    num_workers: Annotated[
-        int,
-        typer.Option(help="Number of workers when creating the dataset for each task."),
-    ] = 1,
-    writer_batch_size: Annotated[
-        int,
-        typer.Option(help="Batch size when creating the dataset for each task."),
-    ] = 50000,
-) -> None:
-    """Create train-valid split across all tasks using stratified sampling.
-
-    Since we can crank the num. workers and the writer batch size up, we should. This will make it
-    go waaaaaaaaaaaay faster when creating things.
-
-    Once the dataset for each task is loaded from the cache, concatenate them together and create
-    the train-valid split using stratified sampling. Then, split back into each task and save.
-    """
-    logger.info("Loading dataset for each task...")
     task_datasets = create_hf_dataset_for_each_task(
         parsed_instances_dir=parsed_instances_dir,
         num_workers=num_workers,
@@ -196,6 +175,7 @@ def create_stratified_splits_across_tasks(
         logger.info(f"Task {idx+1}: Saving dataset for {task}...")
         dataset.save_to_disk(
             parsed_hf_dataset_dir.joinpath(task.name),
+            num_shards={"train": 20, "valid": 5},
             max_shard_size=settings.max_shard_size,
             num_proc=num_workers,
         )
