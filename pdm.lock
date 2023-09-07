@@ -6,7 +6,7 @@ groups = ["default", "test", "lint", "environment"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:3505dbc8b9a2d62217815a180b9e00175fa8684019a86480f9c8db7788e5f9aa"
+content_hash = "sha256:3006c86b0b1f1717cfa3ce48ada6da55731671ab9b11a017cc3e4b105b2d9979"
 
 [[package]]
 name = "aiohttp"
@@ -332,7 +332,7 @@ files = [
 
 [[package]]
 name = "commitizen"
-version = "3.7.0"
+version = "3.8.0"
 requires_python = ">=3.7,<4.0"
 summary = "Python commitizen client tool"
 dependencies = [
@@ -349,8 +349,8 @@ dependencies = [
     "tomlkit<1.0.0,>=0.5.3",
 ]
 files = [
-    {file = "commitizen-3.7.0-py3-none-any.whl", hash = "sha256:473e703f4d3cfa14250ee197a7a47acb02c064d590f351eb94338385427e53e3"},
-    {file = "commitizen-3.7.0.tar.gz", hash = "sha256:c2c83817981f539f0c92a5f16a5d82e41954fdc886ea651b2f5a07f078c8bbaf"},
+    {file = "commitizen-3.8.0-py3-none-any.whl", hash = "sha256:8ef33205c0feb85bb32127bb588b68ff63ddd2bc1e073198087acaeae5dc32cc"},
+    {file = "commitizen-3.8.0.tar.gz", hash = "sha256:2307befb5477a173598f8217ad7bfeebb66b92e900c7606a523287fc9545b631"},
 ]
 
 [[package]]
@@ -478,13 +478,13 @@ files = [
 
 [[package]]
 name = "datasets"
-version = "2.14.4"
+version = "2.14.5"
 requires_python = ">=3.8.0"
 summary = "HuggingFace community-driven open-source library of datasets"
 dependencies = [
     "aiohttp",
     "dill<0.3.8,>=0.3.0",
-    "fsspec[http]>=2021.11.1",
+    "fsspec[http]<2023.9.0,>=2023.1.0",
     "huggingface-hub<1.0.0,>=0.14.0",
     "multiprocess",
     "numpy>=1.17",
@@ -497,8 +497,8 @@ dependencies = [
     "xxhash",
 ]
 files = [
-    {file = "datasets-2.14.4-py3-none-any.whl", hash = "sha256:29336bd316a7d827ccd4da2236596279b20ca2ac78f64c04c9483da7cbc2459b"},
-    {file = "datasets-2.14.4.tar.gz", hash = "sha256:ef29c2b5841de488cd343cfc26ab979bff77efa4d2285af51f1ad7db5c46a83b"},
+    {file = "datasets-2.14.5-py3-none-any.whl", hash = "sha256:dd4155091034cba04d5a28711f2ed3944275ed15c5d0c5a2d0b6b9ea34a2bdfe"},
+    {file = "datasets-2.14.5.tar.gz", hash = "sha256:b738a86540ab8e1a7806c8a3790b67be0056318d0c5d5a58a1b0dbdd76c0f568"},
 ]
 
 [[package]]
@@ -1009,6 +1009,20 @@ files = [
 ]
 
 [[package]]
+name = "hypothesis"
+version = "6.84.2"
+requires_python = ">=3.8"
+summary = "A library for property-based testing"
+dependencies = [
+    "attrs>=19.2.0",
+    "sortedcontainers<3.0.0,>=2.1.0",
+]
+files = [
+    {file = "hypothesis-6.84.2-py3-none-any.whl", hash = "sha256:b79209f2e0adf5a48d49467548a6c7e831ec100674e7aa611a444815d8d9e0dd"},
+    {file = "hypothesis-6.84.2.tar.gz", hash = "sha256:82c7d4b696d211a8edd04dddd1077f13090b10263fee09648f7da389b749f7b0"},
+]
+
+[[package]]
 name = "identify"
 version = "2.5.27"
 requires_python = ">=3.8"
@@ -1030,16 +1044,16 @@ files = [
 
 [[package]]
 name = "imageio"
-version = "2.31.2"
-requires_python = ">=3.7"
+version = "2.31.3"
+requires_python = ">=3.8"
 summary = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
 dependencies = [
     "numpy",
     "pillow>=8.3.2",
 ]
 files = [
-    {file = "imageio-2.31.2-py3-none-any.whl", hash = "sha256:a78fbcb33432042a4d6993c87f3ea1f136d908318ce7dda857846ccff73294de"},
-    {file = "imageio-2.31.2.tar.gz", hash = "sha256:ae19221f4a8f118f1c9451e8f5357faeeacdf956198cf374bc8ab00f1ff7d525"},
+    {file = "imageio-2.31.3-py3-none-any.whl", hash = "sha256:ea777be55bfa4bd6aee126c7dfa3bf1759bf87be982876c50f1a976d1b65446d"},
+    {file = "imageio-2.31.3.tar.gz", hash = "sha256:74c6a832d81b7ad5a8a80976dea58ee033d3e2b99a54990cbd789b4cb0b31461"},
 ]
 
 [[package]]
@@ -1288,7 +1302,7 @@ files = [
 
 [[package]]
 name = "loguru"
-version = "0.7.0"
+version = "0.7.1"
 requires_python = ">=3.5"
 summary = "Python logging made (stupidly) simple"
 dependencies = [
@@ -1296,8 +1310,8 @@ dependencies = [
     "win32-setctime>=1.0.0; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "loguru-0.7.0-py3-none-any.whl", hash = "sha256:b93aa30099fa6860d4727f1b81f8718e965bb96253fa190fab2077aaad6d15d3"},
-    {file = "loguru-0.7.0.tar.gz", hash = "sha256:1612053ced6ae84d7959dd7d5e431a0532642237ec21f7fd83ac73fe539e03e1"},
+    {file = "loguru-0.7.1-py3-none-any.whl", hash = "sha256:046bf970cb3cad77a28d607cbf042ac25a407db987a1e801c7f7e692469982f9"},
+    {file = "loguru-0.7.1.tar.gz", hash = "sha256:7ba2a7d81b79a412b0ded69bd921e012335e80fd39937a633570f273a343579e"},
 ]
 
 [[package]]
@@ -1617,24 +1631,23 @@ files = [
 
 [[package]]
 name = "pandas"
-version = "2.0.3"
-requires_python = ">=3.8"
+version = "2.1.0"
+requires_python = ">=3.9"
 summary = "Powerful data structures for data analysis, time series, and statistics"
 dependencies = [
-    "numpy>=1.21.0; python_version >= \"3.10\"",
     "numpy>=1.23.2; python_version >= \"3.11\"",
     "python-dateutil>=2.8.2",
     "pytz>=2020.1",
     "tzdata>=2022.1",
 ]
 files = [
-    {file = "pandas-2.0.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b084b91d8d66ab19f5bb3256cbd5ea661848338301940e17f4492b2ce0801fe8"},
-    {file = "pandas-2.0.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:37673e3bdf1551b95bf5d4ce372b37770f9529743d2498032439371fc7b7eb26"},
-    {file = "pandas-2.0.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b9cb1e14fdb546396b7e1b923ffaeeac24e4cedd14266c3497216dd4448e4f2d"},
-    {file = "pandas-2.0.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d9cd88488cceb7635aebb84809d087468eb33551097d600c6dad13602029c2df"},
-    {file = "pandas-2.0.3-cp311-cp311-win32.whl", hash = "sha256:694888a81198786f0e164ee3a581df7d505024fbb1f15202fc7db88a71d84ebd"},
-    {file = "pandas-2.0.3-cp311-cp311-win_amd64.whl", hash = "sha256:6a21ab5c89dcbd57f78d0ae16630b090eec626360085a4148693def5452d8a6b"},
-    {file = "pandas-2.0.3.tar.gz", hash = "sha256:c02f372a88e0d17f36d3093a644c73cfc1788e876a7c4bcb4020a77512e2043c"},
+    {file = "pandas-2.1.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cda72cc8c4761c8f1d97b169661f23a86b16fdb240bdc341173aee17e4d6cedd"},
+    {file = "pandas-2.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d97daeac0db8c993420b10da4f5f5b39b01fc9ca689a17844e07c0a35ac96b4b"},
+    {file = "pandas-2.1.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d8c58b1113892e0c8078f006a167cc210a92bdae23322bb4614f2f0b7a4b510f"},
+    {file = "pandas-2.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:629124923bcf798965b054a540f9ccdfd60f71361255c81fa1ecd94a904b9dd3"},
+    {file = "pandas-2.1.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:70cf866af3ab346a10debba8ea78077cf3a8cd14bd5e4bed3d41555a3280041c"},
+    {file = "pandas-2.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:d53c8c1001f6a192ff1de1efe03b31a423d0eee2e9e855e69d004308e046e694"},
+    {file = "pandas-2.1.0.tar.gz", hash = "sha256:62c24c7fc59e42b775ce0679cfa7b14a5f9bfb7643cfbe708c960699e05fb918"},
 ]
 
 [[package]]
@@ -1737,7 +1750,7 @@ files = [
 
 [[package]]
 name = "pre-commit"
-version = "3.3.3"
+version = "3.4.0"
 requires_python = ">=3.8"
 summary = "A framework for managing and maintaining multi-language pre-commit hooks."
 dependencies = [
@@ -1748,8 +1761,8 @@ dependencies = [
     "virtualenv>=20.10.0",
 ]
 files = [
-    {file = "pre_commit-3.3.3-py2.py3-none-any.whl", hash = "sha256:10badb65d6a38caff29703362271d7dca483d01da88f9d7e05d0b97171c136cb"},
-    {file = "pre_commit-3.3.3.tar.gz", hash = "sha256:a2256f489cd913d575c145132ae196fe335da32d91a8294b7afe6622335dd023"},
+    {file = "pre_commit-3.4.0-py2.py3-none-any.whl", hash = "sha256:96d529a951f8b677f730a7212442027e8ba53f9b04d217c4c67dc56c393ad945"},
+    {file = "pre_commit-3.4.0.tar.gz", hash = "sha256:6bbd5129a64cad4c0dfaeeb12cd8f7ea7e15b77028d985341478c8af3c759522"},
 ]
 
 [[package]]
@@ -1985,7 +1998,7 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "7.4.0"
+version = "7.4.1"
 requires_python = ">=3.7"
 summary = "pytest: simple powerful testing with Python"
 dependencies = [
@@ -1995,8 +2008,8 @@ dependencies = [
     "pluggy<2.0,>=0.12",
 ]
 files = [
-    {file = "pytest-7.4.0-py3-none-any.whl", hash = "sha256:78bf16451a2eb8c7a2ea98e32dc119fd2aa758f1d5d66dbf0a59d69a3969df32"},
-    {file = "pytest-7.4.0.tar.gz", hash = "sha256:b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a"},
+    {file = "pytest-7.4.1-py3-none-any.whl", hash = "sha256:460c9a59b14e27c602eb5ece2e47bec99dc5fc5f6513cf924a7d03a578991b1f"},
+    {file = "pytest-7.4.1.tar.gz", hash = "sha256:2f2301e797521b23e4d2585a0a3d7b5e50fdddaaf7e7d6773ea26ddb17c213ab"},
 ]
 
 [[package]]
@@ -2220,27 +2233,27 @@ files = [
 
 [[package]]
 name = "ruff"
-version = "0.0.286"
+version = "0.0.287"
 requires_python = ">=3.7"
 summary = "An extremely fast Python linter, written in Rust."
 files = [
-    {file = "ruff-0.0.286-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:8e22cb557e7395893490e7f9cfea1073d19a5b1dd337f44fd81359b2767da4e9"},
-    {file = "ruff-0.0.286-py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:68ed8c99c883ae79a9133cb1a86d7130feee0397fdf5ba385abf2d53e178d3fa"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8301f0bb4ec1a5b29cfaf15b83565136c47abefb771603241af9d6038f8981e8"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:acc4598f810bbc465ce0ed84417ac687e392c993a84c7eaf3abf97638701c1ec"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:88c8e358b445eb66d47164fa38541cfcc267847d1e7a92dd186dddb1a0a9a17f"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:0433683d0c5dbcf6162a4beb2356e820a593243f1fa714072fec15e2e4f4c939"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ddb61a0c4454cbe4623f4a07fef03c5ae921fe04fede8d15c6e36703c0a73b07"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:47549c7c0be24c8ae9f2bce6f1c49fbafea83bca80142d118306f08ec7414041"},
-    {file = "ruff-0.0.286-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:559aa793149ac23dc4310f94f2c83209eedb16908a0343663be19bec42233d25"},
-    {file = "ruff-0.0.286-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:d73cfb1c3352e7aa0ce6fb2321f36fa1d4a2c48d2ceac694cb03611ddf0e4db6"},
-    {file = "ruff-0.0.286-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:3dad93b1f973c6d1db4b6a5da8690c5625a3fa32bdf38e543a6936e634b83dc3"},
-    {file = "ruff-0.0.286-py3-none-musllinux_1_2_i686.whl", hash = "sha256:26afc0851f4fc3738afcf30f5f8b8612a31ac3455cb76e611deea80f5c0bf3ce"},
-    {file = "ruff-0.0.286-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:9b6b116d1c4000de1b9bf027131dbc3b8a70507788f794c6b09509d28952c512"},
-    {file = "ruff-0.0.286-py3-none-win32.whl", hash = "sha256:556e965ac07c1e8c1c2d759ac512e526ecff62c00fde1a046acb088d3cbc1a6c"},
-    {file = "ruff-0.0.286-py3-none-win_amd64.whl", hash = "sha256:5d295c758961376c84aaa92d16e643d110be32add7465e197bfdaec5a431a107"},
-    {file = "ruff-0.0.286-py3-none-win_arm64.whl", hash = "sha256:1d6142d53ab7f164204b3133d053c4958d4d11ec3a39abf23a40b13b0784e3f0"},
-    {file = "ruff-0.0.286.tar.gz", hash = "sha256:f1e9d169cce81a384a26ee5bb8c919fe9ae88255f39a1a69fd1ebab233a85ed2"},
+    {file = "ruff-0.0.287-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:1e0f9ee4c3191444eefeda97d7084721d9b8e29017f67997a20c153457f2eafd"},
+    {file = "ruff-0.0.287-py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:e9843e5704d4fb44e1a8161b0d31c1a38819723f0942639dfeb53d553be9bfb5"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8ca1ed11d759a29695aed2bfc7f914b39bcadfe2ef08d98ff69c873f639ad3a8"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:1cf4d5ad3073af10f186ea22ce24bc5a8afa46151f6896f35c586e40148ba20b"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:66d9d58bcb29afd72d2afe67120afcc7d240efc69a235853813ad556443dc922"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:06ac5df7dd3ba8bf83bba1490a72f97f1b9b21c7cbcba8406a09de1a83f36083"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:2bfb478e1146a60aa740ab9ebe448b1f9e3c0dfb54be3cc58713310eef059c30"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:00d579a011949108c4b4fa04c4f1ee066dab536a9ba94114e8e580c96be2aeb4"},
+    {file = "ruff-0.0.287-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d3a810a79b8029cc92d06c36ea1f10be5298d2323d9024e1d21aedbf0a1a13e5"},
+    {file = "ruff-0.0.287-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:150007028ad4976ce9a7704f635ead6d0e767f73354ce0137e3e44f3a6c0963b"},
+    {file = "ruff-0.0.287-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:a24a280db71b0fa2e0de0312b4aecb8e6d08081d1b0b3c641846a9af8e35b4a7"},
+    {file = "ruff-0.0.287-py3-none-musllinux_1_2_i686.whl", hash = "sha256:2918cb7885fa1611d542de1530bea3fbd63762da793751cc8c8d6e4ba234c3d8"},
+    {file = "ruff-0.0.287-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:33d7b251afb60bec02a64572b0fd56594b1923ee77585bee1e7e1daf675e7ae7"},
+    {file = "ruff-0.0.287-py3-none-win32.whl", hash = "sha256:022f8bed2dcb5e5429339b7c326155e968a06c42825912481e10be15dafb424b"},
+    {file = "ruff-0.0.287-py3-none-win_amd64.whl", hash = "sha256:26bd0041d135a883bd6ab3e0b29c42470781fb504cf514e4c17e970e33411d90"},
+    {file = "ruff-0.0.287-py3-none-win_arm64.whl", hash = "sha256:44bceb3310ac04f0e59d4851e6227f7b1404f753997c7859192e41dbee9f5c8d"},
+    {file = "ruff-0.0.287.tar.gz", hash = "sha256:02dc4f5bf53ef136e459d467f3ce3e04844d509bc46c025a05b018feb37bbc39"},
 ]
 
 [[package]]
@@ -2355,6 +2368,15 @@ summary = "This package provides 29 stemmers for 28 languages generated from Sno
 files = [
     {file = "snowballstemmer-2.2.0-py2.py3-none-any.whl", hash = "sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a"},
     {file = "snowballstemmer-2.2.0.tar.gz", hash = "sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1"},
+]
+
+[[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+summary = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
+files = [
+    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
+    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
 
 [[package]]
@@ -2479,18 +2501,17 @@ files = [
 
 [[package]]
 name = "torchmetrics"
-version = "1.1.0"
+version = "1.1.1"
 requires_python = ">=3.8"
 summary = "PyTorch native Metrics"
 dependencies = [
     "lightning-utilities>=0.8.0",
     "numpy>1.20.0",
-    "packaging",
     "torch>=1.8.1",
 ]
 files = [
-    {file = "torchmetrics-1.1.0-py3-none-any.whl", hash = "sha256:16afba73195495844248f9120d1629e4067c998194458f4a37bf05642223d29d"},
-    {file = "torchmetrics-1.1.0.tar.gz", hash = "sha256:94b51aeb3d5ff55503fa47086bbc2af9e26efabb840e2d3c2381db9623dda5fd"},
+    {file = "torchmetrics-1.1.1-py3-none-any.whl", hash = "sha256:903b4fc30537acfc5221505c48f7627e58dbf6d9dea85c16ea7b4323f9e13793"},
+    {file = "torchmetrics-1.1.1.tar.gz", hash = "sha256:65ea34205c0506eecfd06b98f63f4d2a2c5c0e17367cf324e1747adc854c80a5"},
 ]
 
 [[package]]
@@ -2537,7 +2558,7 @@ files = [
 
 [[package]]
 name = "transformers"
-version = "4.32.1"
+version = "4.33.1"
 requires_python = ">=3.8.0"
 summary = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 dependencies = [
@@ -2553,8 +2574,8 @@ dependencies = [
     "tqdm>=4.27",
 ]
 files = [
-    {file = "transformers-4.32.1-py3-none-any.whl", hash = "sha256:b930d3dbd907a3f300cf49e54d63a56f8a0ab16b01a2c2a61ecff37c6de1da08"},
-    {file = "transformers-4.32.1.tar.gz", hash = "sha256:1edc8ae1de357d97c3d36b04412aa63d55e6fc0c4b39b419a7d380ed947d2252"},
+    {file = "transformers-4.33.1-py3-none-any.whl", hash = "sha256:0630c2d26448d7c6cb78435e6c43910c89e99387badea6be1f565ffa3f093f1d"},
+    {file = "transformers-4.33.1.tar.gz", hash = "sha256:744265e9f0724d22c229938f28376af54abce730ef647f35bd1685abf49912a4"},
 ]
 
 [[package]]
@@ -2641,9 +2662,9 @@ files = [
 
 [[package]]
 name = "wandb"
-version = "0.15.8"
+version = "0.15.10"
 requires_python = ">=3.6"
-summary = "A CLI and library for interacting with the Weights and Biases API."
+summary = "A CLI and library for interacting with the Weights & Biases API."
 dependencies = [
     "Click!=8.0.0,>=7.1",
     "GitPython!=3.1.29,>=1.0.0",
@@ -2660,8 +2681,8 @@ dependencies = [
     "setuptools",
 ]
 files = [
-    {file = "wandb-0.15.8-py3-none-any.whl", hash = "sha256:0cff71d412a9e6bed0f60cc0dd77d2b9898d3baf0a4aa31c741d3653e84dbd6b"},
-    {file = "wandb-0.15.8.tar.gz", hash = "sha256:2c39e129fb8dc69c7ff813aa52c2ce7f98e3a0f25c12dd96b1de7528d9443a84"},
+    {file = "wandb-0.15.10-py3-none-any.whl", hash = "sha256:bc810879fecd1b62ccd498658e55ade3702939090a94b99418630e77e1f43d50"},
+    {file = "wandb-0.15.10.tar.gz", hash = "sha256:5ce6d2d6be904da726b591a19ac22d2e71aa4b6a9ed450d8cd817d1712969b13"},
 ]
 
 [[package]]
