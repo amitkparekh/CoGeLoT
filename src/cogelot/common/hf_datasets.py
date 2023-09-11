@@ -26,7 +26,7 @@ def maybe_split_dataset_by_node(dataset: T) -> T:
 
 
 def download_parquet_files_from_hub(
-    repo_id: str, *, name: str | None = None, max_workers: int = 8
+    repo_id: str, *, config_name_prefix: str | None = None, max_workers: int = 8
 ) -> None:
     """Download the parquet data files from the dataset on the hub.
 
@@ -34,16 +34,13 @@ def download_parquet_files_from_hub(
     fast as it could do. Even if we are not being rate limited, it is only downloading one SPLIT at
     a time. Not one file, not one shard, but per split.
 
-    However, doing it this way does not automatically fill the cache, so you cannot use
-    `load_dataset` when loading the dataset. The `load_dataset_from_parquet_files` function (below)
-    is there to load the dataset from the parquet files and returns the `DatasetDict`.
-
-    If providing the `name`, then only the parquet files within that directory will be downloaded.
-    If no name is provided, then we just download all the parquet files.
+    If providing the `config_name_prefix`, then only the parquet files for that subset is
+    downloaded. If no `config_name_prefix` is provided, then we just download all the parquet
+    files.
     """
     pattern = "*.parquet"
-    if name:
-        pattern = f"**{name}/*.parquet"
+    if config_name_prefix:
+        pattern = f"**{config_name_prefix}*/*.parquet"
 
     snapshot_download(
         repo_id=repo_id,
@@ -55,8 +52,8 @@ def download_parquet_files_from_hub(
     )
 
 
-def get_location_of_parquet_files(repo_id: str) -> Path:
-    """Get the path to the location where the parquet files were downloaded."""
+def get_location_of_hub_parquet_files(repo_id: str) -> Path:
+    """Get the path to the location where the parquet files were downloaded from the Hub."""
     return Path(
         snapshot_download(
             repo_id=repo_id,
