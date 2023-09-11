@@ -1,12 +1,14 @@
 import os
 from pathlib import Path
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 import datasets
 from datasets.distributed import split_dataset_by_node
 from huggingface_hub import snapshot_download
 from loguru import logger
 
+
+SavedFileExtension = Literal["parquet", "arrow"]
 
 T = TypeVar("T", datasets.Dataset, datasets.IterableDataset)
 
@@ -64,38 +66,76 @@ def get_location_of_hub_parquet_files(repo_id: str) -> Path:
     )
 
 
-def load_dataset_from_parquet_files(
+def load_dataset_from_files(
     data_dir: Path,
     *,
-    name: str | None = None,
+    extension: SavedFileExtension,
     num_proc: int | None = None,
-    split: str | None = None,
 ) -> datasets.DatasetDict:
     """Load the dataset from the parquet files."""
-    if name:
-        data_dir = data_dir.joinpath(name)
+    file_paths = list(data_dir.rglob(f"*.{extension}"))
 
-    parquet_files = list(data_dir.rglob("*.parquet"))
-
-    # Determine the splits that we are loading, if not specified
-    if split:
-        data_splits = {split}
-    else:
-        # Each parquet file is in the form: `SPLIT-NNNNN-of-SSSSS-UUID.parquet`
-        data_splits = {parquet_file.name.split("-")[0] for parquet_file in parquet_files}
+    # Determine the splits that we are loading
+    # Each parquet file is in the form: `SPLIT-NNNNN-of-SSSSS-UUID.parquet`
+    data_splits = {path.name.split("-")[0] for path in file_paths}
 
     # Get the possible data splits from the parquet files
-    parquet_files_per_split = {
-        split: list(map(str, data_dir.rglob(f"{split}*.parquet"))) for split in data_splits
+    files_per_split = {
+        split: list(map(str, data_dir.rglob(f"{split}*.{extension}"))) for split in data_splits
     }
 
     dataset_dict = datasets.load_dataset(
-        "parquet",
-        name=name,
-        data_files=parquet_files_per_split,
+        extension,
+        data_files=files_per_split,
         num_proc=num_proc,
     )
     assert isinstance(dataset_dict, datasets.DatasetDict)
+    return dataset_dict
+
+
+def load_dataset_from_disk(
+    data_dir: Path, *, extension: SavedFileExtension, config_name: str, num_proc: int | None = None
+) -> datasets.DatasetDict:
+    """Load the dataset from disk.
+
+    In doing so, this merges all the tasks together too. If more control is needed with which tasks
+    are loaded, that can be looked at later.
+    """
+    # The root data dir will have subdirs for each task, prefixed by the `config_name` of the
+    # dataset since that's how they were made. e.g. `{data_dir}/raw--visual_manipulation/`
+    task_dataset_dirs = data_dir.glob(f"{config_name}*/")
+
+    # Create a generator that will load the dataset for each and every task
+    dataset_per_task = (
+        load_dataset_from_files(task_dataset_dir, extension=extension, num_proc=num_proc)
+        for task_dataset_dir in task_dataset_dirs
+    )
+
+    # Merge the splits per task together. Since there is no guarantee on the splits per task, this
+    # is the best way I can think to do it. While we are at it, we merge all the dataset info's
+    # together.
+    collated_dataset_splits: dict[str, list[datasets.Dataset]] = {}
+    dataset_info = datasets.DatasetInfo()
+    for task_dataset in dataset_per_task:
+        for split, dataset_split in task_dataset.items():
+            dataset_info.update(dataset_split.info)
+            try:
+                collated_dataset_splits[split].append(dataset_split)
+            except KeyError:
+                collated_dataset_splits[split] = [dataset_split]
+
+    # Force overwrite the config name for the dataset so that it's what we want it to be because
+    # that's just nicer y'know?
+    dataset_info.config_name = config_name
+
+    # Merge all the tasks together by concatenating the datasets for each split
+    dataset_dict = datasets.DatasetDict(
+        {
+            split_name: datasets.concatenate_datasets(splits, info=dataset_info)
+            for split_name, splits in collated_dataset_splits.items()
+        }
+    )
+
     return dataset_dict
 
 
