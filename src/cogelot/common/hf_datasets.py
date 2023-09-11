@@ -8,10 +8,10 @@ from huggingface_hub import snapshot_download
 from loguru import logger
 
 
-U = TypeVar("U", datasets.Dataset, datasets.IterableDataset)
+T = TypeVar("T", datasets.Dataset, datasets.IterableDataset)
 
 
-def maybe_split_dataset_by_node(dataset: U) -> U:
+def maybe_split_dataset_by_node(dataset: T) -> T:
     """Maybe split the dataset per node, if that's a thing that needs doing.
 
     If not, do nothing.
