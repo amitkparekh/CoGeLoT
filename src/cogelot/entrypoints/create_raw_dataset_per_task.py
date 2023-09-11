@@ -5,12 +5,12 @@ from typing import Annotated
 import datasets
 import typer
 from loguru import logger
+from rich.progress import track
 
 from cogelot.common.io import load_pickle
 from cogelot.data.datasets import (
     create_hf_dataset_from_paths,
-    get_pickled_instance_paths,
-    load_instance_from_pickled_path,
+    load_instance_from_path,
 )
 from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task, VIMAInstance
@@ -23,8 +23,14 @@ def _get_config_name_for_task(task: Task) -> str:
     return f"{settings.raw_config_name}--{task.name}"
 
 
+def _get_pickled_instance_paths(root_dir: Path) -> list[Path]:
+    """Get all the pickled instances from the root dir."""
+    path_iterator = root_dir.rglob("*.pkl.gz")
+    return list(track(path_iterator, description=f"Getting pickled paths from {root_dir}"))
+
+
 load_vima_instance_from_path_fn = partial(
-    load_instance_from_pickled_path,
+    load_instance_from_path,
     instance=VIMAInstance,
     load_from_path_fn=load_pickle,
 )
@@ -67,7 +73,7 @@ def create_hf_dataset_for_each_task(
         if not data_root_for_task.exists():
             continue
 
-        instance_paths = get_pickled_instance_paths(data_root_for_task)
+        instance_paths = _get_pickled_instance_paths(data_root_for_task)
         logger.info(
             f"Task {idx+1}/{len(Task)}: Creating HF dataset for {task} from"
             f" {len(instance_paths)} instances..."

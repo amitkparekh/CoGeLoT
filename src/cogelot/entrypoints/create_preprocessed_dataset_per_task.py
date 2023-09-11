@@ -8,7 +8,10 @@ from loguru import logger
 from rich.progress import track
 
 from cogelot.common.io import load_pickle
-from cogelot.data.datasets import create_hf_dataset_from_paths, load_instance_from_pickled_path
+from cogelot.data.datasets import (
+    create_hf_dataset_from_paths,
+    load_instance_from_path,
+)
 from cogelot.entrypoints.settings import Settings
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import Task
@@ -29,14 +32,14 @@ def _get_preprocessed_instances_dir_per_task(preprocessed_instances_dir: Path) -
     return preprocessed_instances_dir_per_task
 
 
-def get_all_preprocessed_instance_paths(preprocessed_instance_dir: Path) -> list[Path]:
+def _get_all_preprocessed_instance_paths(preprocessed_instance_dir: Path) -> list[Path]:
     """Get all the parsed VIMA instance paths."""
     path_iterator = preprocessed_instance_dir.rglob("*.pkl.gz")
     return list(track(path_iterator, description="Getting all preprocessed instance paths"))
 
 
-load_preprocessed_instance_from_path_fn = partial(
-    load_instance_from_pickled_path, instance=PreprocessedInstance, load_from_path_fn=load_pickle
+_load_preprocessed_instance_from_path_fn = partial(
+    load_instance_from_path, instance=PreprocessedInstance, load_from_path_fn=load_pickle
 )
 
 
@@ -51,17 +54,17 @@ def create_preprocessed_hf_dataset_for_task(
 ) -> None:
     """Convert the preprocessed instances into a HF dataset for the given task."""
     logger.info(f"Task {task}: Get all the preprocessed instance paths...")
-    all_train_instance_paths = get_all_preprocessed_instance_paths(
+    all_train_instance_paths = _get_all_preprocessed_instance_paths(
         task_instances_dir.joinpath("train/")
     )
-    all_valid_instance_paths = get_all_preprocessed_instance_paths(
+    all_valid_instance_paths = _get_all_preprocessed_instance_paths(
         task_instances_dir.joinpath("valid/")
     )
 
     logger.info(f"Task {task}: Creating the HF dataset for each split...")
     preprocessed_train_dataset = create_hf_dataset_from_paths(
         paths=all_train_instance_paths,
-        load_instance_from_path_fn=load_preprocessed_instance_from_path_fn,
+        load_instance_from_path_fn=_load_preprocessed_instance_from_path_fn,
         dataset_features=PreprocessedInstance.dataset_features(),
         num_workers=num_workers,
         writer_batch_size=writer_batch_size,
@@ -72,7 +75,7 @@ def create_preprocessed_hf_dataset_for_task(
     )
     preprocessed_valid_dataset = create_hf_dataset_from_paths(
         paths=all_valid_instance_paths,
-        load_instance_from_path_fn=load_preprocessed_instance_from_path_fn,
+        load_instance_from_path_fn=_load_preprocessed_instance_from_path_fn,
         dataset_features=PreprocessedInstance.dataset_features(),
         num_workers=num_workers,
         writer_batch_size=writer_batch_size,
@@ -121,7 +124,7 @@ def create_preprocessed_dataset_per_task(
         create_preprocessed_hf_dataset_for_task(
             task=task,
             task_instances_dir=task_instances_dir,
-            output_dir=preprocessed_hf_dataset_dir.joinpath(task.name),
+            output_dir=preprocessed_hf_dataset_dir.joinpath(_get_config_name_for_task(task)),
             num_workers=num_workers,
             dataset_name=settings.safe_hf_repo_id,
             writer_batch_size=writer_batch_size,
