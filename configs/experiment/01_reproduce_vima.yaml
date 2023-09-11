@@ -6,6 +6,7 @@ defaults:
 architecture: encoder_decoder
 attn_layers: vima
 positional_encoding: absolute
+xattn_positional_encoding: absolute
 source: VIMA
 prompt_input: encoder
 observation_input: decoder

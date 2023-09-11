@@ -1,6 +1,6 @@
 # @package _global_
 
-# For debugging on DMOG (HWU cluster) with A40s
+# DMOG (HWU cluster) with A40s with 48GB VRAM each
 defaults:
   - dmog_1gpu.yaml
   - override /trainer: gpu.yaml
