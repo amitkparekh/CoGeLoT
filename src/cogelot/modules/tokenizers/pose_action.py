@@ -18,7 +18,68 @@ from cogelot.structures.vima import (
     PoseAction,
     PoseActionType,
 )
-from vima.utils import any_slice
+from vima.utils import DataDict, any_slice
+
+
+def create_mask_from_target_actions(
+    actions: DataDict | dict[PoseActionType, torch.Tensor], *, ignore_target_index: int = -100
+) -> torch.Tensor:
+    """Create a mask from the target actions.
+
+    This is used to mask out the loss for the actions that are not present in the target actions.
+    """
+    actions = cast(dict[PoseActionType, torch.Tensor], actions)
+
+    # 1. Figure out which axis has a target value that should be masked (i.e. the target value is
+    #    -100)
+    masked_axes_per_pose = [action.eq(ignore_target_index) for action in actions.values()]
+
+    # 2. Sum across the axes dimension to get a tensor of shape [batch, timesteps]. However, to
+    #    make sure that only mask timesteps where _all_ axes are masked, we check that the sum is
+    #    equal to the number of axes. If the sum is equal to the number of axes, then all axes are
+    #    masked, and are converted to `True`.
+    masked_timesteps_per_pose = [
+        masked_pose_axes.sum(dim=-1).eq(masked_pose_axes.size(-1))
+        for masked_pose_axes in masked_axes_per_pose
+    ]
+
+    # 3. Each tensor how has the same shape. We merge all the tensors by summing them together. To
+    #    make sure that only timesteps where _all_ poses are masked, we check that the sum is equal
+    #    to the number of poses. If the sum is equal to the number of poses, then all poses are
+    #    masked, and are converted to `True`.
+    masked_timesteps = cast(torch.Tensor, sum(masked_timesteps_per_pose)).eq(
+        len(masked_timesteps_per_pose)
+    )
+
+    return masked_timesteps
+
+
+def convert_discrete_action_to_continuous_on_boundary(
+    discrete_actions: torch.Tensor, boundary: torch.Tensor, mask_for_select: torch.Tensor
+) -> torch.Tensor:
+    """Convert discrete actions to continuous actions on the boundary."""
+    # Make sure the discrete actions have the same number of dimensions as the mask for select
+    if discrete_actions.ndim != mask_for_select.ndim:
+        dim_difference = abs(discrete_actions.ndim - mask_for_select.ndim)
+        if discrete_actions.ndim > mask_for_select.ndim:
+            for _ in range(dim_difference):
+                mask_for_select = mask_for_select.unsqueeze(-1)
+        if mask_for_select.ndim > discrete_actions.ndim:
+            for _ in range(dim_difference):
+                discrete_actions = discrete_actions.unsqueeze(-1)
+
+    # As the mask is likely just covering the number of timesteps, we need to expand it to cover
+    # all the axes
+    mask_for_select = mask_for_select.expand_as(discrete_actions)
+
+    # Index the actions on the boundaries to get the continuous value for each axis. We use masked
+    # select to ignore the actions that are set to -100, which is the ignore index.
+    source = boundary[torch.masked_select(discrete_actions, mask_for_select)]
+
+    tensor = torch.masked_scatter(
+        input=discrete_actions.to(source.dtype), mask=mask_for_select, source=source
+    )
+    return tensor
 
 
 class PoseActionTokenizer:
@@ -86,9 +147,19 @@ class PoseActionTokenizer:
         return discrete_actions
 
     def convert_discrete_to_continuous(
-        self, actions: dict[PoseActionType, torch.Tensor]
+        self,
+        actions: dict[PoseActionType, torch.Tensor],
+        mask: torch.Tensor | None = None,
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert discrete actions to continuous actions."""
+        # If the mask is None, then we can just set all the values to False
+        if mask is None:
+            mask = torch.zeros(
+                actions["pose0_position"].shape[:-1],
+                dtype=torch.bool,
+                device=actions["pose0_position"].device,
+            )
+
         # Make sure the actions are integers so we can use them as indices
         actions = {k: v.long() for k, v in actions.items()}
 
@@ -100,21 +171,38 @@ class PoseActionTokenizer:
             k: v.clone().float() for k, v in actions.items()
         }
 
-        # Index the actions on the boundaries
-        continuous_actions["pose0_position"][..., 0] = x_boundary[
-            actions["pose0_position"][..., 0]
-        ]
-        continuous_actions["pose0_position"][..., 1] = y_boundary[
-            actions["pose0_position"][..., 1]
-        ]
-        continuous_actions["pose0_rotation"] = rot_boundary[actions["pose0_rotation"]]
-        continuous_actions["pose1_position"][..., 0] = x_boundary[
-            actions["pose1_position"][..., 0]
-        ]
-        continuous_actions["pose1_position"][..., 1] = y_boundary[
-            actions["pose1_position"][..., 1]
-        ]
-        continuous_actions["pose1_rotation"] = rot_boundary[actions["pose1_rotation"]]
+        # Since the mask assumes that the True values are to be removed, we want to invert it for
+        # the masked selecting since we want to keep all the un-masked values
+        mask_for_select = ~mask
+
+        # Index the actions on the boundaries to get the continuous value for each axis. We use
+        # masked scatter because some action tokens are set to -100, which is the ignore index.
+        continuous_actions["pose0_position"][..., 0] = (
+            convert_discrete_action_to_continuous_on_boundary(
+                actions["pose0_position"][..., 0], x_boundary, mask_for_select
+            )
+        )
+        continuous_actions["pose0_position"][..., 1] = (
+            convert_discrete_action_to_continuous_on_boundary(
+                actions["pose0_position"][..., 1], y_boundary, mask_for_select
+            )
+        )
+        continuous_actions["pose0_rotation"] = convert_discrete_action_to_continuous_on_boundary(
+            actions["pose0_rotation"], rot_boundary, mask_for_select
+        )
+        continuous_actions["pose1_position"][..., 0] = (
+            convert_discrete_action_to_continuous_on_boundary(
+                actions["pose1_position"][..., 0], x_boundary, mask_for_select
+            )
+        )
+        continuous_actions["pose1_position"][..., 1] = (
+            convert_discrete_action_to_continuous_on_boundary(
+                actions["pose1_position"][..., 1], y_boundary, mask_for_select
+            )
+        )
+        continuous_actions["pose1_rotation"] = convert_discrete_action_to_continuous_on_boundary(
+            actions["pose1_rotation"], rot_boundary, mask_for_select
+        )
 
         return continuous_actions
 

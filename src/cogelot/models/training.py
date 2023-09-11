@@ -88,9 +88,10 @@ class VIMALightningModule(pl.LightningModule):
         encoded_predicted_actions = self.policy.predict_action_token(
             encoded_prompt=batch.encoded_prompt,
             encoded_prompt_mask=batch.encoded_prompt_mask,
-            embedded_observations=batch.embedded_observations,
-            embedded_observations_mask=batch.embedded_observations_mask,
-            embedded_actions=batch.embedded_actions,
+            encoded_observations=batch.encoded_observations,
+            encoded_observations_mask=batch.encoded_observations_mask,
+            encoded_actions=batch.encoded_actions,
+            encoded_actions_mask=batch.encoded_actions_mask,
         )
 
         predicted_actions_dists = self.policy.decode_action_token(encoded_predicted_actions)
@@ -178,16 +179,17 @@ class VIMALightningModule(pl.LightningModule):
             (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
         )
         encoded_prompt = self.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
-        embedded_observations, embedded_observations_mask = self.policy.embed_observation_token(
+        encoded_observations, embedded_observations_mask = self.policy.encode_observation_token(
             batch.observations
         )
-        embedded_actions = self.policy.embed_action_token(batch.actions)
+        encoded_actions, encoded_actions_mask = self.policy.encode_action_tokens(batch.actions)
         return ModelInstance(
             encoded_prompt=encoded_prompt,
             encoded_prompt_mask=embedded_prompt_mask,
-            embedded_observations=embedded_observations,
-            embedded_observations_mask=embedded_observations_mask,
-            embedded_actions=embedded_actions,
+            encoded_observations=encoded_observations,
+            encoded_observations_mask=embedded_observations_mask,
+            encoded_actions=encoded_actions,
+            encoded_actions_mask=encoded_actions_mask,
         )
 
     @torch.no_grad()

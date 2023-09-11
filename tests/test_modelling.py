@@ -4,47 +4,91 @@ from pytest import fixture
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.metrics import LossPerAxisPerActionMetric
+from cogelot.modules.stitching import (
+    add_observations_to_tokens_using_loop,
+    add_observations_to_tokens_using_scatter,
+    stitch_observations_with_actions,
+)
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
-from cogelot.structures.model import PreprocessedInstance
+from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
 from vima.nn.action_decoder.dists import MultiCategorical
 
 
-def test_model_forward_does_not_error(
-    vima_lightning_module: VIMALightningModule,
+@fixture(scope="module")
+def preprocessed_batch(
     all_preprocessed_instances: list[PreprocessedInstance],
-) -> None:
+) -> PreprocessedBatch:
     batch = collate_preprocessed_instances(all_preprocessed_instances)
-    forward_output = vima_lightning_module.forward(vima_lightning_module.embed_inputs(batch))
+    return batch
+
+
+def test_model_embeds_properly(
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+) -> None:
+    embedded_inputs = vima_lightning_module.embed_inputs(preprocessed_batch)
+
+    # Make sure that the first element of the masks are False, since we are using PyTorch-style
+    # meaning
+    assert embedded_inputs.encoded_actions_mask is not None
+    assert embedded_inputs.encoded_actions_mask.flatten()[0].item() is False
+
+    assert embedded_inputs.encoded_observations_mask.flatten()[0].item() is False
+
+
+def test_stitching_observations_with_actions_is_correct(
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+) -> None:
+    embedded_inputs = vima_lightning_module.embed_inputs(preprocessed_batch)
+
+    actual_tokens, actual_mask = stitch_observations_with_actions(
+        embedded_inputs.encoded_observations,
+        embedded_inputs.encoded_observations_mask,
+        embedded_inputs.encoded_actions,
+        embedded_inputs.encoded_actions_mask,
+        add_observations_to_tokens_fn=add_observations_to_tokens_using_scatter,
+    )
+
+    expected_tokens, expected_mask = stitch_observations_with_actions(
+        embedded_inputs.encoded_observations,
+        embedded_inputs.encoded_observations_mask,
+        embedded_inputs.encoded_actions,
+        embedded_inputs.encoded_actions_mask,
+        add_observations_to_tokens_fn=add_observations_to_tokens_using_loop,
+    )
+
+    assert torch.all(expected_tokens == actual_tokens)
+    assert torch.all(actual_mask == expected_mask)
+
+
+def test_model_forward_does_not_error(
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+) -> None:
+    forward_output = vima_lightning_module.forward(
+        vima_lightning_module.embed_inputs(preprocessed_batch)
+    )
 
     assert forward_output
 
 
 def test_model_training_step_does_not_error(
-    vima_lightning_module: VIMALightningModule,
-    all_preprocessed_instances: list[PreprocessedInstance],
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
 ) -> None:
-    batch = collate_preprocessed_instances(all_preprocessed_instances)
-    loss = vima_lightning_module.training_step(batch, 0)
+    loss = vima_lightning_module.training_step(preprocessed_batch, 0)
     assert loss
 
 
 @fixture(scope="module")
-def target_actions(
-    all_preprocessed_instances: list[PreprocessedInstance],
-) -> dict[PoseActionType, torch.Tensor]:
-    batch = collate_preprocessed_instances(all_preprocessed_instances)
-    return batch.actions.to_container()
+def target_actions(preprocessed_batch: PreprocessedBatch) -> dict[PoseActionType, torch.Tensor]:
+    return preprocessed_batch.actions.to_container()
 
 
 @fixture(scope="module")
 def predicted_action_dists(
-    vima_lightning_module: VIMALightningModule,
-    all_preprocessed_instances: list[PreprocessedInstance],
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
 ) -> dict[PoseActionType, MultiCategorical]:
-    batch = collate_preprocessed_instances(all_preprocessed_instances)
     predicted_action_dists = vima_lightning_module.forward(
-        vima_lightning_module.embed_inputs(batch)
+        vima_lightning_module.embed_inputs(preprocessed_batch)
     )
     return predicted_action_dists
 

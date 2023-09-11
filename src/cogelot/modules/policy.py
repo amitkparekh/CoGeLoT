@@ -2,15 +2,20 @@ from operator import itemgetter
 from typing import ClassVar, Self, cast
 
 import torch
-from einops import rearrange
 
-from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
+from cogelot.modules.stitching import (
+    add_observations_to_tokens_using_scatter,
+    get_max_num_objects_from_encoded_observations,
+    stitch_observations_with_actions,
+)
+from cogelot.modules.tokenizers.pose_action import (
+    PoseActionTokenizer,
+    create_mask_from_target_actions,
+)
 from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.structures.model import RawPromptTokenType
-from cogelot.structures.vima import (
-    PoseActionType,
-)
+from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
 from vima.nn.action_decoder.dists import MultiCategorical
 from vima.policy.vima_policy import VIMAPolicy
@@ -28,69 +33,6 @@ def get_max_length_of_prompt(raw_prompts_token_type: RawPromptTokenType, max_num
     )
     max_length = max(length_per_prompt)
     return max_length
-
-
-def get_max_num_objects_from_embedded_observations(embedded_observations: torch.Tensor) -> int:
-    """Get the maximum number of objects from the embedded observations."""
-    return embedded_observations.shape[-2]
-
-
-def stitch_observations_with_actions(  # noqa: WPS210
-    embedded_observations: torch.Tensor,
-    embedded_observations_mask: torch.Tensor,
-    embedded_actions: torch.Tensor | None,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Stitch the observations together with actions for decoder input."""
-    embed_dim = embedded_observations.size(-1)
-    batch_size, observation_seq_len = embedded_observations.shape[:2]
-    actions_seq_len = 0 if embedded_actions is None else embedded_actions.shape[1]
-
-    if observation_seq_len not in {actions_seq_len, actions_seq_len + 1}:
-        raise AssertionError(
-            "The number of observations must be equal to or one more than the number of actions"
-        )
-
-    max_objects = get_max_num_objects_from_embedded_observations(embedded_observations)
-    total_seq_len = observation_seq_len * max_objects + actions_seq_len
-
-    # Rearrange the tensors to be in the right structure
-    # embedded_observations = rearrange(embedded_observations, "L B Q E -> B L Q E")
-    embedded_observations = rearrange(embedded_observations, "B L Q E -> B (L Q) E")
-    embedded_observations = rearrange(embedded_observations, "B L E -> L B E")
-
-    # embedded_observations_mask = rearrange(embedded_observations_mask, "L B Q -> B L Q")
-    embedded_observations_mask = rearrange(embedded_observations_mask, "B L Q -> B (L Q)")
-    embedded_observations_mask = rearrange(embedded_observations_mask, "B L -> L B")
-
-    # Create tensors which will we will use to put the various tokens into
-    tokens = torch.empty(
-        total_seq_len,
-        batch_size,
-        embed_dim,
-        dtype=torch.float32,
-        device=embedded_observations.device,
-    )
-    masks = torch.ones(
-        total_seq_len, batch_size, dtype=torch.bool, device=embedded_observations.device
-    )
-
-    # Fill in the tokens and masks properly
-    for obj_idx in range(max_objects):
-        tokens[obj_idx :: max_objects + 1] = embedded_observations[  # noqa: WPS362
-            obj_idx::max_objects
-        ]
-        masks[obj_idx :: max_objects + 1] = embedded_observations_mask[  # noqa: WPS362
-            obj_idx::max_objects
-        ]
-
-    if embedded_actions is not None:
-        tokens[max_objects :: max_objects + 1] = embedded_actions.transpose(0, 1)  # noqa: WPS362
-
-    # Put the batch first
-    tokens = rearrange(tokens, "L B E -> B L E")
-    masks = rearrange(masks, "L B -> B L")
-
-    return tokens, masks
 
 
 class Policy(torch.nn.Module):
@@ -162,14 +104,19 @@ class Policy(torch.nn.Module):
         self,
         encoded_prompt: torch.Tensor,
         encoded_prompt_mask: torch.Tensor,
-        embedded_observations: torch.Tensor,
-        embedded_observations_mask: torch.Tensor,
-        embedded_actions: torch.Tensor | None,
+        encoded_observations: torch.Tensor,
+        encoded_observations_mask: torch.Tensor,
+        encoded_actions: torch.Tensor | None,
+        encoded_actions_mask: torch.Tensor | None,
     ) -> torch.Tensor:
         """Predict the action token."""
-        max_objects = get_max_num_objects_from_embedded_observations(embedded_observations)
+        max_objects = get_max_num_objects_from_encoded_observations(encoded_observations)
         tokens, masks = stitch_observations_with_actions(
-            embedded_observations, embedded_observations_mask, embedded_actions
+            encoded_observations,
+            encoded_observations_mask,
+            encoded_actions,
+            encoded_actions_mask,
+            add_observations_to_tokens_fn=add_observations_to_tokens_using_scatter,
         )
 
         transformer_output = self._transformer_decoder.forward(
@@ -271,8 +218,11 @@ class Policy(torch.nn.Module):
         prompt_masks_tensor = torch.nn.utils.rnn.pad_sequence(prompt_masks, batch_first=True)
         return prompt_tokens_tensor, prompt_masks_tensor
 
-    def embed_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
-        """Embed an observation."""
+    def encode_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
+        """Encode an observation.
+
+        When creating the mask, we follow PyTorch's meaning: `True` == "IS masked".
+        """
         obs_objects, ee = observation["objects"], observation["ee"]
 
         assert isinstance(obs_objects, DataDict)
@@ -306,25 +256,30 @@ class Policy(torch.nn.Module):
             dim=-1,
         )
 
+        # Convert to the PyTorch-style mask, where True means it IS MASKED. The VIMA source opts
+        # for the other approach, and we are going to be consistent dammit.
+        obj_mask_tensor = ~obj_mask_tensor
+
         return obs_feats, obj_mask_tensor
 
-    def embed_action_token(
-        self, actions: DataDict | dict[PoseActionType, torch.Tensor]
-    ) -> torch.Tensor:
+    def encode_action_tokens(
+        self,
+        actions: DataDict | dict[PoseActionType, torch.Tensor],
+        *,
+        ignore_target_index: int = -100,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Embed the actions into a tensor.
 
         So this takes the action tokens, and converts them back into a continuous form, and then
         provides that straight into the encoder, which are just MLPs that convert from the list of
         2/4 coordinates (given the pose action type), into a N-dimensional tensor.
-
-        I don't understand why they did this, but okay.
         """
-        embedded_actions = self._action_encoder(
-            self._pose_action_tokenizer.convert_discrete_to_continuous(
-                cast(dict[PoseActionType, torch.Tensor], actions),
-            )
+        mask = create_mask_from_target_actions(actions, ignore_target_index=ignore_target_index)
+        embedded_actions = self._pose_action_tokenizer.convert_discrete_to_continuous(
+            cast(dict[PoseActionType, torch.Tensor], actions), mask
         )
-        return embedded_actions
+        encoded_actions = self._action_encoder(embedded_actions)
+        return encoded_actions, mask
 
     def encode_prompt(
         self, embedded_prompt: torch.Tensor, embedded_prompt_mask: torch.Tensor

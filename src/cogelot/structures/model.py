@@ -183,9 +183,11 @@ class ModelInstance(NamedTuple):
     encoded_prompt_mask: torch.Tensor
 
     # [batch, obs, obj, dim]
-    embedded_observations: torch.Tensor
+    encoded_observations: torch.Tensor
     # [batch, obs, obj]
-    embedded_observations_mask: torch.Tensor
+    encoded_observations_mask: torch.Tensor
 
     # [batch, actions, dim]
-    embedded_actions: torch.Tensor | None
+    encoded_actions: torch.Tensor | None
+    # [batch, actions]
+    encoded_actions_mask: torch.Tensor | None

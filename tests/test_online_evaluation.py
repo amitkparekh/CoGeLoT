@@ -53,24 +53,24 @@ def test_creating_model_instance_from_state_works(
     assert model_instance.encoded_prompt_mask.shape[0] == 1
 
     # Make sure the observations are the right shape
-    assert model_instance.embedded_observations.ndim == 4
-    assert model_instance.embedded_observations.shape[0] == 1
+    assert model_instance.encoded_observations.ndim == 4
+    assert model_instance.encoded_observations.shape[0] == 1
     assert (
-        model_instance.embedded_observations.shape[1] == evaluation_module.buffer.num_observations
+        model_instance.encoded_observations.shape[1] == evaluation_module.buffer.num_observations
     )
 
-    assert model_instance.embedded_observations_mask.ndim == 3
-    assert model_instance.embedded_observations_mask.shape[0] == 1
+    assert model_instance.encoded_observations_mask.ndim == 3
+    assert model_instance.encoded_observations_mask.shape[0] == 1
     assert (
-        model_instance.embedded_observations_mask.shape[1]
+        model_instance.encoded_observations_mask.shape[1]
         == evaluation_module.buffer.num_observations
     )
 
     # Make sure the actions are the right shape
-    assert model_instance.embedded_actions is not None
-    assert model_instance.embedded_actions.ndim == 3
-    assert model_instance.embedded_actions.shape[0] == 1
-    assert model_instance.embedded_actions.shape[1] == evaluation_module.buffer.num_actions
+    assert model_instance.encoded_actions is not None
+    assert model_instance.encoded_actions.ndim == 3
+    assert model_instance.encoded_actions.shape[0] == 1
+    assert model_instance.encoded_actions.shape[1] == evaluation_module.buffer.num_actions
 
 
 def test_evaluation_runs_with_trainer(

@@ -118,9 +118,9 @@ class ReplayBuffer:
         return ModelInstance(
             encoded_prompt=self.encoded_prompt,
             encoded_prompt_mask=self.encoded_prompt_mask,
-            embedded_observations=self.embedded_observations,
-            embedded_observations_mask=self.embedded_observation_masks,
-            embedded_actions=self.embedded_actions,
+            encoded_observations=self.embedded_observations,
+            encoded_observations_mask=self.embedded_observation_masks,
+            encoded_actions=self.embedded_actions,
         )
 
     def reset(self, task: Task, partition: Partition) -> None:

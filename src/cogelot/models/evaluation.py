@@ -158,9 +158,10 @@ class EvaluationLightningModule(pl.LightningModule):
         # it in
         prepared_observations = cast(DataDict, prepared_observations.map_structure(add_batch_dim))
 
-        embedded_observations, embedded_observation_masks = (
-            self.model.policy.embed_observation_token(prepared_observations)
-        )
+        (
+            embedded_observations,
+            embedded_observation_masks,
+        ) = self.model.policy.encode_observation_token(prepared_observations)
 
         self.buffer.add_next_embedded_observation(
             embedded_observations, embedded_observation_masks
@@ -170,7 +171,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self, pose_action_tokens: dict[PoseActionType, torch.Tensor]
     ) -> None:
         """Add a pose action to the state."""
-        encoded_pose_actions = self.model.policy.embed_action_token(pose_action_tokens)
+        encoded_pose_actions = self.model.policy.encode_action_tokens(pose_action_tokens)
         self.buffer.add_next_embedded_action(encoded_pose_actions)
 
     def predict_next_pose_action_token(self) -> dict[PoseActionType, torch.Tensor]:

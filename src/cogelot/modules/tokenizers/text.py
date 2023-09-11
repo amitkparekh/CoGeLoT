@@ -29,7 +29,7 @@ class AssetPlaceholderToken(BaseModel):
         token_list = [self.asset_name]
         if self.max_idx:
             tokens = [  # noqa: WPS221
-                f"{self.asset_name}_{idx}" for idx in range(0, self.max_idx + 1)
+                f"{self.asset_name}_{idx}" for idx in range(self.max_idx + 1)
             ]
             token_list.extend(tokens)
 
