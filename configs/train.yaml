@@ -4,7 +4,7 @@ defaults:
   - _self_
 
   # Get the datamodule from the other config file
-  - /datamodule.yaml
+  - datamodule: from_local_files.yaml
 
   - trainer: cpu.yaml
 

@@ -1,0 +1,6 @@
+defaults:
+  - default.yaml
+  - _self_
+
+_target_: cogelot.data.datamodule.VIMADataModuleFromHF
+dataset_data_dir: ./storage/data/preprocessed/hf

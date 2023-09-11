@@ -1,4 +1,6 @@
-from typing import Any, Literal
+import abc
+from pathlib import Path
+from typing import Any, Literal, NotRequired, TypedDict, Unpack
 
 import datasets
 from lightning import LightningDataModule
@@ -6,12 +8,11 @@ from torch.utils.data import DataLoader
 
 from cogelot.common.hf_datasets import (
     download_parquet_files_from_hub,
-    get_location_of_parquet_files,
-    load_dataset_from_parquet_files,
+    get_location_of_hub_parquet_files,
+    load_dataset_from_disk,
     maybe_split_dataset_by_node,
 )
 from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
-from cogelot.data.datasets import set_dataset_format
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
 
@@ -19,35 +20,26 @@ from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
 SetupStage = Literal["fit", "validate", "test", "predict"]
 
 
-class VIMADataModule(LightningDataModule):
+class DataModuleKwargs(TypedDict):
+    """Kwargs for the __init__ in the datamodule."""
+
+    num_workers: int
+    batch_size: int
+    dataloader_kwargs: NotRequired[dict[str, Any]]
+
+
+class VIMADataModule(abc.ABC, LightningDataModule):
     """Datamodule for the VIMA dataset."""
 
-    def __init__(
-        self,
-        *,
-        hf_datasets_repo_name: str,
-        num_workers: int,
-        batch_size: int,
-        dataloader_kwargs: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__()
-        self._hf_datasets_repo_name = hf_datasets_repo_name
-
-        self._num_workers = num_workers
-        self._dataloader_kwargs = dataloader_kwargs or {}
-
-        self.batch_size = batch_size
+        self._num_workers = kwargs.get("num_workers")
+        self.batch_size = kwargs.get("batch_size")
+        self._dataloader_kwargs = kwargs.get("dataloader_kwargs", {})
 
         self.train_dataset: datasets.Dataset
         self.valid_dataset: datasets.Dataset
         self.test_dataset: VIMAEvaluationDataset
-
-    def prepare_data(self) -> None:
-        """Prepare any data before starting training.
-
-        This is just making sure the dataset has already been downloaded.
-        """
-        download_parquet_files_from_hub(self._hf_datasets_repo_name, max_workers=self._num_workers)
 
     def setup(self, stage: SetupStage) -> None:
         """Setup each GPU to run the data."""
@@ -97,13 +89,61 @@ class VIMADataModule(LightningDataModule):
             batch_sampler=None,
         )
 
+    @abc.abstractmethod
+    def _load_dataset(self) -> datasets.DatasetDict:
+        """Load the dataset for all the splits."""
+        raise NotImplementedError
+
+
+class VIMADataModuleFromHF(VIMADataModule):
+    """VIMA DataModule by explicitly downloading the dataset from HF."""
+
+    def __init__(self, *, hf_datasets_repo_name: str, **kwargs: Unpack[DataModuleKwargs]) -> None:
+        super().__init__(**kwargs)
+        self._hf_datasets_repo_name = hf_datasets_repo_name
+
+    def prepare_data(self) -> None:
+        """Prepare any data before starting training.
+
+        This is just making sure the dataset has already been downloaded.
+        """
+        download_parquet_files_from_hub(self._hf_datasets_repo_name, max_workers=self._num_workers)
+
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset from the parquet files.
 
         This is not using `datasets.load_dataset` because doing it this separate way is much
         faster, but does have some complexity overhead.
         """
-        dataset_data_dir = get_location_of_parquet_files(self._hf_datasets_repo_name)
-        dataset = load_dataset_from_parquet_files(dataset_data_dir, num_proc=self._num_workers)
-        dataset = set_dataset_format(dataset)
+        dataset_data_dir = get_location_of_hub_parquet_files(self._hf_datasets_repo_name)
+        dataset = load_dataset_from_disk(
+            dataset_data_dir,
+            extension="parquet",
+            config_name="preprocessed",
+            num_proc=self._num_workers,
+        )
+        dataset = dataset.with_format(
+            "torch", columns=PreprocessedInstance.hf_tensor_fields, output_all_columns=True
+        )
+        return dataset
+
+
+class VIMADataModuleFromLocalFiles(VIMADataModule):
+    """VIMA DataModule which loads data from disk."""
+
+    def __init__(self, *, dataset_data_dir: Path, **kwargs: Unpack[DataModuleKwargs]) -> None:
+        super().__init__(**kwargs)
+        self._dataset_data_dir = dataset_data_dir
+
+    def _load_dataset(self) -> datasets.DatasetDict:
+        """Load the dataset from the arrow files."""
+        dataset = load_dataset_from_disk(
+            self._dataset_data_dir,
+            extension="arrow",
+            config_name="preprocessed",
+            num_proc=self._num_workers,
+        )
+        dataset = dataset.with_format(
+            "torch", columns=PreprocessedInstance.hf_tensor_fields, output_all_columns=True
+        )
         return dataset

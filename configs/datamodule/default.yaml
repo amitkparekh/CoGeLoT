@@ -1,0 +1,7 @@
+_target_: ???
+
+batch_size: 16
+num_workers: 64
+dataloader_kwargs:
+  # https://forums.fast.ai/t/last-training-batch-is-dropped/39321/2
+  drop_last: true
