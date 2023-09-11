@@ -1,16 +1,19 @@
-import datasets
+import itertools
+
+from hypothesis import given, strategies as st
 
 from cogelot.data.collate import collate_preprocessed_instances
-from cogelot.data.datamodule import VIMADataModule
 from cogelot.structures.model import PreprocessedInstance
 
 
-def test_collate_preprocessed_instances_works(hf_dataset: datasets.Dataset) -> None:
-    preprocessed_instances = list(map(PreprocessedInstance.from_hf_dict, hf_dataset))  # type: ignore
-
-    batch = collate_preprocessed_instances(preprocessed_instances)
+@given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
+def test_collate_preprocessed_instances_does_not_error(
+    all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
+) -> None:
+    all_preprocessed_instances = list(
+        itertools.chain.from_iterable(
+            [all_preprocessed_instances for _ in range(batch_size_multiplier)]
+        )
+    )
+    batch = collate_preprocessed_instances(all_preprocessed_instances)
     assert batch
-
-
-def test_vima_datamodule_loads_without_error(vima_datamodule: VIMADataModule) -> None:
-    assert vima_datamodule

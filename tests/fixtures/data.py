@@ -1,3 +1,4 @@
+import itertools
 from pathlib import Path
 
 import datasets
@@ -74,28 +75,20 @@ def all_preprocessed_instances(
     return list(preprocessed_instances)
 
 
-# @fixture(scope="session")
-# def hf_dataset(all_preprocessed_instances: list[PreprocessedInstance]) -> datasets.Dataset:
-#     num_cycles = 5
-
-#     # Repeat the input data multiple times
-#     all_preprocessed_instances = list(
-#         itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
-#     )
-
-#     def gen(preprocessed_instances: Iterable[PreprocessedInstance]) -> Iterator[dict[str, Any]]:
-#         generator = (instance.to_hf_dict() for instance in preprocessed_instances)
-#         yield from generator
-
-#     dataset = create_hf_dataset(gen, all_preprocessed_instances)
-#     dataset = set_dataset_format(dataset)
-#     return dataset
-
-
-# @fixture(scope="session")
-# def vima_datamodule() -> VIMADataModule:
-#     """VIMA datamodule."""
-#     datamodule = VIMADataModule(
-#         hf_datasets_repo_name="amitkparekh/vima-small", num_workers=1, batch_size=1
-#     )
-#     return datamodule
+@fixture(scope="session")
+def preprocessed_instances_dataset(
+    all_preprocessed_instances: list[PreprocessedInstance],
+) -> datasets.Dataset:
+    # Repeat the input data multiple times
+    num_cycles = 5
+    all_preprocessed_instances = list(
+        itertools.chain.from_iterable([all_preprocessed_instances for _ in range(num_cycles)])
+    )
+    dataset = datasets.Dataset.from_list(
+        [instance.model_dump() for instance in all_preprocessed_instances],
+        features=PreprocessedInstance.dataset_features(),
+    )
+    dataset = dataset.with_format(
+        "torch", columns=PreprocessedInstance.hf_tensor_fields, output_all_columns=True
+    )
+    return dataset
