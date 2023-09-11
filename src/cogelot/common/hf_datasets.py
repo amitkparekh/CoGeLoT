@@ -49,7 +49,6 @@ def download_parquet_files_from_hub(
         repo_id=repo_id,
         repo_type="dataset",
         local_dir=None,
-        library_name=repo_id,
         allow_patterns=pattern,
         max_workers=max_workers,
         resume_download=True,
@@ -62,7 +61,6 @@ def get_location_of_parquet_files(repo_id: str) -> Path:
         snapshot_download(
             repo_id=repo_id,
             repo_type="dataset",
-            library_name=repo_id,
             local_files_only=True,
             local_dir=None,
         )
