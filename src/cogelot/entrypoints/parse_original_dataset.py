@@ -53,7 +53,7 @@ def parse_original_dataset(
     ] = settings.raw_data_dir,
     parsed_instances_dir: Annotated[
         Path, typer.Argument(help="Where to save all of the parsed instances")
-    ] = settings.parsed_data_dir,
+    ] = settings.parsed_instances_dir,
     *,
     num_workers: Annotated[int, typer.Option(help="Number of workers")] = 1,
     replace_if_exists: Annotated[
