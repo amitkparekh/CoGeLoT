@@ -35,7 +35,7 @@ def create_hf_dataset_from_paths(
     writer_batch_size: int | None,
     dataset_builder_kwargs: dict[str, Any] | None = None,
 ) -> datasets.Dataset:
-    """Create HF dataset from VIMA instance paths."""
+    """Create HF dataset from instance paths."""
     dataset_builder_kwargs = dataset_builder_kwargs or {}
 
     yield_instance_for_generator_fn = partial(

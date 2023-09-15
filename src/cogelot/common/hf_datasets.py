@@ -150,5 +150,8 @@ def upload_dataset_to_hub(
     dataset_dict = datasets.load_from_disk(str(saved_hf_dataset_dir))
     assert isinstance(dataset_dict, datasets.DatasetDict)
 
-    logger.info("Pushing the preprocessed dataset to the hub...")
-    dataset_dict.push_to_hub(hf_repo_id, num_shards=num_shards)
+    # Get the config name for the dataset
+    config_name = next(iter(dataset_dict)).info.config_name
+
+    logger.info(f"Pushing dataset ({config_name}) to the hub...")
+    dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
