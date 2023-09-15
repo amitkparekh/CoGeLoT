@@ -12,7 +12,6 @@ license = { text = "MIT" }
 
 dependencies = [
 	"torch<3.0.0,>=2.0.0,!=2.0.1",
-	"lightning<3,>=2",
 	"tokenizers>=0.13.3",
 	"transformers>=4.32.0",
 	"omegaconf>=2.3.0",
@@ -34,7 +33,11 @@ dependencies = [
 	"einops>=0.6.1",
 	"pandas>=2.0.3",
 	"pydantic-settings>=2.0.3",
+	"lightning>=2.0.9",
 ]
+
+[tool.pdm.resolution.overrides]
+pydantic = ">=2.3.0"
 
 [project.optional-dependencies]
 environment = [
