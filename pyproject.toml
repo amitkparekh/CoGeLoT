@@ -36,9 +36,32 @@ dependencies = [
 	"lightning>=2.0.9",
 ]
 
+[tool.pdm]
 [tool.pdm.resolution.overrides]
 pydantic = ">=2.3.0"
 
+
+[tool.pdm.build]
+package-dir = "src"
+
+[tool.pdm.dev-dependencies]
+test = [
+	"pytest>=7.4.0",
+	"pytest-cov>=4.1.0",
+	"pytest-cases>=3.6.14",
+	"pytest-xdist>=3.3.1",
+	"hypothesis>=6.84.0",
+]
+lint = [
+	"black>=23.7.0",
+	"ruff>=0.0.285",
+	"mypy>=1.5.1",
+	"pre-commit>=3.3.3",
+	"wemake-python-styleguide>=0.18.0",
+	"flake8-pyproject>=1.2.3",
+	"commitizen>=3.6.0",
+	"toml-sort>=0.23.1",
+]
 [project.optional-dependencies]
 environment = [
 	"gym>=0.26.2",
@@ -320,24 +343,3 @@ extend-exclude = [
 [tool.pytest.ini_options]
 # addopts = "--jaxtyping-packages=cogelot,beartype.beartype"
 testpaths = ["tests"]
-
-[tool.pdm.build]
-package-dir = "src"
-
-[tool.pdm.dev-dependencies]
-test = [
-	"pytest>=7.4.0",
-	"pytest-cov>=4.1.0",
-	"pytest-cases>=3.6.14",
-	"pytest-xdist>=3.3.1",
-	"hypothesis>=6.84.0",
-]
-lint = [
-	"black>=23.7.0",
-	"ruff>=0.0.285",
-	"mypy>=1.5.1",
-	"pre-commit>=3.3.3",
-	"wemake-python-styleguide>=0.18.0",
-	"flake8-pyproject>=1.2.3",
-	"commitizen>=3.6.0",
-]

@@ -6,7 +6,7 @@ groups = ["default", "test", "lint", "environment"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:71160486e4e26e0dd2ddeb0e4a57996721f91cbad0df7690b45bd8b7e179d2ea"
+content_hash = "sha256:49103fa86a060dcfdfd2978406f313b477205453fa59fd01143d6f9a33c54be6"
 
 [[package]]
 name = "aiohttp"
@@ -2495,6 +2495,19 @@ files = [
     {file = "tokenizers-0.13.3-cp311-cp311-win32.whl", hash = "sha256:cc78d77f597d1c458bf0ea7c2a64b6aa06941c7a99cb135b5969b0278824d808"},
     {file = "tokenizers-0.13.3-cp311-cp311-win_amd64.whl", hash = "sha256:ecf182bf59bd541a8876deccf0360f5ae60496fd50b58510048020751cf1724c"},
     {file = "tokenizers-0.13.3.tar.gz", hash = "sha256:2e546dbb68b623008a5442353137fbb0123d311a6d7ba52f2667c8862a75af2e"},
+]
+
+[[package]]
+name = "toml-sort"
+version = "0.23.1"
+requires_python = ">=3.7,<4.0"
+summary = "Toml sorting library"
+dependencies = [
+    "tomlkit>=0.11.2",
+]
+files = [
+    {file = "toml_sort-0.23.1-py3-none-any.whl", hash = "sha256:69ae60de9c4d67478533697eb4119092e2b30ddffe5ca09bbad3912905c935a0"},
+    {file = "toml_sort-0.23.1.tar.gz", hash = "sha256:833728c48b0f8d509aecd9ae8347768ca3a9332977b32c9fd2002932f0eb9c90"},
 ]
 
 [[package]]
