@@ -151,7 +151,7 @@ def upload_dataset_to_hub(
     assert isinstance(dataset_dict, datasets.DatasetDict)
 
     # Get the config name for the dataset
-    config_name = next(iter(dataset_dict)).info.config_name
+    config_name = next(iter(dataset_dict.values())).info.config_name
 
     logger.info(f"Pushing dataset ({config_name}) to the hub...")
     dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
