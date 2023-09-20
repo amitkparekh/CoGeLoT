@@ -37,10 +37,6 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     model: pl.LightningModule = instantiated_modules["model"]
     trainer: pl.Trainer = instantiated_modules["trainer"]
 
-    datamodule = hydra.utils.instantiate(config.datamodule)
-    model = hydra.utils.instantiate(config.model)
-    trainer = hydra.utils.instantiate(config.trainer, callbacks=model.callbacks)
-
     return InstantiatedModules(datamodule=datamodule, model=model, trainer=trainer)
 
 
