@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Literal, TypeVar
+from typing import Literal, TypeVar, cast
 
 import datasets
 from datasets.distributed import split_dataset_by_node
@@ -104,19 +104,23 @@ def load_dataset_from_disk(
     # The root data dir will have subdirs for each task, prefixed by the `config_name` of the
     # dataset since that's how they were made. e.g. `{data_dir}/raw--visual_manipulation/`
     task_dataset_dirs = data_dir.glob(f"{config_name}*/")
-
-    # Create a generator that will load the dataset for each and every task
-    dataset_per_task = (
-        load_dataset_from_files(task_dataset_dir, extension=extension, num_proc=num_proc)
-        for task_dataset_dir in task_dataset_dirs
-    )
-
-    # Merge the splits per task together. Since there is no guarantee on the splits per task, this
-    # is the best way I can think to do it. While we are at it, we merge all the dataset info's
-    # together.
+    # Try to load each task dataset using `datasets.load_from_disk` first to get the benefit of the
+    # cache. However, if that fails, then we need to load the dataset from the files directly.
+    # Additionally, merge the splits per task together. Since there is no guarantee on the splits
+    # per task, this is the best way I can think to do it. While we are at it, we merge all the
+    # dataset info's together.
     collated_dataset_splits: dict[str, list[datasets.Dataset]] = {}
     dataset_info = datasets.DatasetInfo()
-    for task_dataset in dataset_per_task:
+    for task_dataset_dir in task_dataset_dirs:
+        try:
+            task_dataset = cast(
+                datasets.DatasetDict, datasets.load_from_disk(str(task_dataset_dir))
+            )
+        except FileNotFoundError:
+            task_dataset = load_dataset_from_files(
+                task_dataset_dir, extension=extension, num_proc=num_proc
+            )
+
         for split, dataset_split in task_dataset.items():
             dataset_info.update(dataset_split.info)
             try:
