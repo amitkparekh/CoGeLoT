@@ -294,3 +294,5 @@ storage/
 !storage/fixtures
 
 outputs/
+jobs/
+.hydra/
