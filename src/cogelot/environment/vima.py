@@ -81,6 +81,7 @@ class VIMAEnvironment(Wrapper):
 
         return VIMAInstance(
             total_steps=0,
+            index=0,
             task=task_name,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
