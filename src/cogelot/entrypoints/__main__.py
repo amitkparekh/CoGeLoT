@@ -33,8 +33,7 @@ def override_sys_args_with_context(ctx: typer.Context) -> None:
     Therefore anything between those indices are going to be lost. But it's okay, it's not too
     dire.
     """
-    overrides = sys.argv[len(ctx.command_path.split(" ")) :]
-    sys.argv = [sys.argv[0], *overrides]
+    sys.argv = [sys.argv[0], *ctx.args]
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
