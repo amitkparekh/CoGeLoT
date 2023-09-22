@@ -26,22 +26,26 @@ class VIMADecoder(TransformerDecoderProtocol):
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
         if tgt_key_padding_mask is None:
-            tgt_key_padding_mask = torch.ones(
+            tgt_key_padding_mask = torch.zeros(
                 size=tgt.shape[:-1],
                 dtype=torch.bool,
                 device=tgt.device,
             )
         if memory_key_padding_mask is None:
-            memory_key_padding_mask = torch.ones(
+            memory_key_padding_mask = torch.zeros(
                 size=memory.shape[:-1],
                 dtype=torch.bool,
                 device=memory.device,
             )
 
+        # Since they use HF-style mask meanings, invert the masks
+        tgt_key_padding_mask = ~tgt_key_padding_mask
+        memory_key_padding_mask = ~memory_key_padding_mask
+
         # Create the position ids from the mask (just how they do in the Policy)
-        position_ids = torch.cumsum(tgt_key_padding_mask, dim=1) - 1
+        position_ids = torch.cumsum(tgt_key_padding_mask, dim=1)
         position_ids = position_ids.long()
-        prompt_position_ids = torch.cumsum(memory_key_padding_mask, dim=1) - 1
+        prompt_position_ids = torch.cumsum(memory_key_padding_mask, dim=1)
 
         tokens_out = self._vima_xattn_gpt(
             obs_action_tokens=tgt,

@@ -216,6 +216,10 @@ class Policy(torch.nn.Module):
 
         prompt_tokens_tensor = torch.nn.utils.rnn.pad_sequence(prompt_tokens, batch_first=True)
         prompt_masks_tensor = torch.nn.utils.rnn.pad_sequence(prompt_masks, batch_first=True)
+
+        # Convert to the PyTorch-style mask, where True means it IS MASKED. The VIMA source opts
+        # for the other approach, and we are going to be consistent dammit.
+        prompt_masks_tensor = ~prompt_masks_tensor
         return prompt_tokens_tensor, prompt_masks_tensor
 
     def encode_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
@@ -285,8 +289,9 @@ class Policy(torch.nn.Module):
         self, embedded_prompt: torch.Tensor, embedded_prompt_mask: torch.Tensor
     ) -> torch.Tensor:
         """Encode the prompt."""
+        # Since we are using torch-style mask meaning, we need to invert the mask for the HF model
         prompt_tokens = self._prompt_encoder(
-            embedded_prompt, attention_mask=embedded_prompt_mask, batch_first=True
+            embedded_prompt, attention_mask=~embedded_prompt_mask, batch_first=True
         )
         prompt_tokens = self._prompt_encoder_post_layer(prompt_tokens)
         return prompt_tokens
