@@ -98,7 +98,7 @@ class VIMAEnvironment(Wrapper):
         """Reset the environment and return the first observation."""
         observation = self.env.reset(**kwargs)
         assert isinstance(observation, dict)
-        return Observation.parse_obj({"index": 0, **observation})
+        return Observation.model_validate({"index": 0, **observation})
 
     def step(self, *args: Any, **kwargs: Any) -> EnvironmentStepResult:
         """Take a step in the environment."""
