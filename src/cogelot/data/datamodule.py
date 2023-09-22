@@ -133,7 +133,7 @@ class VIMADataModuleFromLocalFiles(VIMADataModule):
 
     def __init__(self, *, dataset_data_dir: Path, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__(**kwargs)
-        self._dataset_data_dir = dataset_data_dir
+        self._dataset_data_dir = Path(dataset_data_dir)
 
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset from the arrow files."""
