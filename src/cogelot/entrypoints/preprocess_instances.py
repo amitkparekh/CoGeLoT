@@ -158,7 +158,7 @@ def preprocess_instances_for_task(
 
 def preprocess_instances(
     parsed_hf_dataset_dir: Annotated[
-        Path, typer.Argument(help="Where to save the HF datasets (for each task)")
+        Path, typer.Argument(help="Where to get the parsed HF datasets (for each task)")
     ] = settings.parsed_hf_dataset_dir,
     preprocessed_instances_dir: Annotated[
         Path, typer.Option(help="Directory to save the preprocessed instances to.")
