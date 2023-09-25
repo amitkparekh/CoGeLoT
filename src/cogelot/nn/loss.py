@@ -180,33 +180,12 @@ def reduce_fine_grained_loss(fine_grained_loss: dict[str, torch.Tensor]) -> torc
     # Shape: [batch_size, max_timesteps, total_axes_across_actions]
     loss_per_batch_per_timestep_per_axis = torch.cat(list(fine_grained_loss.values()), dim=-1)
 
-    # We need to make sure we timesteps that should not contribute to the loss whatsoever are
-    # masked out properly. However, we can't just assume all zero-elements are maskd out because
-    # the loss could be zero for those timesteps (as in the case where the model is _that good_, or
-    # drastically overfit on the data). Instead, we need to check if the number of NaN's for the
-    # given timestep is equal to the number of axes across all actions. If it is, then we know that
-    # that timestep can be ignored.
-    # Shape: [batch_size, max_timesteps]
-    mask_per_batch_per_timestep = (
-        torch.isnan(loss_per_batch_per_timestep_per_axis).sum(dim=-1).ge(len(fine_grained_loss))
-    )
+    # We average the loss across all of the axes for a given timestep.
+    loss_per_batch_per_timestep = loss_per_batch_per_timestep_per_axis.mean(dim=-1)
 
-    # All nan's get turned into 0's when summing, so we can just sum across the axes to get the
-    # loss per timestep for each element in the batch. This will make sure that if, for some
-    # reason, a single timestep does not have NaN's for the entire axis, it will contribute to the
-    # loss for that timestep, which it should do. While unlikely to happen, we do things right here
-    # dammit!
-    loss_per_batch_per_timestep = loss_per_batch_per_timestep_per_axis.nansum(dim=-1)
-
-    # Now that we have the loss per timestep, we can mask out the timesteps that should not
-    # contribute to the loss when we average over all the timesteps. Then we can use nanmean to get
-    # the loss per batch element
-    loss_per_batch = loss_per_batch_per_timestep.masked_fill(
-        mask_per_batch_per_timestep, float("nan")
-    ).nanmean(dim=-1)
-
-    # Finally, we can average across all the batches to get the loss
-    loss = loss_per_batch.mean()
+    # Since every timestep is essentially a new example for the model to view, we can just mean
+    # across the the batch and timesteps in one go.
+    loss = loss_per_batch_per_timestep.nanmean()
 
     assert loss.ndim == 0
     return loss
