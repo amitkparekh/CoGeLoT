@@ -11,7 +11,6 @@ def get_max_num_objects_from_encoded_observations(encoded_observations: torch.Te
 
 def create_indices_for_observation_scatter(
     observation_seq_len: int,
-    actions_seq_len: int,
     max_objects_per_observation: int,
     device: torch.device,
 ) -> torch.Tensor:
@@ -23,11 +22,6 @@ def create_indices_for_observation_scatter(
     Using the scatter operation is better because it removes the for-loop, which can easily add
     time.
     """
-    # Ensure that the number of actions per observation is an integer
-    num_actions_per_observation = observation_seq_len / actions_seq_len
-    assert num_actions_per_observation.is_integer()
-    num_actions_per_observation = int(num_actions_per_observation)
-
     # Create an index from 0 to the total number of objects in the observations
     obj_index = torch.arange(max_objects_per_observation * observation_seq_len, device=device)
     # Assign the observation index to each and every object
@@ -36,10 +30,8 @@ def create_indices_for_observation_scatter(
         .repeat(max_objects_per_observation, 1)
         .T.flatten()
     )
-    # Calculate the number of actions seen for each observation/object
-    actions_seen_per_obj = obs_index * num_actions_per_observation
     # When we add them together, we get the new index position for each object observed
-    new_obj_index = obj_index + actions_seen_per_obj
+    new_obj_index = obj_index + obs_index
     return new_obj_index
 
 
@@ -53,7 +45,6 @@ class AddObservationsToTokensFn(Protocol):
         encoded_observations_mask: torch.Tensor,
         observation_seq_len: int,
         max_objects: int,
-        actions_seq_len: int,
         tokens: torch.Tensor,
         masks: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -67,7 +58,6 @@ def add_observations_to_tokens_using_loop(
     encoded_observations_mask: torch.Tensor,
     observation_seq_len: int,  # noqa: ARG001
     max_objects: int,
-    actions_seq_len: int,  # noqa: ARG001
     tokens: torch.Tensor,
     masks: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -92,7 +82,6 @@ def add_observations_to_tokens_using_scatter(
     encoded_observations_mask: torch.Tensor,
     observation_seq_len: int,
     max_objects: int,
-    actions_seq_len: int,
     tokens: torch.Tensor,
     masks: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -103,7 +92,6 @@ def add_observations_to_tokens_using_scatter(
     """
     new_obj_index_for_scatter = create_indices_for_observation_scatter(
         observation_seq_len,
-        actions_seq_len,
         max_objects,
         device=encoded_observations.device,
     )
@@ -169,7 +157,6 @@ def stitch_observations_with_actions(  # noqa: WPS210
         encoded_observations_mask=encoded_observations_mask,
         observation_seq_len=observation_seq_len,
         max_objects=max_objects,
-        actions_seq_len=actions_seq_len,
         tokens=tokens,
         masks=masks,
     )
