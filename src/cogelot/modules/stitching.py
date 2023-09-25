@@ -110,7 +110,8 @@ def add_observations_to_tokens_using_scatter(
     # Shape (obj_seq_len, batch_size, dim)
     observation_scatter_indices = new_obj_index_for_scatter.repeat(
         *encoded_observations.shape[:0:-1], 1
-    ).T
+    ).transpose(-1, 0)
+    # Shape (obj_seq_len, batch_size)
     mask_scatter_indices = new_obj_index_for_scatter.repeat(
         *encoded_observations_mask.shape[:0:-1], 1
     ).T
