@@ -1,0 +1,6 @@
+_target_: cogelot.nn.lr_scheduler.get_cosine_schedule_with_ratio_warmup_and_lr_end
+_partial_: true
+warmup_ratio: 0.15
+annealing_ratio: 0.36
+# https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
+lr_end: 1e-7

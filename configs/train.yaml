@@ -11,6 +11,9 @@ defaults:
   # The chosen policy will automatically be set to the model.policy
   - transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
 
+  # LR scheduler used for training
+  - learning_rate_scheduler@model.lr_scheduler_partial_fn: vima.yaml
+
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
 
@@ -35,16 +38,8 @@ model:
   optimizer_partial_fn:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.0001
+    lr: 0.000001
     weight_decay: 0
-
-  lr_scheduler_partial_fn:
-    _target_: cogelot.nn.lr_scheduler.get_cosine_schedule_with_ratio_warmup_and_lr_end
-    _partial_: true
-    warmup_ratio: 0.15
-    annealing_ratio: 0.36
-    # https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
-    lr_end: 1e-7
 
   policy:
     _target_: cogelot.modules.policy.Policy
