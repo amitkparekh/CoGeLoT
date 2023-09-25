@@ -259,6 +259,8 @@ plugins = "pydantic.mypy,numpy.typing.mypy_plugin"
 select = ["WPS"]
 
 extend-ignore = [
+	# Disable the underscored numbers pattern (I don't like it)
+	"WPS114",
 	# Do not warn on too many imports.
 	"WPS201",
 	# Do not warn on too many module members
