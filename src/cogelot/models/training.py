@@ -2,7 +2,7 @@ import inspect
 from collections.abc import Callable, Iterator
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal, Self, cast
+from typing import Any, Literal, Self
 
 import torch
 from lightning import pytorch as pl
@@ -10,7 +10,7 @@ from torchmetrics import SumMetric
 
 from cogelot.common.checkpoint import create_hparams_for_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
-from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyMetric
+from cogelot.modules.metrics import LossPerAxisPerActionMetric, PoseAccuracyPerAxisMetric
 from cogelot.modules.policy import Policy
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
@@ -50,11 +50,10 @@ class VIMALightningModule(pl.LightningModule):
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
-        self._accuracy = PoseAccuracyMetric.from_config(
-            max_num_pose_position_classes=max(
-                N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS
+        self._accuracy = PoseAccuracyPerAxisMetric(
+            max_num_classes=max(
+                N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
             ),
-            max_num_pose_rotation_classes=N_DISCRETE_ROT_BINS,
             ignore_index=self.ignore_target_index,
         )
         self._loss_per_axis = LossPerAxisPerActionMetric()
@@ -166,11 +165,11 @@ class VIMALightningModule(pl.LightningModule):
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
         }
 
-    def on_train_epoch_end(self) -> None:
+    def on_train_batch_end(self, *args: Any, **kwargs: Any) -> None:
         """Reset the accuracy metric at the end of the epoch."""
         self._accuracy.reset()
         self._loss_per_axis.reset()
-        return super().on_train_epoch_end()
+        return super().on_train_batch_end(*args, **kwargs)
 
     def on_validation_epoch_end(self) -> None:
         """Reset the accuracy metric at the end of the epoch."""
@@ -204,13 +203,11 @@ class VIMALightningModule(pl.LightningModule):
         target_actions: dict[PoseActionType, torch.Tensor],
     ) -> None:
         """Update the accuracy metric for all the pose action types."""
-        predicted_action_tokens: dict[str, torch.Tensor] = {
+        predicted_action_tokens: dict[PoseActionType, torch.Tensor] = {
             pose_action_type: action_distribution.mode()
             for pose_action_type, action_distribution in predicted_actions.items()
         }
-        self._accuracy.update(
-            predicted_action_tokens, cast(dict[str, torch.Tensor], target_actions)
-        )
+        self._accuracy.update(predicted_action_tokens, target_actions)
 
     @torch.no_grad()
     def _log_accuracy(self, *, split: Literal["train", "val"], **log_dict_kwargs: Any) -> None:

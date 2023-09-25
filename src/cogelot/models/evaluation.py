@@ -89,13 +89,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.metric.update(
             partition, task, is_successful=is_task_successful, num_steps_taken=len(self.buffer)
         )
-        self.log_dict(
-            self.metric.compute_current(partition, task),
-            prog_bar=True,
-            logger=True,
-            on_step=True,
-            on_epoch=False,
-        )
+        self.log_dict(self.metric.compute(), logger=True, on_step=True, on_epoch=False)
         logger.info("Task finished")
 
     def take_step_in_environment(

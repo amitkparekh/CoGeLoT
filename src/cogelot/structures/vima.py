@@ -132,6 +132,15 @@ TaskPerGroup: Mapping[TaskGroup, list[Task]] = {
 }
 
 
+def get_task_group_from_task(task: Task) -> TaskGroup:
+    """Get the task group from the task."""
+    for task_group, task_list in TaskPerGroup.items():
+        if task in task_list:
+            return task_group
+
+    raise AssertionError("Task not found in list.")
+
+
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 

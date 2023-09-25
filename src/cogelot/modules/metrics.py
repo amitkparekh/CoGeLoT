@@ -1,43 +1,58 @@
-from typing import ClassVar, Self, get_args
+from typing import ClassVar, get_args
 
 import torch
+import wandb
 from loguru import logger
 from torchmetrics import MeanMetric, SumMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
 from torchmetrics.wrappers import MultitaskWrapper
 
-from cogelot.nn.loss import LOSS_KEY_TEMPLATE
-from cogelot.structures.vima import AxesPerPoseActionType, Partition, Task
+from cogelot.nn.loss import PER_AXIS_KEY_TEMPLATE, PerActionPerAxis
+from cogelot.structures.vima import (
+    AxesPerPoseActionType,
+    Partition,
+    PoseActionType,
+    Task,
+    get_task_group_from_task,
+)
 
 
-class PoseAccuracyMetric(MultitaskWrapper):
+def _create_metric_key_per_axis(string_template: str = PER_AXIS_KEY_TEMPLATE) -> list[str]:
+    """Create keys for every single axis."""
+    return [
+        string_template.format(pose_action_type=pose_action_type, axis=axis)
+        for pose_action_type, axis_literal in AxesPerPoseActionType.items()
+        for axis in get_args(axis_literal)
+    ]
+
+
+class PoseAccuracyPerAxisMetric(MultitaskWrapper):
     """Accuracy metric for the pose action."""
 
-    @classmethod
-    def from_config(
-        cls,
-        *,
-        max_num_pose_position_classes: int,
-        max_num_pose_rotation_classes: int,
-        ignore_index: int,
-    ) -> Self:
-        """Create the pose accuracy metric from some hyperparams."""
-        return cls(
-            {
-                "pose0_position": MulticlassAccuracy(
-                    num_classes=max_num_pose_position_classes, ignore_index=ignore_index
-                ),
-                "pose1_position": MulticlassAccuracy(
-                    num_classes=max_num_pose_position_classes, ignore_index=ignore_index
-                ),
-                "pose0_rotation": MulticlassAccuracy(
-                    num_classes=max_num_pose_rotation_classes, ignore_index=ignore_index
-                ),
-                "pose1_rotation": MulticlassAccuracy(
-                    num_classes=max_num_pose_rotation_classes, ignore_index=ignore_index
-                ),
-            }
-        )
+    def __init__(self, max_num_classes: int, ignore_index: int) -> None:
+        metric_keys = _create_metric_key_per_axis()
+        metrics = {
+            key: MulticlassAccuracy(num_classes=max_num_classes, ignore_index=ignore_index)
+            for key in metric_keys
+        }
+        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
+
+    def update(
+        self,
+        predictions: dict[PoseActionType, torch.Tensor],
+        targets: dict[PoseActionType, torch.Tensor],
+    ) -> None:
+        """Update the metrics for each axis."""
+        if predictions.keys() != targets.keys():
+            raise ValueError(
+                f"Keys for the predictions ({predictions.keys()}) for not match the keys for the"
+                f" targets ({targets.keys()})"
+            )
+
+        predictions_per_axis = PerActionPerAxis.from_actions(predictions).to_flattened_dict()
+        targets_per_axis = PerActionPerAxis.from_actions(targets).to_flattened_dict()
+
+        MultitaskWrapper.update(self, predictions_per_axis, targets_per_axis)
 
 
 class LossPerAxisPerActionMetric(MultitaskWrapper):
@@ -49,11 +64,7 @@ class LossPerAxisPerActionMetric(MultitaskWrapper):
 
     def __init__(self) -> None:
         # Get all of the keys that exist for the loss
-        loss_keys = [
-            LOSS_KEY_TEMPLATE.format(pose_action_type=pose_action_type, axis=axis)
-            for pose_action_type, axis_literal in AxesPerPoseActionType.items()
-            for axis in get_args(axis_literal)
-        ]
+        loss_keys = _create_metric_key_per_axis(PER_AXIS_KEY_TEMPLATE)
         # And create the metric for each of them
         metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
         super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
@@ -73,7 +84,18 @@ class LossPerAxisPerActionMetric(MultitaskWrapper):
 class EvaluationMetrics:
     """Track and compute metrics for the online evaluation."""
 
-    key_template: ClassVar[str] = "L{partition}_Task{task}_{metric}"
+    key_template: ClassVar[str] = "{metric}/L{partition}/Task{task}"
+
+    columns: ClassVar[list[str]] = [
+        "partition",
+        "partition_index",
+        "task",
+        "task_index",
+        "task_group",
+        "task_group_index",
+        "is_successful",
+        "num_steps",
+    ]
 
     def __init__(self) -> None:
         self.success_rate = {
@@ -86,6 +108,8 @@ class EvaluationMetrics:
             partition: {task: SumMetric() for task in Task} for partition in Partition
         }
 
+        self.episode_success_table = wandb.Table(columns=self.columns)
+
     def update(
         self, partition: Partition, task: Task, *, is_successful: bool, num_steps_taken: int
     ) -> None:
@@ -96,19 +120,18 @@ class EvaluationMetrics:
         self.steps_taken[partition][task](num_steps_taken)
         self.tasks_seen[partition][task](1)
 
-    def compute_current(self, partition: Partition, task: Task) -> dict[str, torch.Tensor]:
-        """Compute metrics for just the provided partition and task."""
-        return {
-            self.key_template.format(
-                partition=partition.value, task=task.value, metric="seen"
-            ): self.tasks_seen[partition][task].compute(),
-            self.key_template.format(
-                partition=partition.value, task=task.value, metric="steps"
-            ): self.steps_taken[partition][task].compute(),
-            self.key_template.format(
-                partition=partition.value, task=task.value, metric="success"
-            ): self.success_rate[partition][task].compute(),
-        }
+        task_group = get_task_group_from_task(task)
+
+        self.episode_success_table.add_data(
+            partition.name,
+            partition.value,
+            task.name,
+            task.value + 1,
+            task_group.name,
+            task_group.value,
+            1 if is_successful else 0,
+            num_steps_taken,
+        )
 
     def compute(self) -> dict[str, torch.Tensor]:
         """Compute the metrics, returning a flattened dict of all metrics.
@@ -123,7 +146,7 @@ class EvaluationMetrics:
         # We want to remove any metrics where no tasks of that type have been seen
         computed_tasks_seen = {
             self.key_template.format(
-                partition=partition.value, task=task.value, metric="seen"
+                partition=partition.value, task=str(task.value + 1).zfill(2), metric="seen"
             ): count
             for partition, task_counts in seen_per_task_per_partition.items()
             for task, count in task_counts.items()
@@ -132,7 +155,7 @@ class EvaluationMetrics:
 
         computed_steps = {
             self.key_template.format(
-                partition=partition.value, task=task.value, metric="steps"
+                partition=partition.value, task=str(task.value + 1).zfill(2), metric="steps"
             ): steps.compute()
             for partition, steps_per_task in self.steps_taken.items()
             for task, steps in steps_per_task.items()
@@ -141,7 +164,7 @@ class EvaluationMetrics:
 
         computed_success_rate = {
             self.key_template.format(
-                partition=partition.value, task=task.value, metric="success"
+                partition=partition.value, task=str(task.value + 1).zfill(2), metric="success"
             ): success_rate.compute()
             for partition, success_rate_per_task in self.success_rate.items()
             for task, success_rate in success_rate_per_task.items()
