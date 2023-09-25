@@ -280,7 +280,7 @@ class Policy(torch.nn.Module):
         """
         mask = create_mask_from_target_actions(actions, ignore_target_index=ignore_target_index)
         embedded_actions = self._pose_action_tokenizer.convert_discrete_to_continuous(
-            cast(dict[PoseActionType, torch.Tensor], actions), mask
+            cast(dict[PoseActionType, torch.Tensor], actions)
         )
         encoded_actions = self._action_encoder(embedded_actions)
         return encoded_actions, mask
