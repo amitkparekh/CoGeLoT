@@ -7,7 +7,7 @@ defaults:
   - /instance_preprocessor.yaml@model
 
   # Get the datamodule from the other config file
-  - /datamodule.yaml
+  - datamodule: from_local_files
 
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
@@ -62,7 +62,7 @@ trainer:
   logger:
     - _target_: lightning.pytorch.loggers.WandbLogger
       save_dir: ${output_dir}
-      project: CoGeLoT
+      project: cogelot-downstream
       entity: pyop
       log_model: False
 
