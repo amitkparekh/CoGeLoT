@@ -158,6 +158,11 @@ def upload_dataset_to_hub(
     config_name = next(iter(dataset_dict.values())).info.config_name
 
     logger.info(f"Pushing dataset ({config_name}) to the hub...")
-    dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
+    try:
+        dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
+    # Catching the blind exception because HF is failing to parse YAML for some reason and it's
+    # just crashing and thats annoying.
+    except Exception:  # noqa: BLE001
+        logger.exception("Exception raised while pushing dataset to the hub.")
 
     logger.info(f"Finished pushing dataset {config_name} to the hub.")
