@@ -1,3 +1,4 @@
+import itertools
 from typing import Any, Self
 
 from torch.utils.data import Dataset
@@ -24,15 +25,21 @@ class VIMAEvaluationDataset(Dataset[EvaluationEpisode]):
 
     @classmethod
     def from_partition_to_specs(
-        cls, partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS
+        cls,
+        partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS,
+        num_repeats_per_episode: int = 100,
     ) -> Self:
         """Instantiate from VIMA's `PARTITION_TO_SPECS`."""
         raw_instances_per_task_per_partition = partition_to_specs["test"]
 
-        instances = [
+        instances = (
             EvaluationEpisode(partition=Partition[partition], task=Task[task])
             for partition, tasks in raw_instances_per_task_per_partition.items()
             for task in tasks
-        ]
+        )
 
-        return cls(instances)
+        instances = itertools.chain.from_iterable(
+            itertools.repeat(episode, num_repeats_per_episode) for episode in instances
+        )
+
+        return cls(list(instances))
