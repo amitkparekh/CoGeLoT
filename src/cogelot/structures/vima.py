@@ -95,6 +95,16 @@ class Task(Enum):
         """Export the feature for the HF dataset."""
         return datasets.ClassLabel(names=cls._member_names_)
 
+    @classmethod
+    def minimum(cls) -> int:
+        """Smallest value."""
+        return min(enum.value for enum in cls)
+
+    @classmethod
+    def maximum(cls) -> int:
+        """Largest value."""
+        return max(enum.value for enum in cls)
+
 
 class TaskGroup(Enum):
     """Grouping of tasks."""

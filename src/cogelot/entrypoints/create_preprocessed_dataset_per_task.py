@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Optional
 
 import datasets
 import typer
@@ -43,7 +43,7 @@ _load_preprocessed_instance_from_path_fn = partial(
 )
 
 
-def create_preprocessed_hf_dataset_for_task(
+def create_preprocessed_hf_dataset(
     *,
     task: Task,
     task_instances_dir: Path,
@@ -109,6 +109,9 @@ def create_preprocessed_dataset_per_task(
         int,
         typer.Option(help="Batch size when creating the dataset for each task."),
     ] = 500,
+    task_index_filter: Annotated[
+        Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
+    ] = None,
 ) -> None:
     """Create a HF dataset for the preprocessed instances for each task.
 
@@ -121,7 +124,10 @@ def create_preprocessed_dataset_per_task(
     # Create the HF dataset for each task and save to disk
     logger.info("Creating the preprocessed HF dataset for each task...")
     for task, task_instances_dir in instance_dir_per_task.items():
-        create_preprocessed_hf_dataset_for_task(
+        if task_index_filter is not None and task_index_filter != task.value:
+            continue
+
+        create_preprocessed_hf_dataset(
             task=task,
             task_instances_dir=task_instances_dir,
             output_dir=preprocessed_hf_dataset_dir.joinpath(_get_config_name_for_task(task)),
