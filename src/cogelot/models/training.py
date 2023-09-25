@@ -1,3 +1,4 @@
+import inspect
 from collections.abc import Callable, Iterator
 from functools import partial
 from pathlib import Path
@@ -153,9 +154,13 @@ class VIMALightningModule(pl.LightningModule):
 
     def configure_optimizers(self) -> Any:
         """Configure the optimizer and scheduler."""
-        num_steps = self.trainer.estimated_stepping_batches
         optimizer = self._optimizer_partial_fn(self.parameters())
-        scheduler = self._lr_scheduler_partial_fn(optimizer, total_steps=num_steps)
+        scheduler_kwargs = (
+            {"total_steps": self.trainer.estimated_stepping_batches}
+            if "total_steps" in inspect.signature(self._lr_scheduler_partial_fn).parameters
+            else {}
+        )
+        scheduler = self._lr_scheduler_partial_fn(optimizer, **scheduler_kwargs)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
