@@ -54,34 +54,6 @@ def create_mask_from_target_actions(
     return masked_timesteps
 
 
-def convert_discrete_action_to_continuous_on_boundary(
-    discrete_actions: torch.Tensor, boundary: torch.Tensor, mask_for_select: torch.Tensor
-) -> torch.Tensor:
-    """Convert discrete actions to continuous actions on the boundary."""
-    # Make sure the discrete actions have the same number of dimensions as the mask for select
-    if discrete_actions.ndim != mask_for_select.ndim:
-        dim_difference = abs(discrete_actions.ndim - mask_for_select.ndim)
-        if discrete_actions.ndim > mask_for_select.ndim:
-            for _ in range(dim_difference):
-                mask_for_select = mask_for_select.unsqueeze(-1)
-        if mask_for_select.ndim > discrete_actions.ndim:
-            for _ in range(dim_difference):
-                discrete_actions = discrete_actions.unsqueeze(-1)
-
-    # As the mask is likely just covering the number of timesteps, we need to expand it to cover
-    # all the axes
-    mask_for_select = mask_for_select.expand_as(discrete_actions)
-
-    # Index the actions on the boundaries to get the continuous value for each axis. We use masked
-    # select to ignore the actions that are set to -100, which is the ignore index.
-    source = boundary[torch.masked_select(discrete_actions, mask_for_select)]
-
-    tensor = torch.masked_scatter(
-        input=discrete_actions.to(source.dtype), mask=mask_for_select, source=source
-    )
-    return tensor
-
-
 class PoseActionTokenizer:
     """Tokenize actions into discrete actions for the encoding."""
 
@@ -98,113 +70,38 @@ class PoseActionTokenizer:
         rot_boundary_max: float = ROT_MAX,
         n_discrete_rot_bins: int = N_DISCRETE_ROT_BINS,
     ) -> None:
-        self._x_boundaries = torch.linspace(
-            start=x_boundary_min,
-            end=x_boundary_max,
-            steps=n_discrete_x_bins,
-        )
-        self._y_boundaries = torch.linspace(
-            start=y_boundary_min, end=y_boundary_max, steps=n_discrete_y_bins
-        )
-        self._rot_boundaries = torch.linspace(
-            start=rot_boundary_min,
-            end=rot_boundary_max,
-            steps=n_discrete_rot_bins,
-        )
+        self._n_discrete_x_bins = n_discrete_x_bins
+        self._n_discrete_y_bins = n_discrete_y_bins
+        self._n_discrete_rot_bins = n_discrete_rot_bins
+
+        self._x_boundary_min = x_boundary_min
+        self._x_boundary_max = x_boundary_max
+
+        self._y_boundary_min = y_boundary_min
+        self._y_boundary_max = y_boundary_max
+
+        self._rot_boundary_min = rot_boundary_min
+        self._rot_boundary_max = rot_boundary_max
 
     def convert_continuous_to_discrete(
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert continuous actions to discrete tokens."""
-        x_boundary, y_boundary, rot_boundary = self._get_boundaries(
-            actions["pose0_position"].device
-        )
-
-        discrete_actions: dict[PoseActionType, torch.Tensor] = {
-            k: v.clone().detach() for k, v in actions.items()
-        }
-
-        discrete_actions["pose0_position"][..., 0] = torch.bucketize(
-            discrete_actions["pose0_position"][..., 0].contiguous(), x_boundary
-        )
-        discrete_actions["pose0_position"][..., 1] = torch.bucketize(
-            discrete_actions["pose0_position"][..., 1].contiguous(), y_boundary
-        )
-        discrete_actions["pose0_rotation"] = torch.bucketize(
-            discrete_actions["pose0_rotation"].contiguous(), rot_boundary
-        )
-
-        discrete_actions["pose1_position"][..., 0] = torch.bucketize(
-            discrete_actions["pose1_position"][..., 0].contiguous(), x_boundary
-        )
-        discrete_actions["pose1_position"][..., 1] = torch.bucketize(
-            discrete_actions["pose1_position"][..., 1].contiguous(), y_boundary
-        )
-        discrete_actions["pose1_rotation"] = torch.bucketize(
-            discrete_actions["pose1_rotation"].contiguous(), rot_boundary
-        )
-        discrete_actions = {k: v.long() for k, v in discrete_actions.items()}
-        return discrete_actions
+        actions = self._rescale_continuous_actions_to_0_and_1(actions)
+        actions = self._convert_rescaled_continuous_to_discrete(actions)
+        return actions
 
     def convert_discrete_to_continuous(
-        self,
-        actions: dict[PoseActionType, torch.Tensor],
-        mask: torch.Tensor | None = None,
+        self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert discrete actions to continuous actions."""
-        # If the mask is None, then we can just set all the values to False
-        if mask is None:
-            mask = torch.zeros(
-                actions["pose0_position"].shape[:-1],
-                dtype=torch.bool,
-                device=actions["pose0_position"].device,
-            )
+        # Make all of the actions floats
+        actions = {k: v.float() for k, v in actions.items()}
 
-        # Make sure the actions are integers so we can use them as indices
-        actions = {k: v.long() for k, v in actions.items()}
+        actions = self._convert_discrete_to_rescaled_continuous(actions)
+        actions = self._restore_rescaled_continuous_to_correct_range(actions)
 
-        # Create the boundaries
-        x_boundary, y_boundary, rot_boundary = self._get_boundaries(
-            actions["pose0_position"].device
-        )
-        continuous_actions: dict[PoseActionType, torch.Tensor] = {
-            k: v.clone().float() for k, v in actions.items()
-        }
-
-        # Since the mask assumes that the True values are to be removed, we want to invert it for
-        # the masked selecting since we want to keep all the un-masked values
-        mask_for_select = ~mask
-
-        # Index the actions on the boundaries to get the continuous value for each axis. We use
-        # masked scatter because some action tokens are set to -100, which is the ignore index.
-        continuous_actions["pose0_position"][..., 0] = (
-            convert_discrete_action_to_continuous_on_boundary(
-                actions["pose0_position"][..., 0], x_boundary, mask_for_select
-            )
-        )
-        continuous_actions["pose0_position"][..., 1] = (
-            convert_discrete_action_to_continuous_on_boundary(
-                actions["pose0_position"][..., 1], y_boundary, mask_for_select
-            )
-        )
-        continuous_actions["pose0_rotation"] = convert_discrete_action_to_continuous_on_boundary(
-            actions["pose0_rotation"], rot_boundary, mask_for_select
-        )
-        continuous_actions["pose1_position"][..., 0] = (
-            convert_discrete_action_to_continuous_on_boundary(
-                actions["pose1_position"][..., 0], x_boundary, mask_for_select
-            )
-        )
-        continuous_actions["pose1_position"][..., 1] = (
-            convert_discrete_action_to_continuous_on_boundary(
-                actions["pose1_position"][..., 1], y_boundary, mask_for_select
-            )
-        )
-        continuous_actions["pose1_rotation"] = convert_discrete_action_to_continuous_on_boundary(
-            actions["pose1_rotation"], rot_boundary, mask_for_select
-        )
-
-        return continuous_actions
+        return actions
 
     def tokenize(self, actions: list[PoseAction]) -> list[PoseActionToken]:
         """Tokenize actions into discrete actions."""
@@ -242,7 +139,128 @@ class PoseActionTokenizer:
         self, device: torch.device
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get all the boundaries, and clone and move them to another device."""
-        x_boundary = self._x_boundaries.clone().to(device)
-        y_boundary = self._y_boundaries.clone().to(device)
-        rot_boundary = self._rot_boundaries.clone().to(device)
+        x_boundary = torch.linspace(
+            start=self._x_boundary_min,
+            end=self._x_boundary_max,
+            steps=self._n_discrete_x_bins,
+            device=device,
+        )
+        y_boundary = torch.linspace(
+            start=self._y_boundary_min,
+            end=self._y_boundary_max,
+            steps=self._n_discrete_y_bins,
+            device=device,
+        )
+        rot_boundary = torch.linspace(
+            start=self._rot_boundary_min,
+            end=self._rot_boundary_max,
+            steps=self._n_discrete_rot_bins,
+            device=device,
+        )
+
         return x_boundary, y_boundary, rot_boundary
+
+    def _rescale_continuous_actions_to_0_and_1(
+        self, actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Rescale all the continuous actions to be between 0 and 1."""
+        actions["pose0_position"][..., 0] = (
+            actions["pose0_position"][..., 0] - self._x_boundary_min
+        ) / (self._x_boundary_max - self._x_boundary_min)
+        actions["pose0_position"][..., 1] = (
+            actions["pose0_position"][..., 1] - self._y_boundary_min
+        ) / (self._y_boundary_max - self._y_boundary_min)
+        actions["pose0_rotation"] = (actions["pose0_rotation"] - self._rot_boundary_min) / (
+            self._rot_boundary_max - self._rot_boundary_min
+        )
+        actions["pose1_position"][..., 0] = (
+            actions["pose1_position"][..., 0] - self._x_boundary_min
+        ) / (self._x_boundary_max - self._x_boundary_min)
+        actions["pose1_position"][..., 1] = (
+            actions["pose1_position"][..., 1] - self._y_boundary_min
+        ) / (self._y_boundary_max - self._y_boundary_min)
+        actions["pose1_rotation"] = (actions["pose1_rotation"] - self._rot_boundary_min) / (
+            self._rot_boundary_max - self._rot_boundary_min
+        )
+
+        return actions
+
+    def _convert_rescaled_continuous_to_discrete(
+        self, actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Convert the rescaled continuous values to discrete values for tokens."""
+        x_boundary, y_boundary, rot_boundary = self._get_boundaries(
+            actions["pose0_position"].device
+        )
+
+        actions["pose0_position"][..., 0] = torch.bucketize(
+            actions["pose0_position"][..., 0].contiguous(), x_boundary
+        )
+        actions["pose0_position"][..., 1] = torch.bucketize(
+            actions["pose0_position"][..., 1].contiguous(), y_boundary
+        )
+        actions["pose0_rotation"] = torch.bucketize(
+            actions["pose0_rotation"].contiguous(), rot_boundary
+        )
+        actions["pose1_position"][..., 0] = torch.bucketize(
+            actions["pose1_position"][..., 0].contiguous(), x_boundary
+        )
+        actions["pose1_position"][..., 1] = torch.bucketize(
+            actions["pose1_position"][..., 1].contiguous(), y_boundary
+        )
+        actions["pose1_rotation"] = torch.bucketize(
+            actions["pose1_rotation"].contiguous(), rot_boundary
+        )
+        actions = {k: v.long() for k, v in actions.items()}
+        return actions
+
+    def _convert_discrete_to_rescaled_continuous(
+        self, actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Convert the discrete values to rescaled continuous values."""
+        actions["pose0_position"][..., 0] = (
+            actions["pose0_position"][..., 0] / self._n_discrete_x_bins
+        )
+        actions["pose0_position"][..., 1] = (
+            actions["pose0_position"][..., 1] / self._n_discrete_y_bins
+        )
+        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
+        actions["pose1_position"][..., 0] = (
+            actions["pose1_position"][..., 0] / self._n_discrete_x_bins
+        )
+        actions["pose1_position"][..., 1] = (
+            actions["pose1_position"][..., 1] / self._n_discrete_y_bins
+        )
+        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
+        return actions
+
+    def _restore_rescaled_continuous_to_correct_range(
+        self, actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Restore the rescaled continuous values to the correct range."""
+        actions["pose0_position"][..., 0] = (
+            actions["pose0_position"][..., 0] * (self._x_boundary_max - self._x_boundary_min)
+            + self._x_boundary_min
+        )
+        actions["pose0_position"][..., 1] = (
+            actions["pose0_position"][..., 1] * (self._y_boundary_max - self._y_boundary_min)
+            + self._y_boundary_min
+        )
+        actions["pose0_rotation"] = (
+            actions["pose0_rotation"] * (self._rot_boundary_max - self._rot_boundary_min)
+            + self._rot_boundary_min
+        )
+        actions["pose1_position"][..., 0] = (
+            actions["pose1_position"][..., 0] * (self._x_boundary_max - self._x_boundary_min)
+            + self._x_boundary_min
+        )
+        actions["pose1_position"][..., 1] = (
+            actions["pose1_position"][..., 1] * (self._y_boundary_max - self._y_boundary_min)
+            + self._y_boundary_min
+        )
+        actions["pose1_rotation"] = (
+            actions["pose1_rotation"] * (self._rot_boundary_max - self._rot_boundary_min)
+            + self._rot_boundary_min
+        )
+
+        return actions
