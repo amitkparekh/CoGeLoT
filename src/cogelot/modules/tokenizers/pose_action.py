@@ -140,20 +140,20 @@ class PoseActionTokenizer:
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get all the boundaries, and clone and move them to another device."""
         x_boundary = torch.linspace(
-            start=self._x_boundary_min,
-            end=self._x_boundary_max,
+            start=0,
+            end=1,
             steps=self._n_discrete_x_bins,
             device=device,
         )
         y_boundary = torch.linspace(
-            start=self._y_boundary_min,
-            end=self._y_boundary_max,
+            start=0,
+            end=1,
             steps=self._n_discrete_y_bins,
             device=device,
         )
         rot_boundary = torch.linspace(
-            start=self._rot_boundary_min,
-            end=self._rot_boundary_max,
+            start=0,
+            end=1,
             steps=self._n_discrete_rot_bins,
             device=device,
         )
