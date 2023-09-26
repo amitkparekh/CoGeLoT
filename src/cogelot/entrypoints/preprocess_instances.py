@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Optional
 
 import datasets
 import hydra
@@ -167,6 +167,9 @@ def preprocess_instances(
         Path, typer.Option(help="Hydra config for the instance preprocessor.")
     ] = settings.instance_preprocessor_hydra_config,
     num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
+    task_index_filter: Annotated[
+        Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
+    ] = None,
 ) -> None:
     """Preprocess all the parsed instances per task."""
     logger.info("Loading the instance preprocessor...")
@@ -178,6 +181,9 @@ def preprocess_instances(
     parsed_datasets_per_task_iterator = _load_parsed_datasets_for_each_task(parsed_hf_dataset_dir)
 
     for task, dataset in parsed_datasets_per_task_iterator:
+        if task_index_filter is not None and task_index_filter != task.value:
+            continue
+
         logger.info(f"Preprocessing the {task} instances...")
         preprocess_instances_for_task(
             task=task,
