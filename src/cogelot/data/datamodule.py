@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, Unpack
 
 import datasets
-from lightning import LightningDataModule
+from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
 from cogelot.common.hf_datasets import (

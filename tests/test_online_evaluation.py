@@ -1,4 +1,4 @@
-from lightning import pytorch as pl
+import pytorch_lightning as pl
 
 from cogelot.data.datamodule import VIMADataModule
 from cogelot.data.evaluation import VIMAEvaluationDataset

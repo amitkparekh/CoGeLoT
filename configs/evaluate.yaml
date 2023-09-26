@@ -63,7 +63,7 @@ trainer:
   deterministic: True
 
   logger:
-    - _target_: lightning.pytorch.loggers.WandbLogger
+    - _target_: pytorch_lightning.loggers.WandbLogger
       save_dir: ${output_dir}
       project: ${wandb.project}
       entity: ${wandb.entity}
@@ -73,6 +73,6 @@ trainer:
 
   # Override the callbacks with just the logging ones
   callbacks:
-    - _target_: lightning.pytorch.callbacks.RichModelSummary
+    - _target_: pytorch_lightning.callbacks.RichModelSummary
       max_depth: -1
-    - _target_: lightning.pytorch.callbacks.RichProgressBar
+    - _target_: pytorch_lightning.callbacks.RichProgressBar

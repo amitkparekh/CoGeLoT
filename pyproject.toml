@@ -33,13 +33,10 @@ dependencies = [
 	"einops>=0.6.1",
 	"pandas>=2.0.3",
 	"pydantic-settings>=2.0.3",
-	"lightning>=2.0.9",
+	"pytorch-lightning>=2.0.9",
 ]
 
 [tool.pdm]
-[tool.pdm.resolution.overrides]
-pydantic = ">=2.3.0"
-
 
 [tool.pdm.build]
 package-dir = "src"

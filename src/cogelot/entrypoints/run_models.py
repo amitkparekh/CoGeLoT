@@ -2,9 +2,8 @@ from contextlib import suppress
 from typing import NamedTuple
 
 import hydra
-import lightning
+import pytorch_lightning as pl
 import torch
-from lightning import pytorch as pl
 from loguru import logger
 from omegaconf import DictConfig
 
@@ -23,7 +22,7 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     """Instantiate the modules needed for training."""
     seed = config.get("seed")
     if seed:
-        lightning.seed_everything(seed)
+        pl.seed_everything(seed)
 
     # Try to set the sharing sharing strategy to file system, but don't fail if it's not supported.
     # This is an alternative to running `ulimit -S -n unlimited` in the shell.

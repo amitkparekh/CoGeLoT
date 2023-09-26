@@ -4,8 +4,8 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Literal, Self
 
+import pytorch_lightning as pl
 import torch
-from lightning import pytorch as pl
 from torchmetrics import SumMetric
 
 from cogelot.common.checkpoint import create_hparams_for_checkpoint

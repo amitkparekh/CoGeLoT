@@ -1,8 +1,8 @@
 from typing import cast
 
 import numpy as np
+import pytorch_lightning as pl
 import torch
-from lightning import pytorch as pl
 from loguru import logger
 from numpy import typing as npt
 
