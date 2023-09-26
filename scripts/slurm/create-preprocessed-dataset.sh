@@ -9,7 +9,6 @@
 #SBATCH --output=jobs/%x-%a.%J.out
 #SBATCH --array=0-18
 
-
 export DATASETS_VERBOSITY=info
 
-pdm run python -m cogelot create-preprocessed-dataset-per-task --num-workers 15 --task-index-filter ${SLURM_ARRAY_TASK_ID}
+pdm run python -m cogelot create-preprocessed-dataset-per-task --num-workers 15 --task-index-filter "${SLURM_ARRAY_TASK_ID}"

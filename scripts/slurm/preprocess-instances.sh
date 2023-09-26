@@ -6,7 +6,7 @@
 #SBATCH --partition=nodes
 #SBATCH --job-name=preprocess-instances
 #SBATCH --error=jobs/%x.%J.err
-#SBATCH --output=jobs/%x.%J.out
-#SBATCH --array=0-18
+#SBATCH --output=jobs/%x-%a.%J.out
+#SBATCH --array=0-16
 
 pdm run python -m cogelot preprocess-instances --num-workers 40 --task-index-filter "${SLURM_ARRAY_TASK_ID}"
