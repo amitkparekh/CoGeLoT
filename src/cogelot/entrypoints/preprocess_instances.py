@@ -31,7 +31,7 @@ def _instantiate_instance_preprocessor_from_config(config_file: Path) -> Instanc
 
 
 def _load_parsed_datasets_for_each_task(
-    parsed_hf_datasets_dir: Path,
+    parsed_hf_datasets_dir: Path, *, task_index_filter: int | None = None
 ) -> Iterator[tuple[Task, datasets.DatasetDict]]:
     """Load the parsed datasets for each task."""
     dataset_dir_per_task = list(parsed_hf_datasets_dir.iterdir())
@@ -39,6 +39,10 @@ def _load_parsed_datasets_for_each_task(
 
     for task_dataset_dir in dataset_dir_per_task:
         task = Task[task_dataset_dir.name]
+
+        if task_index_filter is not None and task_index_filter != task.value:
+            logger.info(f"Skipping {task} (index {task.value})...")
+            continue
 
         logger.info(f"Loading dataset for {task} from {task_dataset_dir}...")
         dataset = datasets.load_from_disk(str(task_dataset_dir))
@@ -178,7 +182,9 @@ def preprocess_instances(
     )
 
     logger.info("Loading the parsed datasets for each task...")
-    parsed_datasets_per_task_iterator = _load_parsed_datasets_for_each_task(parsed_hf_dataset_dir)
+    parsed_datasets_per_task_iterator = _load_parsed_datasets_for_each_task(
+        parsed_hf_dataset_dir, task_index_filter=task_index_filter
+    )
 
     for task, dataset in parsed_datasets_per_task_iterator:
         if task_index_filter is not None and task_index_filter != task.value:
