@@ -7,7 +7,7 @@
 #SBATCH --job-name=create-preprocessed-dataset
 #SBATCH --error=jobs/%x-%a.%J.err
 #SBATCH --output=jobs/%x-%a.%J.out
-#SBATCH --array=0-18
+#SBATCH --array=0-17
 
 export DATASETS_VERBOSITY=info
 
