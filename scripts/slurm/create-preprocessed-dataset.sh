@@ -5,8 +5,7 @@
 #SBATCH --time=12:00:00
 #SBATCH --partition=nodes
 #SBATCH --job-name=create-preprocessed-dataset
-#SBATCH --error=jobs/%x-%a.%J.err
-#SBATCH --output=jobs/%x-%a.%J.out
+#SBATCH --output=jobs/%x.%J-%a.out
 #SBATCH --array=0-17
 
 export DATASETS_VERBOSITY=info
