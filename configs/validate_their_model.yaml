@@ -1,0 +1,49 @@
+# @package _global_
+
+defaults:
+  - trainer: cpu.yaml
+
+  # Import the instance_preprocessor.yaml config into the model
+  - /instance_preprocessor.yaml@model
+
+  # Get the datamodule from the other config file
+  - datamodule: from_local_files
+
+  # Set defaults for Hydra's logging and outputs
+  - hydra: default.yaml
+
+  # Update with hardware-specific changes
+  - hardware: local.yaml
+
+  # If you want to debug, then just run like `python train.py debug=default`
+  - debug: null
+
+  # And override any of the other values with what is in this file
+  - _self_
+
+task_name: "validate"
+
+output_dir: ${hydra:runtime.output_dir}
+
+seed: 1000
+
+model:
+  _target_: cogelot.models.VIMALightningModule
+
+  optimizer_partial_fn:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.0001
+    weight_decay: 0
+
+  policy:
+    _target_: cogelot.modules.policy.Policy.from_their_policy
+    their_policy:
+      _target_: vima.create_policy_from_ckpt
+      ckpt_path: ./storage/data/models/them.ckpt
+      device: cpu
+
+trainer:
+  max_epochs: 1
+  inference_mode: true
+  limit_train_batches: 0
