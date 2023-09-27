@@ -98,11 +98,12 @@ external = [
 	"WPS221",
 	"WPS362",
 	"WPS428",
+	"WPS436",
 	"WPS601",
 ]
 
 # Enable every possible rule
-# select = ["ALL"]
+select = ["ALL"]
 
 ignore = [
 	# Allow function call as argument default
@@ -117,6 +118,10 @@ ignore = [
 	"F722",
 	# Allow import to be uppercase, because torch.nn.functional as F
 	"N812",
+	# Allow asserts to be used because they're just convenient for type-narrowing. Type-narrowing is
+	# more important than the possibility that someone is running python with -O (in optimized mode).
+	# https://stackoverflow.com/a/68429294
+	"S101",
 	# Do not enforce annotations for self, cls, or similar
 	"ANN1",
 	# Do not block using 'Any' type since it happens
@@ -127,6 +132,8 @@ ignore = [
 	"G004",
 	# Disable 'flake8-errmsg' because we assume users of this project can read tracebacks
 	"EM",
+	# Allow TODO comments
+	"FIX002",
 	# We don't need to care about creating separate exception classes for every single type of error
 	"TRY003",
 	# Allow assigning variables before returning them
@@ -288,6 +295,8 @@ extend-ignore = [
 	"WPS348",
 	# Allow logic in __init__ modules
 	"WPS412",
+	# Defer to Ruff's PLR2004
+	"WPS432",
 	# Defer to Ruff's SLF001
 	"WPS437",
 	# Allow `float("nan")` because it's a thing that happens in ML stuff
