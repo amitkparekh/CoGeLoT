@@ -3,9 +3,6 @@
 defaults:
   - trainer: cpu.yaml
 
-  # Import the instance_preprocessor.yaml config into the model
-  - /instance_preprocessor.yaml@model
-
   # Get the datamodule from the other config file
   - datamodule: from_local_files
 
