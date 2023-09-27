@@ -5,6 +5,7 @@ from typing import Literal, TypeVar, cast
 import datasets
 from datasets.distributed import split_dataset_by_node
 from huggingface_hub import snapshot_download
+from huggingface_hub.utils._errors import BadRequestError, HfHubHTTPError  # noqa: WPS436
 from loguru import logger
 
 
@@ -162,7 +163,14 @@ def upload_dataset_to_hub(
         dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
     # Catching the blind exception because HF is failing to parse YAML for some reason and it's
     # just crashing and thats annoying.
-    except Exception:  # noqa: BLE001
-        logger.exception("Exception raised while pushing dataset to the hub.")
+    except BadRequestError as request_error:
+        if request_error.server_message is not None and "YAML" in request_error.server_message:
+            logger.error("Invalid YAML occurred while pushing dataset to the hub.")
+        else:
+            raise request_error from None
+    except HfHubHTTPError as http_error:
+        if http_error.errno == 429:  # noqa: PLR2004
+            logger.error("Rate limited while pushing dataset to the hub.")
+            return
 
     logger.info(f"Finished pushing dataset {config_name} to the hub.")
