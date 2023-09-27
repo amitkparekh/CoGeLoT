@@ -2,10 +2,16 @@ from enum import Enum
 from typing import Self
 
 import torch
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from cogelot.structures.common import Bbox, View
-from cogelot.structures.vima import PoseAction, PoseActionType
+from cogelot.structures.vima import (
+    N_DISCRETE_ROT_BINS,
+    N_DISCRETE_X_BINS,
+    N_DISCRETE_Y_BINS,
+    PoseAction,
+    PoseActionType,
+)
 
 
 class TokenType(Enum):
@@ -109,6 +115,23 @@ class PoseActionToken(Token):
     pose1_position: torch.Tensor
     pose0_rotation: torch.Tensor
     pose1_rotation: torch.Tensor
+
+    @field_validator("pose0_position", "pose1_position")
+    @classmethod
+    def position_axis_must_be_within_ranges(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Ensure that each axis for the position tensors is within the correct ranges."""
+        assert tensor[1] < N_DISCRETE_Y_BINS
+        assert tensor[0] < N_DISCRETE_X_BINS
+        assert all(tensor >= 0)
+        return tensor
+
+    @field_validator("pose0_rotation", "pose1_rotation")
+    @classmethod
+    def rotation_tokens_must_be_within_ranges(cls, tensor: torch.Tensor) -> torch.Tensor:
+        """Ensure all rotation tokens are valid."""
+        assert all(tensor >= 0)
+        assert all(tensor < N_DISCRETE_ROT_BINS)
+        return tensor
 
     @classmethod
     def from_pose_action(cls, pose_actions: PoseAction) -> Self:
