@@ -17,9 +17,6 @@ hydra:
   # use this to also set hydra loggers to 'DEBUG'
   # verbose: True
 
-datamodule:
-  hf_datasets_repo_name: amitkparekh/vima-small
-
 trainer:
   max_epochs: 1
   # accelerator: cpu # debuggers don't like gpus
