@@ -296,3 +296,4 @@ storage/
 outputs/
 jobs/
 .hydra/
+wandb/
