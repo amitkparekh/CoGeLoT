@@ -147,7 +147,7 @@ class Policy(torch.nn.Module):
 
         for batch_idx, raw_prompt_tokens in enumerate(raw_prompts_token_type):
             word_positions: list[int] = (
-                torch.tensor(raw_prompt_tokens).eq(0).nonzero().flatten().tolist()
+                torch.tensor(raw_prompt_tokens, device="cpu").eq(0).nonzero().flatten().tolist()
             )
             num_words = len(word_positions)
             word_embedded_per_position = batch_word_emb[batch_idx, :num_words]
@@ -163,7 +163,7 @@ class Policy(torch.nn.Module):
             )
 
             image_positions: list[int] = (
-                torch.tensor(raw_prompt_tokens, device=device).eq(1).nonzero().flatten().tolist()
+                torch.tensor(raw_prompt_tokens, device="cpu").eq(1).nonzero().flatten().tolist()
             )
             num_images = len(image_positions)
             embedded_images = batch_image_emb[batch_idx, :num_images]
