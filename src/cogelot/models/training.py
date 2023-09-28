@@ -117,7 +117,7 @@ class VIMALightningModule(pl.LightningModule):
         self.metrics.update_examples_seen(len(batch))
 
         self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_metrics(split="val", prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_metrics(split="train", prog_bar=True, logger=True, batch_size=len(batch))
 
         return loss
 
