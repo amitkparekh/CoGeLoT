@@ -87,6 +87,7 @@ class PoseActionTokenizer:
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert continuous actions to discrete tokens."""
+        actions = {k: v.detach().clone() for k, v in actions.items()}
         actions = self._rescale_continuous_actions_to_0_and_1(actions)
         actions = self._convert_rescaled_continuous_to_discrete(actions)
         return actions
@@ -121,6 +122,7 @@ class PoseActionTokenizer:
             PoseActionToken.model_validate({"index": idx, **action})
             for idx, action in indexed_discrete_actions
         ]
+
         return tokens
 
     def convert_token_to_environment(
