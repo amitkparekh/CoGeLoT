@@ -1,6 +1,6 @@
 #! /bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=10
+#SBATCH --ntasks-per-node=12
 #SBATCH --mem=75G
 #SBATCH --time=12:00:00
 #SBATCH --partition=nodes
@@ -10,4 +10,4 @@
 
 export DATASETS_VERBOSITY=info
 
-pdm run python -m cogelot create-preprocessed-dataset-per-task --num-workers 15 --task-index-filter "${SLURM_ARRAY_TASK_ID}"
+pdm run python -m cogelot create-preprocessed-dataset-per-task --num-workers 10 --task-index-filter "${SLURM_ARRAY_TASK_ID}"
