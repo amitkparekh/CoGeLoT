@@ -1,5 +1,5 @@
 import torch
-from pytest import fixture
+from pytest_cases import fixture
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
@@ -101,7 +101,7 @@ def test_loss_computation_does_not_error(
 
     # There are a total of 12 axes across all of the pose action types (4 for rotations, 2 for
     # positions)
-    assert len(fine_grained_loss) == 12
+    assert len(fine_grained_loss) == 12  # noqa: PLR2004
 
     # Extract the batch size and the current max timesteps from the target actions
     batch_size, max_timesteps = target_actions["pose0_position"].shape[:2]
@@ -129,5 +129,7 @@ def test_loss_per_axis_metric_tracking_works(
         key: tensor.flatten().nanmean() for key, tensor in fine_grained_loss.items()
     }
 
-    for expected, actual in zip(expected_computed_metric.values(), computed_metric.values()):
+    iterator = zip(expected_computed_metric.values(), computed_metric.values(), strict=True)
+
+    for expected, actual in iterator:
         torch.testing.assert_close(actual, expected)
