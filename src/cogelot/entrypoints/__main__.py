@@ -14,7 +14,7 @@ from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
 from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_per_task
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
-from cogelot.entrypoints.run_models import evaluate_model, train_model
+from cogelot.entrypoints.run_models import evaluate_model, train_model, validate_model
 from cogelot.entrypoints.settings import Settings
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
 
@@ -64,6 +64,20 @@ def train(ctx: typer.Context, config_file: Path = Path("configs/train.yaml")) ->
 
     run_task_function_with_hydra(
         config_dir=config_file.parent, config_file_name=config_file.name, task_function=train_model
+    )
+
+
+@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
+def validate(
+    ctx: typer.Context, config_file: Path = Path("configs/validate_their_model.yaml")
+) -> None:
+    """Run the validate loop for the model."""
+    override_sys_args_with_context(ctx)
+
+    run_task_function_with_hydra(
+        config_dir=config_file.parent,
+        config_file_name=config_file.name,
+        task_function=validate_model,
     )
 
 

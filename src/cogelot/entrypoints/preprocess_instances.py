@@ -101,6 +101,7 @@ def create_dataloader_to_preprocess_instances(
     instance_preprocessor: InstancePreprocessor,
     num_workers: int,
     output_dir: Path,
+    replace_if_exists: bool = False,
 ) -> DataLoader[None]:
     """Create a dataloader to preprocess the instances as fast as possible."""
     dataloader = DataLoader[None](
@@ -108,6 +109,7 @@ def create_dataloader_to_preprocess_instances(
             raw_dataset=dataset_split,
             instance_preprocessor=instance_preprocessor,
             output_dir=output_dir,
+            replace_if_exists=replace_if_exists,
         ),
         batch_size=None,
         batch_sampler=None,
@@ -123,6 +125,7 @@ def preprocess_instances_for_task(
     instance_preprocessor: InstancePreprocessor,
     preprocessed_instances_output_dir: Path,
     num_workers: int,
+    replace_if_exists: bool = False,
 ) -> None:
     """Create the preprocessed instances for the given task (and dataset).
 
@@ -137,12 +140,14 @@ def preprocess_instances_for_task(
         instance_preprocessor=instance_preprocessor,
         num_workers=num_workers,
         output_dir=preprocessed_instances_output_dir.joinpath("train/"),
+        replace_if_exists=replace_if_exists,
     )
     valid_dataloader = create_dataloader_to_preprocess_instances(
         dataset_split=dataset["valid"],
         instance_preprocessor=instance_preprocessor,
         num_workers=num_workers,
         output_dir=preprocessed_instances_output_dir.joinpath("valid/"),
+        replace_if_exists=replace_if_exists,
     )
 
     logger.info(f"Creating iterators to process each {task} split...")
@@ -197,5 +202,6 @@ def preprocess_instances(
             instance_preprocessor=instance_preprocessor,
             preprocessed_instances_output_dir=preprocessed_instances_dir,
             num_workers=num_workers,
+            replace_if_exists=True,
         )
         logger.info(f"Finished preprocessing the {task} instances.")

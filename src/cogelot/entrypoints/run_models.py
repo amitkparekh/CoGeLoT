@@ -49,6 +49,14 @@ def train_model(config: DictConfig) -> None:
     trainer.fit(model, datamodule=datamodule)
 
 
+def validate_model(config: DictConfig) -> None:
+    """Run the evaluation."""
+    datamodule, model, trainer = instantiate_modules_from_hydra(config)
+
+    logger.info("Starting validation...")
+    trainer.validate(model, datamodule=datamodule)
+
+
 def evaluate_model(config: DictConfig) -> None:
     """Run the evaluation."""
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
