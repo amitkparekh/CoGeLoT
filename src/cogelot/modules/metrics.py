@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar, Literal, get_args
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, get_args
 
 import torch
 import wandb
@@ -33,7 +33,7 @@ def _create_metric_key_per_axis(string_template: str = PER_AXIS_KEY_TEMPLATE) ->
 
 def _include_task_in_metric_key(metric_key: str, task: Task) -> str:
     """Include the task in the metric key."""
-    return f"{task.value + 1:02d}_{metric_key}"
+    return f"task{task.value + 1:02d}_{metric_key}"
 
 
 class PoseAccuracyPerAxisMetric(MultitaskWrapper):
@@ -99,30 +99,37 @@ class PoseAccuracyPerAxisPerTaskMetric(MultitaskWrapper):
 
         # Split each tensor within each dictionary into a list of tensors, one for each task. We
         # are splitting across the batch dimension.
-        predictions_per_task_per_axis = {
-            task: {key: tensor[idx] for key, tensor in predictions_per_axis.items()}
+        predictions_per_task_per_axis = (
+            (task, {key: tensor[idx] for key, tensor in predictions_per_axis.items()})
             for idx, task in enumerate(tasks)
-        }
-        targets_per_task_per_axis = {
-            task: {key: tensor[idx] for key, tensor in targets_per_axis.items()}
-            for idx, task in enumerate(tasks)
-        }
-
-        # Reshape the dict into a single dict, with the task as part of the key
-        flattened_predictions_per_task_per_axis = {
-            _include_task_in_metric_key(key, task): tensor
-            for task, predictions_per_axis in predictions_per_task_per_axis.items()
-            for key, tensor in predictions_per_axis.items()
-        }
-        flattened_targets_per_task_per_axis = {
-            _include_task_in_metric_key(key, task): tensor
-            for task, targets_per_axis in targets_per_task_per_axis.items()
-            for key, tensor in targets_per_axis.items()
-        }
-
-        MultitaskWrapper.update(
-            self, flattened_predictions_per_task_per_axis, flattened_targets_per_task_per_axis
         )
+        targets_per_task_per_axis = (
+            (task, {key: tensor[idx] for key, tensor in targets_per_axis.items()})
+            for idx, task in enumerate(tasks)
+        )
+
+        iterator = zip(predictions_per_task_per_axis, targets_per_task_per_axis, strict=True)
+
+        for (task, task_predictions_per_axis), (_, task_target_per_axis) in iterator:
+            flattened_predictions_per_axis = {
+                _include_task_in_metric_key(key, task): tensor
+                for key, tensor in task_predictions_per_axis.items()
+            }
+            flattened_targets_per_axis = {
+                _include_task_in_metric_key(key, task): tensor
+                for key, tensor in task_target_per_axis.items()
+            }
+
+            for metric_key, tensor in flattened_predictions_per_axis.items():
+                self.task_metrics[metric_key](tensor, flattened_targets_per_axis[metric_key])
+
+    def compute(self) -> dict[str, Any]:
+        """Only run compute on the metrics that have been updated."""
+        return {
+            key: cast(MulticlassAccuracy, metric).compute()
+            for key, metric in self.task_metrics.items()
+            if metric.update_called
+        }
 
 
 class LossPerAxisPerActionMetric(MultitaskWrapper):
@@ -173,28 +180,28 @@ class LossPerAxisPerActionPerTaskMetric(MultitaskWrapper):
         self, fine_grained_loss: dict[str, torch.Tensor], *, tasks: list[Task]
     ) -> None:
         """Update the metric with the result of a batch."""
-        if self.task_metrics.keys() != fine_grained_loss.keys():
-            raise ValueError(
-                f"Keys for loss ({fine_grained_loss.keys()}) do not match keys for metrics "
-                f"({self.task_metrics.keys()})"
-            )
-
-        # Split each tensor within each dictionary into a list of tensors, one for each task. We
-        # are splitting across the batch dimension.
-        loss_per_task_per_axis = {
-            task: {key: tensor[idx] for key, tensor in fine_grained_loss.items()}
+        # Split each tensor within each dictionary into a list of tensors, one for each task.
+        loss_per_task_per_axis = (
+            (task, {key: tensor[idx] for key, tensor in fine_grained_loss.items()})
             for idx, task in enumerate(tasks)
-        }
+        )
 
-        # Reshape the dict into a single dict, with the task as part of the key
-        flattened_loss_per_task_per_axis = {
-            _include_task_in_metric_key(key, task): tensor
-            for task, loss_per_axis in loss_per_task_per_axis.items()
-            for key, tensor in loss_per_axis.items()
-        }
+        for task, loss_per_axis in loss_per_task_per_axis:
+            flattened_loss_per_axis = {
+                _include_task_in_metric_key(key, task): tensor
+                for key, tensor in loss_per_axis.items()
+            }
 
-        for metric_key, loss in flattened_loss_per_task_per_axis.items():
-            self.task_metrics[metric_key](loss)
+            for metric_key, loss in flattened_loss_per_axis.items():
+                self.task_metrics[metric_key](loss)
+
+    def compute(self) -> dict[str, Any]:
+        """Only run compute on the metrics that have been updated."""
+        return {
+            key: cast(MeanMetric, metric).compute()
+            for key, metric in self.task_metrics.items()
+            if metric.update_called
+        }
 
 
 class TrainingMetrics(torch.nn.Module):
