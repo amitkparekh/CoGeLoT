@@ -300,6 +300,9 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     prompt: str
     prompt_assets: Annotated[PromptAssets, BeforeValidator(maybe_convert_dict_list_to_list_dict)]
 
+    # Seed used when generating the instance
+    generation_seed: int
+
     @field_validator("pose_actions", "observations")
     @classmethod
     def sort_by_index(cls, indexed_steps: list[Timestep]) -> list[Timestep]:
@@ -341,5 +344,6 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
                 "pose_actions": datasets.Sequence(PoseAction.dataset_features()),
                 "prompt": datasets.Value("string"),
                 "prompt_assets": datasets.Sequence(PromptAsset.dataset_features()),
+                "generation_seed": datasets.Value("int64"),
             }
         )

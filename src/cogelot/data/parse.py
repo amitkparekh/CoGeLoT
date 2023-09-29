@@ -150,4 +150,5 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         object_metadata=parse_object_metadata(trajectory_metadata),
         pose_actions=pose_actions,
         observations=observations,
+        generation_seed=trajectory_metadata["seed"],
     )
