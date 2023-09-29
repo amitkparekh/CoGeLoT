@@ -104,6 +104,14 @@ class Task(Enum):
         """Largest value."""
         return max(enum.value for enum in cls)
 
+    @classmethod
+    def names_for_value(cls, value: int) -> list[str]:  # noqa: WPS110
+        """Get all the names for the given value.
+
+        This is useful so that if a given value has more than one name, we can get the names.
+        """
+        return [name for name, enum in Task.__members__.items() if enum.value == value]
+
 
 class TaskGroup(Enum):
     """Grouping of tasks."""

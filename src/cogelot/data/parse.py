@@ -25,8 +25,18 @@ OBSERVATIONS_FILE_NAME = "obs.pkl"
 RGB_PATH_PER_VIEW: Mapping[str, str] = MappingProxyType({"top": "rgb_top", "front": "rgb_front"})
 
 
-def get_all_raw_instance_directories(raw_data_dir: Path) -> Iterator[Path]:
+def get_all_raw_instance_directories(
+    raw_data_dir: Path, *, task_filter: Task | None = None
+) -> Iterator[Path]:
     """Get all the instance directories."""
+    # If there is a task filter, then we need to get all the possible task names to iterate from,
+    # and then we get all the instance paths from that directory
+    if task_filter is not None:
+        task_dir_names = Task.names_for_value(task_filter.value)
+        path_generators = (raw_data_dir.glob(f"{dir_name}/*/") for dir_name in task_dir_names)
+        return (path for path_globber in path_generators for path in path_globber)
+
+    # Otherwise, we just get all of the instance paths
     return raw_data_dir.glob("*/*/")
 
 

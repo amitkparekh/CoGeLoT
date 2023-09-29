@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Optional
 
 import typer
 from loguru import logger
@@ -59,6 +59,9 @@ def parse_original_dataset(
     replace_if_exists: Annotated[
         bool, typer.Option(help="Replace parsed instances if they already exist")
     ] = False,
+    task_index_filter: Annotated[
+        Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
+    ] = None,
 ) -> None:
     """Convert the raw VIMA data into the instances we can work with.
 
@@ -67,9 +70,13 @@ def parse_original_dataset(
     was no way to recover it mid-way through. For a process that can take 8-something hours, we do
     not want to keep re-running this.
     """
+    task_filter = Task(task_index_filter) if task_index_filter is not None else None
     logger.info("Get all the raw instance directories")
     all_raw_instance_directories = list(
-        tqdm(get_all_raw_instance_directories(raw_data_root), desc="Get all raw instance paths")
+        tqdm(
+            get_all_raw_instance_directories(raw_data_root, task_filter=task_filter),
+            desc="Get all raw instance paths",
+        )
     )
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
