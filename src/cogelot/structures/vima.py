@@ -24,7 +24,6 @@ from cogelot.structures.common import (
 )
 
 
-SEED = 42
 MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60
 OUTPUT_VIDEO_NAME = "gui_record.mp4"
@@ -154,7 +153,7 @@ def get_task_group_from_task(task: Task) -> TaskGroup:
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
-PositionAxes = Literal["x", "y"]  # 'z' is not modelled and therefore not included here
+PositionAxes = Literal["x", "y", "z"]
 RotationAxes = Literal["x", "y", "z", "w"]
 
 AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] = {
@@ -204,7 +203,7 @@ class PoseAction(Action, PydanticHFDatasetMixin):
     @classmethod
     def check_shape_of_pose_position(cls, tensor: torch.Tensor) -> torch.Tensor:
         """Verify the shape of the pose position."""
-        assert tensor.shape == (2,), f"Expected shape (2,), got {tensor.shape}"
+        assert tensor.shape == (3,), f"Expected shape (3,), got {tensor.shape}"
         return tensor
 
     @field_validator("pose0_rotation", "pose1_rotation")
@@ -220,9 +219,9 @@ class PoseAction(Action, PydanticHFDatasetMixin):
         return datasets.Features(
             {
                 **Action.dataset_features(),
-                "pose0_position": datasets.Sequence(datasets.Value("float32"), length=2),
+                "pose0_position": datasets.Sequence(datasets.Value("float32"), length=3),
                 "pose0_rotation": datasets.Sequence(datasets.Value("float32"), length=4),
-                "pose1_position": datasets.Sequence(datasets.Value("float32"), length=2),
+                "pose1_position": datasets.Sequence(datasets.Value("float32"), length=3),
                 "pose1_rotation": datasets.Sequence(datasets.Value("float32"), length=4),
             }
         )

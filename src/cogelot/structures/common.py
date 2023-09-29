@@ -171,16 +171,7 @@ class RGBFrame(Frame):
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Export the features schema for the HF dataset."""
-        array = datasets.Sequence(
-            length=FRAME_SHAPE[0],
-            feature=datasets.Sequence(
-                length=FRAME_SHAPE[1],
-                feature=datasets.Sequence(
-                    length=FRAME_SHAPE[2],
-                    feature=datasets.Value("uint8"),
-                ),
-            ),
-        )
+        array = datasets.Array3D(shape=FRAME_SHAPE, dtype="uint8")
         return datasets.Features({"front": array, "top": array})
 
 
@@ -190,13 +181,7 @@ class SegmentationFrame(Frame):
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Export the features schema for the HF dataset."""
-        array = datasets.Sequence(
-            length=FRAME_SHAPE[1],
-            feature=datasets.Sequence(
-                length=FRAME_SHAPE[2],
-                feature=datasets.Value("uint8"),
-            ),
-        )
+        array = datasets.Array2D(shape=FRAME_SHAPE[1:], dtype="uint8")
         return datasets.Features({"front": array, "top": array})
 
 
@@ -291,10 +276,7 @@ class PromptAssets(RootModel[list[PromptAsset]]):
     @property
     def all_object_ids(self) -> set[int]:
         """Get all the object IDs for all the assets."""
-        all_object_ids: set[int] = set()
-        for asset in self.values():
-            all_object_ids.update(asset.object_ids)
-        return all_object_ids
+        return set.union(*(asset.object_ids for asset in self.root))
 
     def keys(self) -> KeysView[str]:
         """Get the keys of the assets."""
