@@ -141,9 +141,9 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
                     },
                 },
                 "actions": {
-                    "pose0_position": datasets.Array2D(shape=(None, 2), dtype="int64"),
+                    "pose0_position": datasets.Array2D(shape=(None, 3), dtype="int64"),
                     "pose0_rotation": datasets.Array2D(shape=(None, 4), dtype="int64"),
-                    "pose1_position": datasets.Array2D(shape=(None, 2), dtype="int64"),
+                    "pose1_position": datasets.Array2D(shape=(None, 3), dtype="int64"),
                     "pose1_rotation": datasets.Array2D(shape=(None, 4), dtype="int64"),
                 },
             }
