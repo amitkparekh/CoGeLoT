@@ -18,9 +18,7 @@ from loguru import logger
 from tqdm import tqdm
 
 
-SHARD_FILE_NAME_TEMPLATE = (
-    "{data_dir}/{split}-{index:05d}-of-{num_shards:05d}-{fingerprint}.parquet"
-)
+SHARD_FILE_NAME_TEMPLATE = "{split}-{index:05d}-of-{num_shards:05d}-{fingerprint}.parquet"
 
 
 SavedFileExtension = Literal["parquet", "arrow"]
@@ -215,7 +213,7 @@ def _create_parquet_files_for_dataset_split(
     split_name: str,
     num_shards: int,
     embed_external_files: bool = True,
-    output_dir_parent: Path,
+    shards_output_dir: Path,
 ) -> None:
     """Create parquet files for a given dataset split.
 
@@ -238,7 +236,7 @@ def _create_parquet_files_for_dataset_split(
             num_shards=num_shards,
             fingerprint=shard._fingerprint,  # noqa: SLF001
         )
-        shard_path = output_dir_parent.joinpath(shard_file_name)
+        shard_path = shards_output_dir.joinpath(shard_file_name)
         shard_path.parent.mkdir(parents=True, exist_ok=True)
         shard.to_parquet(shard_path)
         logger.info(f"Created parquet file: `{shard_path}`")
@@ -248,7 +246,7 @@ def _export_dataset_as_parquet_files_for_hub(
     *,
     dataset: datasets.DatasetDict,
     config_name: str,
-    output_dir: Path,
+    dataset_shards_output_dir: Path,
     num_shards: dict[str, int],
     embed_external_files: bool = True,
 ) -> None:
@@ -261,7 +259,7 @@ def _export_dataset_as_parquet_files_for_hub(
             split_name=split_name,
             num_shards=num_shards[split_name],
             embed_external_files=embed_external_files,
-            output_dir_parent=output_dir,
+            shards_output_dir=dataset_shards_output_dir,
         )
 
 
@@ -269,14 +267,14 @@ def _upload_parquet_files_to_hub(
     *,
     hf_repo_id: str,
     config_name: str,
-    parquet_files_dir: Path,
+    dataset_shards_output_dir: Path,
     is_private_repo: bool = True,
     use_multi_commits: bool = True,
 ) -> None:
     """Upload parquet files to the hub."""
     # Ensure that the parquet files directory exists and is the same as the config name
-    assert parquet_files_dir.is_dir()
-    assert parquet_files_dir.name == config_name
+    assert dataset_shards_output_dir.is_dir()
+    assert dataset_shards_output_dir.name == config_name
 
     api = HfApi(endpoint=HF_ENDPOINT)
 
@@ -297,7 +295,7 @@ def _upload_parquet_files_to_hub(
 
     logger.info("Starting the upload...")
     api.upload_folder(
-        folder_path=parquet_files_dir,
+        folder_path=dataset_shards_output_dir,
         repo_id=hf_repo_id,
         repo_type="dataset",
         path_in_repo=config_name,
@@ -337,7 +335,7 @@ def upload_dataset_to_hub(
     hf_repo_id: str,
     num_shards: dict[str, int],
     use_custom_method: bool = False,
-    parquet_files_dir_for_dataset: Path | None = None,
+    hf_parquets_dir: Path | None = None,
 ) -> None:
     """Upload the dataset to the hub."""
     logger.info("Load dataset from disk...")
@@ -349,21 +347,21 @@ def upload_dataset_to_hub(
 
     if use_custom_method:
         logger.info("Using the 'custom method' to push the dataset to the hub.")
-        if not parquet_files_dir_for_dataset:
+        if not hf_parquets_dir:
             raise ValueError(
-                "You need to provide the `parquet_files_dir_for_dataset` when using the custom"
-                " method."
+                "You need to provide the `hf_parquets_dir` when using the custom method."
             )
+        dataset_shards_output_dir = hf_parquets_dir.joinpath(config_name)
         _export_dataset_as_parquet_files_for_hub(
             dataset=dataset_dict,
             config_name=config_name,
-            output_dir=parquet_files_dir_for_dataset,
+            dataset_shards_output_dir=dataset_shards_output_dir,
             num_shards=num_shards,
         )
         _upload_parquet_files_to_hub(
             hf_repo_id=hf_repo_id,
             config_name=config_name,
-            parquet_files_dir=parquet_files_dir_for_dataset,
+            dataset_shards_output_dir=dataset_shards_output_dir,
         )
     else:
         logger.info("Using the 'push_to_hub' method to push the dataset to the hub.")
