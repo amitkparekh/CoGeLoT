@@ -73,7 +73,7 @@ def upload_preprocessed_dataset(
     preprocessed_hf_parquets_dir.mkdir(parents=True, exist_ok=True)
 
     for task_dataset_path in preprocessed_hf_dataset_dir.iterdir():
-        task = Task[task_dataset_path.name]
+        task = Task[task_dataset_path.name.removeprefix("preprocessed--")]
         if task_index_filter is not None and task_index_filter != task.value:
             logger.info(f"Skipping task {task}...")
             continue
