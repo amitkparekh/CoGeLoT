@@ -1,15 +1,30 @@
+import logging
 import os
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Literal, TypeVar, cast
 
 import datasets
+from datasets.config import HF_ENDPOINT
 from datasets.distributed import split_dataset_by_node
-from huggingface_hub import snapshot_download
-from huggingface_hub.utils._errors import BadRequestError, HfHubHTTPError  # noqa: WPS436
+from datasets.features.features import require_decoding
+from datasets.table import embed_table_storage
+from huggingface_hub import HfApi, HfFolder, snapshot_download
+from huggingface_hub.utils._errors import (  # noqa: WPS436  # noqa: WPS436
+    BadRequestError,
+    HfHubHTTPError,
+)
 from loguru import logger
+from tqdm import tqdm
+
+
+SHARD_FILE_NAME_TEMPLATE = (
+    "{data_dir}/{split}-{index:05d}-of-{num_shards:05d}-{fingerprint}.parquet"
+)
 
 
 SavedFileExtension = Literal["parquet", "arrow"]
+
 
 T = TypeVar("T", datasets.Dataset, datasets.IterableDataset)
 
@@ -144,25 +159,167 @@ def load_dataset_from_disk(
     return dataset_dict
 
 
-def upload_dataset_to_hub(
-    saved_hf_dataset_dir: Path,
+def _embed_external_files_in_shards(
+    shards: Iterable[datasets.Dataset],
+) -> Iterator[datasets.Dataset]:
+    """Embed the external files in the shards, as done by HF.
+
+    This is taken from `datasets.Dataset._push_parquet_files_to_hub()`, and reformatted slightly.
+    """
+    for shard in shards:
+        shard_with_embedded_files = (
+            shard.with_format("arrow")
+            .map(
+                embed_table_storage,
+                batched=True,
+                batch_size=1000,
+                keep_in_memory=True,
+            )
+            .with_format(**shard.format)  # pyright: ignore[reportGeneralTypeIssues]
+        )
+        yield shard_with_embedded_files
+
+
+def _shard_dataset(
     *,
+    dataset: datasets.Dataset,
+    num_shards: int,
+    embed_external_files: bool = True,
+) -> Iterator[datasets.Dataset]:
+    """Shard the dataset into multiple shards."""
+    shards = (dataset.shard(num_shards=num_shards, index=index) for index in range(num_shards))
+
+    # Check if it has decodable columns
+    # Find decodable columns, because if there are any, we need to:
+    # embed the bytes from the files in the shards
+    assert dataset.info.features is not None
+    decodable_columns: list[str] = (
+        [
+            column_name
+            for column_name, column_feature in dataset.info.features.items()
+            if require_decoding(column_feature, ignore_decode_attribute=True)
+        ]
+        if embed_external_files
+        else []
+    )
+    if decodable_columns:
+        shards = _embed_external_files_in_shards(shards)
+
+    return shards
+
+
+def _create_parquet_files_for_dataset_split(
+    *,
+    dataset_split: datasets.Dataset,
+    config_name: str,
+    split_name: str,
+    num_shards: int,
+    embed_external_files: bool = True,
+    output_dir_parent: Path,
+) -> None:
+    """Create parquet files for a given dataset split.
+
+    This saves the parquet files to a given directory.
+    """
+    shards = _shard_dataset(
+        dataset=dataset_split, num_shards=num_shards, embed_external_files=embed_external_files
+    )
+
+    # Create an iterator with a progress bar for the shards
+    shard_iterator = tqdm(
+        enumerate(shards), desc="Creating parquet files for shards", total=num_shards
+    )
+
+    for index, shard in shard_iterator:
+        shard_file_name = SHARD_FILE_NAME_TEMPLATE.format(
+            data_dir=config_name,
+            split=split_name,
+            index=index,
+            num_shards=num_shards,
+            fingerprint=shard._fingerprint,  # noqa: SLF001
+        )
+        shard_path = output_dir_parent.joinpath(shard_file_name)
+        shard_path.parent.mkdir(parents=True, exist_ok=True)
+        shard.to_parquet(shard_path)
+        logger.info(f"Created parquet file: `{shard_path}`")
+
+
+def _export_dataset_as_parquet_files_for_hub(
+    *,
+    dataset: datasets.DatasetDict,
+    config_name: str,
+    output_dir: Path,
+    num_shards: dict[str, int],
+    embed_external_files: bool = True,
+) -> None:
+    """Export a dataset as parquet files for easier uploading to the hub."""
+    for split_name, dataset_split in dataset.items():
+        logging.info(f"Creating parquet files for split `{split_name}`")
+        _create_parquet_files_for_dataset_split(
+            dataset_split=dataset_split,
+            config_name=config_name,
+            split_name=split_name,
+            num_shards=num_shards[split_name],
+            embed_external_files=embed_external_files,
+            output_dir_parent=output_dir,
+        )
+
+
+def _upload_parquet_files_to_hub(
+    *,
+    hf_repo_id: str,
+    config_name: str,
+    parquet_files_dir: Path,
+    is_private_repo: bool = True,
+    use_multi_commits: bool = True,
+) -> None:
+    """Upload parquet files to the hub."""
+    # Ensure that the parquet files directory exists and is the same as the config name
+    assert parquet_files_dir.is_dir()
+    assert parquet_files_dir.name == config_name
+
+    api = HfApi(endpoint=HF_ENDPOINT)
+
+    token = HfFolder.get_token()
+    if token is None:
+        raise OSError(
+            "You need to provide a `token` or be logged in to Hugging Face with `huggingface-cli"
+            " login`."
+        )
+
+    api.create_repo(
+        hf_repo_id,
+        token=token,
+        repo_type="dataset",
+        private=is_private_repo,
+        exist_ok=True,
+    )
+
+    logger.info("Starting the upload...")
+    api.upload_folder(
+        folder_path=parquet_files_dir,
+        repo_id=hf_repo_id,
+        repo_type="dataset",
+        path_in_repo=config_name,
+        allow_patterns="*.parquet",
+        delete_patterns="*.parquet",
+        multi_commits=use_multi_commits,
+        multi_commits_verbose=use_multi_commits,
+    )
+
+    logger.info("Finished uploading the parquet files to the hub.")
+
+
+def _upload_dataset_to_hub_using_hf(
+    *,
+    dataset: datasets.DatasetDict,
+    config_name: str,
     hf_repo_id: str,
     num_shards: dict[str, int],
 ) -> None:
-    """Upload the dataset to the hub."""
-    logger.info("Load dataset from disk...")
-    dataset_dict = datasets.load_from_disk(str(saved_hf_dataset_dir))
-    assert isinstance(dataset_dict, datasets.DatasetDict)
-
-    # Get the config name for the dataset
-    config_name = next(iter(dataset_dict.values())).info.config_name
-
-    logger.info(f"Pushing dataset ({config_name}) to the hub...")
+    """Upload a dataset to the hub using `push_to_hub`."""
     try:
-        dataset_dict.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
-    # Catching the blind exception because HF is failing to parse YAML for some reason and it's
-    # just crashing and thats annoying.
+        dataset.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
     except BadRequestError as request_error:
         if request_error.server_message is not None and "YAML" in request_error.server_message:
             logger.error("Invalid YAML occurred while pushing dataset to the hub.")
@@ -172,5 +329,49 @@ def upload_dataset_to_hub(
         if http_error.errno == 429:  # noqa: PLR2004
             logger.error("Rate limited while pushing dataset to the hub.")
             return
+
+
+def upload_dataset_to_hub(
+    saved_hf_dataset_dir: Path,
+    *,
+    hf_repo_id: str,
+    num_shards: dict[str, int],
+    use_custom_method: bool = False,
+    parquet_files_dir_for_dataset: Path | None = None,
+) -> None:
+    """Upload the dataset to the hub."""
+    logger.info("Load dataset from disk...")
+    dataset_dict = datasets.load_from_disk(str(saved_hf_dataset_dir))
+    assert isinstance(dataset_dict, datasets.DatasetDict)
+
+    # Get the config name for the dataset
+    config_name = next(iter(dataset_dict.values())).info.config_name
+
+    if use_custom_method:
+        logger.info("Using the 'custom method' to push the dataset to the hub.")
+        if not parquet_files_dir_for_dataset:
+            raise ValueError(
+                "You need to provide the `parquet_files_dir_for_dataset` when using the custom"
+                " method."
+            )
+        _export_dataset_as_parquet_files_for_hub(
+            dataset=dataset_dict,
+            config_name=config_name,
+            output_dir=parquet_files_dir_for_dataset,
+            num_shards=num_shards,
+        )
+        _upload_parquet_files_to_hub(
+            hf_repo_id=hf_repo_id,
+            config_name=config_name,
+            parquet_files_dir=parquet_files_dir_for_dataset,
+        )
+    else:
+        logger.info("Using the 'push_to_hub' method to push the dataset to the hub.")
+        _upload_dataset_to_hub_using_hf(
+            dataset=dataset_dict,
+            config_name=config_name,
+            hf_repo_id=hf_repo_id,
+            num_shards=num_shards,
+        )
 
     logger.info(f"Finished pushing dataset {config_name} to the hub.")

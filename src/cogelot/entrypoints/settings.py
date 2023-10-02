@@ -28,10 +28,12 @@ class Settings(BaseSettings):
     parsed_data_dir: Path = storage_data_dir.joinpath("parsed/")
     parsed_instances_dir: Path = parsed_data_dir.joinpath("instances/")
     parsed_hf_dataset_dir: Path = parsed_data_dir.joinpath("hf/")
+    parsed_hf_parquets_dir: Path = parsed_data_dir.joinpath("hf_parquets/")
 
     preprocessed_data_dir: Path = storage_data_dir.joinpath("preprocessed/")
     preprocessed_instances_dir: Path = preprocessed_data_dir.joinpath("instances/")
     preprocessed_hf_dataset_dir: Path = preprocessed_data_dir.joinpath("hf/")
+    preprocessed_hf_parquets_dir: Path = preprocessed_data_dir.joinpath("hf_parquets/")
 
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")

@@ -203,7 +203,8 @@ reportFunctionMemberAccess = "warning"
 reportUnusedClass = true
 reportUnusedFunction = true
 reportUnusedVariable = true
-reportPrivateUsage = true
+# Report private usage is covered by ruff
+reportPrivateUsage = false
 reportIncompatibleMethodOverride = "none"
 reportUnnecessaryIsInstance = true
 reportUnnecessaryCast = true
