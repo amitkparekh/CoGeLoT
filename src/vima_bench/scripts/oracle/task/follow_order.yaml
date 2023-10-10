@@ -1,6 +1,5 @@
 # @package _global_
 
-
 vima_bench_kwargs:
   task_name: "follow_order"
   task_kwargs: null

@@ -1,6 +1,5 @@
 # @package _global_
 
-
 vima_bench_kwargs:
   task_name: "follow_motion"
   task_kwargs: null

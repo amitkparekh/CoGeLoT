@@ -1,6 +1,5 @@
 # @package _global_
 
-
 vima_bench_kwargs:
   task_name: "same_shape"
   task_kwargs: null

@@ -1,6 +1,5 @@
 # @package _global_
 
-
 vima_bench_kwargs:
   task_name: "sweep_without_touching"
   task_kwargs: null

@@ -1,6 +1,5 @@
 # @package _global_
 
-
 vima_bench_kwargs:
   task_name: "novel_noun"
   task_kwargs: null

@@ -62,7 +62,7 @@ success_rate: dict[Partition, dict[Task, float]] = {
 }
 
 tasks_seen: dict[Partition, dict[Task, int]] = {
-    partition: {task: STEPS_PER_TASK for task in tasks.keys()}
+    partition: {task: STEPS_PER_TASK for task in tasks}
     for partition, tasks in success_rate.items()
 }
 

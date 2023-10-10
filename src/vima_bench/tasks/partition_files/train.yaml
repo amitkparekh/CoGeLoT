@@ -127,7 +127,7 @@ twist:
   possible_dragged_obj_texture: ${color_set_1}
 
 novel_adj:
-  possible_dragged_obj:  # exclude block due to height scaling
+  possible_dragged_obj: # exclude block due to height scaling
     - letter A
     - letter E
     - letter G
@@ -181,7 +181,7 @@ rearrange_then_restore:
 # ====== require_reasoning ======
 same_shape:
   possible_dragged_obj:
-    - shorter block   # only one shared square-like obj
+    - shorter block # only one shared square-like obj
     - letter A
     - letter E
     - letter G
