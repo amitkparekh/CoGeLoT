@@ -58,6 +58,11 @@ repos:
           - --include-star-import
           - --gitignore
 
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 2.7.2
+    hooks:
+      - id: editorconfig-checker
+
   # - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks/
   #   rev: v2.10.0
   #   hooks:
