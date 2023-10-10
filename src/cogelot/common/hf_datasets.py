@@ -301,6 +301,7 @@ def _upload_parquet_files_to_hub(
         path_in_repo=config_name,
         allow_patterns="*.parquet",
         delete_patterns="*.parquet",
+        commit_message=f"Upload {config_name} with huggingface_hub",
         multi_commits=use_multi_commits,
         multi_commits_verbose=use_multi_commits,
     )
