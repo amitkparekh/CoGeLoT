@@ -11,7 +11,7 @@ readme = "README.md"
 license = { text = "MIT" }
 
 dependencies = [
-	"torch<3.0.0,>=2.0.0,!=2.0.1",
+	"torch<3.0.0,>=2.0.0,!=2.0.1,!=2.1.0",
 	"tokenizers>=0.13.3",
 	"transformers>=4.32.0",
 	"omegaconf>=2.3.0",
