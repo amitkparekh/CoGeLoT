@@ -5,7 +5,6 @@ import torch
 from torch.utils.data import default_collate
 
 from cogelot.modules.tokenizers import EndEffectorTokenizer, TextTokenizer
-from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.structures.common import ImageType, Observation, PromptAssets, View
 from cogelot.structures.model import PreprocessedInstance, RawPromptTokenType
 from cogelot.structures.vima import PoseAction, VIMAInstance
@@ -56,11 +55,9 @@ class InstancePreprocessor:
         *,
         text_tokenizer: TextTokenizer,
         end_effector_tokenizer: EndEffectorTokenizer,
-        pose_action_tokenizer: PoseActionTokenizer,
     ) -> None:
         self.text_tokenizer = text_tokenizer
         self.end_effector_tokenizer = end_effector_tokenizer
-        self.pose_action_tokenizer = pose_action_tokenizer
 
     def preprocess(self, instance: VIMAInstance) -> PreprocessedInstance:
         """Preprocess a single instance of the dataset."""
@@ -163,8 +160,11 @@ class InstancePreprocessor:
         return np.array(tokenized_end_effector).repeat(num_observations)
 
     def prepare_actions(self, pose_actions: list[PoseAction]) -> DataDict:
-        """Prepare the actions for the model."""
-        tokenized_actions = self.pose_action_tokenizer.tokenize(pose_actions)
-        action_dicts = [action.to_target_pose_action() for action in tokenized_actions]
+        """Prepare the actions for the model.
+
+        We keep the actions continuous so that we can change how fine-grained the bin sizes are on
+        the fly, without needing to re-run the data processing.
+        """
+        action_dicts = [action.model_dump() for action in pose_actions]
         collated_actions = default_collate(action_dicts)
         return cast(DataDict, any_to_datadict(collated_actions).to_torch_tensor())
