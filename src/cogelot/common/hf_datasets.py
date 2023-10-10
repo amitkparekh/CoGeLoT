@@ -269,7 +269,7 @@ def _upload_parquet_files_to_hub(
     config_name: str,
     dataset_shards_output_dir: Path,
     is_private_repo: bool = True,
-    use_multi_commits: bool = True,
+    use_multi_commits: bool = False,
 ) -> None:
     """Upload parquet files to the hub."""
     # Ensure that the parquet files directory exists and is the same as the config name
