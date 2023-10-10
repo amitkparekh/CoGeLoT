@@ -21,3 +21,10 @@ indent_size = 2
 [*.{py,ipynb}]
 indent_size = 4
 indent_style = space
+
+# Ignore lockfiles
+[*.lock]
+indent_size = unset
+indent_style = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
