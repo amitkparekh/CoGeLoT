@@ -163,6 +163,6 @@ class InstancePreprocessor:
         We keep the actions continuous so that we can change how fine-grained the bin sizes are on
         the fly, without needing to re-run the data processing.
         """
-        action_dicts = [action.model_dump() for action in pose_actions]
+        action_dicts = [action.model_dump(exclude={"index"}) for action in pose_actions]
         collated_actions = default_collate(action_dicts)
         return cast(DataDict, any_to_datadict(collated_actions).to_torch_tensor())
