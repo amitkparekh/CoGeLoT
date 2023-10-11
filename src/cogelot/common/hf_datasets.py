@@ -251,12 +251,13 @@ def _get_other_shard_paths_for_same_index(
     # Get any other shard with the same index
     other_shards_for_same_index = list(
         output_dir.glob(
+            # Use a little bit of a hack to set a wildcard for the `num_shards`
             SHARD_FILE_NAME_TEMPLATE.format(
                 split=split_name,
                 index=index,
-                num_shards="*",
+                num_shards=-1,
                 fingerprint="*",
-            )
+            ).replace("-0001", "*")
         )
     )
 
