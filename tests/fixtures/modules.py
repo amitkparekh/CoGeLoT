@@ -32,12 +32,10 @@ def pose_action_tokenizer() -> PoseActionTokenizer:
 def instance_preprocessor(
     text_tokenizer: TextTokenizer,
     end_effector_tokenizer: EndEffectorTokenizer,
-    pose_action_tokenizer: PoseActionTokenizer,
 ) -> InstancePreprocessor:
     return InstancePreprocessor(
         text_tokenizer=text_tokenizer,
         end_effector_tokenizer=end_effector_tokenizer,
-        pose_action_tokenizer=pose_action_tokenizer,
     )
 
 
