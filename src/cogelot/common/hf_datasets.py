@@ -257,7 +257,7 @@ def _get_other_shard_paths_for_same_index(
                 index=index,
                 num_shards=-1,
                 fingerprint="*",
-            ).replace("-0001", "*")
+            ).replace("-0001-*", "*-*")
         )
     )
 
