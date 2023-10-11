@@ -45,7 +45,7 @@ def upload_raw_dataset(
             task_dataset_path,
             hf_repo_id=settings.hf_repo_id,
             num_shards=settings.num_shards,
-            hf_parquets_dir=parsed_hf_parquets_dir.joinpath(task.name),
+            hf_parquets_dir=parsed_hf_parquets_dir,
             use_custom_method=use_custom_method,
         )
 
