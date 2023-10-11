@@ -1,6 +1,7 @@
 import logging
 import os
 from collections.abc import Iterable, Iterator
+from contextlib import suppress
 from pathlib import Path
 from typing import Literal, TypeVar, cast
 
@@ -206,6 +207,69 @@ def _shard_dataset(
     return shards
 
 
+def _delete_shards_with_different_fingerprint(
+    *,
+    output_dir: Path,
+    split_name: str,
+    index: int,
+    num_shards: int,
+    fingerprint: str,
+) -> None:
+    """Delete shards with a different fingerprint."""
+    other_shards_for_same_index = _get_other_shard_paths_for_same_index(
+        output_dir=output_dir,
+        split_name=split_name,
+        index=index,
+        num_shards=num_shards,
+        fingerprint=fingerprint,
+    )
+
+    if other_shards_for_same_index:
+        for shard_path in other_shards_for_same_index:
+            shard_path.unlink()
+            logger.info(f"Deleted parquet file: `{shard_path}`")
+
+
+def _get_other_shard_paths_for_same_index(
+    *,
+    output_dir: Path,
+    split_name: str,
+    index: int,
+    num_shards: int,
+    fingerprint: str,
+) -> list[Path] | None:
+    """Get paths of shards with different fingerprints for the given index."""
+    # Get the path to the shard
+    shard_file_name = SHARD_FILE_NAME_TEMPLATE.format(
+        split=split_name,
+        index=index,
+        num_shards=num_shards,
+        fingerprint=fingerprint,
+    )
+    shard_path = output_dir.joinpath(shard_file_name)
+
+    # Get any other shard with the same index
+    other_shards_for_same_index = list(
+        output_dir.glob(
+            SHARD_FILE_NAME_TEMPLATE.format(
+                split=split_name,
+                index=index,
+                num_shards="*",
+                fingerprint="*",
+            )
+        )
+    )
+
+    # Remove the desired fingerprinted shard from the list
+    with suppress(ValueError):
+        other_shards_for_same_index.remove(shard_path)
+
+    # If the list is not empty, then there is more than one shard with the same index
+    if other_shards_for_same_index:
+        return other_shards_for_same_index
+    return None
+
+
 def _create_parquet_files_for_dataset_split(
     *,
     dataset_split: datasets.Dataset,
@@ -216,7 +280,8 @@ def _create_parquet_files_for_dataset_split(
 ) -> None:
     """Create parquet files for a given dataset split.
 
-    This saves the parquet files to a given directory.
+    This saves the parquet files to a given directory. This will delete shards that have the same
+    index and a different fingerprint.
     """
     shards = _shard_dataset(
         dataset=dataset_split, num_shards=num_shards, embed_external_files=embed_external_files
@@ -235,6 +300,16 @@ def _create_parquet_files_for_dataset_split(
             fingerprint=shard._fingerprint,  # noqa: SLF001
         )
         shard_path = shards_output_dir.joinpath(shard_file_name)
+
+        # Delete shards with a different fingerprint
+        _delete_shards_with_different_fingerprint(
+            output_dir=shards_output_dir,
+            split_name=split_name,
+            index=index,
+            num_shards=num_shards,
+            fingerprint=shard._fingerprint,  # noqa: SLF001
+        )
+
         shard_path.parent.mkdir(parents=True, exist_ok=True)
         shard.to_parquet(shard_path)
         logger.info(f"Created parquet file: `{shard_path}`")
