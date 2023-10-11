@@ -209,7 +209,6 @@ def _shard_dataset(
 def _create_parquet_files_for_dataset_split(
     *,
     dataset_split: datasets.Dataset,
-    config_name: str,
     split_name: str,
     num_shards: int,
     embed_external_files: bool = True,
@@ -230,7 +229,6 @@ def _create_parquet_files_for_dataset_split(
 
     for index, shard in shard_iterator:
         shard_file_name = SHARD_FILE_NAME_TEMPLATE.format(
-            data_dir=config_name,
             split=split_name,
             index=index,
             num_shards=num_shards,
@@ -245,7 +243,6 @@ def _create_parquet_files_for_dataset_split(
 def _export_dataset_as_parquet_files_for_hub(
     *,
     dataset: datasets.DatasetDict,
-    config_name: str,
     dataset_shards_output_dir: Path,
     num_shards: dict[str, int],
     embed_external_files: bool = True,
@@ -255,7 +252,6 @@ def _export_dataset_as_parquet_files_for_hub(
         logging.info(f"Creating parquet files for split `{split_name}`")
         _create_parquet_files_for_dataset_split(
             dataset_split=dataset_split,
-            config_name=config_name,
             split_name=split_name,
             num_shards=num_shards[split_name],
             embed_external_files=embed_external_files,
@@ -355,7 +351,6 @@ def upload_dataset_to_hub(
         dataset_shards_output_dir = hf_parquets_dir.joinpath(config_name)
         _export_dataset_as_parquet_files_for_hub(
             dataset=dataset_dict,
-            config_name=config_name,
             dataset_shards_output_dir=dataset_shards_output_dir,
             num_shards=num_shards,
         )
