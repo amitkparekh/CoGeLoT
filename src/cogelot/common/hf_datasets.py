@@ -310,6 +310,12 @@ def _create_parquet_files_for_dataset_split(
             fingerprint=shard._fingerprint,  # noqa: SLF001
         )
 
+        # If the shard already exists, then we don't need to create it again. The fingerprint of
+        # the shard makes sure that we are not going to be repeating ourselves.
+        if shard_path.exists():
+            logger.info(f"Parquet file already exists: `{shard_path}`")
+            continue
+
         shard_path.parent.mkdir(parents=True, exist_ok=True)
         shard.to_parquet(shard_path)
         logger.info(f"Created parquet file: `{shard_path}`")
