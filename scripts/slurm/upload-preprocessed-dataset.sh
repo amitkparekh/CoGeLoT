@@ -1,7 +1,7 @@
 #! /bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
-#SBATCH --mem=100G
+#SBATCH --mem=50G
 #SBATCH --time=24:00:00
 #SBATCH --partition=nodes
 #SBATCH --job-name=upload-preprocessed-dataset
