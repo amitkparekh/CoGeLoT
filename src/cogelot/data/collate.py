@@ -32,7 +32,7 @@ def collate_variable_ndim_batch(
     shape_per_tensor = torch.tensor([i.shape for i in batch], device=batch[0].device)
 
     # Get the max size per dimension across all tensors
-    max_size_per_dim: list[int] = shape_per_tensor.max(dim=0).values  # noqa: PD011
+    max_size_per_dim = shape_per_tensor.max(dim=0).values  # noqa: PD011
 
     # [instances, dims]
     padding_needed_per_tensor: torch.Tensor = max_size_per_dim - shape_per_tensor
@@ -132,5 +132,5 @@ def collate_preprocessed_instances_from_hf_dataset(
     instances: list[dict[str, Any]]
 ) -> PreprocessedBatch:
     """Collate a batch of preprocessed instances from the HF dataset."""
-    parsed_instances = list(map(PreprocessedInstance.model_validate, instances))
+    parsed_instances = [PreprocessedInstance.model_validate(instance) for instance in instances]
     return collate_preprocessed_instances(parsed_instances)
