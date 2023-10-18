@@ -1,8 +1,10 @@
 import abc
+import itertools
 from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, Unpack
 
 import datasets
+from loguru import logger
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 
@@ -27,12 +29,17 @@ class DataModuleKwargs(TypedDict):
     batch_size: int
     dataloader_kwargs: NotRequired[dict[str, Any]]
 
+    # For filtering the dataset
+    task_index_seen: NotRequired[int]
+    max_num_instances_seen: NotRequired[int]
+
 
 class VIMADataModule(abc.ABC, LightningDataModule):
     """Datamodule for the VIMA dataset."""
 
     def __init__(self, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__()
+        self._kwargs = kwargs
         self._num_workers = kwargs.get("num_workers")
         self.batch_size = kwargs.get("batch_size")
         self._dataloader_kwargs = kwargs.get("dataloader_kwargs", {})
@@ -54,6 +61,8 @@ class VIMADataModule(abc.ABC, LightningDataModule):
 
         if stage == "test":
             self.test_dataset = VIMAEvaluationDataset.from_partition_to_specs()
+
+        self._maybe_filter_datasets()
 
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the training set."""
@@ -93,6 +102,28 @@ class VIMADataModule(abc.ABC, LightningDataModule):
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset for all the splits."""
         raise NotImplementedError
+
+    def _maybe_filter_datasets(self) -> None:
+        """Apply filtering and such if desired."""
+        task_index_seen = self._kwargs.get("task_index_seen")
+        max_num_instances_seen = self._kwargs.get("max_num_instances_seen")
+
+        if task_index_seen is not None:
+            logger.info(f"Limiting task to `{task_index_seen}`")
+            self.train_dataset = self.train_dataset.filter(
+                lambda instance: instance["task"] == task_index_seen
+            )
+            self.valid_dataset = self.valid_dataset.filter(
+                lambda instance: instance["task"] == task_index_seen
+            )
+
+        if max_num_instances_seen is not None:
+            logger.info(f"Selecting `{max_num_instances_seen}` instances")
+            selected_indices = itertools.chain(
+                *itertools.tee(range(max_num_instances_seen), self.batch_size)
+            )
+            self.train_dataset = self.train_dataset.select(selected_indices)
+            self.valid_dataset = self.valid_dataset.select(selected_indices)
 
 
 class VIMADataModuleFromHF(VIMADataModule):

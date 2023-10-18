@@ -1,0 +1,25 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - train
+  - hardware=dmog_1gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/__main__.py
+
+name: Overfit on a single example
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    value: 00_overfit_single_example
+
+  datamodule.batch_size:
+    values:
+      min: 1
+      max: 32

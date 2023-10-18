@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - override /transformer_decoder@model.policy.transformer_decoder:
+      - prompt_encoder_history_decoder
+      - attn_layers/vima
+      - positional/absolute
+      - xattn_positional/absolute
+
+  - override /learning_rate_scheduler@model.lr_scheduler_partial_fn: constant
+
+  - override /debug@debug: overfit_batches
+
+architecture: encoder_decoder
+attn_layers: vima
+positional_encoding: absolute
+xattn_positional_encoding: absolute
+source: x-transformers
+prompt_input: encoder
+observation_input: decoder
+
+datamodule:
+  # Only show the rotate task
+  task_index_seen: 2
+  # Only show 1 example
+  max_num_instances_seen: 1
+
+trainer:
+  logger:
+    - _target_: pytorch_lightning.loggers.WandbLogger
+      save_dir: ${output_dir}
+      project: CoGeLoT
+      entity: pyop
+      log_model: False
+      group: overfit-single-example
