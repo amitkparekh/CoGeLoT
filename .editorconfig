@@ -10,6 +10,7 @@ indent_size = 2
 
 [*.toml]
 indent_size = 4
+indent_style = space
 
 # YAML doesn't support hard tabs
 # Templates that will be weird with hard tabs in the website editor
