@@ -4,18 +4,19 @@ import numpy as np
 import torch
 from numpy import typing as npt
 
-from cogelot.structures.token import PoseActionToken
 from cogelot.structures.vima import (
     N_DISCRETE_ROT_BINS,
     N_DISCRETE_X_BINS,
     N_DISCRETE_Y_BINS,
+    N_DISCRETE_Z_BINS,
     ROT_MAX,
     ROT_MIN,
     X_MAX,
     X_MIN,
     Y_MAX,
     Y_MIN,
-    PoseAction,
+    Z_MAX,
+    Z_MIN,
     PoseActionType,
 )
 from vima.utils import DataDict, any_slice
@@ -66,12 +67,16 @@ class PoseActionTokenizer:
         y_boundary_min: float = Y_MIN,
         y_boundary_max: float = Y_MAX,
         n_discrete_y_bins: int = N_DISCRETE_Y_BINS,
+        z_boundary_min: float = Z_MIN,
+        z_boundary_max: float = Z_MAX,
+        n_discrete_z_bins: int = N_DISCRETE_Z_BINS,
         rot_boundary_min: float = ROT_MIN,
         rot_boundary_max: float = ROT_MAX,
         n_discrete_rot_bins: int = N_DISCRETE_ROT_BINS,
     ) -> None:
         self._n_discrete_x_bins = n_discrete_x_bins
         self._n_discrete_y_bins = n_discrete_y_bins
+        self._n_discrete_z_bins = n_discrete_z_bins
         self._n_discrete_rot_bins = n_discrete_rot_bins
 
         self._x_boundary_min = x_boundary_min
@@ -80,8 +85,19 @@ class PoseActionTokenizer:
         self._y_boundary_min = y_boundary_min
         self._y_boundary_max = y_boundary_max
 
+        self._z_boundary_min = z_boundary_min
+        self._z_boundary_max = z_boundary_max
+
         self._rot_boundary_min = rot_boundary_min
         self._rot_boundary_max = rot_boundary_max
+
+    def normalize_continuous_actions(
+        self, actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Normalise the continuous actions between 0 and 1."""
+        actions = {k: v.detach().clone().float() for k, v in actions.items()}
+        actions = self._rescale_continuous_actions_to_0_and_1(actions)
+        return actions
 
     def convert_continuous_to_discrete(
         self, actions: dict[PoseActionType, torch.Tensor]
@@ -104,27 +120,6 @@ class PoseActionTokenizer:
 
         return actions
 
-    def tokenize(self, actions: list[PoseAction]) -> list[PoseActionToken]:
-        """Tokenize actions into discrete actions."""
-        # When dumping the model, we are explicitly excluding the index from the dump because that
-        # is something that should not get passed to the tokenizer
-        discrete_actions = (
-            self.convert_continuous_to_discrete(
-                cast(dict[PoseActionType, torch.Tensor], action.model_dump(exclude={"index"}))
-            )
-            for action in actions
-        )
-        indexed_discrete_actions = (
-            (action.index, discrete_action)
-            for action, discrete_action in zip(actions, discrete_actions, strict=True)
-        )
-        tokens = [
-            PoseActionToken.model_validate({"index": idx, **action})
-            for idx, action in indexed_discrete_actions
-        ]
-
-        return tokens
-
     def convert_token_to_environment(
         self, action_token: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, npt.NDArray[np.float64]]:
@@ -139,7 +134,7 @@ class PoseActionTokenizer:
 
     def _get_boundaries(
         self, device: torch.device
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get all the boundaries, and clone and move them to another device."""
         x_boundary = torch.linspace(
             start=0,
@@ -153,6 +148,7 @@ class PoseActionTokenizer:
             steps=self._n_discrete_y_bins,
             device=device,
         )
+        z_boundary = torch.linspace(start=0, end=1, steps=self._n_discrete_z_bins, device=device)
         rot_boundary = torch.linspace(
             start=0,
             end=1,
@@ -160,28 +156,32 @@ class PoseActionTokenizer:
             device=device,
         )
 
-        return x_boundary, y_boundary, rot_boundary
+        return x_boundary, y_boundary, z_boundary, rot_boundary
 
     def _rescale_continuous_actions_to_0_and_1(
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Rescale all the continuous actions to be between 0 and 1."""
-        actions["pose0_position"][..., 0] = (
-            actions["pose0_position"][..., 0] - self._x_boundary_min
-        ) / (self._x_boundary_max - self._x_boundary_min)
-        actions["pose0_position"][..., 1] = (
-            actions["pose0_position"][..., 1] - self._y_boundary_min
-        ) / (self._y_boundary_max - self._y_boundary_min)
-        actions["pose0_rotation"] = (actions["pose0_rotation"] - self._rot_boundary_min) / (
+        device = actions["pose0_position"].device
+
+        subtract_from_position = torch.tensor(
+            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min], device=device
+        )
+        divide_from_position = torch.tensor(
+            [
+                self._x_boundary_max - self._x_boundary_min,
+                self._y_boundary_max - self._y_boundary_min,
+                self._z_boundary_max - self._z_boundary_min,
+            ]
+        )
+
+        actions["pose0_position"].subtract_(subtract_from_position).divide_(divide_from_position)
+        actions["pose1_position"].subtract_(subtract_from_position).divide_(divide_from_position)
+
+        actions["pose0_rotation"].subtract_(self._rot_boundary_min).divide_(
             self._rot_boundary_max - self._rot_boundary_min
         )
-        actions["pose1_position"][..., 0] = (
-            actions["pose1_position"][..., 0] - self._x_boundary_min
-        ) / (self._x_boundary_max - self._x_boundary_min)
-        actions["pose1_position"][..., 1] = (
-            actions["pose1_position"][..., 1] - self._y_boundary_min
-        ) / (self._y_boundary_max - self._y_boundary_min)
-        actions["pose1_rotation"] = (actions["pose1_rotation"] - self._rot_boundary_min) / (
+        actions["pose1_rotation"].subtract_(self._rot_boundary_min).divide_(
             self._rot_boundary_max - self._rot_boundary_min
         )
 
@@ -191,7 +191,7 @@ class PoseActionTokenizer:
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the rescaled continuous values to discrete values for tokens."""
-        x_boundary, y_boundary, rot_boundary = self._get_boundaries(
+        x_boundary, y_boundary, z_boundary, rot_boundary = self._get_boundaries(
             actions["pose0_position"].device
         )
 
@@ -201,6 +201,9 @@ class PoseActionTokenizer:
         actions["pose0_position"][..., 1] = torch.bucketize(
             actions["pose0_position"][..., 1].contiguous(), y_boundary
         )
+        actions["pose0_position"][..., 2] = torch.bucketize(
+            actions["pose0_position"][..., 2].contiguous(), z_boundary
+        )
         actions["pose0_rotation"] = torch.bucketize(
             actions["pose0_rotation"].contiguous(), rot_boundary
         )
@@ -209,6 +212,9 @@ class PoseActionTokenizer:
         )
         actions["pose1_position"][..., 1] = torch.bucketize(
             actions["pose1_position"][..., 1].contiguous(), y_boundary
+        )
+        actions["pose1_position"][..., 2] = torch.bucketize(
+            actions["pose1_position"][..., 2].contiguous(), z_boundary
         )
         actions["pose1_rotation"] = torch.bucketize(
             actions["pose1_rotation"].contiguous(), rot_boundary
@@ -220,49 +226,43 @@ class PoseActionTokenizer:
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the discrete values to rescaled continuous values."""
-        actions["pose0_position"][..., 0] = (
-            actions["pose0_position"][..., 0] / self._n_discrete_x_bins
+        device = actions["pose0_position"].device
+        divide_from_position = torch.tensor(
+            [self._n_discrete_x_bins, self._n_discrete_y_bins, self._n_discrete_z_bins],
+            device=device,
         )
-        actions["pose0_position"][..., 1] = (
-            actions["pose0_position"][..., 1] / self._n_discrete_y_bins
-        )
-        actions["pose0_rotation"] = actions["pose0_rotation"] / self._n_discrete_rot_bins
-        actions["pose1_position"][..., 0] = (
-            actions["pose1_position"][..., 0] / self._n_discrete_x_bins
-        )
-        actions["pose1_position"][..., 1] = (
-            actions["pose1_position"][..., 1] / self._n_discrete_y_bins
-        )
-        actions["pose1_rotation"] = actions["pose1_rotation"] / self._n_discrete_rot_bins
+
+        actions["pose0_position"].divide_(divide_from_position)
+        actions["pose1_position"].divide_(divide_from_position)
+        actions["pose0_rotation"].divide_(self._n_discrete_rot_bins)
+        actions["pose1_rotation"].divide_(self._n_discrete_rot_bins)
+
         return actions
 
     def _restore_rescaled_continuous_to_correct_range(
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Restore the rescaled continuous values to the correct range."""
-        actions["pose0_position"][..., 0] = (
-            actions["pose0_position"][..., 0] * (self._x_boundary_max - self._x_boundary_min)
-            + self._x_boundary_min
+        device = actions["pose0_position"].device
+        add_to_position = torch.tensor(
+            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min], device=device
         )
-        actions["pose0_position"][..., 1] = (
-            actions["pose0_position"][..., 1] * (self._y_boundary_max - self._y_boundary_min)
-            + self._y_boundary_min
+        multiply_to_position = torch.tensor(
+            [
+                self._x_boundary_max - self._x_boundary_min,
+                self._y_boundary_max - self._y_boundary_min,
+                self._z_boundary_max - self._z_boundary_min,
+            ]
         )
-        actions["pose0_rotation"] = (
-            actions["pose0_rotation"] * (self._rot_boundary_max - self._rot_boundary_min)
-            + self._rot_boundary_min
+
+        actions["pose0_position"].multiply_(multiply_to_position).add_(add_to_position)
+        actions["pose1_position"].multiply_(multiply_to_position).add_(add_to_position)
+
+        actions["pose0_rotation"].multiply_(self._rot_boundary_max - self._rot_boundary_min).add_(
+            self._rot_boundary_min
         )
-        actions["pose1_position"][..., 0] = (
-            actions["pose1_position"][..., 0] * (self._x_boundary_max - self._x_boundary_min)
-            + self._x_boundary_min
-        )
-        actions["pose1_position"][..., 1] = (
-            actions["pose1_position"][..., 1] * (self._y_boundary_max - self._y_boundary_min)
-            + self._y_boundary_min
-        )
-        actions["pose1_rotation"] = (
-            actions["pose1_rotation"] * (self._rot_boundary_max - self._rot_boundary_min)
-            + self._rot_boundary_min
+        actions["pose1_rotation"].multiply_(self._rot_boundary_max - self._rot_boundary_min).add_(
+            self._rot_boundary_min
         )
 
         return actions

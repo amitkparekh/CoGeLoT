@@ -3,6 +3,7 @@ from typing import ClassVar, Self, cast
 
 import torch
 
+from cogelot.modules.embedders import ActionEmbedder, VIMAContinuousActionEmbedder
 from cogelot.modules.stitching import (
     add_observations_to_tokens_using_scatter,
     get_max_num_objects_from_encoded_observations,
@@ -47,7 +48,7 @@ class Policy(torch.nn.Module):
         obj_encoder: vnn.ObjEncoder,
         end_effector_encoder: vnn.Embedding,
         obs_fusion_layer: torch.nn.Linear,
-        action_encoder: vnn.ActionEmbedding,
+        action_encoder: ActionEmbedder,
         action_decoder: vnn.ActionDecoder,
         prompt_embedding: vnn.WordEmbedding,
         prompt_encoder: vnn.T5PromptEncoder,
@@ -72,20 +73,23 @@ class Policy(torch.nn.Module):
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
 
-        self._pose_action_tokenizer = PoseActionTokenizer()
-
     @classmethod
     def from_their_policy(cls, their_policy: VIMAPolicy) -> Self:
         """Instantiate our policy from their policy.
 
-        This is what we need when we are going to run from their checkpoint.
+        This is what we need when we are going to run from their checkpoint. The incoming policy
+        has already been loaded with the correct weights so we can just rearrange the components as
+        necessary.
         """
         policy = cls(
             embed_dim=their_policy.embed_dim,
             obj_encoder=their_policy.obj_encoder,
             end_effector_encoder=their_policy.end_effector_encoder,
             obs_fusion_layer=their_policy.obs_fusion_layer,
-            action_encoder=their_policy.action_encoder,
+            action_encoder=VIMAContinuousActionEmbedder.from_their_action_encoder(
+                pose_action_tokenizer=PoseActionTokenizer(),
+                their_action_encoder=their_policy.action_encoder,
+            ),
             action_decoder=their_policy.action_decoder,
             prompt_embedding=their_policy.prompt_embedding,
             prompt_encoder=their_policy.t5_prompt_encoder,
@@ -272,17 +276,12 @@ class Policy(torch.nn.Module):
         *,
         ignore_target_index: int = -100,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Embed the actions into a tensor.
+        """Encode the continuous actions.
 
-        So this takes the action tokens, and converts them back into a continuous form, and then
-        provides that straight into the encoder, which are just MLPs that convert from the list of
-        2/4 coordinates (given the pose action type), into a N-dimensional tensor.
+        So this takes the action in their original continuous form and embeds/encodes them.
         """
         mask = create_mask_from_target_actions(actions, ignore_target_index=ignore_target_index)
-        embedded_actions = self._pose_action_tokenizer.convert_discrete_to_continuous(
-            cast(dict[PoseActionType, torch.Tensor], actions)
-        )
-        encoded_actions = self._action_encoder(embedded_actions)
+        encoded_actions = self._action_encoder(actions)
         return encoded_actions, mask
 
     def encode_prompt(

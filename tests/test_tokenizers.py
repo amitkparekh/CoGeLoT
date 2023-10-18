@@ -1,7 +1,9 @@
+from typing import cast
+
 import torch
 
 from cogelot.modules.tokenizers import PoseActionTokenizer, TextTokenizer
-from cogelot.structures.vima import VIMAInstance
+from cogelot.structures.vima import PoseActionType, VIMAInstance
 
 
 def test_text_tokenizer_does_not_fail(
@@ -14,24 +16,24 @@ def test_text_tokenizer_does_not_fail(
 def test_pose_action_tokenizer_works_properly(
     vima_instance: VIMAInstance, pose_action_tokenizer: PoseActionTokenizer
 ) -> None:
-    original_pose_actions = vima_instance.pose_actions
+    original_continuous_actions = [
+        cast(dict[PoseActionType, torch.Tensor], action.model_dump(exclude={"index"}))
+        for action in vima_instance.pose_actions
+    ]
 
-    for original_pose_action in original_pose_actions:
-        tokenized_action = next(
-            iter(pose_action_tokenizer.tokenize([original_pose_action]))
-        ).to_target_pose_action()
+    for original_continuous_action in original_continuous_actions:
+        # Make sure de-normalized actions are the same as the original actions
+        denormalised_continuous_action = (
+            pose_action_tokenizer._restore_rescaled_continuous_to_correct_range(  # noqa: SLF001
+                pose_action_tokenizer.normalize_continuous_actions(original_continuous_action)
+            )
+        )
+        torch.testing.assert_close(original_continuous_action, denormalised_continuous_action)
 
-        continuous_actions = pose_action_tokenizer.convert_discrete_to_continuous(tokenized_action)
-        discrete_actions = pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
-
-        for action_token, discrete_action in zip(
-            tokenized_action.values(), discrete_actions.values()
-        ):
-            torch.testing.assert_allclose(action_token, discrete_action)
-
-        # for original_action, continous_action in zip(
-        #     original_pose_action.to_tensor().values(), continuous_actions.values()
-        # ):
-        #     # Continuous actions are not exactly the same as the original actions, but we want thme
-        #     # to be close
-        #     torch.testing.assert_allclose(original_action, continous_action, atol=0.02, rtol=1e-2)
+        # Make sure the discrete actions can be converted back reliably
+        continuous_actions = pose_action_tokenizer.convert_discrete_to_continuous(
+            pose_action_tokenizer.convert_continuous_to_discrete(original_continuous_action)
+        )
+        torch.testing.assert_close(
+            continuous_actions, original_continuous_action, atol=0.02, rtol=0.02
+        )
