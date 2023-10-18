@@ -10,10 +10,10 @@ defaults:
 datamodule:
   # TODO: What is the largest batch size we can fit?
   # Choices: 1, 2, 4, 8, 16, 32, 64, 128
-  batch_size: 32
+  batch_size: 64
   num_workers: 10
 
 trainer:
-  accumulate_grad_batches: 4
+  accumulate_grad_batches: 2
   devices: 1
   num_nodes: 1
