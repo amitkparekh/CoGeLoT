@@ -1,4 +1,5 @@
 """PyBullet utilities for loading assets."""
+
 from __future__ import annotations
 
 import os

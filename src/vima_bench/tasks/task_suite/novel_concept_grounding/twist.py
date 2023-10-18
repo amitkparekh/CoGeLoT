@@ -34,11 +34,9 @@ class Twist(RotateTheObjBase):
         oracle_step_to_env_step_ratio: int = 4,
         possible_angles_of_rotation: list[float | int] | float | int | None = None,
         possible_dragged_obj: str | list[str] | ObjEntry | list[ObjEntry] | None = None,
-        possible_dragged_obj_texture: str
-        | list[str]
-        | TextureEntry
-        | list[TextureEntry]
-        | None = None,
+        possible_dragged_obj_texture: (
+            str | list[str] | TextureEntry | list[TextureEntry] | None
+        ) = None,
         placeholder_scene_views: str | list[str] | None = None,
         # ====== general ======
         obs_img_views: str | list[str] | None = None,

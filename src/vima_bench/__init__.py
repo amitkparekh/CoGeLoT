@@ -17,9 +17,9 @@ def make(
     task_name: str | None,
     *,
     task_kwargs: dict | None = None,
-    modalities: Literal["rgb", "depth", "segm"]
-    | list[Literal["rgb", "depth", "segm"]]
-    | None = None,
+    modalities: (
+        Literal["rgb", "depth", "segm"] | list[Literal["rgb", "depth", "segm"]] | None
+    ) = None,
     seed: int | None = None,
     debug: bool = False,
     display_debug_window: bool = False,

@@ -101,7 +101,7 @@ def test_loss_computation_does_not_error(
 
     # There are a total of 12 axes across all of the pose action types (4 for rotations, 2 for
     # positions)
-    assert len(fine_grained_loss) == 12  # noqa: PLR2004
+    assert len(fine_grained_loss) == 12
 
     # Extract the batch size and the current max timesteps from the target actions
     batch_size, max_timesteps = target_actions["pose0_position"].shape[:2]

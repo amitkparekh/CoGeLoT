@@ -1,4 +1,5 @@
 """Define data structures used in all encyclopedias."""
+
 from typing import NamedTuple, Tuple, Optional, List, Callable
 
 from .profiles import ProfilePedia

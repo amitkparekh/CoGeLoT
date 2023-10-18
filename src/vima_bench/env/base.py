@@ -28,9 +28,9 @@ class VIMAEnvBase(gym.Env):
 
     def __init__(
         self,
-        modalities: Literal["rgb", "depth", "segm"]
-        | list[Literal["rgb", "depth", "segm"]]
-        | None = None,
+        modalities: (
+            Literal["rgb", "depth", "segm"] | list[Literal["rgb", "depth", "segm"]] | None
+        ) = None,
         task: BaseTask | str | None = None,
         task_kwargs: dict | None = None,
         seed: int | None = None,

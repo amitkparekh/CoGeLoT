@@ -24,16 +24,12 @@ class NovelNoun(SimpleManipulation):
         oracle_step_to_env_step_ratio: int = 4,
         possible_dragged_obj: str | list[str] | ObjEntry | list[ObjEntry] | None = None,
         possible_base_obj: str | list[str] | ObjEntry | list[ObjEntry] | None = None,
-        possible_dragged_obj_texture: str
-        | list[str]
-        | TextureEntry
-        | list[TextureEntry]
-        | None = None,
-        possible_base_obj_texture: str
-        | list[str]
-        | TextureEntry
-        | list[TextureEntry]
-        | None = None,
+        possible_dragged_obj_texture: (
+            str | list[str] | TextureEntry | list[TextureEntry] | None
+        ) = None,
+        possible_base_obj_texture: (
+            str | list[str] | TextureEntry | list[TextureEntry] | None
+        ) = None,
         # ====== general ======
         obs_img_views: str | list[str] | None = None,
         obs_img_size: tuple[int, int] = (128, 256),

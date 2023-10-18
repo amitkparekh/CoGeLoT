@@ -1,5 +1,4 @@
 extend = "../../pyproject.toml"
-
 fix-only = true
 # Just only check defaults
 select = ["E", "F"]

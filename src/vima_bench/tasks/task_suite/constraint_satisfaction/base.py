@@ -37,16 +37,12 @@ class SweepObjectsToZoneBase(BaseTask):
         prepend_color_to_name: bool = True,
         oracle_max_steps: int | None = None,
         oracle_step_to_env_step_ratio: int = 3,
-        possible_dragged_obj_texture: str
-        | list[str]
-        | TextureEntry
-        | list[TextureEntry]
-        | None = None,
-        possible_base_obj_texture: str
-        | list[str]
-        | TextureEntry
-        | list[TextureEntry]
-        | None = None,
+        possible_dragged_obj_texture: (
+            str | list[str] | TextureEntry | list[TextureEntry] | None
+        ) = None,
+        possible_base_obj_texture: (
+            str | list[str] | TextureEntry | list[TextureEntry] | None
+        ) = None,
         # ====== general ======
         obs_img_views: str | list[str] | None = None,
         obs_img_size: tuple[int, int] = (128, 256),
