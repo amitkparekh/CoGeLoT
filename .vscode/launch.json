@@ -14,32 +14,32 @@
 			"subProcess": true,
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}",
-				"PYDEVD_DISABLE_FILE_VALIDATION": "1",
-			}
+				"PYDEVD_DISABLE_FILE_VALIDATION": "1"
+			},
+			"args": ["train", "debug=overfit_batches"]
 		},
 		{
 			"name": "Debug Run",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/src/cogelot/train.py",
+			"program": "${workspaceFolder}/src/cogelot/commands/train.py",
 			"console": "integratedTerminal",
 			"justMyCode": false,
 			"subProcess": true,
-			"args": [
-				"debug=default"
-			]
+			"args": ["debug=overfit_batches"],
+			"env": {
+				"PYDEVD_DISABLE_FILE_VALIDATION": "1"
+			}
 		},
 		{
 			"name": "Debug Tests",
 			"type": "python",
 			"request": "launch",
 			"justMyCode": false,
-			"purpose": [
-				"debug-test"
-			],
+			"purpose": ["debug-test"],
 			"env": {
 				"_PYTEST_RAISE": "1",
-				"PYDEVD_DISABLE_FILE_VALIDATION": "1",
+				"PYDEVD_DISABLE_FILE_VALIDATION": "1"
 			}
 		}
 	]

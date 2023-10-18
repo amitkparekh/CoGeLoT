@@ -17,6 +17,6 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
 
 # Import all the fixtures from every file in the tests/fixtures dir.
 pytest_plugins = [
-    fixture_file.replace("/", ".").replace(".py", "")
+    fixture_file.as_posix().replace("/", ".").replace(".py", "")
     for fixture_file in Path.cwd().rglob("tests/fixtures/[!__]*.py")
 ]

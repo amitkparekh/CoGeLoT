@@ -76,19 +76,20 @@ model:
       out_features: ${..embed_dim}
 
     action_encoder:
-      _target_: vima.nn.ActionEmbedding
-      output_dim: ${..embed_dim}
-      embed_dict:
+      _target_: cogelot.modules.embedders.VIMAContinuousActionEmbedder
+      pose_action_tokenizer:
+        _target_: cogelot.modules.tokenizers.PoseActionTokenizer
+      embedder_per_pose_action:
         pose0_position:
           _target_: vima.nn.ContinuousActionEmbedding
           output_dim: 256
-          input_dim: 2
+          input_dim: 3
           hidden_dim: 256
           hidden_depth: 1
         pose1_position:
           _target_: vima.nn.ContinuousActionEmbedding
           output_dim: 256
-          input_dim: 2
+          input_dim: 3
           hidden_dim: 256
           hidden_depth: 1
         pose0_rotation:
@@ -103,14 +104,17 @@ model:
           input_dim: 4
           hidden_dim: 256
           hidden_depth: 1
+      post_layer:
+        _target_: torch.nn.LazyLinear
+        out_features: ${...embed_dim}
 
     action_decoder:
       _target_: vima.nn.ActionDecoder
       _convert_: all
       input_dim: ${..embed_dim}
       action_dims:
-        pose0_position: [50, 100]
-        pose1_position: [50, 100]
+        pose0_position: [50, 100, 50]
+        pose1_position: [50, 100, 50]
         pose0_rotation: [50, 50, 50, 50]
         pose1_rotation: [50, 50, 50, 50]
       hidden_dim: 512
