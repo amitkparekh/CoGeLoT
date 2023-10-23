@@ -20,10 +20,3 @@ trainer:
     - _target_: pytorch_lightning.callbacks.RichProgressBar
     - _target_: pytorch_lightning.callbacks.LearningRateMonitor
       logging_interval: step
-
-model:
-  # Make the LRs similar so it drops faster
-  optimizer_partial_fn:
-    lr: 0.001
-  lr_scheduler_partial_fn:
-    lr_end: 0.0001

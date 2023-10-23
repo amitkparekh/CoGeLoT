@@ -4,7 +4,6 @@ command:
   - python
   - ${program}
   - train
-  - hardware=dmog_1gpu
   - ${args_no_hyphens}
 
 program: src/cogelot/__main__.py
@@ -21,5 +20,14 @@ parameters:
 
   datamodule.batch_size:
     values:
-      min: 1
-      max: 32
+      - 1
+      - 2
+      - 4
+      - 8
+      - 16
+      - 32
+
+  datamodule.task_index_seen:
+    distribution: int_uniform
+    max: 16
+    min: 0

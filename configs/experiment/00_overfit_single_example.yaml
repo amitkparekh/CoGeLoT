@@ -9,7 +9,7 @@ defaults:
 
   - override /learning_rate_scheduler@model.lr_scheduler_partial_fn: constant
 
-  - override /debug@debug: overfit_batches
+task_name: "overfit-single-example"
 
 architecture: encoder_decoder
 attn_layers: vima
@@ -20,12 +20,40 @@ prompt_input: encoder
 observation_input: decoder
 
 datamodule:
+  num_workers: 10
   # Only show the rotate task
   task_index_seen: 2
   # Only show 1 example
   max_num_instances_seen: 1
 
+model:
+  optimizer_partial_fn:
+    # Make the LRs bigger so it drops faster
+    lr: 0.0001
+
 trainer:
+  log_every_n_steps: 1
+  max_epochs: 500
+  limit_train_batches: 1
+  limit_val_batches: 0
+  num_sanity_val_steps: 0
+
+  # Also disable any checkpointing or early stopping
+  enable_checkpointing: false
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.RichModelSummary
+      max_depth: -1
+    - _target_: pytorch_lightning.callbacks.RichProgressBar
+    - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+      logging_interval: step
+    - _target_: pytorch_lightning.callbacks.EarlyStopping
+      monitor: train_loss
+      min_delta: 0.001
+      check_on_train_epoch_end: true
+      patience: 500
+      mode: min
+      stopping_threshold: 0.0001
+
   logger:
     - _target_: pytorch_lightning.loggers.WandbLogger
       save_dir: ${output_dir}
