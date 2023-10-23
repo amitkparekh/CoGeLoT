@@ -34,7 +34,9 @@ class TransformerDecoder(TransformerDecoderProtocol, ContinuousTransformerWrappe
 
         the cross-attention input.
         """
-        memory_position_ids = (torch.cumsum(memory_key_padding_mask, dim=1) - 1).long()
+        memory_position_ids = (
+            (torch.cumsum(~memory_key_padding_mask, dim=1) - 1).long().clamp(min=0)
+        )
         embedded_memory_position = self.xattn_embedder.forward(memory, memory_position_ids)
         memory_with_position = memory + embedded_memory_position
         return memory_with_position
@@ -59,7 +61,7 @@ class PromptEncoderHistoryDecoder(TransformerDecoder):
             memory_key_padding_mask = _create_padding_mask_from_tensor(memory)
 
         # Create the position ids from the mask (just how they do in the Policy)
-        position_ids = (torch.cumsum(tgt_key_padding_mask, dim=1) - 1).long()
+        position_ids = (torch.cumsum(~tgt_key_padding_mask, dim=1) - 1).long().clamp(min=0)
 
         memory = self._add_position_embedding_to_memory(memory, memory_key_padding_mask)
 
@@ -128,7 +130,7 @@ class DecoderOnly(TransformerDecoder):
         tgt_key_padding_mask = torch.cat([memory_key_padding_mask, tgt_key_padding_mask], dim=1)
 
         # Create the position ids from the mask (just how they do in the Policy)
-        position_ids = (torch.cumsum(tgt_key_padding_mask, dim=1) - 1).long()
+        position_ids = (torch.cumsum(~tgt_key_padding_mask, dim=1) - 1).long().clamp(min=0)
 
         model_output = ContinuousTransformerWrapper.forward(
             self,
