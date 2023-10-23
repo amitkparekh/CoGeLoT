@@ -104,14 +104,17 @@ class VIMALightningModule(pl.LightningModule):
         prepared_batch = self.embed_inputs(batch)
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
+        discrete_target_actions = self.policy.tokenize_continuous_actions(target_actions)
 
         fine_grained_loss = compute_fine_grained_loss(
-            predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
+            predicted_actions,
+            discrete_target_actions,
+            ignore_target_index=self.ignore_target_index,
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
         self.metrics.update_loss(fine_grained_loss, tasks=batch.task)
-        self.metrics.update_accuracy(predicted_actions, target_actions, tasks=batch.task)
+        self.metrics.update_accuracy(predicted_actions, discrete_target_actions, tasks=batch.task)
         # Log the total number of examples seen across all epochs (and doing it this way will
         # prevent the thing resetting every epoch)
         self.metrics.update_examples_seen(len(batch))
@@ -128,14 +131,17 @@ class VIMALightningModule(pl.LightningModule):
         prepared_batch = self.embed_inputs(batch)
         predicted_actions = self.forward(prepared_batch)
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
+        discrete_target_actions = self.policy.tokenize_continuous_actions(target_actions)
 
         fine_grained_loss = compute_fine_grained_loss(
-            predicted_actions, target_actions, ignore_target_index=self.ignore_target_index
+            predicted_actions,
+            discrete_target_actions,
+            ignore_target_index=self.ignore_target_index,
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
         self.metrics.update_loss(fine_grained_loss, tasks=batch.task)
-        self.metrics.update_accuracy(predicted_actions, target_actions, tasks=batch.task)
+        self.metrics.update_accuracy(predicted_actions, discrete_target_actions, tasks=batch.task)
 
         # There may be a PossibleUserWarning about needing to use `sync_dist=True` here. However,
         # as we are using torchmetrics, we should not/do not need to be adding that flag. For more,

@@ -45,6 +45,9 @@ model:
     _target_: cogelot.modules.policy.Policy
     embed_dim: 768
 
+    pose_action_tokenizer:
+      _target_: cogelot.modules.tokenizers.PoseActionTokenizer
+
     transformer_decoder: ???
 
     obj_encoder:

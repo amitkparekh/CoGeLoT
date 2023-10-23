@@ -54,6 +54,7 @@ class Policy(torch.nn.Module):
         prompt_encoder: vnn.T5PromptEncoder,
         prompt_obj_post_layer: torch.nn.Sequential,
         transformer_decoder: TransformerDecoderProtocol,
+        pose_action_tokenizer: PoseActionTokenizer,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -72,6 +73,7 @@ class Policy(torch.nn.Module):
         )
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
+        self._pose_action_tokenizer = pose_action_tokenizer
 
     @classmethod
     def from_their_policy(cls, their_policy: VIMAPolicy) -> Self:
@@ -81,13 +83,14 @@ class Policy(torch.nn.Module):
         has already been loaded with the correct weights so we can just rearrange the components as
         necessary.
         """
+        pose_action_tokenizer = PoseActionTokenizer()
         policy = cls(
             embed_dim=their_policy.embed_dim,
             obj_encoder=their_policy.obj_encoder,
             end_effector_encoder=their_policy.end_effector_encoder,
             obs_fusion_layer=their_policy.obs_fusion_layer,
             action_encoder=VIMAContinuousActionEmbedder.from_their_action_encoder(
-                pose_action_tokenizer=PoseActionTokenizer(),
+                pose_action_tokenizer=pose_action_tokenizer,
                 their_action_encoder=their_policy.action_encoder,
             ),
             action_decoder=their_policy.action_decoder,
@@ -95,6 +98,7 @@ class Policy(torch.nn.Module):
             prompt_encoder=their_policy.t5_prompt_encoder,
             prompt_obj_post_layer=their_policy.prompt_obj_post_layer,
             transformer_decoder=VIMADecoder(their_policy.xattn_gpt),
+            pose_action_tokenizer=pose_action_tokenizer,
         )
         # Take their prompt encoder post layer and replace whatever we have, otherwise it's not
         # identical. I made a mistake when originally preparing the class, however I don't know how
@@ -300,3 +304,9 @@ class Policy(torch.nn.Module):
     ) -> dict[PoseActionType, MultiCategorical]:
         """Decode the action token."""
         return self._action_decoder(predicted_action_tokens)
+
+    def tokenize_continuous_actions(
+        self, continuous_actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Convert the continuous actions into a discrete form to work with cross-entropy."""
+        return self._pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
