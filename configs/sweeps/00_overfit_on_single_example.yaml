@@ -19,7 +19,7 @@ parameters:
     value: 00_overfit_single_example
 
   datamodule.batch_size:
-    value:
+    values:
       - 1
 
   datamodule.task_index_seen:
