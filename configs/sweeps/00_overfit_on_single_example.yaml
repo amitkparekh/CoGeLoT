@@ -8,7 +8,7 @@ command:
 
 program: src/cogelot/__main__.py
 
-name: Overfit on a single example
+name: Overfit on a single example, for different examples
 entity: pyop
 project: CoGeLoT
 
@@ -19,15 +19,15 @@ parameters:
     value: 00_overfit_single_example
 
   datamodule.batch_size:
-    values:
+    value:
       - 1
-      - 2
-      - 4
-      - 8
-      - 16
-      - 32
 
   datamodule.task_index_seen:
     distribution: int_uniform
     max: 16
+    min: 0
+
+  datamodule.dataset_start_index:
+    distribution: int_uniform
+    max: 10
     min: 0
