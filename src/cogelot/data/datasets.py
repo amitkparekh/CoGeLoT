@@ -53,3 +53,19 @@ def create_hf_dataset_from_paths(
         ),
     )
     return hf_dataset
+
+
+def only_select_indices_within_range(
+    dataset: datasets.Dataset, *, start: int, end: int
+) -> datasets.Dataset:
+    """Only select indices within the range."""
+    dataset = dataset.select(range(start, end))
+    return dataset
+
+
+def repeat_dataset_for_batch_size(
+    dataset: datasets.Dataset, *, batch_size: int
+) -> datasets.Dataset:
+    """Repeat the dataset to match the batch size."""
+    dataset = datasets.concatenate_datasets([dataset for _ in range(batch_size)])
+    return dataset

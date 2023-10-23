@@ -1,5 +1,4 @@
 import abc
-import itertools
 from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, Unpack
 
@@ -15,8 +14,10 @@ from cogelot.common.hf_datasets import (
     maybe_split_dataset_by_node,
 )
 from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
+from cogelot.data.datasets import only_select_indices_within_range, repeat_dataset_for_batch_size
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
+from cogelot.structures.vima import Task
 
 
 SetupStage = Literal["fit", "validate", "test", "predict"]
@@ -31,11 +32,14 @@ class DataModuleKwargs(TypedDict):
 
     # For filtering the dataset
     task_index_seen: NotRequired[int]
+    dataset_start_index: NotRequired[int]
     max_num_instances_seen: NotRequired[int]
 
 
 class VIMADataModule(abc.ABC, LightningDataModule):
     """Datamodule for the VIMA dataset."""
+
+    config_name: str = "preprocessed"
 
     def __init__(self, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__()
@@ -105,25 +109,38 @@ class VIMADataModule(abc.ABC, LightningDataModule):
 
     def _maybe_filter_datasets(self) -> None:
         """Apply filtering and such if desired."""
-        task_index_seen = self._kwargs.get("task_index_seen")
         max_num_instances_seen = self._kwargs.get("max_num_instances_seen")
 
-        if task_index_seen is not None:
-            logger.info(f"Limiting task to `{task_index_seen}`")
-            self.train_dataset = self.train_dataset.filter(
-                lambda instance: instance["task"] == task_index_seen
-            )
-            self.valid_dataset = self.valid_dataset.filter(
-                lambda instance: instance["task"] == task_index_seen
+        if max_num_instances_seen is not None:
+            dataset_start_index = self._kwargs.get("dataset_start_index", 0)
+            dataset_end_index = dataset_start_index + max_num_instances_seen
+
+            logger.info(
+                f"Selecting instances from `{dataset_start_index}` to `{dataset_end_index}` (not"
+                " inclusive)"
             )
 
-        if max_num_instances_seen is not None:
-            logger.info(f"Selecting `{max_num_instances_seen}` instances")
-            selected_indices = itertools.chain(
-                *itertools.tee(range(max_num_instances_seen), self.batch_size)
+            self.train_dataset = repeat_dataset_for_batch_size(
+                only_select_indices_within_range(
+                    self.train_dataset, start=dataset_start_index, end=dataset_end_index
+                ),
+                batch_size=self.batch_size,
             )
-            self.train_dataset = self.train_dataset.select(selected_indices)
-            self.valid_dataset = self.valid_dataset.select(selected_indices)
+            self.valid_dataset = repeat_dataset_for_batch_size(
+                only_select_indices_within_range(
+                    self.valid_dataset, start=dataset_start_index, end=dataset_end_index
+                ),
+                batch_size=self.batch_size,
+            )
+
+    def _maybe_get_config_for_task_index(self, task_index: int | None) -> str:
+        """Get the config name for the task index, if the task index is provided."""
+        if not task_index:
+            return self.config_name
+
+        task = Task(task_index)
+        logger.info(f"Limiting task to `{task}`")
+        return f"{self.config_name}--{task.name}"
 
 
 class VIMADataModuleFromHF(VIMADataModule):
@@ -146,11 +163,14 @@ class VIMADataModuleFromHF(VIMADataModule):
         This is not using `datasets.load_dataset` because doing it this separate way is much
         faster, but does have some complexity overhead.
         """
+        task_index_seen = self._kwargs.get("task_index_seen")
+        config_name = self._maybe_get_config_for_task_index(task_index_seen)
+
         dataset_data_dir = get_location_of_hub_parquet_files(self._hf_datasets_repo_name)
         dataset = load_dataset_from_disk(
             dataset_data_dir,
             extension="parquet",
-            config_name="preprocessed",
+            config_name=config_name,
             num_proc=self._num_workers,
         )
         dataset = dataset.with_format(
@@ -168,10 +188,13 @@ class VIMADataModuleFromLocalFiles(VIMADataModule):
 
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset from the arrow files."""
+        task_index_seen = self._kwargs.get("task_index_seen")
+        config_name = self._maybe_get_config_for_task_index(task_index_seen)
+
         dataset = load_dataset_from_disk(
             self._dataset_data_dir,
             extension="arrow",
-            config_name="preprocessed",
+            config_name=config_name,
             num_proc=self._num_workers,
         )
         dataset = dataset.with_format(
