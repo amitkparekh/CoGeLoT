@@ -309,8 +309,7 @@ class ManipulateOldNeighbor(BaseTask):
 
         partial_str = partial(
             "First put {dragged_obj} into {base_obj} "
-            "then put the object that was previously at its {direction} into the same {base_obj}."
-            .format,
+            "then put the object that was previously at its {direction} into the same {base_obj}.".format,
             direction=sampled_neighbor_dir,
         )
         self.prompt_template = partial_str(dragged_obj="{dragged_obj}", base_obj="{base_obj}")
@@ -397,10 +396,13 @@ class ManipulateOldNeighbor(BaseTask):
             high=sampled_base_obj.size_range.high,
         )
         base_pose = (
-            self.base_pos[0],
-            self.base_pos[1],
-            sampled_base_size[2] / 2,
-        ), zero_rot
+            (
+                self.base_pos[0],
+                self.base_pos[1],
+                sampled_base_size[2] / 2,
+            ),
+            zero_rot,
+        )
         base_obj_id, base_urdf, base_pose = self.add_object_to_env(
             env,
             sampled_base_obj,

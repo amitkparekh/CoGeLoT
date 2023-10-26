@@ -39,9 +39,7 @@ class Gripper(object):
 class Spatula(Gripper):
     """Simulate simple spatula for pushing."""
 
-    def __init__(
-        self, assets_root, robot, ee, obj_ids, client_id, is_visible=True
-    ):  # pylint: disable=unused-argument
+    def __init__(self, assets_root, robot, ee, obj_ids, client_id, is_visible=True):  # pylint: disable=unused-argument
         """Creates spatula and 'attaches' it to the robot."""
         super().__init__(assets_root)
 
@@ -130,11 +128,11 @@ class Suction(Gripper):
         about z=0.03m higher and empirically seems worse.
 
         Args:
-          assets_root: str for root directory with assets.
-          robot: int representing PyBullet ID of robot.
-          ee: int representing PyBullet ID of end effector link.
-          obj_ids: list of PyBullet IDs of all suctionable objects in the env.
-          client_id: Client ID of pybullet simulation.
+            assets_root: str for root directory with assets.
+            robot: int representing PyBullet ID of robot.
+            ee: int representing PyBullet ID of end effector link.
+            obj_ids: list of PyBullet IDs of all suctionable objects in the env.
+            client_id: Client ID of pybullet simulation.
         """
         super().__init__(assets_root)
 

@@ -46,7 +46,8 @@ class NearPerfectCamera128x256(object):
     top_intrinsics = (64e4 // 2.55, 0, 320.0, 0, 63e4, 240.0, 0, 0, 1)
 
     # Set default camera poses.
-    front_offset = 0.09  # offset from the center of workspace to make the workspace close to the bottom in the view
+    # offset from the center of workspace to make the workspace close to the bottom in the view
+    front_offset = 0.09
     front_position = (1000 + 0.5 - front_offset, 0, 1000)
     front_rotation = (np.pi / 4, np.pi, -np.pi / 2)
     front_rotation = p.getQuaternionFromEuler(front_rotation)

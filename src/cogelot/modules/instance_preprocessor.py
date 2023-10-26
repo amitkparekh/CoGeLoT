@@ -93,7 +93,8 @@ class InstancePreprocessor:
         prompt: str,
         prompt_assets: dict[str, dict[str, Any]],
         object_ids_from_prompt_assets: set[int],
-    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]: ...  # noqa: WPS428
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
+        ...
 
     @overload
     def prepare_prompt(
@@ -102,7 +103,8 @@ class InstancePreprocessor:
         prompt: str,
         prompt_assets: PromptAssets,
         object_ids_from_prompt_assets: None,
-    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]: ...  # noqa: WPS428
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
+        ...
 
     def prepare_prompt(
         self,

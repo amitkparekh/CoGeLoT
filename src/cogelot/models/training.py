@@ -24,7 +24,6 @@ from cogelot.structures.vima import (
 )
 from vima.nn.action_decoder.dists import MultiCategorical
 
-
 OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
 LRSchedulerPartialFn = Callable[..., torch.optim.lr_scheduler.LRScheduler]
 
@@ -98,7 +97,9 @@ class VIMALightningModule(pl.LightningModule):
         return predicted_actions_dists
 
     def training_step(
-        self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
+        self,
+        batch: PreprocessedBatch,
+        batch_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a training step."""
         prepared_batch = self.embed_inputs(batch)
@@ -125,7 +126,9 @@ class VIMALightningModule(pl.LightningModule):
         return loss
 
     def validation_step(
-        self, batch: PreprocessedBatch, batch_idx: int  # noqa: ARG002
+        self,
+        batch: PreprocessedBatch,
+        batch_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
         prepared_batch = self.embed_inputs(batch)
@@ -178,17 +181,16 @@ class VIMALightningModule(pl.LightningModule):
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
         """Embed a batch of instances and convert to the ModelInstance."""
-        embedded_prompt, embedded_prompt_mask = self.policy.assemble_prompt(
+        encoded_prompt, encoded_prompt_mask = self.policy.embed_multimodal_prompt(
             (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
         )
-        encoded_prompt = self.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
         encoded_observations, embedded_observations_mask = self.policy.encode_observation_token(
             batch.observations
         )
         encoded_actions, encoded_actions_mask = self.policy.encode_action_tokens(batch.actions)
         return ModelInstance(
             encoded_prompt=encoded_prompt,
-            encoded_prompt_mask=embedded_prompt_mask,
+            encoded_prompt_mask=encoded_prompt_mask,
             encoded_observations=encoded_observations,
             encoded_observations_mask=embedded_observations_mask,
             encoded_actions=encoded_actions,

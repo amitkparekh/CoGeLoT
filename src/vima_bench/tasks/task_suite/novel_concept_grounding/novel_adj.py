@@ -269,17 +269,23 @@ class NovelAdj(BaseTask):
         ratio_short = self.rng.uniform(0.3, 0.4)
         ratio_tall = ratio_short + 2.0
         if adjective_definition in ["smaller", "larger"]:
-            scalar_blicker, scalar_less_blicker = [ratio_small, ratio_small, 1.0], [
-                ratio_large,
-                ratio_large,
-                1.0,
-            ]
+            scalar_blicker, scalar_less_blicker = (
+                [ratio_small, ratio_small, 1.0],
+                [
+                    ratio_large,
+                    ratio_large,
+                    1.0,
+                ],
+            )
         elif adjective_definition in ["shorter", "taller"]:
-            scalar_blicker, scalar_less_blicker = [1, 1, ratio_short], [
-                1,
-                1,
-                ratio_tall,
-            ]
+            scalar_blicker, scalar_less_blicker = (
+                [1, 1, ratio_short],
+                [
+                    1,
+                    1,
+                    ratio_tall,
+                ],
+            )
         else:
             scalar_blicker, scalar_less_blicker = 1.0, 1.0
         if adjective_definition in ["larger", "taller"]:
