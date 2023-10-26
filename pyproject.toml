@@ -62,7 +62,6 @@ test = [
     "hypothesis>=6.84.0",
 ]
 lint = [
-    "black>=23.7.0",
     "ruff>=0.0.285",
     "mypy>=1.5.1",
     "pre-commit>=3.3.3",
@@ -79,10 +78,6 @@ package-dir = "src"
 [tool.pdm.scripts]
 pre_install = "pdm install --plugins"
 format = "pre-commit run --all-files"
-
-[tool.black]
-line-length = 99
-preview = true
 
 [tool.flake8]
 select = ["WPS"]
@@ -119,6 +114,8 @@ extend-ignore = [
     "WPS348",
     # Allow logic in __init__ modules
     "WPS412",
+    # Defer to other tools to find pointless lines
+    "WPS420",
     # Defer to Ruff's PLR2004
     "WPS432",
     # Defer to Ruff's SLF001
@@ -293,6 +290,14 @@ ignore = [
     "TD003",
     # Disable flagging commented-out code because it's false-positives on shape comments
     "ERA001",
+    # Things to ignore because ruff's formatter says so
+    "D206",
+    "ISC001",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "W191",
 ]
 unfixable = [
     # Do not remove unused variables
@@ -316,7 +321,6 @@ runtime-evaluated-base-classes = [
 
 [tool.ruff.isort]
 combine-as-imports = true
-lines-after-imports = 2
 known-first-party = ["vima", "cogelot", "vima_bench"]
 
 [tool.ruff.mccabe]
