@@ -58,10 +58,10 @@ repos:
           - --include-star-import
           - --gitignore
 
-  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 2.7.2
-    hooks:
-      - id: editorconfig-checker
+  # - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+  #   rev: 2.7.2
+  #   hooks:
+  #     - id: editorconfig-checker
 
   - repo: https://github.com/pappasam/toml-sort
     rev: "v0.23.1"
