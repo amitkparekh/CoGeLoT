@@ -14,7 +14,6 @@ from cogelot.entrypoints.settings import Settings
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.vima import Task, VIMAInstance
 
-
 settings = Settings()
 
 

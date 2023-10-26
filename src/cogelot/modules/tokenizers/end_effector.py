@@ -4,7 +4,6 @@ from typing import get_args
 
 from cogelot.structures.vima import EndEffector
 
-
 UNK_TOKEN = "[UNK]"  # noqa: S105
 
 END_EFFECTOR_VOCAB = MappingProxyType[str, int](

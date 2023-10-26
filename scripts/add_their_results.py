@@ -3,7 +3,6 @@ import wandb
 from cogelot.modules.metrics import EvaluationMetrics
 from cogelot.structures.vima import Partition, Task
 
-
 STEPS_PER_TASK = 100
 
 metric_key_template = EvaluationMetrics.key_template

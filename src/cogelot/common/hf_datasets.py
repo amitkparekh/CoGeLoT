@@ -18,7 +18,6 @@ from huggingface_hub.utils._errors import (  # noqa: WPS436  # noqa: WPS436
 from loguru import logger
 from tqdm import tqdm
 
-
 SHARD_FILE_NAME_TEMPLATE = "{split}-{index:05d}-of-{num_shards:05d}-{fingerprint}.parquet"
 
 

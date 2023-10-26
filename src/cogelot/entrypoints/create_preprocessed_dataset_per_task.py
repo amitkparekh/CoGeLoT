@@ -16,7 +16,6 @@ from cogelot.entrypoints.settings import Settings
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import Task
 
-
 settings = Settings()
 
 

@@ -17,7 +17,6 @@ from cogelot.structures.vima import (
 )
 from vima.nn.action_decoder.dists import MultiCategorical
 
-
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

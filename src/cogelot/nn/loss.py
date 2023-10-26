@@ -11,7 +11,6 @@ from cogelot.structures.vima import (
 )
 from vima.nn.action_decoder.dists import MultiCategorical
 
-
 PER_AXIS_KEY_TEMPLATE = "{pose_action_type}_{axis}"
 
 

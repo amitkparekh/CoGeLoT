@@ -8,7 +8,6 @@ from cogelot.structures.common import PydanticHFDatasetMixin, PydanticTensor
 from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
 
-
 RawPromptTokenType = list[list[Literal[0, 1]]]
 
 _Bbox = datasets.Sequence(datasets.Value("int64"), length=4)

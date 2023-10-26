@@ -19,7 +19,6 @@ from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
 from cogelot.structures.vima import Task
 
-
 SetupStage = Literal["fit", "validate", "test", "predict"]
 
 

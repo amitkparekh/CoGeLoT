@@ -7,7 +7,6 @@ from typing import Any
 import dill as pickle
 import orjson
 
-
 ORJSON_OPTIONS = orjson.OPT_NON_STR_KEYS | orjson.OPT_SERIALIZE_NUMPY | orjson.OPT_APPEND_NEWLINE
 
 

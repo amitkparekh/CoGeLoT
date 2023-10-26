@@ -8,7 +8,6 @@ from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType, Task
 from vima.utils import any_to_datadict
 
-
 ImageFeatureName = Literal["bbox", "cropped_img", "mask"]
 ViewLiteral = Literal["front", "top"]
 ImageFeatures = dict[ImageFeatureName, dict[ViewLiteral, torch.Tensor]]

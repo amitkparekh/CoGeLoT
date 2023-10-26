@@ -17,7 +17,6 @@ from cogelot.structures.vima import (
     VIMAInstance,
 )
 
-
 POSE_ACTION_KEYS: tuple[PoseActionType, ...] = get_args(PoseActionType)
 ACTIONS_FILE_NAME = "action.pkl"
 TRAJECTORY_METADATA_FILE_NAME = "trajectory.pkl"

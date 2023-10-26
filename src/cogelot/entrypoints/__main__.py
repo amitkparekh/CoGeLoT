@@ -18,7 +18,6 @@ from cogelot.entrypoints.run_models import evaluate_model, train_model, validate
 from cogelot.entrypoints.settings import Settings
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
 
-
 settings = Settings()
 
 

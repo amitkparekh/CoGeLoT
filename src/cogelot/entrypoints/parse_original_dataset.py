@@ -14,7 +14,6 @@ from cogelot.data.parse import (
 from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task
 
-
 settings = Settings()
 
 

@@ -8,7 +8,6 @@ from cogelot.common.hf_datasets import upload_dataset_to_hub
 from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task
 
-
 settings = Settings()
 
 

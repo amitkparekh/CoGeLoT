@@ -23,7 +23,6 @@ from cogelot.structures.common import (
     Timestep,
 )
 
-
 MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60
 OUTPUT_VIDEO_NAME = "gui_record.mp4"

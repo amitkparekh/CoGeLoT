@@ -15,7 +15,6 @@ from cogelot.data.datasets import (
 from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task, VIMAInstance
 
-
 settings = Settings()
 
 

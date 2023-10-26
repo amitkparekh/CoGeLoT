@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from tokenizers import AddedToken
 from transformers import AutoTokenizer  # pyright: ignore[reportGeneralTypeIssues]
 
-
 LEFT_SYMBOL = "{"
 RIGHT_SYMBOL = "}"
 
