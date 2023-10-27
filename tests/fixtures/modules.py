@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 import torch
-from pytest_cases import fixture
+from pytest_cases import AUTO, fixture, parametrize
 
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
@@ -85,9 +85,12 @@ def vima_continuous_action_embedder(
 
 
 @fixture(scope="session")
+@parametrize("add_residual_connection", [False, True], idgen=AUTO)  # pyright: ignore[reportGeneralTypeIssues]
 def vima_policy(
     vima_continuous_action_embedder: VIMAContinuousActionEmbedder,
     pose_action_tokenizer: PoseActionTokenizer,
+    *,
+    add_residual_connection: bool,
 ) -> Policy:
     vima = VIMAPolicy(embed_dim=768, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
     return Policy(
@@ -102,6 +105,7 @@ def vima_policy(
         prompt_obj_post_layer=vima.prompt_obj_post_layer,
         transformer_decoder=VIMADecoder(vima.xattn_gpt),
         pose_action_tokenizer=pose_action_tokenizer,
+        add_residual_connection_to_prompt_visual_features=add_residual_connection,
     )
 
 

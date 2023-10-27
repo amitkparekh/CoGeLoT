@@ -137,6 +137,7 @@ class Policy(torch.nn.Module):
         prompt_obj_post_layer: torch.nn.Sequential,
         transformer_decoder: TransformerDecoderProtocol,
         pose_action_tokenizer: PoseActionTokenizer,
+        add_residual_connection_to_prompt_visual_features: bool = False,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -156,6 +157,10 @@ class Policy(torch.nn.Module):
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
         self._pose_action_tokenizer = pose_action_tokenizer
+
+        self._add_residual_connection_to_prompt_visual_features = (
+            add_residual_connection_to_prompt_visual_features
+        )
 
     @classmethod
     def from_their_policy(cls, their_policy: VIMAPolicy) -> Self:
@@ -240,11 +245,7 @@ class Policy(torch.nn.Module):
         encoded_prompt = self.encode_prompt(embedded_prompt, embedded_prompt_mask)
 
         if self._add_residual_connection_to_prompt_visual_features:
-            encoded_prompt = self._add_residual_connection_to_encoded_prompt(
-                encoded_prompt=encoded_prompt,
-                embedded_visuals=embedded_images,
-                raw_prompts_token_type=raw_prompts_token_type,
-            )
+            raise NotImplementedError("Not implemented this yet")
 
         return encoded_prompt, embedded_prompt_mask
 
