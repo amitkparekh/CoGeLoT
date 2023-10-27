@@ -1,5 +1,9 @@
-# Created by https://www.toptal.com/developers/gitignore/api/python,direnv,visualstudiocode,intellij+all
-# Edit at https://www.toptal.com/developers/gitignore?templates=python,direnv,visualstudiocode,intellij+all
+# Created by https://www.toptal.com/developers/gitignore/api/python,asdf,visualstudiocode,intellij+all,direnv,jupyternotebooks
+# Edit at https://www.toptal.com/developers/gitignore?templates=python,asdf,visualstudiocode,intellij+all,direnv,jupyternotebooks
+
+### asdf ###
+.tool-versions
+.rtx.toml
 
 ### direnv ###
 .direnv
