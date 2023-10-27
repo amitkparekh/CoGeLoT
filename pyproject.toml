@@ -6,7 +6,7 @@ authors = [
     {name = "Amit Parekh", email = "7276308+amitkparekh@users.noreply.github.com"},
     {name = "VIMA Team"},
 ]
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.11,<3.13"
 readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
@@ -33,6 +33,7 @@ dependencies = [
     "pandas>=2.0.3",
     "pydantic-settings>=2.0.3",
     "pytorch-lightning>=2.0.9",
+    "streamlit>=1.28.0",
 ]
 
 [project.optional-dependencies]
