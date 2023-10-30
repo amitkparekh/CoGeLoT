@@ -73,6 +73,19 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
         }
         return cls.model_validate(per_action_per_axis)
 
+    @classmethod
+    def from_multi_categorical(cls, actions: dict[PoseActionType, MultiCategorical]) -> Self:
+        """Instantiate from the model outputs, which is the distribution."""
+        return cls.from_action_logits(
+            cast(
+                dict[PoseActionType, list[torch.Tensor]],
+                {
+                    pose_action_type: [axis_dist.logits for axis_dist in action_dist.dists]
+                    for pose_action_type, action_dist in actions.items()
+                },
+            )
+        )
+
     def to_flattened_dict(self) -> dict[str, torch.Tensor]:
         """Flatten the dict into a single dict."""
         return {
@@ -112,15 +125,7 @@ def compute_fine_grained_loss(
     operators support NaN's, so we can just use those to reduce the loss. (See
     `reduce_fine_grained_loss()` for how that's done.)
     """
-    predicted_logits_per_pose_per_axis = PerActionPerAxis.from_action_logits(
-        cast(
-            dict[PoseActionType, list[torch.Tensor]],
-            {
-                pose_action_type: [axis_dist.logits for axis_dist in action_dist.dists]
-                for pose_action_type, action_dist in predicted_actions.items()
-            },
-        )
-    )
+    predicted_logits_per_pose_per_axis = PerActionPerAxis.from_multi_categorical(predicted_actions)
     target_per_pose_per_axis = PerActionPerAxis.from_actions(target_actions)
 
     iterator = zip(
