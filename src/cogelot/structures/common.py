@@ -7,7 +7,14 @@ from typing import Annotated, Any, Self
 import datasets
 import numpy as np
 import torch
-from pydantic import BaseModel, BeforeValidator, ConfigDict, RootModel, field_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    PlainSerializer,
+    RootModel,
+    field_validator,
+)
 
 
 class PydanticHFDatasetMixin(abc.ABC):
@@ -140,6 +147,7 @@ PydanticTensor = Annotated[
     BeforeValidator(
         lambda tensor: torch.from_numpy(tensor) if isinstance(tensor, np.ndarray) else tensor
     ),
+    PlainSerializer(lambda tensor: tensor.cpu().numpy().tolist(), when_used="json"),
 ]
 
 

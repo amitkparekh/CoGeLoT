@@ -3,6 +3,7 @@ from typing import Self, cast, get_args
 import torch
 from pydantic import BaseModel
 
+from cogelot.structures.common import PydanticTensor
 from cogelot.structures.vima import (
     AxesPerPoseActionType,
     PoseActionType,
@@ -20,10 +21,10 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
     Every single tensor has the following shape: [batch_size, max_timesteps, ...].
     """
 
-    pose0_position: dict[PositionAxes, torch.Tensor]
-    pose0_rotation: dict[RotationAxes, torch.Tensor]
-    pose1_position: dict[PositionAxes, torch.Tensor]
-    pose1_rotation: dict[RotationAxes, torch.Tensor]
+    pose0_position: dict[PositionAxes, PydanticTensor]
+    pose0_rotation: dict[RotationAxes, PydanticTensor]
+    pose1_position: dict[PositionAxes, PydanticTensor]
+    pose1_rotation: dict[RotationAxes, PydanticTensor]
 
     @property
     def batch_size(self) -> int:
