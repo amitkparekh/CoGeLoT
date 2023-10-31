@@ -83,7 +83,7 @@ class VIMALightningModule(pl.LightningModule):
 
     def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
         """Perform the forward on a batch of instances."""
-        encoded_predicted_actions = self.policy.predict_action_token(
+        return self.policy.predict_actions(
             encoded_prompt=batch.encoded_prompt,
             encoded_prompt_mask=batch.encoded_prompt_mask,
             encoded_observations=batch.encoded_observations,
@@ -91,10 +91,6 @@ class VIMALightningModule(pl.LightningModule):
             encoded_actions=batch.encoded_actions,
             encoded_actions_mask=batch.encoded_actions_mask,
         )
-
-        predicted_actions_dists = self.policy.decode_action_token(encoded_predicted_actions)
-
-        return predicted_actions_dists
 
     def training_step(
         self,

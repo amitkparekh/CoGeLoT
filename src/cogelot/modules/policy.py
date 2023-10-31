@@ -2,6 +2,7 @@ from typing import ClassVar, Self, cast
 
 import torch
 
+from cogelot.modules.action_decoders import ActionDecoder, VIMAActionDecoder
 from cogelot.modules.action_encoders import ActionEncoder, VIMAContinuousActionEmbedder
 from cogelot.modules.stitching import (
     add_observations_to_tokens_using_scatter,
@@ -131,7 +132,7 @@ class Policy(torch.nn.Module):
         end_effector_encoder: vnn.Embedding,
         obs_fusion_layer: torch.nn.Linear,
         action_encoder: ActionEncoder,
-        action_decoder: vnn.ActionDecoder,
+        action_decoder: ActionDecoder,
         prompt_embedding: vnn.WordEmbedding,
         prompt_encoder: vnn.T5PromptEncoder,
         prompt_obj_post_layer: torch.nn.Sequential,
@@ -180,7 +181,7 @@ class Policy(torch.nn.Module):
                 pose_action_tokenizer=pose_action_tokenizer,
                 their_action_encoder=their_policy.action_encoder,
             ),
-            action_decoder=their_policy.action_decoder,
+            action_decoder=VIMAActionDecoder(their_policy.action_decoder),
             prompt_embedding=their_policy.prompt_embedding,
             prompt_encoder=their_policy.t5_prompt_encoder,
             prompt_obj_post_layer=their_policy.prompt_obj_post_layer,
@@ -195,7 +196,7 @@ class Policy(torch.nn.Module):
         )
         return policy
 
-    def predict_action_token(
+    def predict_actions(
         self,
         encoded_prompt: torch.Tensor,
         encoded_prompt_mask: torch.Tensor,
@@ -203,7 +204,7 @@ class Policy(torch.nn.Module):
         encoded_observations_mask: torch.Tensor,
         encoded_actions: torch.Tensor | None,
         encoded_actions_mask: torch.Tensor | None,
-    ) -> torch.Tensor:
+    ) -> dict[PoseActionType, MultiCategorical]:
         """Predict the action token."""
         max_objects = get_max_num_objects_from_encoded_observations(encoded_observations)
         tokens, masks = stitch_observations_with_actions(
@@ -220,8 +221,10 @@ class Policy(torch.nn.Module):
             memory=encoded_prompt,
             memory_key_padding_mask=encoded_prompt_mask,
         )
-        predicted_action_tokens = transformer_output[:, max_objects - 1 :: max_objects + 1]
-        return predicted_action_tokens
+        predicted_actions = self.decode_action_token(
+            transformer_output, max_num_objects=max_objects
+        )
+        return predicted_actions
 
     def embed_multimodal_prompt(
         self, prompts: tuple[RawPromptTokenType, torch.Tensor, DataDict]
@@ -322,10 +325,10 @@ class Policy(torch.nn.Module):
         return prompt_tokens
 
     def decode_action_token(
-        self, predicted_action_tokens: torch.Tensor
+        self, transformer_output: torch.Tensor, max_num_objects: int
     ) -> dict[PoseActionType, MultiCategorical]:
         """Decode the action token."""
-        return self._action_decoder(predicted_action_tokens)
+        return self._action_decoder(transformer_output, max_num_objects=max_num_objects)
 
     def tokenize_continuous_actions(
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
