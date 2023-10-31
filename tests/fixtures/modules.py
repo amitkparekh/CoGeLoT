@@ -5,7 +5,7 @@ from pytest_cases import AUTO, fixture, parametrize
 
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
-from cogelot.modules.embedders import VIMAContinuousActionEmbedder
+from cogelot.modules.action_encoders import VIMAContinuousActionEmbedder
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers import (

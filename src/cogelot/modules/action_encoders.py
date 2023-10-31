@@ -8,7 +8,7 @@ from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
 
 
-class ActionEmbedder(abc.ABC, torch.nn.Module):
+class ActionEncoder(abc.ABC, torch.nn.Module):
     """Embed actions from their continuous form to something that is useful for the model."""
 
     @abc.abstractmethod
@@ -17,8 +17,8 @@ class ActionEmbedder(abc.ABC, torch.nn.Module):
         raise NotImplementedError
 
 
-class LearnedActionEmbedder(ActionEmbedder):
-    """Embed actions using learned embeddings.
+class LearnedActionEmbedder(ActionEncoder):
+    """Encode actions using learned embeddings.
 
     Different to the way VIMA does it but is how the original Gato does it.
     """
@@ -58,8 +58,8 @@ class LearnedActionEmbedder(ActionEmbedder):
         return fused_embedding
 
 
-class VIMAContinuousActionEmbedder(ActionEmbedder):
-    """Embed actions from their continuous form.
+class VIMAContinuousActionEmbedder(ActionEncoder):
+    """Encode actions from their continuous form.
 
     First normalize the continuous actions and then encode them through an MLP.
 

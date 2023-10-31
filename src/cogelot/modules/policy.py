@@ -2,7 +2,7 @@ from typing import ClassVar, Self, cast
 
 import torch
 
-from cogelot.modules.embedders import ActionEmbedder, VIMAContinuousActionEmbedder
+from cogelot.modules.action_encoders import ActionEncoder, VIMAContinuousActionEmbedder
 from cogelot.modules.stitching import (
     add_observations_to_tokens_using_scatter,
     get_max_num_objects_from_encoded_observations,
@@ -130,7 +130,7 @@ class Policy(torch.nn.Module):
         obj_encoder: vnn.ObjEncoder,
         end_effector_encoder: vnn.Embedding,
         obs_fusion_layer: torch.nn.Linear,
-        action_encoder: ActionEmbedder,
+        action_encoder: ActionEncoder,
         action_decoder: vnn.ActionDecoder,
         prompt_embedding: vnn.WordEmbedding,
         prompt_encoder: vnn.T5PromptEncoder,
