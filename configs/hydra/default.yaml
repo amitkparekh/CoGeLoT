@@ -1,6 +1,6 @@
 # Specify how the output directory is decided for each run
 run:
-  dir: storage/outputs/${task_name}/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  dir: storage/data/outputs/${task_name}/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
 sweep:
-  dir: storage/outputs/${task_name}/multiruns/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  dir: storage/data/outputs/${task_name}/multiruns/${now:%Y-%m-%d}_${now:%H-%M-%S}
   subdir: ${hydra.job.num}
