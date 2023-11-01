@@ -1,0 +1,54 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - train
+  - ${args_no_hyphens}
+
+program: src/cogelot/__main__.py
+
+name: Overfit on a single example (with different decoder hyperparameters)
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    value: 00_overfit_single_example
+
+  datamodule.batch_size:
+    value: 1
+
+  datamodule.task_index_seen:
+    distribution: int_uniform
+    max: 16
+    min: 0
+
+  datamodule.dataset_start_index:
+    distribution: int_uniform
+    max: 2
+    min: 0
+
+  model:
+    policy:
+      action_decoder:
+        action_decoder:
+          activation:
+            values:
+              - "relu"
+              - "gelu"
+
+          hidden_dim:
+            values:
+              - 512
+              - 768
+              - 1024
+              - 2048
+
+          hidden_depth:
+            values:
+              - 1
+              - 2
+              - 4
