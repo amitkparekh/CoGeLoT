@@ -31,24 +31,20 @@ parameters:
     max: 2
     min: 0
 
-  model:
-    policy:
-      action_decoder:
-        action_decoder:
-          activation:
-            values:
-              - "relu"
-              - "gelu"
+  model.policy.action_decoder.action_decoder.activation:
+    values:
+      - "relu"
+      - "gelu"
 
-          hidden_dim:
-            values:
-              - 512
-              - 768
-              - 1024
-              - 2048
+  model.policy.action_decoder.action_decoder.hidden_dim:
+    values:
+      - 512
+      - 768
+      - 1024
+      - 2048
 
-          hidden_depth:
-            values:
-              - 1
-              - 2
-              - 4
+  model.policy.action_decoder.action_decoder.hidden_depth:
+    values:
+      - 1
+      - 2
+      - 4
