@@ -5,6 +5,7 @@ from pytest_cases import AUTO, fixture, parametrize
 
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
+from cogelot.modules.action_decoders import VIMAActionDecoder
 from cogelot.modules.action_encoders import VIMAContinuousActionEmbedder
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.policy import Policy
@@ -99,7 +100,7 @@ def vima_policy(
         end_effector_encoder=vima.end_effector_encoder,
         obs_fusion_layer=vima.obs_fusion_layer,
         action_encoder=vima_continuous_action_embedder,
-        action_decoder=vima.action_decoder,
+        action_decoder=VIMAActionDecoder(vima.action_decoder),
         prompt_embedding=vima.prompt_embedding,
         prompt_encoder=vima.t5_prompt_encoder,
         prompt_obj_post_layer=vima.prompt_obj_post_layer,

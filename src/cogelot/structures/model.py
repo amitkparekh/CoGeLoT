@@ -157,7 +157,15 @@ class EvaluationEpisode(NamedTuple):
 
 
 class PreprocessedBatch(NamedTuple):
-    """Preprocessed Batch that will get made by the collate fn."""
+    """Preprocessed Batch that will get made by the collate fn.
+
+    Note: Because of a mistake made during data preprocessing and cleaning, the observations
+    dimension has one too many dimensions, but the extra dim is literally of length 1. This is not
+    an actual problem though because when modelling, the observations gets reshaped to encode the
+    object-centric representation. However, this is important to note if you work on this and are
+    unsure why the the tensors for the observations are of shape [batch, obs, obj, 1, ...] (with
+    that extra `1`).
+    """
 
     task: list[Task]
 
