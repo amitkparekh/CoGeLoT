@@ -17,47 +17,6 @@ class ActionEncoder(abc.ABC, torch.nn.Module):
         raise NotImplementedError
 
 
-class LearnedActionEmbedder(ActionEncoder):
-    """Encode actions using learned embeddings.
-
-    Different to the way VIMA does it but is how the original Gato does it.
-    """
-
-    def __init__(
-        self,
-        *,
-        embedder_per_pose_action: dict[PoseActionType, torch.nn.Embedding],
-        output_dim: int,
-    ) -> None:
-        super().__init__()
-        self._embedder_per_pose_action = embedder_per_pose_action
-        self._output_dim = output_dim
-        self._post_layer = torch.nn.LazyLinear(output_dim)
-
-        raise NotImplementedError("This implementation is not finished yet.")
-
-    def forward(self, discrete_action_tokens: dict[PoseActionType, torch.Tensor]) -> torch.Tensor:
-        """Embed the discrete action tokens."""
-        embedded_action_tokens = {
-            pose_action_type: self._embedder_per_pose_action[pose_action_type](
-                discrete_action_tokens[pose_action_type]
-            )
-            for pose_action_type in discrete_action_tokens
-        }
-
-        combined_embedding = torch.cat(
-            [
-                embedded_action_tokens[pose_action_type]
-                for pose_action_type in sorted(embedded_action_tokens.keys())
-            ],
-            dim=-1,
-        )
-
-        fused_embedding = self._post_layer(combined_embedding)
-
-        return fused_embedding
-
-
 class VIMAContinuousActionEmbedder(ActionEncoder):
     """Encode actions from their continuous form.
 
