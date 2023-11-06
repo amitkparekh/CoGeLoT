@@ -2,7 +2,7 @@ import itertools
 from pathlib import Path
 
 import datasets
-from pytest_cases import fixture
+from pytest_cases import fixture, param_fixture
 
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
@@ -11,6 +11,9 @@ from cogelot.data.parse import (
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
+
+mission_task = param_fixture("mission_task", ["sweep", "follow_order"], scope="session")
+mission_id = param_fixture("mission_id", ["000000"], scope="session")
 
 
 @fixture(scope="session")
