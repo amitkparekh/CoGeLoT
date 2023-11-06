@@ -9,6 +9,7 @@ from cogelot.modules.stitching import (
     add_observations_to_tokens_using_scatter,
     stitch_observations_with_actions,
 )
+from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType
@@ -79,8 +80,13 @@ def test_model_training_step_does_not_error(
 
 
 @fixture(scope="module")
-def target_actions(preprocessed_batch: PreprocessedBatch) -> dict[PoseActionType, torch.Tensor]:
-    return preprocessed_batch.actions.to_container()
+def target_actions(
+    preprocessed_batch: PreprocessedBatch,
+    pose_action_tokenizer: PoseActionTokenizer,
+) -> dict[PoseActionType, torch.Tensor]:
+    continuous_actions = preprocessed_batch.actions.to_container()
+    discrete_actions = pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
+    return discrete_actions
 
 
 @fixture(scope="module")
