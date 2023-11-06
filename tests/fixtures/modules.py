@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import pytest
 import torch
 from pytest_cases import fixture, param_fixture, parametrize_with_cases
+from transformers.models.t5.configuration_t5 import T5Config
 
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
@@ -18,6 +19,7 @@ from cogelot.modules.action_encoders import (
 )
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.policy import Policy
+from cogelot.modules.text_encoders import T5PromptEncoder, T5TextEmbedder
 from cogelot.modules.tokenizers import (
     EndEffectorTokenizer,
     PoseActionTokenizer,
@@ -44,8 +46,8 @@ def pretrained_model() -> str:
 
 
 @fixture(scope="session")
-def embed_dim() -> int:
-    return 768
+def embed_dim(pretrained_model: str) -> int:
+    return T5Config.from_pretrained(pretrained_model).d_model
 
 
 @fixture(scope="session")
@@ -71,6 +73,54 @@ def instance_preprocessor(
     return InstancePreprocessor(
         text_tokenizer=text_tokenizer,
         end_effector_tokenizer=end_effector_tokenizer,
+    )
+
+
+@fixture(scope="session")
+def prompt_embedder(pretrained_model: str) -> T5TextEmbedder:
+    return T5TextEmbedder(pretrained_model)
+
+
+@fixture(scope="session")
+def prompt_encoder(pretrained_model: str) -> T5PromptEncoder:
+    encoder = T5PromptEncoder.from_pretrained(pretrained_model, unfreeze_last_n_layers=2)
+    assert isinstance(encoder, T5PromptEncoder)
+    return encoder
+
+
+@fixture(scope="session")
+def object_encoder(embed_dim: int) -> vnn.ObjEncoder:
+    return vnn.ObjEncoder(
+        transformer_emb_dim=embed_dim,
+        views=["front", "top"],
+        vit_output_dim=embed_dim,
+        vit_resolution=32,
+        vit_patch_size=16,
+        vit_width=embed_dim,
+        vit_layers=4,
+        vit_heads=2,
+        bbox_mlp_hidden_dim=embed_dim,
+        bbox_mlp_hidden_depth=2,
+    )
+
+
+@fixture(scope="session")
+def end_effector_encoder() -> torch.nn.Embedding:
+    return torch.nn.Embedding(num_embeddings=2, embedding_dim=2)
+
+
+@fixture(scope="session")
+def obs_fusion_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Linear:
+    return torch.nn.Linear(object_encoder.output_dim + 2, embed_dim)
+
+
+@fixture(scope="session")
+def prompt_obj_post_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Sequential:
+    return vnn.build_mlp(
+        object_encoder.output_dim,
+        hidden_dim=embed_dim,
+        output_dim=embed_dim,
+        hidden_depth=2,
     )
 
 
@@ -151,20 +201,26 @@ class ActionEncoderDecoderCases:
 def vima_policy(
     action_encoder_decoder: tuple[ActionEncoder, ActionDecoder],
     pose_action_tokenizer: PoseActionTokenizer,
+    prompt_encoder: T5PromptEncoder,
     embed_dim: int,
+    prompt_embedder: T5TextEmbedder,
+    object_encoder: vnn.ObjEncoder,
+    end_effector_encoder: torch.nn.Embedding,
+    obs_fusion_layer: torch.nn.Linear,
+    prompt_obj_post_layer: torch.nn.Sequential,
     add_residual_connection: bool,  # noqa: FBT001
 ) -> Policy:
     vima = VIMAPolicy(embed_dim=embed_dim, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
     return Policy(
         embed_dim=vima.embed_dim,
-        obj_encoder=vima.obj_encoder,
-        end_effector_encoder=vima.end_effector_encoder,
-        obs_fusion_layer=vima.obs_fusion_layer,
+        obj_encoder=object_encoder,
+        end_effector_encoder=end_effector_encoder,
+        obs_fusion_layer=obs_fusion_layer,
         action_encoder=action_encoder_decoder[0],
         action_decoder=action_encoder_decoder[1],
-        prompt_embedding=vima.prompt_embedding,
-        prompt_encoder=vima.t5_prompt_encoder,
-        prompt_obj_post_layer=vima.prompt_obj_post_layer,
+        prompt_embedding=prompt_embedder,
+        prompt_encoder=prompt_encoder,
+        prompt_obj_post_layer=prompt_obj_post_layer,
         transformer_decoder=VIMADecoder(vima.xattn_gpt),
         pose_action_tokenizer=pose_action_tokenizer,
         add_residual_connection_to_prompt_visual_features=add_residual_connection,

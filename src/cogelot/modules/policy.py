@@ -1,6 +1,7 @@
 from typing import ClassVar, Self, cast
 
 import torch
+from transformers.models.t5.modeling_t5 import T5EncoderModel
 
 from cogelot.modules.action_decoders import ActionDecoder, VIMAActionDecoder
 from cogelot.modules.action_encoders import ActionEncoder, VIMAContinuousActionEmbedder
@@ -8,6 +9,7 @@ from cogelot.modules.stitching import (
     add_encoding_to_tokens_using_scatter,
     stitch_observations_with_actions,
 )
+from cogelot.modules.text_encoders import T5TextEmbedder
 from cogelot.modules.tokenizers.pose_action import (
     PoseActionTokenizer,
     create_mask_from_target_actions,
@@ -128,12 +130,12 @@ class Policy(torch.nn.Module):
         *,
         embed_dim: int,
         obj_encoder: vnn.ObjEncoder,
-        end_effector_encoder: vnn.Embedding,
+        end_effector_encoder: vnn.Embedding | torch.nn.Embedding,
         obs_fusion_layer: torch.nn.Linear,
         action_encoder: ActionEncoder,
         action_decoder: ActionDecoder,
-        prompt_embedding: vnn.WordEmbedding,
-        prompt_encoder: vnn.T5PromptEncoder,
+        prompt_embedding: T5TextEmbedder,
+        prompt_encoder: T5EncoderModel,
         prompt_obj_post_layer: torch.nn.Sequential,
         transformer_decoder: TransformerDecoderProtocol,
         pose_action_tokenizer: PoseActionTokenizer,
@@ -189,8 +191,8 @@ class Policy(torch.nn.Module):
                 their_action_encoder=their_policy.action_encoder,
             ),
             action_decoder=VIMAActionDecoder(their_policy.action_decoder),
-            prompt_embedding=their_policy.prompt_embedding,
-            prompt_encoder=their_policy.t5_prompt_encoder,
+            prompt_embedding=cast(T5TextEmbedder, their_policy.prompt_embedding),
+            prompt_encoder=their_policy.t5_prompt_encoder.t5,  # pyright: ignore[reportGeneralTypeIssues]
             prompt_obj_post_layer=their_policy.prompt_obj_post_layer,
             transformer_decoder=VIMADecoder(their_policy.xattn_gpt),
             pose_action_tokenizer=pose_action_tokenizer,
@@ -336,8 +338,8 @@ class Policy(torch.nn.Module):
         """Encode the prompt."""
         # Since we are using torch-style mask meaning, we need to invert the mask for the HF model
         prompt_tokens = self._prompt_encoder(
-            embedded_prompt, attention_mask=~embedded_prompt_mask, batch_first=True
-        )
+            inputs_embeds=embedded_prompt, attention_mask=~embedded_prompt_mask
+        ).last_hidden_state
         prompt_tokens = self._prompt_encoder_post_layer(prompt_tokens)
 
         return prompt_tokens
