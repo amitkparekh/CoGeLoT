@@ -99,9 +99,9 @@ def test_loss_computation_does_not_error(
 ) -> None:
     fine_grained_loss = compute_fine_grained_loss(predicted_action_dists, target_actions)
 
-    # There are a total of 12 axes across all of the pose action types (4 for rotations, 2 for
+    # There are a total of 14 axes across all of the pose action types (4 for rotations, 3 for
     # positions)
-    assert len(fine_grained_loss) == 12
+    assert len(fine_grained_loss) == 14
 
     # Extract the batch size and the current max timesteps from the target actions
     batch_size, max_timesteps = target_actions["pose0_position"].shape[:2]
