@@ -8,6 +8,8 @@ defaults:
       - xattn_positional/absolute
 
   - override /learning_rate_scheduler@model.lr_scheduler_partial_fn: constant
+  - override /action_decoder@model.policy.action_decoder: token_per_axis
+  - override /action_encoder@model.policy.action_encoder: token_per_axis
 
 task_name: "overfit-single-example"
 
@@ -18,7 +20,7 @@ xattn_positional_encoding: absolute
 source: x-transformers
 prompt_input: encoder
 observation_input: decoder
-num_action_tokens: 1
+num_action_tokens: 14
 
 datamodule:
   num_workers: 10
