@@ -13,7 +13,7 @@ def test_text_tokenizer_does_not_fail(
     assert tokenized_output is not None
 
 
-def test_pose_action_tokenizer_works_properly(
+def test_pose_action_tokenizer_denormalizes_actions(
     vima_instance: VIMAInstance, pose_action_tokenizer: PoseActionTokenizer
 ) -> None:
     original_continuous_actions = [
@@ -30,6 +30,16 @@ def test_pose_action_tokenizer_works_properly(
         )
         torch.testing.assert_close(original_continuous_action, denormalised_continuous_action)
 
+
+def test_pose_action_tokenizer_create_reversible_discrete_actions(
+    vima_instance: VIMAInstance, pose_action_tokenizer: PoseActionTokenizer
+) -> None:
+    original_continuous_actions = [
+        cast(dict[PoseActionType, torch.Tensor], action.model_dump(exclude={"index"}))
+        for action in vima_instance.pose_actions
+    ]
+
+    for original_continuous_action in original_continuous_actions:
         # Make sure the discrete actions can be converted back reliably
         continuous_actions = pose_action_tokenizer.convert_discrete_to_continuous(
             pose_action_tokenizer.convert_continuous_to_discrete(original_continuous_action)
