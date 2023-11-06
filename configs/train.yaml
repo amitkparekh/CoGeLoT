@@ -11,6 +11,9 @@ defaults:
   # The chosen policy will automatically be set to the model.policy
   - transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
 
+  - action_encoder@model.policy.action_encoder: vima.yaml
+  - action_decoder@model.policy.action_decoder: vima.yaml
+
   # LR scheduler used for training
   - learning_rate_scheduler@model.lr_scheduler_partial_fn: vima.yaml
 
@@ -45,10 +48,12 @@ model:
     _target_: cogelot.modules.policy.Policy
     embed_dim: 768
 
+    transformer_decoder: ???
+    action_encoder: ???
+    action_decoder: ???
+
     pose_action_tokenizer:
       _target_: cogelot.modules.tokenizers.PoseActionTokenizer
-
-    transformer_decoder: ???
 
     obj_encoder:
       _target_: vima.nn.ObjEncoder
@@ -77,56 +82,6 @@ model:
           - - ${model.policy.obj_encoder.transformer_emb_dim}
             - ${model.policy.end_effector_encoder.embedding_dim}
       out_features: ${..embed_dim}
-
-    action_encoder:
-      _target_: cogelot.modules.action_encoders.VIMAContinuousActionEmbedder
-      pose_action_tokenizer:
-        _target_: cogelot.modules.tokenizers.PoseActionTokenizer
-      embedder_per_pose_action:
-        pose0_position:
-          _target_: vima.nn.ContinuousActionEmbedding
-          output_dim: 256
-          input_dim: 3
-          hidden_dim: 256
-          hidden_depth: 1
-        pose1_position:
-          _target_: vima.nn.ContinuousActionEmbedding
-          output_dim: 256
-          input_dim: 3
-          hidden_dim: 256
-          hidden_depth: 1
-        pose0_rotation:
-          _target_: vima.nn.ContinuousActionEmbedding
-          output_dim: 256
-          input_dim: 4
-          hidden_dim: 256
-          hidden_depth: 1
-        pose1_rotation:
-          _target_: vima.nn.ContinuousActionEmbedding
-          output_dim: 256
-          input_dim: 4
-          hidden_dim: 256
-          hidden_depth: 1
-      post_layer:
-        _target_: torch.nn.LazyLinear
-        out_features: ${...embed_dim}
-
-    action_decoder:
-      _target_: cogelot.modules.action_decoders.VIMAActionDecoder
-      action_decoder:
-        _target_: vima.nn.ActionDecoder
-        _convert_: all
-        input_dim: ${...embed_dim}
-        action_dims:
-          pose0_position: [50, 100, 50]
-          pose1_position: [50, 100, 50]
-          pose0_rotation: [50, 50, 50, 50]
-          pose1_rotation: [50, 50, 50, 50]
-        hidden_dim: 512
-        hidden_depth: 2
-        activation: "relu"
-        norm_type: null
-        last_layer_gain: 0.01
 
     prompt_embedding:
       _target_: vima.nn.WordEmbedding

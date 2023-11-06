@@ -1,0 +1,4 @@
+_target_: cogelot.modules.action_decoders.TokenPerAxisActionDecoder
+input_dim: ${model.policy.embed_dim}
+max_num_action_bins: 100
+num_action_tokens_per_timestep: 14

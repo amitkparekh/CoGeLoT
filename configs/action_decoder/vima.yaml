@@ -1,0 +1,15 @@
+_target_: cogelot.modules.action_decoders.VIMAActionDecoder
+action_decoder:
+  _target_: vima.nn.ActionDecoder
+  _convert_: all
+  input_dim: ${model.policy.embed_dim}
+  action_dims:
+    pose0_position: [50, 100, 50]
+    pose1_position: [50, 100, 50]
+    pose0_rotation: [50, 50, 50, 50]
+    pose1_rotation: [50, 50, 50, 50]
+  hidden_dim: 512
+  hidden_depth: 2
+  activation: "relu"
+  norm_type: null
+  last_layer_gain: 0.01
