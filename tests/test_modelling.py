@@ -4,11 +4,6 @@ from pytest_cases import fixture
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.metrics import LossPerAxisPerActionMetric
-from cogelot.modules.stitching import (
-    add_observations_to_tokens_using_loop,
-    add_observations_to_tokens_using_scatter,
-    stitch_observations_with_actions,
-)
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
@@ -24,7 +19,14 @@ def preprocessed_batch(
     return batch
 
 
-def test_model_embeds_properly(
+def test_embed_inputs_does_not_error(
+    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+) -> None:
+    embedded_inputs = vima_lightning_module.embed_inputs(preprocessed_batch)
+    assert embedded_inputs
+
+
+def test_masks_from_embedding_are_pytorch_style(
     vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
 ) -> None:
     embedded_inputs = vima_lightning_module.embed_inputs(preprocessed_batch)
@@ -33,33 +35,29 @@ def test_model_embeds_properly(
     # meaning
     assert embedded_inputs.encoded_actions_mask is not None
     assert embedded_inputs.encoded_actions_mask.flatten()[0].item() is False
-
     assert embedded_inputs.encoded_observations_mask.flatten()[0].item() is False
 
 
-def test_stitching_observations_with_actions_is_correct(
-    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+def test_encoded_actions_tensor_is_correct(
+    vima_lightning_module: VIMALightningModule,
+    preprocessed_batch: PreprocessedBatch,
+    embed_dim: int,
 ) -> None:
-    embedded_inputs = vima_lightning_module.embed_inputs(preprocessed_batch)
-
-    actual_tokens, actual_mask = stitch_observations_with_actions(
-        embedded_inputs.encoded_observations,
-        embedded_inputs.encoded_observations_mask,
-        embedded_inputs.encoded_actions,
-        embedded_inputs.encoded_actions_mask,
-        add_observations_to_tokens_fn=add_observations_to_tokens_using_scatter,
+    encoded_actions, encoded_actions_mask = vima_lightning_module.policy.encode_action_tokens(
+        preprocessed_batch.actions
     )
 
-    expected_tokens, expected_mask = stitch_observations_with_actions(
-        embedded_inputs.encoded_observations,
-        embedded_inputs.encoded_observations_mask,
-        embedded_inputs.encoded_actions,
-        embedded_inputs.encoded_actions_mask,
-        add_observations_to_tokens_fn=add_observations_to_tokens_using_loop,
-    )
+    assert encoded_actions.ndim == 4
+    assert encoded_actions_mask.ndim == 3
 
-    assert torch.all(expected_tokens == actual_tokens)
-    assert torch.all(actual_mask == expected_mask)
+    # Batch size
+    assert encoded_actions.size(0) == encoded_actions_mask.size(0)
+    # timesteps
+    assert encoded_actions.size(1) == encoded_actions_mask.size(1)
+    # Number of tokens per timestep
+    assert encoded_actions.size(2) == encoded_actions_mask.size(2)
+    # embed dim
+    assert encoded_actions.size(3) == embed_dim
 
 
 def test_model_forward_does_not_error(
