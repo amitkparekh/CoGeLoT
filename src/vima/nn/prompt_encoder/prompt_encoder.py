@@ -2,7 +2,7 @@ import copy
 
 import torch
 from torch import nn
-from torch.nn.utils import checkpoint
+from torch.utils.checkpoint import checkpoint
 from transformers.models.t5.modeling_t5 import (
     BaseModelOutput,
     BaseModelOutputWithPastAndCrossAttentions,
@@ -11,7 +11,6 @@ from transformers.models.t5.modeling_t5 import (
     T5LayerNorm,
     T5PreTrainedModel,
     assert_device_map,
-    # checkpoint,
     get_device_map,
     logger,
 )

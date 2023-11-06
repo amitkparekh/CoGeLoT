@@ -8,7 +8,7 @@ command:
 
 program: src/cogelot/__main__.py
 
-name: Overfit on a single example (single action token)
+name: Overfit on a single example (multiple action tokens)
 entity: pyop
 project: CoGeLoT
 
@@ -16,7 +16,7 @@ method: grid
 
 parameters:
   experiment:
-    value: 00_overfit_single_example
+    value: 00_overfit_single_example_autoregressive
 
   datamodule.batch_size:
     values:

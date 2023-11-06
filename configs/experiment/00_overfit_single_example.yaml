@@ -32,6 +32,14 @@ model:
     # Make the LRs bigger so it drops faster
     lr: 0.0001
 
+  policy:
+    transformer_decoder:
+      attn_layers:
+        layer_dropout: 0
+
+    prompt_encoder:
+      dropout_rate: 0.0
+
 trainer:
   log_every_n_steps: 1
   max_epochs: 500

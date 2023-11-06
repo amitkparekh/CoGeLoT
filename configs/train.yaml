@@ -84,8 +84,8 @@ model:
       out_features: ${..embed_dim}
 
     prompt_embedding:
-      _target_: cogelot.modules.text_encoders.T5TextEmbedder.from_pretrained
-      pretrained_model_name_or_path: t5-base
+      _target_: cogelot.modules.text_encoders.T5TextEmbedder
+      pretrained_model: t5-base
 
     prompt_encoder:
       _target_: cogelot.modules.text_encoders.T5PromptEncoder.from_pretrained
