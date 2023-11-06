@@ -6,7 +6,11 @@ from pytest_cases import fixture, param_fixture, parametrize_with_cases
 
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import VIMALightningModule
-from cogelot.modules.action_decoders import VIMAActionDecoder
+from cogelot.modules.action_decoders import (
+    ActionDecoder,
+    TokenPerAxisActionDecoder,
+    VIMAActionDecoder,
+)
 from cogelot.modules.action_encoders import (
     ActionEncoder,
     TokenPerAxisActionEmbedder,
@@ -70,12 +74,12 @@ def instance_preprocessor(
     )
 
 
-class ActionEncoderCases:
-    def case_vima_continuous_action_embedder(
+class ActionEncoderDecoderCases:
+    def case_single_action_token(
         self,
         pose_action_tokenizer: PoseActionTokenizer,
         embed_dim: int,
-    ) -> VIMAContinuousActionEmbedder:
+    ) -> tuple[VIMAContinuousActionEmbedder, VIMAActionDecoder]:
         embedder_per_pose_action: dict[PoseActionType, vnn.ContinuousActionEmbedding] = {
             "pose0_position": vnn.ContinuousActionEmbedding(
                 output_dim=256,
@@ -102,49 +106,50 @@ class ActionEncoderCases:
                 hidden_depth=1,
             ),
         }
-        return VIMAContinuousActionEmbedder(
+        encoder = VIMAContinuousActionEmbedder(
             pose_action_tokenizer=pose_action_tokenizer,
             embedder_per_pose_action=embedder_per_pose_action,
             post_layer=torch.nn.LazyLinear(embed_dim),
         )
+        action_decoder = vnn.ActionDecoder(
+            input_dim=embed_dim,
+            action_dims={
+                "pose0_position": [50, 100, 50],
+                "pose0_rotation": [50] * 4,
+                "pose1_position": [50, 100, 50],
+                "pose1_rotation": [50] * 4,
+            },
+            hidden_dim=512,
+            hidden_depth=2,
+            activation="relu",
+            norm_type=None,
+            last_layer_gain=0.01,
+        )
+        decoder = VIMAActionDecoder(action_decoder)
+        return encoder, decoder
 
-    def case_token_per_axis_action_embedder(
+    def case_token_per_axis(
         self,
         pose_action_tokenizer: PoseActionTokenizer,
         embed_dim: int,
-    ) -> TokenPerAxisActionEmbedder:
-        return TokenPerAxisActionEmbedder(
+    ) -> tuple[TokenPerAxisActionEmbedder, TokenPerAxisActionDecoder]:
+        encoder = TokenPerAxisActionEmbedder(
             pose_action_tokenizer=pose_action_tokenizer,
             num_axes=14,
             max_num_action_bins=100,
             embed_dim=embed_dim,
         )
 
-
-@fixture(scope="session")
-def vima_action_decoder(embed_dim: int) -> VIMAActionDecoder:
-    action_decoder = vnn.ActionDecoder(
-        input_dim=embed_dim,
-        action_dims={
-            "pose0_position": [50, 100, 50],
-            "pose0_rotation": [50] * 4,
-            "pose1_position": [50, 100, 50],
-            "pose1_rotation": [50] * 4,
-        },
-        hidden_dim=512,
-        hidden_depth=2,
-        activation="relu",
-        norm_type=None,
-        last_layer_gain=0.01,
-    )
-    return VIMAActionDecoder(action_decoder)
+        decoder = TokenPerAxisActionDecoder(
+            input_dim=embed_dim, max_num_action_bins=100, num_action_tokens_per_timestep=14
+        )
+        return encoder, decoder
 
 
 @fixture(scope="session")
-@parametrize_with_cases("action_encoder", cases=ActionEncoderCases, scope="session")
+@parametrize_with_cases("action_encoder_decoder", cases=ActionEncoderDecoderCases, scope="session")
 def vima_policy(
-    action_encoder: ActionEncoder,
-    vima_action_decoder: VIMAActionDecoder,
+    action_encoder_decoder: tuple[ActionEncoder, ActionDecoder],
     pose_action_tokenizer: PoseActionTokenizer,
     embed_dim: int,
     add_residual_connection: bool,  # noqa: FBT001
@@ -155,8 +160,8 @@ def vima_policy(
         obj_encoder=vima.obj_encoder,
         end_effector_encoder=vima.end_effector_encoder,
         obs_fusion_layer=vima.obs_fusion_layer,
-        action_encoder=action_encoder,
-        action_decoder=vima_action_decoder,
+        action_encoder=action_encoder_decoder[0],
+        action_decoder=action_encoder_decoder[1],
         prompt_embedding=vima.prompt_embedding,
         prompt_encoder=vima.t5_prompt_encoder,
         prompt_obj_post_layer=vima.prompt_obj_post_layer,

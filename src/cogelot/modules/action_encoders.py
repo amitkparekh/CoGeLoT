@@ -2,6 +2,7 @@ import abc
 from typing import Self, cast
 
 import torch
+from einops import rearrange
 
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.structures.vima import PoseActionType
@@ -10,6 +11,12 @@ from vima import nn as vnn
 
 class ActionEncoder(abc.ABC, torch.nn.Module):
     """Embed actions from their continuous form to something that is useful for the model."""
+
+    @property
+    @abc.abstractmethod
+    def num_action_tokens_per_timestep(self) -> int:
+        """The number of action tokens per timestep."""
+        raise NotImplementedError
 
     @abc.abstractmethod
     def forward(self, continuous_actions: dict[PoseActionType, torch.Tensor]) -> torch.Tensor:
@@ -51,8 +58,13 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
                 dict[PoseActionType, vnn.ContinuousActionEmbedding],
                 their_action_encoder._embed_dict,  # noqa: SLF001
             ),
-            post_layer=their_action_encoder._post_layer,  # noqa: SLF001
+            post_layer=cast(torch.nn.Linear, their_action_encoder._post_layer),  # noqa: SLF001
         )
+
+    @property
+    def num_action_tokens_per_timestep(self) -> int:
+        """The number of action tokens per timestep."""
+        return 1
 
     def forward(self, continuous_actions: dict[PoseActionType, torch.Tensor]) -> torch.Tensor:
         """Embed the continuous actions the way VIMA does it."""
@@ -77,4 +89,74 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
 
         fused_embedding = self._post_layer(combined_embedding)
 
+        # Add an additional dim because each timestep consists of only a single token
+        fused_embedding = fused_embedding.unsqueeze(-2)
+
         return fused_embedding
+
+
+class TokenPerAxisActionEmbedder(ActionEncoder):
+    """Embed actions to a single token per axis.
+
+    This is so that we can autoregressively decode them.
+    """
+
+    def __init__(
+        self,
+        *,
+        pose_action_tokenizer: PoseActionTokenizer,
+        num_axes: int,
+        max_num_action_bins: int,
+        embed_dim: int,
+    ) -> None:
+        super().__init__()
+        self._pose_action_tokenizer = pose_action_tokenizer
+        self._num_axes = num_axes
+        self._max_num_action_bins = max_num_action_bins
+
+        self.pose_action_axes_embedder = torch.nn.Parameter(
+            torch.empty(
+                self._num_axes, self._max_num_action_bins, embed_dim, device=None, dtype=None
+            ),
+            requires_grad=True,
+        )
+        torch.nn.init.normal_(self.pose_action_axes_embedder)
+
+    @property
+    def num_action_tokens_per_timestep(self) -> int:
+        """The number of action tokens per timestep."""
+        return self._num_axes
+
+    def forward(self, continuous_actions: dict[PoseActionType, torch.Tensor]) -> torch.Tensor:
+        """Embed the actions into multiple tokens, so we can autoregressively decode them."""
+        discrete_actions = self._pose_action_tokenizer.convert_continuous_to_discrete(
+            continuous_actions
+        )
+        discrete_actions_tensor = torch.cat(
+            [
+                discrete_actions[pose_action_type]
+                for pose_action_type in sorted(discrete_actions.keys())
+            ],
+            dim=-1,
+        )
+        embedded_actions = self._embed_discrete_actions(discrete_actions_tensor)
+
+        return embedded_actions
+
+    def _embed_discrete_actions(self, discrete_actions_tensor: torch.Tensor) -> torch.Tensor:
+        batch_size, num_timesteps, num_axes = discrete_actions_tensor.shape
+
+        action_indices = discrete_actions_tensor
+        action_indices = rearrange(action_indices, "B T A -> (B T) A")
+        action_indices = rearrange(action_indices, "BT A -> (BT A)")
+
+        batch_indices = torch.arange(
+            num_axes, device=discrete_actions_tensor.device, dtype=torch.long
+        ).tile(batch_size * num_timesteps)
+
+        embedded_actions = self.pose_action_axes_embedder[batch_indices, action_indices]
+
+        embedded_actions = rearrange(
+            embedded_actions, "(B T A) dim -> B T A dim", B=batch_size, T=num_timesteps, A=num_axes
+        )
+        return embedded_actions

@@ -5,8 +5,7 @@ import torch
 from cogelot.modules.action_decoders import ActionDecoder, VIMAActionDecoder
 from cogelot.modules.action_encoders import ActionEncoder, VIMAContinuousActionEmbedder
 from cogelot.modules.stitching import (
-    add_observations_to_tokens_using_scatter,
-    get_max_num_objects_from_encoded_observations,
+    add_encoding_to_tokens_using_scatter,
     stitch_observations_with_actions,
 )
 from cogelot.modules.tokenizers.pose_action import (
@@ -143,6 +142,14 @@ class Policy(torch.nn.Module):
         super().__init__()
         self.embed_dim = embed_dim
 
+        if (
+            action_encoder.num_action_tokens_per_timestep
+            != action_decoder.num_action_tokens_per_timestep
+        ):
+            raise AssertionError(
+                "The number of action tokens per timestep expected by both the encoder and decoder are not the same."
+            )
+
         self._obj_encoder = obj_encoder
         self._end_effector_encoder = end_effector_encoder
         self._obs_fusion_layer = obs_fusion_layer
@@ -196,6 +203,11 @@ class Policy(torch.nn.Module):
         )
         return policy
 
+    @property
+    def num_action_tokens_per_timestep(self) -> int:
+        """The number of action tokens per timestep."""
+        return self._action_encoder.num_action_tokens_per_timestep
+
     def predict_actions(
         self,
         encoded_prompt: torch.Tensor,
@@ -206,13 +218,13 @@ class Policy(torch.nn.Module):
         encoded_actions_mask: torch.Tensor | None,
     ) -> dict[PoseActionType, MultiCategorical]:
         """Predict the action token."""
-        max_objects = get_max_num_objects_from_encoded_observations(encoded_observations)
         tokens, masks = stitch_observations_with_actions(
             encoded_observations,
             encoded_observations_mask,
             encoded_actions,
             encoded_actions_mask,
-            add_observations_to_tokens_fn=add_observations_to_tokens_using_scatter,
+            add_encoding_to_tokens_fn=add_encoding_to_tokens_using_scatter,
+            num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
         )
 
         transformer_output = self._transformer_decoder.forward(
@@ -222,7 +234,7 @@ class Policy(torch.nn.Module):
             memory_key_padding_mask=encoded_prompt_mask,
         )
         predicted_actions = self.decode_action_token(
-            transformer_output, max_num_objects=max_objects
+            transformer_output, max_num_objects=encoded_observations.size(-2)
         )
         return predicted_actions
 
@@ -306,9 +318,15 @@ class Policy(torch.nn.Module):
 
         So this takes the action in their original continuous form and embeds/encodes them.
         """
-        mask = create_mask_from_target_actions(actions, ignore_target_index=ignore_target_index)
+        # Shape: (batch size, timesteps, tokens per timestep, embed_dim)
         encoded_actions = self._action_encoder(actions)
-        return encoded_actions, mask
+
+        # Shape: (batch size, timesteps)
+        mask = create_mask_from_target_actions(actions, ignore_target_index=ignore_target_index)
+        # Shape: (batch size, timesteps, tokens per timestep)
+        encoded_actions_mask = mask.unsqueeze(-1).expand(encoded_actions.shape[: mask.ndim + 1])
+
+        return encoded_actions, encoded_actions_mask
 
     def encode_prompt(
         self,
