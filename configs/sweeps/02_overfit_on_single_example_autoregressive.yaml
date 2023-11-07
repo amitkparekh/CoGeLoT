@@ -29,5 +29,5 @@ parameters:
 
   datamodule.dataset_start_index:
     distribution: int_uniform
-    max: 10
+    max: 5
     min: 0
