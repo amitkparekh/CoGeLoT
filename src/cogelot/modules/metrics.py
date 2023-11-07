@@ -271,13 +271,17 @@ class TrainingMetrics(torch.nn.Module):
     @torch.no_grad()
     def compute(self, split: Literal["train", "val"]) -> dict[str, torch.Tensor]:
         """Compute the metrics, returning a flattened dict of all metrics."""
+        pose_accuracy_per_axis = self.pose_accuracy_per_axis.compute()
         accuracy_metrics = {
             f"{split}_{metric_key}_acc": acc
             for metric_key, acc in {
-                **self.pose_accuracy_per_axis.compute(),
+                **pose_accuracy_per_axis,
                 **self.pose_accuracy_per_axis_per_task.compute(),
             }.items()
         }
+        accuracy_metrics[f"{split}_acc"] = torch.mean(
+            torch.stack(list(pose_accuracy_per_axis.values()))
+        )
 
         loss_metrics = {
             f"{split}_{metric_key}_loss": loss
