@@ -1,11 +1,15 @@
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, get_args
+from collections.abc import Mapping
+from typing import Any, ClassVar, Literal, cast, get_args
 
 import torch
 import wandb
 from loguru import logger
 from torchmetrics import MeanMetric, SumMetric
 from torchmetrics.classification.accuracy import MulticlassAccuracy
+from torchmetrics.collections import MetricCollection
+from torchmetrics.metric import Metric
 from torchmetrics.wrappers import MultitaskWrapper
+from torchmetrics.wrappers.abstract import WrapperMetric
 
 from cogelot.nn.loss import PER_AXIS_KEY_TEMPLATE, PerActionPerAxis
 from cogelot.structures.vima import (
@@ -16,9 +20,6 @@ from cogelot.structures.vima import (
     get_task_group_from_task,
 )
 from vima.nn.action_decoder.dists import MultiCategorical
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 def _create_metric_key_per_axis(string_template: str = PER_AXIS_KEY_TEMPLATE) -> list[str]:
@@ -35,16 +36,38 @@ def _include_task_in_metric_key(metric_key: str, task: Task) -> str:
     return f"task{task.value + 1:02d}_{metric_key}"
 
 
-class PoseAccuracyPerAxisMetric(MultitaskWrapper):
+class WrappedMultitaskWrapper(WrapperMetric):
+    """Wrap the multitask wrapper so we have less type errors.
+
+    Unnecessary but they were annoying me. This fixes that by doing some patching.
+    """
+
+    is_differentiable = False
+
+    def __init__(self, metrics: Mapping[str, Metric]) -> None:
+        super().__init__()
+        self.metrics = MultitaskWrapper(cast(dict[str, Metric | MetricCollection], metrics))
+        self.task_metrics = self.metrics.task_metrics
+
+    def compute(self) -> dict[str, Any]:
+        """Compute metrics for all tasks."""
+        return self.metrics.compute()
+
+    def reset(self) -> None:
+        """Reset all underlying metrics."""
+        return self.metrics.reset()
+
+
+class PoseAccuracyPerAxisMetric(WrappedMultitaskWrapper):
     """Accuracy metric for the pose action."""
 
     def __init__(self, max_num_classes: int, ignore_index: int) -> None:
         metric_keys = _create_metric_key_per_axis()
-        metrics: Mapping[str, MulticlassAccuracy] = {
+        metrics = {
             key: MulticlassAccuracy(num_classes=max_num_classes, ignore_index=ignore_index)
             for key in metric_keys
         }
-        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
+        super().__init__(metrics)
 
     def update(
         self,
@@ -61,10 +84,10 @@ class PoseAccuracyPerAxisMetric(MultitaskWrapper):
         predictions_per_axis = PerActionPerAxis.from_actions(predictions).to_flattened_dict()
         targets_per_axis = PerActionPerAxis.from_actions(targets).to_flattened_dict()
 
-        MultitaskWrapper.update(self, predictions_per_axis, targets_per_axis)
+        self.metrics.update(predictions_per_axis, targets_per_axis)
 
 
-class PoseAccuracyPerAxisPerTaskMetric(MultitaskWrapper):
+class PoseAccuracyPerAxisPerTaskMetric(WrappedMultitaskWrapper):
     """Accuracy metric for each axis for each pose, separated by task."""
 
     def __init__(self, max_num_classes: int, ignore_index: int) -> None:
@@ -77,7 +100,7 @@ class PoseAccuracyPerAxisPerTaskMetric(MultitaskWrapper):
             key: MulticlassAccuracy(num_classes=max_num_classes, ignore_index=ignore_index)
             for key in metric_keys
         }
-        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
+        super().__init__(metrics)
 
     def update(
         self,
@@ -131,7 +154,7 @@ class PoseAccuracyPerAxisPerTaskMetric(MultitaskWrapper):
         }
 
 
-class LossPerAxisPerActionMetric(MultitaskWrapper):
+class LossPerAxisPerActionMetric(WrappedMultitaskWrapper):
     """Track the loss per axis per action.
 
     If there are NaN's in the loss, they get ignored. This is because of how NaN's are used to aid
@@ -143,7 +166,7 @@ class LossPerAxisPerActionMetric(MultitaskWrapper):
         loss_keys = _create_metric_key_per_axis(PER_AXIS_KEY_TEMPLATE)
         # And create the metric for each of them
         metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
-        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
+        super().__init__(metrics)
 
     def update(self, fine_grained_loss: dict[str, torch.Tensor]) -> None:
         """Update the metric with the result of a batch."""
@@ -157,7 +180,7 @@ class LossPerAxisPerActionMetric(MultitaskWrapper):
             self.task_metrics[key](loss)
 
 
-class LossPerAxisPerActionPerTaskMetric(MultitaskWrapper):
+class LossPerAxisPerActionPerTaskMetric(WrappedMultitaskWrapper):
     """Track the loss per axis per action per task.
 
     If there are NaN's in the loss, they get ignored. This is because of how NaN's are used to aid
@@ -173,11 +196,9 @@ class LossPerAxisPerActionPerTaskMetric(MultitaskWrapper):
         ]
         # And create the metric for each of them
         metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
-        super().__init__(metrics)  # pyright: ignore[reportGeneralTypeIssues]
+        super().__init__(metrics)
 
-    def update(  # type: ignore[override]
-        self, fine_grained_loss: dict[str, torch.Tensor], *, tasks: list[Task]
-    ) -> None:
+    def update(self, fine_grained_loss: dict[str, torch.Tensor], *, tasks: list[Task]) -> None:
         """Update the metric with the result of a batch."""
         # Split each tensor within each dictionary into a list of tensors, one for each task.
         loss_per_task_per_axis = (
