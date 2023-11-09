@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from huggingface_hub import HfApi, create_repo, hf_hub_download
@@ -9,9 +10,21 @@ from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from cogelot.common.wandb import get_id_from_current_run
 
 
-def create_model_repository(username: str, repo_name: str, *, is_private: bool = True) -> None:
+def enable_hf_transfer() -> None:
+    """Enable the hf-transfer library for faster uploads/downloads.
+
+    Reference:
+        https://huggingface.co/docs/huggingface_hub/guides/download#faster-downloads
+    """
+    logger.warning(
+        "HF's hf-transfer library makes things go so much faster, but you lose progress bars and a bunch of other nice things. It's also in a very early stage. Use at your own risk."
+    )
+    os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
+
+
+def create_model_repository(repo_id: str, *, is_private: bool = True) -> None:
     """Create a repository on the Hub for a model."""
-    create_repo(f"{username}/{repo_name}", private=is_private, exist_ok=True)
+    create_repo(repo_id, private=is_private, exist_ok=True)
 
 
 def upload_model_checkpoint(
@@ -24,6 +37,8 @@ def upload_model_checkpoint(
     If desired, you can provide the name of the checkpoint file. If not, it will use the name of
     the file that you are uploading.
     """
+    create_model_repository(repo_id)
+
     if checkpoint_name is None:
         checkpoint_name = checkpoint_path.name
 
@@ -39,6 +54,8 @@ def upload_model_checkpoint(
 
 def upload_model_checkpoint_dir(checkpoint_dir: Path, run_id: str, repo_id: str) -> None:
     """Upload all the checkpoints for a wandb run to the repository on the hub."""
+    create_model_repository(repo_id)
+
     api = HfApi()
     api.upload_folder(
         repo_id=repo_id,
@@ -69,12 +86,15 @@ class HuggingFaceModelLogger(Logger):
     Currently, we are only uploading the best checkpoint for each run.
     """
 
-    def __init__(self, repo_id: str) -> None:
+    def __init__(self, repo_id: str, *, use_hf_transfer: bool = False) -> None:
         self._repo_id = repo_id
 
         self._checkpoint_dir: Path | None = None
         self._checkpoint_callback: ModelCheckpoint | None = None
         self._experiment_id: str | None = None
+
+        if use_hf_transfer:
+            enable_hf_transfer()
 
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         """After save checkpoint is called, save the checkpoint callback and the experiment ID.

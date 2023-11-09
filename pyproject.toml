@@ -34,6 +34,7 @@ dependencies = [
     "pydantic-settings>=2.0.3",
     "pytorch-lightning>=2.0.9",
     "streamlit>=1.28.0",
+    "hf-transfer>=0.1.4",
 ]
 
 [project.optional-dependencies]
