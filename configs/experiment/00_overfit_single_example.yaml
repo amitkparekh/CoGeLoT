@@ -26,6 +26,7 @@ datamodule:
   task_index_seen: 2
   # Only show 1 example
   max_num_instances_seen: 1
+  dataset_start_index: 0
 
 model:
   optimizer_partial_fn:
