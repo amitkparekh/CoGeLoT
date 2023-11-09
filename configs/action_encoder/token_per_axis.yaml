@@ -1,4 +1,4 @@
-_target_: cogelot.modules.action_encoders.TokenPerAxisActionDecoder
+_target_: cogelot.modules.action_encoders.TokenPerAxisActionEmbedder
 pose_action_tokenizer:
   _target_: cogelot.modules.tokenizers.PoseActionTokenizer
 max_num_action_bins: 100
