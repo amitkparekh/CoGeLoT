@@ -7,7 +7,7 @@ from typing import Any, Literal, Self
 import pytorch_lightning as pl
 import torch
 
-from cogelot.common.checkpoint import create_hparams_for_checkpoint
+from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
 from cogelot.modules.metrics import (
     TrainingMetrics,
@@ -78,7 +78,8 @@ class VIMALightningModule(pl.LightningModule):
             return cls.load_from_checkpoint(model_checkpoint_path)
         except TypeError:
             return cls.load_from_checkpoint(
-                model_checkpoint_path, **create_hparams_for_checkpoint(model_checkpoint_path)
+                model_checkpoint_path,
+                **instantiate_module_hparams_from_checkpoint(model_checkpoint_path),
             )
 
     def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:

@@ -1,52 +1,136 @@
+import os
 from pathlib import Path
-from typing import Any
 
-import hydra
-import torch
-from omegaconf import OmegaConf
+from huggingface_hub import HfApi, create_repo, hf_hub_download
+from loguru import logger
+from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.loggers import Logger
+from pytorch_lightning.utilities.rank_zero import rank_zero_only
+
+from cogelot.common.wandb import get_id_from_current_run
 
 
-def convert_to_dotlist(config: dict[str, Any]) -> list[str]:
-    """Convert a dict to a dotlist.
+def enable_hf_transfer() -> None:
+    """Enable the hf-transfer library for faster uploads/downloads.
 
-    Yes, while this is pretty much just doing a simple dict comprehension, we need to manually
-    convert any value that is `None` into a string of 'null', otherwise it will fail.
+    Reference:
+        https://huggingface.co/docs/huggingface_hub/guides/download#faster-downloads
     """
-    return [
-        f"{key}={value if value is not None else 'null'}"
-        for key, value in config.items()  # noqa: WPS110
-    ]
-
-
-def create_hparams_for_checkpoint(checkpoint_path: Path) -> dict[str, Any]:
-    """Create the hparams objects for the current checkpoint when the hparams don't exist.
-
-    I am a numpty and created the checkpoints and didn't call the `self.save_hyperparameters()`
-    method in the `__init__` method. As a result, some of the checkpoints will fail when loading.
-
-    Thankfully, we can use hydra to instantiate the modules for the model so the model state dict
-    has somewhere to go.
-    """
-    loaded_checkpoint: dict[str, Any] = torch.load(
-        checkpoint_path, map_location=torch.device("cpu")
+    logger.warning(
+        "HF's hf-transfer library makes things go so much faster, but you lose progress bars and a bunch of other nice things. It's also in a very early stage. Use at your own risk."
     )
-    raw_config: dict[str, Any] | None = loaded_checkpoint.get("hyper_parameters")
+    os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
-    if not raw_config:
-        raise KeyError(
-            "The hydra config is not within the checkpoint for some reason. That will require some"
-            " more work to get right. I am sorry :("
-        )
 
-    raw_config_as_dotlist = convert_to_dotlist(raw_config)
-    hydra_config = OmegaConf.from_dotlist(raw_config_as_dotlist)
+def create_model_repository(repo_id: str, *, is_private: bool = True) -> None:
+    """Create a repository on the Hub for a model."""
+    create_repo(repo_id, private=is_private, exist_ok=True)
 
-    # Just select the model key from the config, and remove the `_target_` key since we don't want
-    # to instantiate the model itself, just kwargs.
-    model_config = OmegaConf.select(hydra_config, "model")
-    model_config.pop("_target_")
 
-    # Instantiate the modules from the config
-    instantiated_modules = hydra.utils.instantiate(model_config)
+def upload_model_checkpoint(
+    checkpoint_path: Path, run_id: str, repo_id: str, *, checkpoint_name: str | None = None
+) -> None:
+    """Upload a model checkpoint to the repository on the hub.
 
-    return instantiated_modules
+    If the run name is provied,
+
+    If desired, you can provide the name of the checkpoint file. If not, it will use the name of
+    the file that you are uploading.
+    """
+    create_model_repository(repo_id)
+
+    if checkpoint_name is None:
+        checkpoint_name = checkpoint_path.name
+
+    api = HfApi()
+    api.upload_file(
+        path_or_fileobj=checkpoint_path,
+        path_in_repo=f"{run_id}/{checkpoint_name}",
+        repo_id=repo_id,
+        repo_type="model",
+        commit_message=f"Upload {run_id}/{checkpoint_name}",
+    )
+
+
+def upload_model_checkpoint_dir(checkpoint_dir: Path, run_id: str, repo_id: str) -> None:
+    """Upload all the checkpoints for a wandb run to the repository on the hub."""
+    create_model_repository(repo_id)
+
+    api = HfApi()
+    api.upload_folder(
+        repo_id=repo_id,
+        path_in_repo=run_id,
+        folder_path=checkpoint_dir,
+        repo_type="model",
+        commit_message=f"Upload checkpoints for {run_id}",
+    )
+
+
+def download_model_checkpoint(
+    repo_id: str, run_id: str, checkpoint_name: str, output_dir: Path
+) -> None:
+    """Download a model checkpoint from the repository on the hub."""
+    hf_hub_download(
+        repo_id=repo_id,
+        filename=checkpoint_name,
+        subfolder=run_id,
+        repo_type="model",
+        local_dir=output_dir,
+        local_dir_use_symlinks=False,
+    )
+
+
+class HuggingFaceModelLogger(Logger):
+    """Logger for uploading models to the HuggingFace Hub.
+
+    Currently, we are only uploading the best checkpoint for each run.
+    """
+
+    def __init__(self, repo_id: str, *, use_hf_transfer: bool = False) -> None:
+        self._repo_id = repo_id
+
+        self._checkpoint_dir: Path | None = None
+        self._checkpoint_callback: ModelCheckpoint | None = None
+        self._experiment_id: str | None = None
+
+        if use_hf_transfer:
+            enable_hf_transfer()
+
+    def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
+        """After save checkpoint is called, save the checkpoint callback and the experiment ID.
+
+        This is so that we only need upload checkpoints once the training has finished.
+        """
+        if self._checkpoint_callback is None:
+            self._checkpoint_callback = checkpoint_callback
+
+        if not self._experiment_id:
+            self._experiment_id = get_id_from_current_run()
+
+        if not self._checkpoint_dir and checkpoint_callback.dirpath is not None:
+            self._checkpoint_dir = Path(checkpoint_callback.dirpath)
+
+    @rank_zero_only
+    def finalize(self, status: str) -> None:
+        """Upload the model to HF after the training has successfully finished."""
+        if status != "success":
+            logger.info("Not uploading model because training was not successful.")
+            return
+        if self._checkpoint_callback is None:
+            logger.warning(
+                "There is no checkpoint callback to upload? Is the checkpoint callback included in the Trainer?"
+            )
+            return
+        if not self._experiment_id:
+            logger.warning(
+                "There is no checkpoint callback or experiment ID to upload? This is the case if there is no wandb run associated."
+            )
+            return
+        if not self._checkpoint_dir:
+            logger.warning(
+                "There is no checkpoint directory to upload. Does the ModelCheckpoint callback have a directory? Surely it must right?"
+            )
+            return
+
+        logger.info(f"Uploading model checkpoints to `{self._repo_id}/{self._experiment_id}/`")
+        upload_model_checkpoint_dir(self._checkpoint_dir, self._experiment_id, self._repo_id)
