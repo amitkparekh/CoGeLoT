@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import wandb
+from loguru import logger
 
 
 def download_model_from_wandb(
@@ -15,6 +15,8 @@ def download_model_from_wandb(
         return checkpoint_path
 
     # Get the run from wandb
+    import wandb
+
     api = wandb.Api()
     run = api.run(f"{entity}/{project}/{run_id}")
 
@@ -30,3 +32,16 @@ def download_model_from_wandb(
     checkpoint_path = model_checkpoint_file.rename(checkpoint_path)
 
     return checkpoint_path
+
+
+def get_id_from_current_run() -> str | None:
+    """Get the current run ID from wandb, if there is a run in progress on the current machine."""
+    import wandb
+
+    if wandb.run is None:
+        logger.warning(
+            "Wandb is not initialized. Please initialize wandb before calling this function."
+        )
+        return None
+
+    return wandb.run.id
