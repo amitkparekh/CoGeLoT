@@ -236,6 +236,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 99
 ignore-init-module-imports = true
+unsafe-fixes = true
 target-version = "py311"
 src = ["src"]
 external = [
