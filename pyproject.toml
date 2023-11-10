@@ -28,28 +28,24 @@ dependencies = [
     "wandb>=0.15.8",
     "x-transformers>=1.18.2",
     "pillow>=10.0.0",
-    "opencv-python>=4.8.0.76",
+    "opencv-python-headless>=4.8.0.76",
     "einops>=0.6.1",
     "pandas>=2.0.3",
     "pydantic-settings>=2.0.3",
     "pytorch-lightning>=2.0.9",
     "streamlit>=1.28.0",
     "hf-transfer>=0.1.4",
-]
-
-[project.optional-dependencies]
-environment = [
-    "gym>=0.26.2",
-    "imageio>=2.31.1",
-    "matplotlib>=3.7.2",
     "kornia>=0.7.0",
-    "psutil>=5.9.5",
-    "torchvision>=0.15.0",
+    "dm-tree>=0.1.8",
+    "gym>=0.26.2",
     "pybullet>=3.2.5",
     "av>=10.0.0",
+    "imageio>=2.31.1",
+    "matplotlib>=3.7.2",
+    "psutil>=5.9.5",
+    "torchvision>=0.15.0",
     "importlib-resources>=6.0.1",
     "transforms3d>=0.4.1",
-    "dm-tree>=0.1.8",
 ]
 
 [tool.pdm]
