@@ -31,7 +31,7 @@ logger:
     project: CoGeLoT
     entity: pyop
     log_model: False
-  - _target_: cogelot.common.checkpoint.HuggingFaceModelCheckpoint
+  - _target_: cogelot.common.checkpoint.HuggingFaceModelLogger
     repo_id: amitkparekh/cogelot
     use_hf_transfer: false
 
