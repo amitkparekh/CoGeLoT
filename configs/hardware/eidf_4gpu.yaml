@@ -1,0 +1,13 @@
+# @package _global_
+
+# This is for when it is run on OCI with A100s
+defaults:
+  - override /trainer: ddp.yaml
+
+datamodule:
+  batch_size: 32
+  num_workers: 32
+
+trainer:
+  devices: 4
+  num_nodes: 1
