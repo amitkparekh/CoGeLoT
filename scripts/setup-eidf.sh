@@ -6,7 +6,7 @@ mkdir -p /mnt/ceph_rbd/wandb /mnt/ceph_rbd/huggingface /mnt/ceph_rbd/data /mnt/c
 # Install deps (without torch since we are using the conda one)
 pdm export --prod --without-hashes | grep -v "torch==" >requirements.txt
 pip install --no-deps -r requirements.txt
-pip install -e .
+pip install --no-deps -e .
 python -m torch.utils.collect_env
 
 # Add a symlink to the mnt for storage/data, since that's where everything goes
