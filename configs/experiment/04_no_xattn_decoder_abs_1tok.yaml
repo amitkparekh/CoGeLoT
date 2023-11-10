@@ -4,13 +4,14 @@ defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
       - decoder_only.yaml
       - attn_layers/default.yaml
-      - positional/xpos.yaml
-      - xattn_positional/none.yaml
+      - positional/absolute.yaml
+      - xattn_positional/absolute.yaml
 
 architecture: decoder_only
 attn_layers: default
-positional_encoding: xpos
-xattn_positional_encoding: none
+positional_encoding: absolute
+xattn_positional_encoding: absolute
 source: x-transformers
 prompt_input: decoder
 observation_input: decoder
+num_action_tokens: 1

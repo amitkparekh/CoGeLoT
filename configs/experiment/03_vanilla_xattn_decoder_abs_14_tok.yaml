@@ -6,7 +6,8 @@ defaults:
       - attn_layers/default.yaml
       - positional/absolute.yaml
       - xattn_positional/none.yaml
-
+  - override /action_decoder@model.policy.action_decoder: token_per_axis
+  - override /action_encoder@model.policy.action_encoder: token_per_axis
 architecture: encoder_decoder
 attn_layers: default
 positional_encoding: absolute
@@ -14,3 +15,4 @@ xattn_positional_encoding: absolute
 source: x-transformers
 prompt_input: encoder
 observation_input: decoder
+num_action_tokens: 14

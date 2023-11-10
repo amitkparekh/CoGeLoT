@@ -1,0 +1,32 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - train
+  - hardware=eidf_4gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/__main__.py
+
+name: Experiments 1
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    values:
+      - 02_vima_xattn_decoder_abs_1tok
+      - 02_vima_xattn_decoder_alibi_1tok
+      - 03_vanilla_xattn_decoder_abs_1tok
+      - 03_vanilla_xattn_decoder_alibi_1tok
+      - 04_no_xattn_decoder_abs_1tok
+      - 04_no_xattn_decoder_alibi_1tok
+      - 02_vima_xattn_decoder_abs_14tok
+      - 02_vima_xattn_decoder_alibi_14tok
+      - 03_vanilla_xattn_decoder_abs_14tok
+      - 03_vanilla_xattn_decoder_alibi_14tok
+      - 04_no_xattn_decoder_abs_14tok
+      - 04_no_xattn_decoder_alibi_14tok

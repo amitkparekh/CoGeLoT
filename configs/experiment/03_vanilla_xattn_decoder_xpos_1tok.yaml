@@ -14,3 +14,4 @@ xattn_positional_encoding: none
 source: x-transformers
 prompt_input: encoder
 observation_input: decoder
+num_action_tokens: 1

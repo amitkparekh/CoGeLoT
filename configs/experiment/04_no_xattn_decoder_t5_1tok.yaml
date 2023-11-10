@@ -2,15 +2,16 @@
 
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
-      - prompt_encoder_history_decoder.yaml
-      - attn_layers/vima.yaml
-      - positional/xpos.yaml
+      - decoder_only.yaml
+      - attn_layers/default.yaml
+      - positional/t5.yaml
       - xattn_positional/none.yaml
 
-architecture: encoder_decoder
-attn_layers: vima
-positional_encoding: xpos
+architecture: decoder_only
+attn_layers: default
+positional_encoding: t5
 xattn_positional_encoding: none
 source: x-transformers
-prompt_input: encoder
+prompt_input: decoder
 observation_input: decoder
+num_action_tokens: 1
