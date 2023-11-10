@@ -53,7 +53,7 @@ environment = [
 ]
 
 [tool.pdm]
-plguins = ["sync-pre-commit-lock"]
+plugins = ["sync-pre-commit-lock"]
 
 [tool.pdm.dev-dependencies]
 test = [
