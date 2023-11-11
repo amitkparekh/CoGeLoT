@@ -148,7 +148,12 @@ class PoseActionTokenizer:
             steps=self._n_discrete_y_bins,
             device=device,
         )
-        z_boundary = torch.linspace(start=0, end=1, steps=self._n_discrete_z_bins, device=device)
+        z_boundary = torch.linspace(
+            start=0,
+            end=1,
+            steps=self._n_discrete_z_bins,
+            device=device,
+        )
         rot_boundary = torch.linspace(
             start=0,
             end=1,
@@ -172,7 +177,8 @@ class PoseActionTokenizer:
                 self._x_boundary_max - self._x_boundary_min,
                 self._y_boundary_max - self._y_boundary_min,
                 self._z_boundary_max - self._z_boundary_min,
-            ]
+            ],
+            device=device,
         )
 
         actions["pose0_position"].subtract_(subtract_from_position).divide_(divide_from_position)
@@ -252,7 +258,8 @@ class PoseActionTokenizer:
                 self._x_boundary_max - self._x_boundary_min,
                 self._y_boundary_max - self._y_boundary_min,
                 self._z_boundary_max - self._z_boundary_min,
-            ]
+            ],
+            device=device,
         )
 
         actions["pose0_position"].multiply_(multiply_to_position).add_(add_to_position)
