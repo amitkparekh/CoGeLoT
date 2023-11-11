@@ -4,6 +4,7 @@ import hydra
 from loguru import logger
 from omegaconf import DictConfig
 
+from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra
 
 CONFIG_DIR = Path.cwd().joinpath("configs").as_posix()
@@ -13,6 +14,8 @@ CONFIG_DIR = Path.cwd().joinpath("configs").as_posix()
 def train_model(config: DictConfig) -> None:
     """Run the training."""
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
+
+    model.save_hyperparameters(flatten_config(config))
 
     logger.info("Starting training...")
     trainer.fit(model, datamodule=datamodule)
