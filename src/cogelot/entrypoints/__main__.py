@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import typer
@@ -21,7 +20,7 @@ from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, uplo
 settings = Settings()
 
 
-def override_sys_args_with_context(ctx: typer.Context) -> None:
+def override_sys_args_with_context(ctx: typer.Context) -> None:  # noqa: ARG001
     """Override the sys args with the context args.
 
     Override the args provides to the command by moving them all over. This is needed so that we
@@ -32,7 +31,7 @@ def override_sys_args_with_context(ctx: typer.Context) -> None:
     Therefore anything between those indices are going to be lost. But it's okay, it's not too
     dire.
     """
-    sys.argv = [sys.argv[0], *ctx.args]
+    return
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
