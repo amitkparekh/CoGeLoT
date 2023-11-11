@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Mapping
 from typing import Self, cast
 
 import torch
@@ -36,12 +37,14 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
         self,
         *,
         pose_action_tokenizer: PoseActionTokenizer,
-        embedder_per_pose_action: dict[PoseActionType, vnn.ContinuousActionEmbedding],
+        embedder_per_pose_action: Mapping[PoseActionType, vnn.ContinuousActionEmbedding],
         post_layer: torch.nn.Linear | torch.nn.Identity | torch.nn.LazyLinear,
     ) -> None:
         super().__init__()
         self._pose_action_tokenizer = pose_action_tokenizer
-        self._embedder_per_pose_action = embedder_per_pose_action
+        self._embedder_per_pose_action = torch.nn.ModuleDict(
+            cast(Mapping[str, torch.nn.Module], embedder_per_pose_action)
+        )
         self._post_layer = post_layer
 
     @classmethod
