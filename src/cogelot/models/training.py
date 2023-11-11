@@ -147,8 +147,12 @@ class VIMALightningModule(pl.LightningModule):
         # as we are using torchmetrics, we should not/do not need to be adding that flag. For more,
         # see: https://github.com/Lightning-AI/lightning/discussions/6501#discussioncomment-553152
         # and https://lightning.ai/docs/pytorch/stable/accelerators/accelerator_prepare.html#synchronize-validation-and-test-logging
-        self.log("val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_metrics(split="val", prog_bar=True, logger=True, batch_size=len(batch))
+        self.log(
+            "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_metrics(
+            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
 
         return loss
 
