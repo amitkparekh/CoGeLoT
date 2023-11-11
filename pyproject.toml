@@ -46,6 +46,7 @@ dependencies = [
     "torchvision>=0.15.0",
     "importlib-resources>=6.0.1",
     "transforms3d>=0.4.1",
+    "pyarrow!=14",
 ]
 
 [tool.pdm]
