@@ -1,8 +1,8 @@
 # @package _global_
 
-# This is for when it is run on OCI with A100s
 defaults:
-  - override /trainer: ddp.yaml
+  - override /trainer: ddp
+  - override /datamodule: from_hf
 
 datamodule:
   batch_size: 32
