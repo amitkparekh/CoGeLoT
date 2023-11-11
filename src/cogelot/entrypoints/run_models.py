@@ -48,6 +48,8 @@ def train_model(config: DictConfig) -> None:
     # things. So I've made things harder for myself by wanting to use a library.
     model._log_hyperparams = True  # noqa: SLF001
     model._set_hparams(flatten_config(config))  # noqa: SLF001
+    for model_logger in model.loggers:
+        model_logger.log_hyperparams(flatten_config(config))
 
     logger.info("Starting training...")
     trainer.fit(model, datamodule=datamodule)
