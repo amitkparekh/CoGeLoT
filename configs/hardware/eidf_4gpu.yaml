@@ -5,9 +5,10 @@ defaults:
   - override /datamodule: from_hf
 
 datamodule:
-  batch_size: 32
+  batch_size: 16
   num_workers: 32
 
 trainer:
   devices: 4
   num_nodes: 1
+  accumulate_grad_batches: 2
