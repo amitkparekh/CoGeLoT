@@ -1,10 +1,13 @@
 from collections.abc import Callable
+from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import hydra
+import pytorch_lightning as pl
 import torch
 from hydra.core.hydra_config import HydraConfig
+from loguru import logger
 from omegaconf import DictConfig, OmegaConf, open_dict, read_write
 from rich.console import Console
 from rich.syntax import Syntax
@@ -92,3 +95,32 @@ def run_task_function_with_hydra(
     hydra.main(
         version_base="1.3", config_path=str(config_dir.resolve()), config_name=config_file_name
     )(task_function)()
+
+
+class InstantiatedModules(NamedTuple):
+    """Tuple of the main instantiated modules from Hydra."""
+
+    datamodule: pl.LightningDataModule
+    model: pl.LightningModule
+    trainer: pl.Trainer
+
+
+def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
+    """Instantiate the modules needed for training."""
+    seed = config.get("seed")
+    if seed:
+        pl.seed_everything(seed)
+
+    # Try to set the sharing sharing strategy to file system, but don't fail if it's not supported.
+    # This is an alternative to running `ulimit -S -n unlimited` in the shell.
+    with suppress(AssertionError):
+        torch.multiprocessing.set_sharing_strategy("file_system")
+
+    logger.info("Instantiating modules...")
+    instantiated_modules = hydra.utils.instantiate(config)
+
+    datamodule: pl.LightningDataModule = instantiated_modules["datamodule"]
+    model: pl.LightningModule = instantiated_modules["model"]
+    trainer: pl.Trainer = instantiated_modules["trainer"]
+
+    return InstantiatedModules(datamodule=datamodule, model=model, trainer=trainer)
