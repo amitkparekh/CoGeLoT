@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import hydra
 from loguru import logger
 from omegaconf import DictConfig
@@ -5,8 +7,10 @@ from omegaconf import DictConfig
 from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra
 
+CONFIG_DIR = Path.cwd().joinpath("configs").as_posix()
 
-@hydra.main(config_path="configs", config_name="train.yaml")
+
+@hydra.main(config_path=CONFIG_DIR, config_name="train.yaml")
 def train_model(config: DictConfig) -> None:
     """Run the training."""
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
