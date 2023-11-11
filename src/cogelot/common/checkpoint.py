@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 from huggingface_hub import HfApi, create_repo, hf_hub_download
 from loguru import logger
@@ -95,6 +96,27 @@ class HuggingFaceModelLogger(Logger):
 
         if use_hf_transfer:
             enable_hf_transfer()
+
+    @property
+    def name(self) -> str | None:
+        """Return the experiment name."""
+        return None
+
+    @property
+    def version(self) -> str | None | int:
+        """Return the experiment version."""
+        return None
+
+    def log_metrics(self, metrics: dict[str, float], step: int | None = None) -> None:  # noqa: ARG002
+        """Records metrics.
+
+        This method logs metrics as soon as it received them.
+        """
+        return
+
+    def log_hyperparams(self, params: dict[str, Any], *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
+        """Record hyperparameters."""
+        return
 
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         """After save checkpoint is called, save the checkpoint callback and the experiment ID.
