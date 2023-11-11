@@ -42,6 +42,7 @@ class VIMALightningModule(pl.LightningModule):
         policy: Policy,
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
 
@@ -56,7 +57,7 @@ class VIMALightningModule(pl.LightningModule):
             ),
             ignore_index=self.ignore_target_index,
         )
-        self.save_hyperparameters()
+        self.save_hyperparameters(config)
 
     @classmethod
     def from_wandb_run(
