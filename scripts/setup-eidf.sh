@@ -15,3 +15,6 @@ pdm export --prod --without-hashes | grep -v "torch==" >requirements.txt
 pip install --no-deps -r requirements.txt
 pip install --no-deps -e .
 python -m torch.utils.collect_env
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
