@@ -34,4 +34,4 @@ attn_layers:
   ff_mult: 4
 
   # Use flash attention (default in pytorch 2.0+)
-  attn_flash: false
+  attn_flash: true
