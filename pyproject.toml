@@ -26,7 +26,7 @@ dependencies = [
     "typer>=0.9.0",
     "datasets>=2.14.4",
     "wandb>=0.15.8",
-    "x-transformers>=1.18.2",
+    "x-transformers==1.23.5",
     "pillow>=10.0.0",
     "opencv-python-headless>=4.8.0.76",
     "einops>=0.6.1",

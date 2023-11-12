@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:b72adcc97a42722dbd57466ef18f9be5df62e355d892d3804f5220cfe4784569"
+content_hash = "sha256:e863e5b4800ed950c9bde73cb7196e4f3325a950857ea5fb1fa53054eab397b3"
 
 [[package]]
 name = "aiohttp"
@@ -2871,15 +2871,15 @@ files = [
 
 [[package]]
 name = "x-transformers"
-version = "1.24.5"
+version = "1.23.5"
 summary = "X-Transformers - Pytorch"
 dependencies = [
     "einops>=0.7.0",
     "torch>=1.6",
 ]
 files = [
-    {file = "x-transformers-1.24.5.tar.gz", hash = "sha256:385b234a016039ed900d8604ab542673872289be557fa6ffbf603e000199f77f"},
-    {file = "x_transformers-1.24.5-py3-none-any.whl", hash = "sha256:aa428414af7c8c48905d68a0c6ab52b1160e6f545449c1b99ee9f41fede12a85"},
+    {file = "x-transformers-1.23.5.tar.gz", hash = "sha256:3910ca9813c99bba2371e2046d04606c98796abd29d98cf1f566d159195ddbbc"},
+    {file = "x_transformers-1.23.5-py3-none-any.whl", hash = "sha256:4ed754c1fa78edd500c6b8517c808c10ec40a302d5025e21aef6b84c822ec5ba"},
 ]
 
 [[package]]
