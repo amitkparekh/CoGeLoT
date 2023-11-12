@@ -47,3 +47,5 @@ trainer:
       patience: 10
       mode: max
       stopping_threshold: 1
+
+  logger: null
