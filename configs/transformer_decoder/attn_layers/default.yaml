@@ -12,7 +12,7 @@
 attn_layers:
   _target_: x_transformers.Decoder
 
-  cross_attend: true
+  # cross_attend: true
 
   dim: ${model.policy.embed_dim}
   depth: 11

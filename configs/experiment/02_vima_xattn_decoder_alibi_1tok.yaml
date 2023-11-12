@@ -4,6 +4,7 @@ defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
       - prompt_encoder_history_decoder.yaml
       - attn_layers/vima.yaml
+      - attn_layers/with_cross_attn.yaml
       - positional/alibi.yaml
       - xattn_positional/none.yaml
 

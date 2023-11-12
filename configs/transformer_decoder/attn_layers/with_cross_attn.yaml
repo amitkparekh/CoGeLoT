@@ -1,0 +1,2 @@
+attn_layers:
+  cross_attend: true
