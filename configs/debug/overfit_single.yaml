@@ -1,6 +1,7 @@
 # @package _global_
 defaults:
   - default.yaml
+  - override /learning_rate_scheduler@model.lr_scheduler_partial_fn: constant
   - _self_
 
 task_name: "overfit-single-example"
