@@ -38,7 +38,7 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
         *,
         pose_action_tokenizer: PoseActionTokenizer,
         embedder_per_pose_action: Mapping[PoseActionType, vnn.ContinuousActionEmbedding],
-        post_layer: torch.nn.Linear | torch.nn.Identity | torch.nn.LazyLinear,
+        post_layer: torch.nn.Linear | torch.nn.Identity,
     ) -> None:
         super().__init__()
         self._pose_action_tokenizer = pose_action_tokenizer

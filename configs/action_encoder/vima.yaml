@@ -27,5 +27,13 @@ embedder_per_pose_action:
     hidden_dim: 256
     hidden_depth: 1
 post_layer:
-  _target_: torch.nn.LazyLinear
+  _target_: torch.nn.Linear
+  in_features:
+    _target_: builtins.sum
+    _convert_: all
+    _args_:
+      - - ${model.policy.action_encoder.embedder_per_pose_action.pose0_position.output_dim}
+        - ${model.policy.action_encoder.embedder_per_pose_action.pose1_position.output_dim}
+        - ${model.policy.action_encoder.embedder_per_pose_action.pose0_rotation.output_dim}
+        - ${model.policy.action_encoder.embedder_per_pose_action.pose1_rotation.output_dim}
   out_features: ${model.policy.embed_dim}
