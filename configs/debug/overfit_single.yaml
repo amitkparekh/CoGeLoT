@@ -44,6 +44,6 @@ trainer:
       monitor: train_acc
       min_delta: 0.001
       check_on_train_epoch_end: true
-      patience: 20
+      patience: 10
       mode: max
       stopping_threshold: 1
