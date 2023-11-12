@@ -40,3 +40,10 @@ trainer:
     - _target_: pytorch_lightning.callbacks.RichProgressBar
     - _target_: pytorch_lightning.callbacks.LearningRateMonitor
       logging_interval: step
+    - _target_: pytorch_lightning.callbacks.EarlyStopping
+      monitor: train_acc
+      min_delta: 0.001
+      check_on_train_epoch_end: true
+      patience: 20
+      mode: max
+      stopping_threshold: 1
