@@ -1,0 +1,41 @@
+# @package _global_
+defaults:
+  - default.yaml
+  - _self_
+
+task_name: "overfit-single-example"
+
+datamodule:
+  # Only show the rotate task
+  task_index_seen: 2
+  # Only show 1 example
+  max_num_instances_seen: 1
+  dataset_start_index: 0
+
+model:
+  optimizer_partial_fn:
+    # Make the LRs bigger so it drops faster
+    lr: 0.0001
+
+  policy:
+    transformer_decoder:
+      attn_layers:
+        layer_dropout: 0
+
+    prompt_encoder:
+      dropout_rate: 0.0
+
+trainer:
+  log_every_n_steps: 1
+  max_epochs: 500
+  limit_train_batches: 1
+  limit_val_batches: 0
+  num_sanity_val_steps: 0
+
+  enable_checkpointing: false
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.RichModelSummary
+      max_depth: -1
+    - _target_: pytorch_lightning.callbacks.RichProgressBar
+    - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+      logging_interval: step

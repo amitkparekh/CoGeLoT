@@ -1,0 +1,34 @@
+# @package _global_
+
+defaults:
+  - overfit_single
+  - _self_
+
+trainer:
+  enable_checkpointing: true
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.RichModelSummary
+      max_depth: -1
+    - _target_: pytorch_lightning.callbacks.RichProgressBar
+    - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+      logging_interval: step
+    - _target_: pytorch_lightning.callbacks.EarlyStopping
+      monitor: train_acc
+      min_delta: 0.001
+      check_on_train_epoch_end: true
+      patience: 50
+      mode: max
+      stopping_threshold: 1
+    - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+      dirpath: ${output_dir}/checkpoints
+      save_last: true
+      save_top_k: 0
+      filename: "{epoch:03d}"
+
+  logger:
+    - _target_: pytorch_lightning.loggers.WandbLogger
+      save_dir: ${output_dir}
+      project: CoGeLoT
+      entity: pyop
+      log_model: False
+      group: overfit-single-example
