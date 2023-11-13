@@ -111,8 +111,6 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
-        self.metrics.update_loss(fine_grained_loss, tasks=batch.task)
-        self.metrics.update_accuracy(predicted_actions, discrete_target_actions, tasks=batch.task)
         # Log the total number of examples seen across all epochs (and doing it this way will
         # prevent the thing resetting every epoch)
         self.metrics.update_examples_seen(len(batch))

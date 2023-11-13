@@ -271,27 +271,31 @@ class TrainingMetrics(torch.nn.Module):
     @torch.no_grad()
     def compute(self, split: Literal["train", "val"]) -> dict[str, torch.Tensor]:
         """Compute the metrics, returning a flattened dict of all metrics."""
-        pose_accuracy_per_axis = self.pose_accuracy_per_axis.compute()
-        accuracy_metrics = {
-            f"{split}_{metric_key}_acc": acc
-            for metric_key, acc in {
-                **pose_accuracy_per_axis,
-                **self.pose_accuracy_per_axis_per_task.compute(),
-            }.items()
-        }
-        accuracy_metrics[f"{split}_acc"] = torch.mean(
-            torch.stack(list(pose_accuracy_per_axis.values()))
-        )
+        metrics = {}
 
-        loss_metrics = {
-            f"{split}_{metric_key}_loss": loss
-            for metric_key, loss in {
-                **self.loss_per_axis_per_action.compute(),
-                **self.loss_per_axis_per_action_per_task.compute(),
-            }.items()
-        }
+        if split != "train":
+            pose_accuracy_per_axis = self.pose_accuracy_per_axis.compute()
+            accuracy_metrics = {
+                f"{split}_{metric_key}_acc": acc
+                for metric_key, acc in {
+                    **pose_accuracy_per_axis,
+                    **self.pose_accuracy_per_axis_per_task.compute(),
+                }.items()
+            }
+            accuracy_metrics[f"{split}_acc"] = torch.mean(
+                torch.stack(list(pose_accuracy_per_axis.values()))
+            )
 
-        metrics = {**accuracy_metrics, **loss_metrics}
+            loss_metrics = {
+                f"{split}_{metric_key}_loss": loss
+                for metric_key, loss in {
+                    **self.loss_per_axis_per_action.compute(),
+                    **self.loss_per_axis_per_action_per_task.compute(),
+                }.items()
+            }
+
+            metrics.update(accuracy_metrics)
+            metrics.update(loss_metrics)
 
         # We only want to return the examples seen metric during training since it doesn't matter
         # during validation and shouldn't change.
