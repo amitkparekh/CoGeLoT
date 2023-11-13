@@ -41,6 +41,12 @@ callbacks:
   - _target_: pytorch_lightning.callbacks.TQDMProgressBar
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
     logging_interval: step
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: val_loss
+    min_delta: 0.001
+    patience: 10
+    mode: min
+    stopping_threshold: 0
 
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
     dirpath: ${output_dir}/checkpoints
