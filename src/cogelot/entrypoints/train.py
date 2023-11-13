@@ -7,7 +7,6 @@ from omegaconf import DictConfig
 
 from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra
-from cogelot.common.log import setup_logging
 
 CONFIG_DIR = Path.cwd().joinpath("configs").as_posix()
 
@@ -28,5 +27,4 @@ def train_model(config: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    setup_logging()
     train_model()
