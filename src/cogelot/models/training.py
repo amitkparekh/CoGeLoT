@@ -55,6 +55,7 @@ class VIMALightningModule(pl.LightningModule):
                 N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
             ),
             ignore_index=self.ignore_target_index,
+            compute_on_cpu=True,
         )
         self.save_hyperparameters()
 
@@ -101,6 +102,7 @@ class VIMALightningModule(pl.LightningModule):
         """Perform a training step."""
         prepared_batch = self.embed_inputs(batch)
         predicted_actions = self.forward(prepared_batch)
+
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
         discrete_target_actions = self.policy.tokenize_continuous_actions(target_actions)
 

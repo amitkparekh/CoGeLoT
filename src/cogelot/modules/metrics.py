@@ -44,8 +44,8 @@ class WrappedMultitaskWrapper(WrapperMetric):
 
     is_differentiable = False
 
-    def __init__(self, metrics: Mapping[str, Metric]) -> None:
-        super().__init__()
+    def __init__(self, metrics: Mapping[str, Metric], *, compute_on_cpu: bool = False) -> None:
+        super().__init__(compute_on_cpu=compute_on_cpu)
         self.metrics = MultitaskWrapper(cast(dict[str, Metric | MetricCollection], metrics))
         self.task_metrics = self.metrics.task_metrics
 
@@ -61,10 +61,16 @@ class WrappedMultitaskWrapper(WrapperMetric):
 class PoseAccuracyPerAxisMetric(WrappedMultitaskWrapper):
     """Accuracy metric for the pose action."""
 
-    def __init__(self, max_num_classes: int, ignore_index: int) -> None:
+    def __init__(
+        self, max_num_classes: int, ignore_index: int, *, compute_on_cpu: bool = False
+    ) -> None:
         metric_keys = _create_metric_key_per_axis()
         metrics = {
-            key: MulticlassAccuracy(num_classes=max_num_classes, ignore_index=ignore_index)
+            key: MulticlassAccuracy(
+                num_classes=max_num_classes,
+                ignore_index=ignore_index,
+                compute_on_cpu=compute_on_cpu,
+            )
             for key in metric_keys
         }
         super().__init__(metrics)
@@ -90,14 +96,20 @@ class PoseAccuracyPerAxisMetric(WrappedMultitaskWrapper):
 class PoseAccuracyPerAxisPerTaskMetric(WrappedMultitaskWrapper):
     """Accuracy metric for each axis for each pose, separated by task."""
 
-    def __init__(self, max_num_classes: int, ignore_index: int) -> None:
+    def __init__(
+        self, max_num_classes: int, ignore_index: int, *, compute_on_cpu: bool = False
+    ) -> None:
         metric_keys = [
             _include_task_in_metric_key(key, task)
             for key in _create_metric_key_per_axis()
             for task in Task
         ]
         metrics = {
-            key: MulticlassAccuracy(num_classes=max_num_classes, ignore_index=ignore_index)
+            key: MulticlassAccuracy(
+                num_classes=max_num_classes,
+                ignore_index=ignore_index,
+                compute_on_cpu=compute_on_cpu,
+            )
             for key in metric_keys
         }
         super().__init__(metrics)
@@ -161,11 +173,14 @@ class LossPerAxisPerActionMetric(WrappedMultitaskWrapper):
     with masking the loss during reduction.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, compute_on_cpu: bool = False) -> None:
         # Get all of the keys that exist for the loss
         loss_keys = _create_metric_key_per_axis(PER_AXIS_KEY_TEMPLATE)
         # And create the metric for each of them
-        metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
+        metrics = {
+            key: MeanMetric(nan_strategy="ignore", compute_on_cpu=compute_on_cpu)
+            for key in loss_keys
+        }
         super().__init__(metrics)
 
     def update(self, fine_grained_loss: dict[str, torch.Tensor]) -> None:
@@ -187,7 +202,7 @@ class LossPerAxisPerActionPerTaskMetric(WrappedMultitaskWrapper):
     with masking the loss during reduction.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, compute_on_cpu: bool = False) -> None:
         # Get all of the keys that exist for the loss
         loss_keys = [
             _include_task_in_metric_key(key, task)
@@ -195,7 +210,10 @@ class LossPerAxisPerActionPerTaskMetric(WrappedMultitaskWrapper):
             for task in Task
         ]
         # And create the metric for each of them
-        metrics = {key: MeanMetric(nan_strategy="ignore") for key in loss_keys}
+        metrics = {
+            key: MeanMetric(nan_strategy="ignore", compute_on_cpu=compute_on_cpu)
+            for key in loss_keys
+        }
         super().__init__(metrics)
 
     def update(self, fine_grained_loss: dict[str, torch.Tensor], *, tasks: list[Task]) -> None:
@@ -227,17 +245,25 @@ class LossPerAxisPerActionPerTaskMetric(WrappedMultitaskWrapper):
 class TrainingMetrics(torch.nn.Module):
     """Track and compute metrics for the training."""
 
-    def __init__(self, max_num_classes: int, ignore_index: int) -> None:
+    def __init__(
+        self, max_num_classes: int, ignore_index: int, *, compute_on_cpu: bool = False
+    ) -> None:
         super().__init__()
         self.pose_accuracy_per_axis = PoseAccuracyPerAxisMetric(
-            max_num_classes=max_num_classes, ignore_index=ignore_index
+            max_num_classes=max_num_classes,
+            ignore_index=ignore_index,
+            compute_on_cpu=compute_on_cpu,
         )
         self.pose_accuracy_per_axis_per_task = PoseAccuracyPerAxisPerTaskMetric(
-            max_num_classes=max_num_classes, ignore_index=ignore_index
+            max_num_classes=max_num_classes,
+            ignore_index=ignore_index,
+            compute_on_cpu=compute_on_cpu,
         )
-        self.loss_per_axis_per_action = LossPerAxisPerActionMetric()
-        self.loss_per_axis_per_action_per_task = LossPerAxisPerActionPerTaskMetric()
-        self.examples_seen = SumMetric(compute_on_cpu=True)
+        self.loss_per_axis_per_action = LossPerAxisPerActionMetric(compute_on_cpu=compute_on_cpu)
+        self.loss_per_axis_per_action_per_task = LossPerAxisPerActionPerTaskMetric(
+            compute_on_cpu=compute_on_cpu
+        )
+        self.examples_seen = SumMetric(compute_on_cpu=compute_on_cpu)
 
     @torch.no_grad()
     def update_accuracy(
