@@ -305,7 +305,7 @@ class TrainingMetrics(torch.nn.Module):
                 f"{split}_{metric_key}_acc": acc
                 for metric_key, acc in {
                     **pose_accuracy_per_axis,
-                    **self.pose_accuracy_per_axis_per_task.compute(),
+                    # **self.pose_accuracy_per_axis_per_task.compute(),
                 }.items()
             }
             accuracy_metrics[f"{split}_acc"] = torch.mean(
@@ -316,7 +316,7 @@ class TrainingMetrics(torch.nn.Module):
                 f"{split}_{metric_key}_loss": loss
                 for metric_key, loss in {
                     **self.loss_per_axis_per_action.compute(),
-                    **self.loss_per_axis_per_action_per_task.compute(),
+                    # **self.loss_per_axis_per_action_per_task.compute(),
                 }.items()
             }
 
