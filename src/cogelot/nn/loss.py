@@ -1,8 +1,10 @@
 from typing import Self, cast, get_args
 
 import torch
+from einops import rearrange
 from pydantic import BaseModel
 
+from cogelot.data.collate import collate_variable_ndim_batch
 from cogelot.structures.common import PydanticTensor
 from cogelot.structures.vima import (
     AxesPerPoseActionType,
@@ -105,7 +107,7 @@ class PerActionPerAxis(BaseModel, arbitrary_types_allowed=True):
         )
 
 
-def compute_fine_grained_loss(
+def compute_fine_grained_loss_with_loops(
     predicted_actions: dict[PoseActionType, MultiCategorical],
     target_actions: dict[PoseActionType, torch.Tensor],
     *,
@@ -125,6 +127,10 @@ def compute_fine_grained_loss(
     around this, any masked values are replaces with NaN's. This is because torch's reduction
     operators support NaN's, so we can just use those to reduce the loss. (See
     `reduce_fine_grained_loss()` for how that's done.)
+
+    Note: Since this is using for-loops, it is much slower than using vectorised operations. Since
+    we have that (see `compute_fine_grained_loss`), we are using that in the code. However, this
+    exists for debugging and testing purposes, so we can be sure that it is correct.
     """
     predicted_logits_per_pose_per_axis = PerActionPerAxis.from_multi_categorical(predicted_actions)
     target_per_pose_per_axis = PerActionPerAxis.from_actions(target_actions)
@@ -154,6 +160,74 @@ def compute_fine_grained_loss(
         # masked loss into a nan. This is because torch's reduction operators support nan's.
         loss[targets == ignore_target_index] = float("nan")
         loss_per_action_per_axis[loss_key] = loss
+
+    return loss_per_action_per_axis
+
+
+def compute_fine_grained_loss(
+    predicted_actions: dict[PoseActionType, MultiCategorical],
+    target_actions: dict[PoseActionType, torch.Tensor],
+    *,
+    ignore_target_index: int = -100,
+) -> dict[str, torch.Tensor]:
+    """Compute a fine-grained loss across all the poses and the axes per pose.
+
+    Since a trajectory can be made of more than one action, we need to average the loss across the
+    trajectory _and_ the batch.
+
+    Additionally, the loss for each action is constructed from predictions across each axis for
+    each head (e.g. the rotation pose has 4 heads: one for each of X, Y, Z, W), meaning there are
+    multiple separate losses to compute and compare.
+
+    On top of calculating the loss, we need a way to ensure the mask from the targets are kept as
+    we will need these when reducing the loss. If we don't, the loss will be incorrect. To get
+    around this, any masked values are replaces with NaN's. This is because torch's reduction
+    operators support NaN's, so we can just use those to reduce the loss. (See
+    `reduce_fine_grained_loss()` for how that's done.)
+    """
+    predicted_logits_per_pose_per_axis = PerActionPerAxis.from_multi_categorical(
+        predicted_actions
+    ).to_flattened_dict()
+    target_per_pose_per_axis = PerActionPerAxis.from_actions(target_actions).to_flattened_dict()
+
+    # Calculate the minimum value that the logits can be, so that we can pad the tensors with this
+    # value. This is so that when collating, these additional dims will not contribute to the loss,
+    # so that we are doing a masked cross-entropy loss.
+    logits_dtype = predicted_logits_per_pose_per_axis["pose0_position_x"].dtype
+    min_logits_value = torch.finfo(logits_dtype).min
+
+    # In one step, we are collate the logits tensors for each axis into a single tensor, and
+    # rearrange them into a shape that the cross-entropy function likes when doing
+    # multidimensional loss.
+    logits_tensor = rearrange(
+        collate_variable_ndim_batch(
+            list(predicted_logits_per_pose_per_axis.values()), padding_value=min_logits_value
+        ),
+        "pose bsz toks dim -> pose dim bsz toks",
+    )
+    targets_tensor = rearrange(
+        collate_variable_ndim_batch(
+            list(target_per_pose_per_axis.values()), padding_value=ignore_target_index
+        ),
+        "pose bsz toks dim -> (pose dim) bsz toks",
+    )
+
+    # Calculate the loss. We need to use the ignore_index argument to make sure that if we are not
+    # letting masked targets from contributing. We also disable reduction since we are going to
+    # reduce it ourselves later (see `reduce_fine_grained_loss()`)
+    loss = torch.nn.functional.cross_entropy(
+        logits_tensor, targets_tensor, ignore_index=ignore_target_index, reduction="none"
+    )
+    loss[targets_tensor == ignore_target_index] = float("nan")
+
+    # Make the shape the same as expected by the slow loss. This is so that we can easily reduce
+    # the losses across the correct axes
+    loss = rearrange(loss, "pose bsz toks -> bsz toks pose")
+
+    # Split the loss into a dict; allowing easy tracking of loss per axis.
+    loss_per_action_per_axis: dict[str, torch.Tensor] = dict(
+        zip(predicted_logits_per_pose_per_axis.keys(), loss.split(1, dim=-1), strict=True)
+    )
 
     return loss_per_action_per_axis
 

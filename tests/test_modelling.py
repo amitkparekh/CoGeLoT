@@ -1,14 +1,8 @@
-import torch
 from pytest_cases import fixture
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
-from cogelot.modules.metrics import LossPerAxisPerActionMetric
-from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
-from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
-from cogelot.structures.vima import PoseActionType
-from vima.nn.action_decoder.dists import MultiCategorical
 
 
 @fixture(scope="module")
@@ -75,65 +69,3 @@ def test_model_training_step_does_not_error(
 ) -> None:
     loss = vima_lightning_module.training_step(preprocessed_batch, 0)
     assert loss
-
-
-@fixture(scope="module")
-def target_actions(
-    preprocessed_batch: PreprocessedBatch,
-    pose_action_tokenizer: PoseActionTokenizer,
-) -> dict[PoseActionType, torch.Tensor]:
-    continuous_actions = preprocessed_batch.actions.to_container()
-    discrete_actions = pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
-    return discrete_actions
-
-
-@fixture(scope="module")
-def predicted_action_dists(
-    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
-) -> dict[PoseActionType, MultiCategorical]:
-    predicted_action_dists = vima_lightning_module.forward(
-        vima_lightning_module.embed_inputs(preprocessed_batch)
-    )
-    return predicted_action_dists
-
-
-def test_loss_computation_does_not_error(
-    target_actions: dict[PoseActionType, torch.Tensor],
-    predicted_action_dists: dict[PoseActionType, MultiCategorical],
-) -> None:
-    fine_grained_loss = compute_fine_grained_loss(predicted_action_dists, target_actions)
-
-    # There are a total of 14 axes across all of the pose action types (4 for rotations, 3 for
-    # positions)
-    assert len(fine_grained_loss) == 14
-
-    # Extract the batch size and the current max timesteps from the target actions
-    batch_size, max_timesteps = target_actions["pose0_position"].shape[:2]
-
-    # Make sure each tensor's shape in the fine_grained_loss is identical and correct
-    assert all(
-        tensor.shape == (batch_size, max_timesteps, 1) for tensor in fine_grained_loss.values()
-    )
-
-    loss = reduce_fine_grained_loss(fine_grained_loss)
-    assert loss
-
-
-def test_loss_per_axis_metric_tracking_works(
-    target_actions: dict[PoseActionType, torch.Tensor],
-    predicted_action_dists: dict[PoseActionType, MultiCategorical],
-) -> None:
-    fine_grained_loss = compute_fine_grained_loss(predicted_action_dists, target_actions)
-
-    metric = LossPerAxisPerActionMetric()
-    metric.update(fine_grained_loss)
-
-    computed_metric = metric.compute()
-    expected_computed_metric = {
-        key: tensor.flatten().nanmean() for key, tensor in fine_grained_loss.items()
-    }
-
-    iterator = zip(expected_computed_metric.values(), computed_metric.values(), strict=True)
-
-    for expected, actual in iterator:
-        torch.testing.assert_close(actual, expected)
