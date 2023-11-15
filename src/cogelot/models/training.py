@@ -200,6 +200,12 @@ class VIMALightningModule(pl.LightningModule):
         target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
         discrete_target_actions = self.policy.tokenize_continuous_actions(target_actions)
 
+        # TODO: This is incredibly slow and should be refactored to use vector-ops
+        for action_type, actions in target_actions.items():
+            discrete_target_actions[action_type][
+                actions == self.ignore_target_index
+            ] = self.ignore_target_index
+
         return discrete_target_actions
 
     @torch.no_grad()
