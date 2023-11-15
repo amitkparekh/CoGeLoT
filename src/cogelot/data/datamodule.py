@@ -43,8 +43,8 @@ class VIMADataModule(abc.ABC, LightningDataModule):
     def __init__(self, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__()
         self._kwargs = kwargs
-        self._num_workers = kwargs.get("num_workers")
-        self.batch_size = kwargs.get("batch_size")
+        self._num_workers = kwargs.get("num_workers", 0)
+        self.batch_size = kwargs.get("batch_size", 1)
         self._dataloader_kwargs = kwargs.get("dataloader_kwargs", {})
 
         self.train_dataset: datasets.Dataset
