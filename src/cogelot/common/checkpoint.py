@@ -3,12 +3,23 @@ from pathlib import Path
 from typing import Any
 
 from huggingface_hub import HfApi, create_repo, hf_hub_download
+from huggingface_hub.utils import HfHubHTTPError
 from loguru import logger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers import Logger
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from cogelot.common.wandb import get_id_from_current_run
+
+
+def does_token_allow_write_access() -> bool:
+    """Check if the token available to HF allows writing to the Hub."""
+    api = HfApi()
+    token_permission = api.get_token_permission()
+    token_has_write_permission = token_permission == "write"  # noqa: S105
+
+    logger.debug(f"HF token has write permission: {token_has_write_permission}")
+    return token_has_write_permission
 
 
 def enable_hf_transfer() -> None:
@@ -88,6 +99,8 @@ class HuggingFaceModelLogger(Logger):
     """
 
     def __init__(self, repo_id: str, *, use_hf_transfer: bool = False) -> None:
+        super().__init__()
+
         self._repo_id = repo_id
 
         self._checkpoint_dir: Path | None = None
@@ -96,6 +109,11 @@ class HuggingFaceModelLogger(Logger):
 
         if use_hf_transfer:
             enable_hf_transfer()
+
+        # Make sure that the token allows writing to the Hub, otherwise this logger should not be
+        # used because it will fail and therefore the training will fail and we don't want that.
+        if not does_token_allow_write_access():
+            raise HfHubHTTPError("The token available to HF does not allow writing to the Hub.")
 
     @property
     def name(self) -> str | None:
