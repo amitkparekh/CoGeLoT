@@ -1,7 +1,9 @@
-from pytest_cases import fixture
+import torch
+from pytest_cases import fixture, parametrize
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
+from cogelot.modules.metrics import TrainingSplit
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
 
 
@@ -60,12 +62,15 @@ def test_model_forward_does_not_error(
     forward_output = vima_lightning_module.forward(
         vima_lightning_module.embed_inputs(preprocessed_batch)
     )
-
     assert forward_output
 
 
-def test_model_training_step_does_not_error(
-    vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
+@parametrize("split", ["train", "val", "test"])
+def test_model_step_does_not_error(
+    vima_lightning_module: VIMALightningModule,
+    preprocessed_batch: PreprocessedBatch,
+    split: TrainingSplit,
 ) -> None:
-    loss = vima_lightning_module.training_step(preprocessed_batch, 0)
+    loss = vima_lightning_module.step(preprocessed_batch, split=split)
     assert loss
+    assert torch.all(torch.isnan(loss)).item() is False

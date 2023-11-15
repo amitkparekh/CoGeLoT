@@ -21,6 +21,8 @@ from cogelot.structures.vima import (
 )
 from vima.nn.action_decoder.dists import MultiCategorical
 
+TrainingSplit = Literal["train", "val", "test"]
+
 
 def _create_metric_key_per_axis(string_template: str = PER_AXIS_KEY_TEMPLATE) -> list[str]:
     """Create keys for every single axis."""
@@ -272,22 +274,39 @@ class TrainingMetrics(torch.nn.Module):
         targets: dict[PoseActionType, torch.Tensor],
         *,
         tasks: list[Task],
+        split: TrainingSplit,
     ) -> None:
         """Update the accuracy metrics."""
+        if split == "train":
+            return
+
         predicted_action_tokens: dict[PoseActionType, torch.Tensor] = {
             pose_action_type: action_distribution.mode()
             for pose_action_type, action_distribution in predictions.items()
         }
         self.pose_accuracy_per_axis.update(predicted_action_tokens, targets)
-        self.pose_accuracy_per_axis_per_task.update(predicted_action_tokens, targets, tasks=tasks)
+
+        if split == "test":
+            self.pose_accuracy_per_axis_per_task.update(
+                predicted_action_tokens, targets, tasks=tasks
+            )
 
     @torch.no_grad()
     def update_loss(
-        self, fine_grained_loss: dict[str, torch.Tensor], *, tasks: list[Task]
+        self,
+        fine_grained_loss: dict[str, torch.Tensor],
+        *,
+        tasks: list[Task],
+        split: TrainingSplit,
     ) -> None:
         """Update the loss metrics."""
+        if split == "train":
+            return
+
         self.loss_per_axis_per_action.update(fine_grained_loss)
-        self.loss_per_axis_per_action_per_task.update(fine_grained_loss, tasks=tasks)
+
+        if split == "test":
+            self.loss_per_axis_per_action_per_task.update(fine_grained_loss, tasks=tasks)
 
     @torch.no_grad()
     def update_examples_seen(self, batch_size: int) -> None:
@@ -295,38 +314,42 @@ class TrainingMetrics(torch.nn.Module):
         self.examples_seen(batch_size)
 
     @torch.no_grad()
-    def compute(self, split: Literal["train", "val"]) -> dict[str, torch.Tensor]:
+    def compute(self, split: TrainingSplit) -> dict[str, torch.Tensor]:
         """Compute the metrics, returning a flattened dict of all metrics."""
         metrics = {}
-
-        if split != "train":
-            pose_accuracy_per_axis = self.pose_accuracy_per_axis.compute()
-            accuracy_metrics = {
-                f"{split}_{metric_key}_acc": acc
-                for metric_key, acc in {
-                    **pose_accuracy_per_axis,
-                    # **self.pose_accuracy_per_axis_per_task.compute(),
-                }.items()
-            }
-            accuracy_metrics[f"{split}_acc"] = torch.mean(
-                torch.stack(list(pose_accuracy_per_axis.values()))
-            )
-
-            loss_metrics = {
-                f"{split}_{metric_key}_loss": loss
-                for metric_key, loss in {
-                    **self.loss_per_axis_per_action.compute(),
-                    # **self.loss_per_axis_per_action_per_task.compute(),
-                }.items()
-            }
-
-            metrics.update(accuracy_metrics)
-            metrics.update(loss_metrics)
 
         # We only want to return the examples seen metric during training since it doesn't matter
         # during validation and shouldn't change.
         if split == "train":
             metrics["trainer/examples_seen"] = self.examples_seen.compute()
+
+        if split in ("val", "test"):
+            pose_accuracy_per_axis = {
+                f"{split}_{key}_acc": acc
+                for key, acc in self.pose_accuracy_per_axis.compute().items()
+            }
+            loss_per_axis = {
+                f"{split}_{key}_loss": loss
+                for key, loss in self.loss_per_axis_per_action.compute().items()
+            }
+            metrics.update(loss_per_axis)
+            metrics.update(pose_accuracy_per_axis)
+
+            metrics[f"{split}_acc"] = torch.mean(
+                torch.stack(list(pose_accuracy_per_axis.values()))
+            )
+
+        if split == "test":
+            pose_accuracy_per_axis_per_task = {
+                f"{split}_{key}_acc": acc
+                for key, acc in self.pose_accuracy_per_axis_per_task.compute().items()
+            }
+            loss_per_axis_per_action_per_task = {
+                f"{split}_{key}_loss": loss
+                for key, loss in self.loss_per_axis_per_action_per_task.compute().items()
+            }
+            metrics.update(loss_per_axis_per_action_per_task)
+            metrics.update(pose_accuracy_per_axis_per_task)
 
         return metrics
 

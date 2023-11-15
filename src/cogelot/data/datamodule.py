@@ -49,21 +49,21 @@ class VIMADataModule(abc.ABC, LightningDataModule):
 
         self.train_dataset: datasets.Dataset
         self.valid_dataset: datasets.Dataset
-        self.test_dataset: VIMAEvaluationDataset
+        self.predict_dataset: VIMAEvaluationDataset
 
-    def setup(self, stage: SetupStage) -> None:
-        """Setup each GPU to run the data."""
+    def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
+        """Setup each node to run the data."""
         if stage == "fit":
             dataset = self._load_dataset()
             self.train_dataset = maybe_split_dataset_by_node(dataset["train"])
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
 
-        if stage == "validate":
+        if stage in ("validate", "test"):
             dataset = self._load_dataset()
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
 
-        if stage == "test":
-            self.test_dataset = VIMAEvaluationDataset.from_partition_to_specs()
+        if stage == "predict":
+            self.predict_dataset = VIMAEvaluationDataset.from_partition_to_specs()
 
         self._maybe_filter_datasets()
 
@@ -89,13 +89,17 @@ class VIMADataModule(abc.ABC, LightningDataModule):
             **self._dataloader_kwargs,
         )
 
-    def test_dataloader(self) -> DataLoader[EvaluationEpisode]:
+    def test_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
+        """Use the validation dataset and dataloader for testing."""
+        return self.val_dataloader()
+
+    def predict_dataloader(self) -> DataLoader[EvaluationEpisode]:
         """Get a dataloader to use for creating environment during evaluation.
 
         Disable the `batch_size` and `batch_sampler` to ensure that we get a single instance at a time.
         """
         return DataLoader[EvaluationEpisode](
-            self.test_dataset,
+            self.predict_dataset,
             batch_size=None,
             shuffle=False,
             batch_sampler=None,
