@@ -41,7 +41,7 @@ model:
   optimizer_partial_fn:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.000001
+    lr: 1e-4
     weight_decay: 0
 
   policy:
