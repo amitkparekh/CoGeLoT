@@ -116,8 +116,21 @@ class VIMALightningModule(pl.LightningModule):
         if split == "train":
             self.metrics.update_examples_seen(len(batch))
 
-        self.log(f"{split}_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_metrics(split=split, prog_bar=True, logger=True, batch_size=len(batch))
+        self.log(
+            f"{split}_loss",
+            loss,
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=split != "train",
+        )
+        self._log_metrics(
+            split=split,
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=split != "train",
+        )
 
         return loss
 
