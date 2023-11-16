@@ -77,19 +77,20 @@ def instance_preprocessor(
 
 
 @fixture(scope="session")
-def prompt_embedder(pretrained_model: str) -> T5TextEmbedder:
-    return T5TextEmbedder(pretrained_model)
+def prompt_embedder(pretrained_model: str, torch_device: torch.device) -> T5TextEmbedder:
+    return T5TextEmbedder(pretrained_model).to(torch_device)
 
 
 @fixture(scope="session")
-def prompt_encoder(pretrained_model: str) -> T5PromptEncoder:
+def prompt_encoder(pretrained_model: str, torch_device: torch.device) -> T5PromptEncoder:
     encoder = T5PromptEncoder.from_pretrained(pretrained_model, unfreeze_last_n_layers=2)
     assert isinstance(encoder, T5PromptEncoder)
-    return encoder
+    assert isinstance(encoder, torch.nn.Module)
+    return encoder.to(device=torch_device)
 
 
 @fixture(scope="session")
-def object_encoder(embed_dim: int) -> vnn.ObjEncoder:
+def object_encoder(embed_dim: int, torch_device: torch.device) -> vnn.ObjEncoder:
     return vnn.ObjEncoder(
         transformer_emb_dim=embed_dim,
         views=["front", "top"],
@@ -101,27 +102,31 @@ def object_encoder(embed_dim: int) -> vnn.ObjEncoder:
         vit_heads=2,
         bbox_mlp_hidden_dim=embed_dim,
         bbox_mlp_hidden_depth=2,
-    )
+    ).to(torch_device)
 
 
 @fixture(scope="session")
-def end_effector_encoder() -> torch.nn.Embedding:
-    return torch.nn.Embedding(num_embeddings=2, embedding_dim=2)
+def end_effector_encoder(torch_device: torch.device) -> torch.nn.Embedding:
+    return torch.nn.Embedding(num_embeddings=2, embedding_dim=2).to(torch_device)
 
 
 @fixture(scope="session")
-def obs_fusion_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Linear:
-    return torch.nn.Linear(object_encoder.output_dim + 2, embed_dim)
+def obs_fusion_layer(
+    object_encoder: vnn.ObjEncoder, embed_dim: int, torch_device: torch.device
+) -> torch.nn.Linear:
+    return torch.nn.Linear(object_encoder.output_dim + 2, embed_dim).to(torch_device)
 
 
 @fixture(scope="session")
-def prompt_obj_post_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Sequential:
+def prompt_obj_post_layer(
+    object_encoder: vnn.ObjEncoder, embed_dim: int, torch_device: torch.device
+) -> torch.nn.Sequential:
     return vnn.build_mlp(
         object_encoder.output_dim,
         hidden_dim=embed_dim,
         output_dim=embed_dim,
         hidden_depth=2,
-    )
+    ).to(torch_device)
 
 
 class ActionEncoderDecoderCases:
@@ -129,6 +134,7 @@ class ActionEncoderDecoderCases:
         self,
         pose_action_tokenizer: PoseActionTokenizer,
         embed_dim: int,
+        torch_device: torch.device,
     ) -> tuple[VIMAContinuousActionEmbedder, VIMAActionDecoder]:
         embedder_per_pose_action: dict[PoseActionType, vnn.ContinuousActionEmbedding] = {
             "pose0_position": vnn.ContinuousActionEmbedding(
@@ -136,31 +142,31 @@ class ActionEncoderDecoderCases:
                 input_dim=3,
                 hidden_dim=256,
                 hidden_depth=1,
-            ),
+            ).to(torch_device),
             "pose0_rotation": vnn.ContinuousActionEmbedding(
                 output_dim=256,
                 input_dim=4,
                 hidden_dim=256,
                 hidden_depth=1,
-            ),
+            ).to(torch_device),
             "pose1_position": vnn.ContinuousActionEmbedding(
                 output_dim=256,
                 input_dim=3,
                 hidden_dim=256,
                 hidden_depth=1,
-            ),
+            ).to(torch_device),
             "pose1_rotation": vnn.ContinuousActionEmbedding(
                 output_dim=256,
                 input_dim=4,
                 hidden_dim=256,
                 hidden_depth=1,
-            ),
+            ).to(torch_device),
         }
         encoder = VIMAContinuousActionEmbedder(
             pose_action_tokenizer=pose_action_tokenizer,
             embedder_per_pose_action=embedder_per_pose_action,
             post_layer=torch.nn.LazyLinear(embed_dim),
-        )
+        ).to(torch_device)
         action_decoder = vnn.ActionDecoder(
             input_dim=embed_dim,
             action_dims={
@@ -174,25 +180,26 @@ class ActionEncoderDecoderCases:
             activation="relu",
             norm_type=None,
             last_layer_gain=0.01,
-        )
-        decoder = VIMAActionDecoder(action_decoder)
+        ).to(torch_device)
+        decoder = VIMAActionDecoder(action_decoder).to(torch_device)
         return encoder, decoder
 
     def case_token_per_axis(
         self,
         pose_action_tokenizer: PoseActionTokenizer,
         embed_dim: int,
+        torch_device: torch.device,
     ) -> tuple[TokenPerAxisActionEmbedder, TokenPerAxisActionDecoder]:
         encoder = TokenPerAxisActionEmbedder(
             pose_action_tokenizer=pose_action_tokenizer,
             num_axes=14,
             max_num_action_bins=100,
             embed_dim=embed_dim,
-        )
+        ).to(torch_device)
 
         decoder = TokenPerAxisActionDecoder(
             input_dim=embed_dim, max_num_action_bins=100, num_action_tokens_per_timestep=14
-        )
+        ).to(torch_device)
         return encoder, decoder
 
 
@@ -209,6 +216,7 @@ def vima_policy(
     obs_fusion_layer: torch.nn.Linear,
     prompt_obj_post_layer: torch.nn.Sequential,
     add_residual_connection: bool,  # noqa: FBT001
+    torch_device: torch.device,
 ) -> Policy:
     vima = VIMAPolicy(embed_dim=embed_dim, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
     return Policy(
@@ -224,12 +232,12 @@ def vima_policy(
         transformer_decoder=VIMADecoder(vima.xattn_gpt),
         pose_action_tokenizer=pose_action_tokenizer,
         add_residual_connection_to_prompt_visual_features=add_residual_connection,
-    )
+    ).to(torch_device)
 
 
 @fixture(scope="session")
-def vima_lightning_module(vima_policy: Policy) -> VIMALightningModule:
-    return VIMALightningModule(policy=vima_policy)
+def vima_lightning_module(vima_policy: Policy, torch_device: torch.device) -> VIMALightningModule:
+    return VIMALightningModule(policy=vima_policy).to(torch_device)
 
 
 @fixture(scope="session")
