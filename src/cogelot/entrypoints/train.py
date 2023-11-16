@@ -7,6 +7,7 @@ from omegaconf import DictConfig
 
 from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra
+from cogelot.data.datamodule import VIMADataModule
 
 CONFIG_DIR = Path.cwd().joinpath("configs").as_posix()
 
@@ -24,6 +25,13 @@ def train_model(config: DictConfig) -> None:
 
     logger.info("Starting training...")
     trainer.fit(model, datamodule=datamodule)
+
+    logger.info("Changing batch size in datamodule to 1 for testing...")
+    assert isinstance(datamodule, VIMADataModule)
+    datamodule.batch_size = 1
+
+    logger.info("Starting testing...")
+    trainer.test(model, datamodule=datamodule)
 
 
 if __name__ == "__main__":
