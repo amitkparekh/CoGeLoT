@@ -111,27 +111,6 @@ class VIMALightningModule(pl.LightningModule):
             predicted_actions, discrete_target_actions, tasks=batch.task, split=split
         )
 
-        # Log the total number of examples seen across all epochs (and doing it this way will
-        # prevent the thing resetting every epoch)
-        if split == "train":
-            self.metrics.update_examples_seen(len(batch))
-
-        self.log(
-            f"{split}_loss",
-            loss,
-            prog_bar=True,
-            logger=True,
-            batch_size=len(batch),
-            sync_dist=split != "train",
-        )
-        self._log_metrics(
-            split=split,
-            prog_bar=True,
-            logger=True,
-            batch_size=len(batch),
-            sync_dist=split != "train",
-        )
-
         return loss
 
     def training_step(
@@ -140,7 +119,14 @@ class VIMALightningModule(pl.LightningModule):
         batch_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a training step."""
-        return self.step(batch, split="train")
+        loss = self.step(batch, split="train")
+        # Log the total number of examples seen across all epochs (and doing it this way will
+        # prevent the thing resetting every epoch)
+        self.metrics.update_examples_seen(len(batch))
+
+        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self._log_metrics(split="train", prog_bar=True, logger=True, batch_size=len(batch))
+        return loss
 
     def validation_step(
         self,
@@ -148,16 +134,29 @@ class VIMALightningModule(pl.LightningModule):
         batch_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
-        return self.step(batch, split="val")
+        loss = self.step(batch, split="val")
+        self.log(
+            "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_metrics(
+            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        return loss
 
     def test_step(
         self,
         batch: PreprocessedBatch,
         batch_idx: int,  # noqa: ARG002
-        dataloader_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform the test step, which is just the validation step but with more metrics."""
-        return self.step(batch, split="test")
+        loss = self.step(batch, split="test")
+        self.log(
+            "test_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        self._log_metrics(
+            split="test", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        )
+        return loss
 
     def configure_optimizers(self) -> Any:
         """Configure the optimizer and scheduler."""
@@ -174,14 +173,19 @@ class VIMALightningModule(pl.LightningModule):
         }
 
     def on_train_batch_end(self, *args: Any, **kwargs: Any) -> None:
-        """Reset the accuracy metric at the end of the epoch."""
+        """Reset the metrics at the end of the batch."""
         self.metrics.reset()
         return super().on_train_batch_end(*args, **kwargs)
 
     def on_validation_epoch_end(self) -> None:
-        """Reset the accuracy metric at the end of the epoch."""
+        """Reset the metrics at the end of the epoch."""
         self.metrics.reset()
         return super().on_validation_epoch_end()
+
+    def on_test_epoch_end(self) -> None:
+        """Reset the metrics at the end of the epoch."""
+        self.metrics.reset()
+        return super().on_validation_test_end()
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
         """Embed a batch of instances and convert to the ModelInstance."""
