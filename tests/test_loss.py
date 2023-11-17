@@ -83,10 +83,11 @@ def test_loss_per_axis_metric_tracking_works(
     target_actions: dict[PoseActionType, torch.Tensor],
     predicted_action_dists: dict[PoseActionType, MultiCategorical],
     compute_fine_grained_loss_fn: ComputeFineGrainedLossFn,
+    torch_device: torch.device,
 ) -> None:
     fine_grained_loss = compute_fine_grained_loss_fn(predicted_action_dists, target_actions)
 
-    metric = LossPerAxisPerActionMetric()
+    metric = LossPerAxisPerActionMetric().to(torch_device)
     metric.update(fine_grained_loss)
 
     computed_metric = metric.compute()
