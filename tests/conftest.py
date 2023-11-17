@@ -14,6 +14,26 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
         raise excinfo.value
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "-E",
+        action="store",
+        metavar="NAME",
+        help="only run tests matching the environment NAME.",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    # register an additional marker
+    config.addinivalue_line("markers", "env(name): mark test to run only on named environment")
+
+
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
+    if envnames and item.config.getoption("-E") not in envnames:
+        pytest.skip(f"test requires env in {envnames!r}")
+
+
 # Import all the fixtures from every file in the tests/fixtures dir.
 pytest_plugins = [
     fixture_file.as_posix().replace("/", ".").replace(".py", "")

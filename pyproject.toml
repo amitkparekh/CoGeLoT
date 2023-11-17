@@ -77,6 +77,7 @@ package-dir = "src"
 [tool.pdm.scripts]
 pre_install = "pdm install --plugins"
 format = "pre-commit run --all-files"
+pre_train = "pytest --deselect tests/test_online_evaluation.py -E cuda"
 
 [tool.flake8]
 select = ["WPS"]
