@@ -139,4 +139,9 @@ class DecoderOnly(TransformerDecoder):
             pos=position_ids,
         )
         assert isinstance(model_output, torch.Tensor)
+
+        # We need to slice away the memory part of the output, so we are just left the transformer
+        # output of the observations and actions
+        model_output = model_output[:, memory.size(1) :]
+
         return model_output
