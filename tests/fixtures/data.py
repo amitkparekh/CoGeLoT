@@ -2,6 +2,7 @@ import itertools
 from pathlib import Path
 
 import datasets
+import torch
 from pytest_cases import fixture, param_fixture
 
 from cogelot.data.parse import (
@@ -57,15 +58,19 @@ def vima_instances_dataset(all_vima_instances: list[VIMAInstance]) -> datasets.D
 
 @fixture(scope="session")
 def preprocessed_instance(
-    vima_instance: VIMAInstance, instance_preprocessor: InstancePreprocessor
+    vima_instance: VIMAInstance,
+    instance_preprocessor: InstancePreprocessor,
+    torch_device: torch.device,
 ) -> PreprocessedInstance:
     """A single preprocessed instance."""
-    return instance_preprocessor.preprocess(vima_instance)
+    return instance_preprocessor.preprocess(vima_instance).transfer_to_device(torch_device)
 
 
 @fixture(scope="session")
 def all_preprocessed_instances(
-    fixture_storage_dir: Path, instance_preprocessor: InstancePreprocessor
+    fixture_storage_dir: Path,
+    instance_preprocessor: InstancePreprocessor,
+    torch_device: torch.device,
 ) -> list[PreprocessedInstance]:
     """All preprocessed instances."""
     parsed_instances = (
@@ -73,7 +78,8 @@ def all_preprocessed_instances(
         for instance_dir in get_all_raw_instance_directories(fixture_storage_dir)
     )
     preprocessed_instances = (
-        instance_preprocessor.preprocess(instance) for instance in parsed_instances
+        instance_preprocessor.preprocess(instance).transfer_to_device(torch_device)
+        for instance in parsed_instances
     )
     return list(preprocessed_instances)
 
