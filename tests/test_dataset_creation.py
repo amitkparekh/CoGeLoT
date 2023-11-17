@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import datasets
+import torch
 from torch.testing._comparison import (
     BooleanPair,
     NonePair,
@@ -58,7 +59,7 @@ def test_preprocessing_vima_instances_does_not_error(
 
 
 def test_preprocessed_instance_can_be_saved_into_hf(
-    preprocessed_instance: PreprocessedInstance,
+    preprocessed_instance: PreprocessedInstance, torch_device: torch.device
 ) -> None:
     hf_dataset = datasets.Dataset.from_list(
         [preprocessed_instance.model_dump()], features=PreprocessedInstance.dataset_features()
@@ -73,7 +74,9 @@ def test_preprocessed_instance_can_be_saved_into_hf(
     # objects. Unfortunately, the thing from torch.testing.assert_close does not have `ObjectPair`
     # as a pair type, so I've put it here manually.
     error_metas = not_close_error_metas(
-        actual=PreprocessedInstance.model_validate(hf_dataset[0]).model_dump(),
+        actual=PreprocessedInstance.model_validate(hf_dataset[0])
+        .transfer_to_device(torch_device)
+        .model_dump(),
         expected=preprocessed_instance.model_dump(),
         pair_types=(
             NonePair,
