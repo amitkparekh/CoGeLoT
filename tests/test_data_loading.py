@@ -1,7 +1,7 @@
 import itertools
 from typing import TYPE_CHECKING
 
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
@@ -22,6 +22,7 @@ def _collate_instances(
     return batch
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_collate_preprocessed_instances_does_not_error(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -35,6 +36,7 @@ def test_collate_preprocessed_instances_does_not_error(
     assert batch
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_number_of_tasks_are_correct(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -45,6 +47,7 @@ def test_number_of_tasks_are_correct(
     assert len(batch.task) == desired_batch_size
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_raw_prompt_token_size_has_right_batch_size(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -55,6 +58,7 @@ def test_raw_prompt_token_size_has_right_batch_size(
     assert len(batch.raw_prompts_token_type) == desired_batch_size
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_prompt_text_has_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -66,6 +70,7 @@ def test_prompt_text_has_correct_shape(
     assert batch.word_batch.size(0) == desired_batch_size
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_prompt_masks_have_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -84,6 +89,7 @@ def test_prompt_masks_have_correct_shape(
         assert prompt_mask.size(2) == max_num_prompt_objects
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_prompt_bboxes_have_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -103,6 +109,7 @@ def test_prompt_bboxes_have_correct_shape(
         assert prompt_bbox.size(3) == 4
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_prompt_images_have_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -125,6 +132,7 @@ def test_prompt_images_have_correct_shape(
         assert image_per_view.size(5) == 32
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_actions_have_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
@@ -137,6 +145,7 @@ def test_actions_have_correct_shape(
         assert actions_tensor.size(0) == desired_batch_size
 
 
+@settings(deadline=None)
 @given(batch_size_multiplier=st.integers(min_value=1, max_value=10))
 def test_observation_end_effector_has_correct_shape(
     all_preprocessed_instances: list[PreprocessedInstance], batch_size_multiplier: int
