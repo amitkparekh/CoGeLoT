@@ -4,7 +4,9 @@ from pathlib import Path
 import datasets
 import torch
 from pytest_cases import fixture, param_fixture
+from torch.utils.data import DataLoader
 
+from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
 from cogelot.data.parse import (
     create_vima_instance_from_instance_dir,
     get_all_raw_instance_directories,
@@ -101,3 +103,15 @@ def preprocessed_instances_dataset(
         "torch", columns=PreprocessedInstance.hf_tensor_fields, output_all_columns=True
     )
     return dataset
+
+
+@fixture(scope="session")
+def vima_dataloader(
+    preprocessed_instances_dataset: datasets.Dataset
+) -> DataLoader[list[PreprocessedInstance]]:
+    return DataLoader(
+        preprocessed_instances_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+        batch_size=2,
+        collate_fn=collate_preprocessed_instances_from_hf_dataset,
+        num_workers=0,
+    )
