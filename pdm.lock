@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:e863e5b4800ed950c9bde73cb7196e4f3325a950857ea5fb1fa53054eab397b3"
+content_hash = "sha256:7e45b402ded2123158eb3e10dd0c1d4877674bfbd74b78751c567f04ed7a13fd"
 
 [[package]]
 name = "aiohttp"
@@ -1917,6 +1917,20 @@ dependencies = [
 files = [
     {file = "pytest-cov-4.1.0.tar.gz", hash = "sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6"},
     {file = "pytest_cov-4.1.0-py3-none-any.whl", hash = "sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a"},
+]
+
+[[package]]
+name = "pytest-pretty"
+version = "1.2.0"
+requires_python = ">=3.7"
+summary = "pytest plugin for printing summary data as I want it"
+dependencies = [
+    "pytest>=7",
+    "rich>=12",
+]
+files = [
+    {file = "pytest_pretty-1.2.0-py3-none-any.whl", hash = "sha256:6f79122bf53864ae2951b6c9e94d7a06a87ef753476acd4588aeac018f062036"},
+    {file = "pytest_pretty-1.2.0.tar.gz", hash = "sha256:105a355f128e392860ad2c478ae173ff96d2f03044692f9818ff3d49205d3a60"},
 ]
 
 [[package]]
