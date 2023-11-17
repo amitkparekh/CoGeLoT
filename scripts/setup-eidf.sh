@@ -11,7 +11,7 @@ rm -rf /var/lib/apt/lists/*
 ln -s /mnt/ceph_rbd/data ./storage/
 
 # Install deps (without torch since we are using the conda one)
-pdm export --prod --without-hashes | grep -v "torch==" >requirements.txt
+pdm export --group default,test --without-hashes | grep -v "torch==" >requirements.txt
 pip install --no-deps -r requirements.txt
 pip install --no-deps -e .
 python -m torch.utils.collect_env
