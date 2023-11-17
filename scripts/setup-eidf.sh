@@ -19,4 +19,4 @@ python -m torch.utils.collect_env
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
-pdm pre_train -n auto
+pdm pre_train -n 16
