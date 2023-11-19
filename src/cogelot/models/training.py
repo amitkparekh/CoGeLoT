@@ -185,7 +185,7 @@ class VIMALightningModule(pl.LightningModule):
     def on_test_epoch_end(self) -> None:
         """Reset the metrics at the end of the epoch."""
         self.metrics.reset()
-        return super().on_validation_test_end()
+        return super().on_test_epoch_end()
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
         """Embed a batch of instances and convert to the ModelInstance."""
