@@ -125,6 +125,7 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, npt.NDArray[np.float64]]:
         """Convert discrete pose aciton tokens to the environment."""
         actions = self.convert_discrete_to_continuous(action_token)
+        actions = self._clamp_continuous_actions_to_limits(actions)
 
         # Convert to numpy because it needs to be in numpy for the environment
         actions_numpy = {k: v.cpu().numpy() for k, v in actions.items()}
@@ -273,3 +274,27 @@ class PoseActionTokenizer:
         )
 
         return actions
+
+    def _clamp_continuous_actions_to_limits(
+        self, continuous_actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Clamp continuous coordinates to the limits of the environment."""
+        device = continuous_actions["pose0_position"].device
+        position_min = torch.tensor(
+            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min],
+            device=device,
+        )
+        position_max = torch.tensor(
+            [self._x_boundary_max, self._y_boundary_max, self._z_boundary_max],
+            device=device,
+        )
+        continuous_actions["pose0_position"].clamp_(min=position_min, max=position_max)
+        continuous_actions["pose1_position"].clamp_(min=position_min, max=position_max)
+        continuous_actions["pose0_position"].clamp_(
+            min=self._rot_boundary_min, max=self._rot_boundary_max
+        )
+        continuous_actions["pose1_position"].clamp_(
+            min=self._rot_boundary_min, max=self._rot_boundary_max
+        )
+
+        return continuous_actions
