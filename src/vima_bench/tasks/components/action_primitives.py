@@ -261,7 +261,8 @@ class Push:
         pos1 = np.float32((pose1[0][0], pose1[0][1], self._operation_height))
         vec = np.float32(pos1) - np.float32(pos0)
         length = np.linalg.norm(vec)
-        vec = vec / length
+        if length != 0:
+            vec = vec / length
         pos0 -= vec * 0.02
         pos1 -= vec * 0.05
 
