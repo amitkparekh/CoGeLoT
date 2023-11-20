@@ -32,6 +32,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.environment = environment
         self.model = model
         self.preprocessor = instance_preprocessor
+        self.pose_action_tokenizer = self.model.policy.pose_action_tokenizer
         self.buffer = ReplayBuffer()
         self.metric = EvaluationMetrics()
 
@@ -72,22 +73,30 @@ class EvaluationLightningModule(pl.LightningModule):
 
             # Predict the next pose action token
             predicted_action_tokens = self.predict_next_pose_action_token()
+            predicted_continuous_actions = (
+                self.pose_action_tokenizer.convert_discrete_to_continuous(predicted_action_tokens)
+            )
 
-            self.add_pose_action_token_to_buffer(pose_action_tokens=predicted_action_tokens)
+            self.add_pose_action_token_to_buffer(predicted_continuous_actions)
 
             # Convert the pose action token to the environment
-            actions_for_env = self.preprocessor.pose_action_tokenizer.convert_token_to_environment(
+            actions_for_env = self.pose_action_tokenizer.convert_token_to_environment(
                 predicted_action_tokens
             )
 
             # Take a step in the environment
-            observation, is_task_done, is_task_successful = self.take_step_in_environment(
-                actions=actions_for_env
-            )
+            (
+                observation,
+                is_task_done,
+                is_task_successful,
+            ) = self.take_step_in_environment(actions=actions_for_env)
 
         # Update the metric
         self.metric.update(
-            partition, task, is_successful=is_task_successful, num_steps_taken=len(self.buffer)
+            partition,
+            task,
+            is_successful=is_task_successful,
+            num_steps_taken=len(self.buffer),
         )
         self.log_dict(self.metric.compute(), logger=True, on_step=True, on_epoch=False)
         logger.info("Task finished")
@@ -102,7 +111,7 @@ class EvaluationLightningModule(pl.LightningModule):
         logger.debug("Parsing response from environment")
 
         assert isinstance(step_result.observation, dict)
-        observation = Observation.parse_obj(
+        observation = Observation.model_validate(
             {"index": self.buffer.num_observations, **step_result.observation}
         )
 
@@ -113,8 +122,14 @@ class EvaluationLightningModule(pl.LightningModule):
 
     def add_prompt_to_buffer(self, prompt: str, prompt_assets: PromptAssets) -> None:
         """Prepare and encode the prompt."""
-        raw_prompts_token_type, word_batch, image_batch = self.preprocessor.prepare_prompt(
-            prompt=prompt, prompt_assets=prompt_assets, object_ids_from_prompt_assets=None
+        (
+            raw_prompts_token_type,
+            word_batch,
+            image_batch,
+        ) = self.preprocessor.prepare_prompt(
+            prompt=prompt,
+            prompt_assets=prompt_assets,
+            object_ids_from_prompt_assets=None,
         )
 
         # Update devices
@@ -126,7 +141,10 @@ class EvaluationLightningModule(pl.LightningModule):
         word_batch = cast(torch.Tensor, add_batch_dim(word_batch))
         image_batch = cast(DataDict, add_batch_dim(image_batch))
 
-        embedded_prompt, embedded_prompt_mask = self.model.policy.assemble_prompt(
+        (
+            embedded_prompt,
+            embedded_prompt_mask,
+        ) = self.model.policy.embed_multimodal_prompt(
             (raw_prompts_token_type, word_batch, image_batch)
         )
         encoded_prompt = self.model.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
@@ -160,11 +178,11 @@ class EvaluationLightningModule(pl.LightningModule):
         self.buffer.add_next_encoded_observation(encoded_observations, encoded_observation_masks)
 
     def add_pose_action_token_to_buffer(
-        self, pose_action_tokens: dict[PoseActionType, torch.Tensor]
+        self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> None:
         """Add a pose action to the state."""
         encoded_actions, encoded_actions_mask = self.model.policy.encode_action_tokens(
-            pose_action_tokens
+            continuous_actions
         )
         self.buffer.add_next_encoded_action(encoded_actions, encoded_actions_mask)
 

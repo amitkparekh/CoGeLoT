@@ -166,7 +166,7 @@ class Policy(torch.nn.Module):
         )
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
-        self._pose_action_tokenizer = pose_action_tokenizer
+        self.pose_action_tokenizer = pose_action_tokenizer
 
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features

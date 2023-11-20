@@ -83,6 +83,7 @@ class VIMAEnvironment(Wrapper):
             total_steps=0,
             index=0,
             task=task_name,
+            generation_seed=0,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
             prompt=prompt,
