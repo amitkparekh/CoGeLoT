@@ -22,7 +22,6 @@ defaults:
   - _self_
 
 task_name: "evaluate"
-
 output_dir: ${hydra:runtime.output_dir}
 
 # This is the seed they used in their example script

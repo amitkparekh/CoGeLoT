@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - _self_
+
+trainer:
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1

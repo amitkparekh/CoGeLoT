@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - gpu
+  - _self_
+
+trainer:
+  strategy: ddp_find_unused_parameters_true
+  sync_batchnorm: True

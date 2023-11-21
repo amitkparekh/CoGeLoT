@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+
+_target_: cogelot.models.VIMALightningModule
+
+policy:
+  _target_: cogelot.modules.policy.Policy.from_their_policy
+  their_policy:
+    _target_: vima.create_policy_from_ckpt
+    ckpt_path: ./storage/data/models/them.ckpt
+    device: cpu

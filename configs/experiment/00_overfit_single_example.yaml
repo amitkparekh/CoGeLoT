@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /transformer_decoder@model.policy.transformer_decoder:
+  - override /model/transformer_decoder@model.policy.transformer_decoder:
       - prompt_encoder_history_decoder
       - attn_layers/vima
       - attn_layers/with_cross_attn

@@ -2,86 +2,27 @@
 
 defaults:
   - _self_
+  - hydra: default
 
   - datamodule: from_local_files
-  - trainer: cpu
+  - model: default
 
-  - transformer_decoder@model.policy.transformer_decoder: their_vima
-  - action_encoder@model.policy.action_encoder: vima
-  - action_decoder@model.policy.action_decoder: vima
   - learning_rate_scheduler@model.lr_scheduler_partial_fn: vima
 
-  - hydra: default
-  - hardware: local
+  - trainer: default
+  - hardware: default
 
   - debug: null
   - experiment: null
 
 task_name: "train"
-
 output_dir: ${hydra:runtime.output_dir}
 
 seed: 1000
 
 model:
-  _target_: cogelot.models.VIMALightningModule
-
   optimizer_partial_fn:
     _target_: torch.optim.AdamW
     _partial_: true
     lr: 1e-4
     weight_decay: 0
-
-  policy:
-    _target_: cogelot.modules.policy.Policy
-    embed_dim: 768
-
-    transformer_decoder: ???
-    action_encoder: ???
-    action_decoder: ???
-
-    pose_action_tokenizer:
-      _target_: cogelot.modules.tokenizers.PoseActionTokenizer
-
-    obj_encoder:
-      _target_: vima.nn.ObjEncoder
-      transformer_emb_dim: ${..embed_dim}
-      views: ["front", "top"]
-      vit_output_dim: ${.transformer_emb_dim}
-      vit_resolution: 32
-      vit_patch_size: 16
-      vit_width: ${.transformer_emb_dim}
-      vit_layers: 4
-      vit_heads: 24
-      bbox_mlp_hidden_dim: ${.transformer_emb_dim}
-      bbox_mlp_hidden_depth: 2
-
-    end_effector_encoder:
-      _target_: vima.nn.Embedding
-      num_embeddings: 2
-      embedding_dim: 2
-
-    obs_fusion_layer:
-      _target_: torch.nn.Linear
-      in_features:
-        _target_: builtins.sum
-        _convert_: all
-        _args_:
-          - - ${model.policy.obj_encoder.transformer_emb_dim}
-            - ${model.policy.end_effector_encoder.embedding_dim}
-      out_features: ${..embed_dim}
-
-    prompt_embedding:
-      _target_: cogelot.modules.text_encoders.T5TextEmbedder
-      pretrained_model: t5-base
-
-    prompt_encoder:
-      _target_: cogelot.modules.text_encoders.T5PromptEncoder.from_pretrained
-      pretrained_model_name_or_path: t5-base
-
-    prompt_obj_post_layer:
-      _target_: vima.nn.build_mlp
-      input_dim: ${..embed_dim}
-      hidden_dim: ${.input_dim}
-      output_dim: ${.hidden_dim}
-      hidden_depth: 2

@@ -1,0 +1,5 @@
+_target_: cogelot.models.VIMALightningModule.from_wandb_run
+wandb_entity: pyop
+wandb_project: CoGeLoT
+wandb_run_id: null
+checkpoint_save_dir: "./storage/data/models"

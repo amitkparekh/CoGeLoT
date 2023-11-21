@@ -3,11 +3,10 @@ command:
   - ${env}
   - python
   - ${program}
-  - train
   - hardware=eidf_4gpu
   - ${args_no_hyphens}
 
-program: src/cogelot/__main__.py
+program: src/cogelot/entrypoints/train.py
 
 name: Experiments 1
 entity: pyop

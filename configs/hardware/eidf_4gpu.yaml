@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /trainer: ddp
+  - ddp
   - override /datamodule: from_hf
 
 datamodule:
@@ -10,5 +10,4 @@ datamodule:
 
 trainer:
   devices: 4
-  num_nodes: 1
   accumulate_grad_batches: 2

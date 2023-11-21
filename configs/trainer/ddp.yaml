@@ -1,7 +1,0 @@
-defaults:
-  - default.yaml
-  - gpu.yaml
-  - _self_
-
-strategy: ddp_find_unused_parameters_true
-sync_batchnorm: True
