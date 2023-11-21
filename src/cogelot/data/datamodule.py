@@ -49,7 +49,7 @@ class VIMADataModule(abc.ABC, LightningDataModule):
 
         self.train_dataset: datasets.Dataset
         self.valid_dataset: datasets.Dataset
-        self.predict_dataset: VIMAEvaluationDataset
+        self.evaluation_dataset: VIMAEvaluationDataset
 
     def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
         """Setup each node to run the data."""
@@ -58,12 +58,12 @@ class VIMADataModule(abc.ABC, LightningDataModule):
             self.train_dataset = maybe_split_dataset_by_node(dataset["train"])
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
 
-        if stage in ("validate", "test"):
+        if stage == "validate":
             dataset = self._load_dataset()
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
 
-        if stage == "predict":
-            self.predict_dataset = VIMAEvaluationDataset.from_partition_to_specs()
+        if stage == "test":
+            self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs()
 
         self._maybe_filter_datasets()
 
@@ -89,17 +89,13 @@ class VIMADataModule(abc.ABC, LightningDataModule):
             **self._dataloader_kwargs,
         )
 
-    def test_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
-        """Use the validation dataset and dataloader for testing."""
-        return self.val_dataloader()
-
-    def predict_dataloader(self) -> DataLoader[EvaluationEpisode]:
+    def test_dataloader(self) -> DataLoader[EvaluationEpisode]:
         """Get a dataloader to use for creating environment during evaluation.
 
         Disable the `batch_size` and `batch_sampler` to ensure that we get a single instance at a time.
         """
         return DataLoader[EvaluationEpisode](
-            self.predict_dataset,
+            self.evaluation_dataset,
             batch_size=None,
             shuffle=False,
             batch_sampler=None,
@@ -204,3 +200,20 @@ class VIMADataModuleFromLocalFiles(VIMADataModule):
             "torch", columns=PreprocessedInstance.hf_tensor_fields, output_all_columns=True
         )
         return dataset
+
+
+class VIMABenchOnlineDataModule(VIMADataModule):
+    """Evaluation datamodule to run VIMA online."""
+
+    def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
+        """Setup each node to run the data."""
+        if stage == "test":
+            super().setup(stage)
+        raise ValueError("Don't use this datamodule if you are not testing online.")
+
+    def _load_dataset(self) -> datasets.DatasetDict:  # pyright: ignore[reportGeneralTypeIssues]
+        """This is not used whatsoever by this class.
+
+        To prevent abstract method errors, we just override it and pass. Is this the best solution?
+        No. Am I writing a dissertation? No.
+        """

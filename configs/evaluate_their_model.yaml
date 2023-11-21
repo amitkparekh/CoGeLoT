@@ -6,8 +6,7 @@ defaults:
   # Import the instance_preprocessor.yaml config into the model
   - /instance_preprocessor.yaml@model
 
-  # Get the datamodule from the other config file
-  - datamodule: from_local_files
+  - datamodule: evaluation
 
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
@@ -27,10 +26,6 @@ output_dir: ${hydra:runtime.output_dir}
 
 # This is the seed they used in their example script
 seed: 42
-
-datamodule:
-  batch_size: 1
-  num_workers: 1
 
 model:
   _target_: cogelot.models.EvaluationLightningModule

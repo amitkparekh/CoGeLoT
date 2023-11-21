@@ -7,7 +7,7 @@ defaults:
   - /instance_preprocessor.yaml@model
 
   # Get the datamodule from the other config file
-  - /datamodule.yaml
+  - datamodule: evaluation
 
   # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
@@ -33,10 +33,6 @@ wandb:
   entity: pyop
   project: CoGeLoT
   run_id: null
-
-datamodule:
-  batch_size: 1
-  num_workers: 1
 
 model:
   _target_: cogelot.models.EvaluationLightningModule
