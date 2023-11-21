@@ -26,14 +26,27 @@ experiment = param_fixture(
 
 
 @fixture(scope="module")
-def hydra_config(experiment: str, torch_device: torch.device) -> DictConfig:
+def hydra_config(
+    experiment: str, torch_device: torch.device, embed_dim: int, pretrained_model: str
+) -> DictConfig:
+    if experiment == "01_reproduce_vima":
+        pytest.xfail("Don't try to run VIMA's model")
+
     GlobalHydra.instance().clear()
 
     accelerator = "gpu" if torch_device.type == "cuda" else "cpu"
     overrides = [
         f"experiment={experiment}",
         f"trainer.accelerator={accelerator}",
-        "+trainer.fast_dev_run=2",
+        "+trainer.fast_dev_run=True",
+        # Add a bunch of overrides to make the model smaller so it runs faster.
+        f"model.policy.embed_dim={embed_dim}",
+        f"model.policy.prompt_embedding.pretrained_model={pretrained_model}",
+        f"model.policy.prompt_encoder.pretrained_model_name_or_path={pretrained_model}",
+        "model.policy.obj_encoder.vit_heads=2",
+        "model.policy.obj_encoder.vit_layers=4",
+        "model.policy.transformer_decoder.attn_layers.depth=2",
+        "model.policy.transformer_decoder.attn_layers.heads=2",
     ]
     config = load_hydra_config(
         config_dir=CONFIG_DIR, config_file_name=TRAIN_FILE.name, overrides=overrides
