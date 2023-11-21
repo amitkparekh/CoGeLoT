@@ -86,7 +86,7 @@ def prompt_encoder(pretrained_model: str, torch_device: torch.device) -> T5Promp
     encoder = T5PromptEncoder.from_pretrained(pretrained_model, unfreeze_last_n_layers=2)
     assert isinstance(encoder, T5PromptEncoder)
     assert isinstance(encoder, torch.nn.Module)
-    return encoder.to(device=torch_device)
+    return encoder.to(device=torch_device)  # pyright: ignore[reportGeneralTypeIssues]
 
 
 @fixture(scope="session")

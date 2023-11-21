@@ -19,7 +19,6 @@ from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
-from vima.nn.action_decoder.dists import MultiCategorical
 from vima.policy.vima_policy import VIMAPolicy
 from vima.utils import DataDict
 
@@ -210,7 +209,7 @@ class Policy(torch.nn.Module):
         """The number of action tokens per timestep."""
         return self._action_encoder.num_action_tokens_per_timestep
 
-    def predict_actions(
+    def predict_action_logits(
         self,
         encoded_prompt: torch.Tensor,
         encoded_prompt_mask: torch.Tensor,
@@ -218,7 +217,7 @@ class Policy(torch.nn.Module):
         encoded_observations_mask: torch.Tensor,
         encoded_actions: torch.Tensor | None,
         encoded_actions_mask: torch.Tensor | None,
-    ) -> dict[PoseActionType, MultiCategorical]:
+    ) -> torch.Tensor:
         """Predict the action token."""
         tokens, masks = stitch_observations_with_actions(
             encoded_observations,
@@ -235,7 +234,7 @@ class Policy(torch.nn.Module):
             memory=encoded_prompt,
             memory_key_padding_mask=encoded_prompt_mask,
         )
-        predicted_actions = self.decode_action_token(
+        predicted_actions = self.decode_action_logits(
             transformer_output, max_num_objects=encoded_observations.size(-2)
         )
         return predicted_actions
@@ -344,9 +343,9 @@ class Policy(torch.nn.Module):
 
         return prompt_tokens
 
-    def decode_action_token(
+    def decode_action_logits(
         self, transformer_output: torch.Tensor, max_num_objects: int
-    ) -> dict[PoseActionType, MultiCategorical]:
+    ) -> torch.Tensor:
         """Decode the action token."""
         return self._action_decoder(transformer_output, max_num_objects=max_num_objects)
 
@@ -354,4 +353,4 @@ class Policy(torch.nn.Module):
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the continuous actions into a discrete form to work with cross-entropy."""
-        return self._pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
+        return self.pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)

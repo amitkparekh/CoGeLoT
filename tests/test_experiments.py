@@ -33,7 +33,7 @@ def hydra_config(experiment: str, torch_device: torch.device) -> DictConfig:
     overrides = [
         f"experiment={experiment}",
         f"trainer.accelerator={accelerator}",
-        "+trainer.fast_dev_run=True",
+        "+trainer.fast_dev_run=2",
     ]
     config = load_hydra_config(
         config_dir=CONFIG_DIR, config_file_name=TRAIN_FILE.name, overrides=overrides

@@ -9,8 +9,9 @@ import torch
 
 from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
-from cogelot.modules.metrics import TrainingMetrics, TrainingSplit
+from cogelot.metrics.offline import TrainingMetrics, ValidationMetrics
 from cogelot.modules.policy import Policy
+from cogelot.modules.tokenizers.pose_action import prepare_target_actions
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
 from cogelot.structures.model import ModelInstance, PreprocessedBatch
 from cogelot.structures.vima import (
@@ -18,9 +19,7 @@ from cogelot.structures.vima import (
     N_DISCRETE_X_BINS,
     N_DISCRETE_Y_BINS,
     N_DISCRETE_Z_BINS,
-    PoseActionType,
 )
-from vima.nn.action_decoder.dists import MultiCategorical
 
 OptimizerPartialFn = Callable[[Iterator[torch.nn.Parameter]], torch.optim.Optimizer]
 LRSchedulerPartialFn = Callable[..., torch.optim.lr_scheduler.LRScheduler]
@@ -40,6 +39,7 @@ class VIMALightningModule(pl.LightningModule):
         policy: Policy,
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
+        enable_validation_per_task_metrics: bool = True,
     ) -> None:
         super().__init__()
 
@@ -48,12 +48,29 @@ class VIMALightningModule(pl.LightningModule):
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
-        self.metrics = TrainingMetrics(
+        self.training_metrics = TrainingMetrics(
+            num_axes=14,
             max_num_classes=max(
                 N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
             ),
             ignore_index=self.ignore_target_index,
-            compute_on_cpu=True,
+        )
+        self.validation_metrics = (
+            ValidationMetrics(
+                num_axes=14,
+                max_num_classes=max(
+                    N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
+                ),
+                ignore_index=self.ignore_target_index,
+            )
+            if enable_validation_per_task_metrics
+            else ValidationMetrics.without_per_task_metrics(
+                num_axes=14,
+                max_num_classes=max(
+                    N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
+                ),
+                ignore_index=self.ignore_target_index,
+            )
         )
         self.save_hyperparameters()
 
@@ -81,9 +98,9 @@ class VIMALightningModule(pl.LightningModule):
                 **instantiate_module_hparams_from_checkpoint(model_checkpoint_path),
             )
 
-    def forward(self, batch: ModelInstance) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, batch: ModelInstance) -> torch.Tensor:
         """Perform the forward on a batch of instances."""
-        return self.policy.predict_actions(
+        return self.policy.predict_action_logits(
             encoded_prompt=batch.encoded_prompt,
             encoded_prompt_mask=batch.encoded_prompt_mask,
             encoded_observations=batch.encoded_observations,
@@ -92,8 +109,12 @@ class VIMALightningModule(pl.LightningModule):
             encoded_actions_mask=batch.encoded_actions_mask,
         )
 
-    def step(self, batch: PreprocessedBatch, *, split: TrainingSplit) -> torch.Tensor:
-        """Perform a step and return the loss for the batch."""
+    def training_step(
+        self,
+        batch: PreprocessedBatch,
+        batch_idx: int,  # noqa: ARG002
+    ) -> torch.Tensor:
+        """Perform a training step."""
         prepared_batch = self.embed_inputs(batch)
         predicted_actions = self.forward(prepared_batch)
 
@@ -106,26 +127,21 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
-        self.metrics.update_loss(fine_grained_loss, tasks=batch.task, split=split)
-        self.metrics.update_accuracy(
-            predicted_actions, discrete_target_actions, tasks=batch.task, split=split
+        self.training_metrics.update(
+            fine_grained_loss=fine_grained_loss,
+            predicted_actions=predicted_actions,
+            target_actions=discrete_target_actions,
+            tasks=batch.task,
         )
 
-        return loss
-
-    def training_step(
-        self,
-        batch: PreprocessedBatch,
-        batch_idx: int,  # noqa: ARG002
-    ) -> torch.Tensor:
-        """Perform a training step."""
-        loss = self.step(batch, split="train")
-        # Log the total number of examples seen across all epochs (and doing it this way will
-        # prevent the thing resetting every epoch)
-        self.metrics.update_examples_seen(len(batch))
-
         self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self._log_metrics(split="train", prog_bar=True, logger=True, batch_size=len(batch))
+        self.log_dict(
+            self.training_metrics.compute(),
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=True,
+        )
         return loss
 
     def validation_step(
@@ -134,27 +150,34 @@ class VIMALightningModule(pl.LightningModule):
         batch_idx: int,  # noqa: ARG002
     ) -> torch.Tensor:
         """Perform a validation step (identical to training step)."""
-        loss = self.step(batch, split="val")
+        prepared_batch = self.embed_inputs(batch)
+        predicted_actions = self.forward(prepared_batch)
+
+        discrete_target_actions = self.prepare_target_actions(batch)
+
+        fine_grained_loss = compute_fine_grained_loss(
+            predicted_actions,
+            discrete_target_actions,
+            ignore_target_index=self.ignore_target_index,
+        )
+        loss = reduce_fine_grained_loss(fine_grained_loss)
+
+        self.validation_metrics.update(
+            fine_grained_loss=fine_grained_loss,
+            predicted_actions=predicted_actions,
+            target_actions=discrete_target_actions,
+            tasks=batch.task,
+        )
+
         self.log(
             "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
-        self._log_metrics(
-            split="val", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        return loss
-
-    def test_step(
-        self,
-        batch: PreprocessedBatch,
-        batch_idx: int,  # noqa: ARG002
-    ) -> torch.Tensor:
-        """Perform the test step, which is just the validation step but with more metrics."""
-        loss = self.step(batch, split="test")
-        self.log(
-            "test_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
-        )
-        self._log_metrics(
-            split="test", prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
+        self.log_dict(
+            self.validation_metrics.compute(),
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=True,
         )
         return loss
 
@@ -174,18 +197,13 @@ class VIMALightningModule(pl.LightningModule):
 
     def on_train_batch_end(self, *args: Any, **kwargs: Any) -> None:
         """Reset the metrics at the end of the batch."""
-        self.metrics.reset()
+        self.training_metrics.reset()
         return super().on_train_batch_end(*args, **kwargs)
 
     def on_validation_epoch_end(self) -> None:
         """Reset the metrics at the end of the epoch."""
-        self.metrics.reset()
+        self.validation_metrics.reset()
         return super().on_validation_epoch_end()
-
-    def on_test_epoch_end(self) -> None:
-        """Reset the metrics at the end of the epoch."""
-        self.metrics.reset()
-        return super().on_test_epoch_end()
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
         """Embed a batch of instances and convert to the ModelInstance."""
@@ -206,26 +224,14 @@ class VIMALightningModule(pl.LightningModule):
         )
 
     @torch.no_grad()
-    def prepare_target_actions(
-        self, batch: PreprocessedBatch
-    ) -> dict[PoseActionType, torch.Tensor]:
+    def prepare_target_actions(self, batch: PreprocessedBatch) -> torch.Tensor:
         """Prepare the target actions from a batch.
 
         This means making it a dictionary and discretizing them. Since these are target actions, we
         don't need to track the gradients for them either, so we can do this in a no_grad context.
         """
-        target_actions: dict[PoseActionType, torch.Tensor] = batch.actions.to_container()
-        discrete_target_actions = self.policy.tokenize_continuous_actions(target_actions)
-
-        # TODO: This is incredibly slow and should be refactored to use vector-ops
-        for action_type, actions in target_actions.items():
-            discrete_target_actions[action_type][
-                actions == self.ignore_target_index
-            ] = self.ignore_target_index
-
-        return discrete_target_actions
-
-    @torch.no_grad()
-    def _log_metrics(self, *, split: TrainingSplit, **log_dict_kwargs: Any) -> None:
-        """Log the accuracy for the given split."""
-        self.log_dict(self.metrics.compute(split=split), **log_dict_kwargs)
+        return prepare_target_actions(
+            batch.actions.to_container(),
+            self.policy.pose_action_tokenizer,
+            ignore_target_index=self.ignore_target_index,
+        )

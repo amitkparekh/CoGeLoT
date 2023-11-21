@@ -2,6 +2,7 @@ from typing import cast
 
 import numpy as np
 import torch
+from einops import rearrange
 from numpy import typing as npt
 
 from cogelot.structures.vima import (
@@ -305,3 +306,26 @@ class PoseActionTokenizer:
         )
 
         return continuous_actions
+
+
+@torch.no_grad()
+def prepare_target_actions(
+    continuous_targart_actions: dict[PoseActionType, torch.Tensor],
+    pose_action_tokenizer: PoseActionTokenizer,
+    *,
+    ignore_target_index: int = -100,
+) -> torch.Tensor:
+    """Convert the discrete target actions into a single tensor."""
+    discrete_target_actions = pose_action_tokenizer.convert_continuous_to_discrete(
+        continuous_targart_actions
+    )
+    # Shape: (batch size, num observations, num action tokens per timestep)
+    target_actions_tensor = torch.cat(list(continuous_targart_actions.values()), dim=-1)
+    discrete_target_actions_tensor = torch.cat(list(discrete_target_actions.values()), dim=-1)
+    discrete_target_actions_tensor[
+        target_actions_tensor == ignore_target_index
+    ] = ignore_target_index
+
+    # Shape: (num action tokens per pose, batch size, num observations)
+    discrete_target_actions_tensor = rearrange(discrete_target_actions_tensor, "B T A -> A B T")
+    return discrete_target_actions_tensor

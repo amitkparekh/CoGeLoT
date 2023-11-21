@@ -1,8 +1,10 @@
 import abc
+from typing import cast
 
 import torch
-from einops.einops import rearrange
+from einops import rearrange
 
+from cogelot.data.collate import collate_variable_ndim_batch
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
 from vima.nn.action_decoder.dists import MultiCategorical
@@ -18,9 +20,7 @@ class ActionDecoder(abc.ABC, torch.nn.Module):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def forward(
-        self, transformer_output: torch.Tensor, *, max_num_objects: int
-    ) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, transformer_output: torch.Tensor, *, max_num_objects: int) -> torch.Tensor:
         """Process the transformer output into a distribution for each pose action type."""
         raise NotImplementedError
 
@@ -37,13 +37,38 @@ class VIMAActionDecoder(ActionDecoder):
         """The supported number of action tokens per timestep."""
         return 1
 
-    def forward(
-        self, transformer_output: torch.Tensor, *, max_num_objects: int
-    ) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, transformer_output: torch.Tensor, *, max_num_objects: int) -> torch.Tensor:
         """Process the output as in the VIMA paper."""
         predicted_action_tokens = transformer_output[:, max_num_objects - 1 :: max_num_objects + 1]
         predicted_action_distributions = self._action_decoder(predicted_action_tokens)
-        return predicted_action_distributions
+
+        # Shape (axes, batch size, num action tokens per timestep, dim)
+        logits = self._convert_distributions_to_logits(predicted_action_distributions)
+        return logits
+
+    def _convert_distributions_to_logits(
+        self, predicted_action_distributions: dict[PoseActionType, MultiCategorical]
+    ) -> torch.Tensor:
+        """Convert the action distributions to a single logits tensor.
+
+        For efficiency, we are going to turn all of the various action distributions into a single
+        tensor instead of doing it over and over later on. And no loops because otherwise thats
+        slow.
+        """
+        logits_list = [
+            axis.logits
+            for action_dist in predicted_action_distributions.values()
+            for axis in action_dist.dists
+        ]
+        logits_list = cast(list[torch.Tensor], logits_list)
+
+        # To prevent the model from incorrectly attending to the padded logits, we set those values
+        # to be absolutely tiny, so not to contribute to the overall loss
+        logits = collate_variable_ndim_batch(
+            logits_list, padding_value=torch.finfo(logits_list[0].dtype).min
+        )
+        # Shape (axes, batch size, num action tokens per timestep, dim)
+        return logits
 
 
 class TokenPerAxisActionDecoder(ActionDecoder):
@@ -63,9 +88,7 @@ class TokenPerAxisActionDecoder(ActionDecoder):
         """The supported number of action tokens per timestep."""
         return self._num_action_tokens_per_timestep
 
-    def forward(
-        self, transformer_output: torch.Tensor, *, max_num_objects: int
-    ) -> dict[PoseActionType, MultiCategorical]:
+    def forward(self, transformer_output: torch.Tensor, *, max_num_objects: int) -> torch.Tensor:
         """Process the output from an autoregressive decoder."""
         num_tokens_per_timestep = max_num_objects + self.num_action_tokens_per_timestep
 
@@ -84,43 +107,8 @@ class TokenPerAxisActionDecoder(ActionDecoder):
         logits_per_token_per_timestep: torch.Tensor = self.projection(
             action_tokens_from_transformer
         )
-
-        predicted_action_distributions = self._convert_to_multicategorical_dists(
-            logits_per_token_per_timestep
+        logits = rearrange(
+            logits_per_token_per_timestep,
+            "bsz timesteps action_tokens action_bins -> action_tokens bsz timesteps action_bins",
         )
-        return predicted_action_distributions
-
-    def _convert_to_multicategorical_dists(
-        self, logits_per_token_per_timestep: torch.Tensor
-    ) -> dict[PoseActionType, MultiCategorical]:
-        action_dim = logits_per_token_per_timestep.size(-1)
-        position_action_dims = [action_dim, action_dim, action_dim]
-        rotation_action_dims = [action_dim, action_dim, action_dim, action_dim]
-        rearrange_pattern = "B T N D -> B T (N D)"
-        pose0_position_logits = rearrange(
-            logits_per_token_per_timestep[:, :, :3], rearrange_pattern
-        )
-        pose0_rotation_logits = rearrange(
-            logits_per_token_per_timestep[:, :, 3:7], rearrange_pattern
-        )
-        pose1_position_logits = rearrange(
-            logits_per_token_per_timestep[:, :, 7:10], rearrange_pattern
-        )
-        pose1_rotation_logits = rearrange(
-            logits_per_token_per_timestep[:, :, 10:], rearrange_pattern
-        )
-
-        return {
-            "pose0_position": MultiCategorical(
-                logits=pose0_position_logits, action_dims=position_action_dims
-            ),
-            "pose0_rotation": MultiCategorical(
-                logits=pose0_rotation_logits, action_dims=rotation_action_dims
-            ),
-            "pose1_position": MultiCategorical(
-                logits=pose1_position_logits, action_dims=position_action_dims
-            ),
-            "pose1_rotation": MultiCategorical(
-                logits=pose1_rotation_logits, action_dims=rotation_action_dims
-            ),
-        }
+        return logits

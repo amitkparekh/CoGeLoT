@@ -1,10 +1,13 @@
 import torch
-from pytest_cases import fixture, parametrize
+from hypothesis import given, strategies as st
+from pytest_cases import fixture, parametrize_with_cases
 
 from cogelot.data.collate import collate_preprocessed_instances
 from cogelot.models.training import VIMALightningModule
-from cogelot.modules.metrics import TrainingSplit
+from cogelot.modules.action_decoders import ActionDecoder
+from cogelot.modules.action_encoders import ActionEncoder
 from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
+from tests.fixtures.modules import ActionEncoderDecoderCases
 
 
 @fixture(scope="module")
@@ -56,21 +59,61 @@ def test_encoded_actions_tensor_is_correct(
     assert encoded_actions.size(3) == embed_dim
 
 
+@given(
+    batch_size=st.integers(min_value=1, max_value=10),
+    max_num_objects=st.integers(min_value=4, max_value=20),
+    num_observations=st.integers(min_value=1, max_value=5),
+)
+@parametrize_with_cases("action_encoder_decoder", cases=ActionEncoderDecoderCases, scope="session")
+def test_action_decoder_output_shape_is_correct(
+    action_encoder_decoder: tuple[ActionEncoder, ActionDecoder],
+    batch_size: int,
+    max_num_objects: int,
+    num_observations: int,
+    embed_dim: int,
+) -> None:
+    action_decoder = action_encoder_decoder[1]
+    transformer_output = torch.randn(
+        (
+            batch_size,
+            (max_num_objects + action_decoder.num_action_tokens_per_timestep) * num_observations,
+            embed_dim,
+        )
+    )
+
+    decoded_logits = action_decoder(transformer_output, max_num_objects=max_num_objects)
+
+    assert isinstance(decoded_logits, torch.Tensor)
+    assert decoded_logits.ndim == 4
+    assert decoded_logits.size(0) == 14
+    assert decoded_logits.size(1) == batch_size
+    assert decoded_logits.size(2) == num_observations
+    assert decoded_logits.size(3) != embed_dim
+
+
 def test_model_forward_does_not_error(
     vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
 ) -> None:
     forward_output = vima_lightning_module.forward(
         vima_lightning_module.embed_inputs(preprocessed_batch)
     )
-    assert forward_output
+    assert isinstance(forward_output, torch.Tensor)
+    assert torch.all(torch.isnan(forward_output)).item()
 
 
-@parametrize("split", ["train", "val", "test"])
-def test_model_step_does_not_error(
+def test_training_step_does_not_error(
     vima_lightning_module: VIMALightningModule,
     preprocessed_batch: PreprocessedBatch,
-    split: TrainingSplit,
 ) -> None:
-    loss = vima_lightning_module.step(preprocessed_batch, split=split)
-    assert loss
+    loss = vima_lightning_module.training_step(preprocessed_batch, batch_idx=0)
+    assert isinstance(loss, torch.Tensor)
+    assert torch.all(torch.isnan(loss)).item() is False
+
+
+def test_validation_step_does_not_error(
+    vima_lightning_module: VIMALightningModule,
+    preprocessed_batch: PreprocessedBatch,
+) -> None:
+    loss = vima_lightning_module.validation_step(preprocessed_batch, batch_idx=0)
+    assert isinstance(loss, torch.Tensor)
     assert torch.all(torch.isnan(loss)).item() is False

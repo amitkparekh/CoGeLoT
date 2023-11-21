@@ -7,9 +7,9 @@ from loguru import logger
 from numpy import typing as npt
 
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
+from cogelot.metrics.online import OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
-from cogelot.modules.metrics import EvaluationMetrics
 from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import (
@@ -34,7 +34,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.preprocessor = instance_preprocessor
         self.pose_action_tokenizer = self.model.policy.pose_action_tokenizer
         self.buffer = ReplayBuffer()
-        self.metric = EvaluationMetrics()
+        self.metric = OnlineEvaluationMetrics()
 
     def test_step(  # type: ignore[override]
         self,
