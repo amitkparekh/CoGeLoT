@@ -60,13 +60,18 @@ def remove_hydra_key_from_config(config: DictConfig) -> DictConfig:
     return config
 
 
-def load_hydra_config(config_dir: Path, config_file_name: str, overrides: list[str]) -> DictConfig:
+def load_hydra_config(
+    config_dir: Path, config_file_name: str, overrides: list[str] | None = None
+) -> DictConfig:
     """Load a Hydra config file and return it."""
-    hydra.initialize_config_dir(config_dir=str(config_dir.resolve()), version_base="1.3")
-    config = hydra.compose(
-        config_name=config_file_name, return_hydra_config=True, overrides=overrides
-    )
-    HydraConfig.instance().set_config(config)
+    if overrides is None:
+        overrides = []
+
+    with hydra.initialize_config_dir(config_dir=str(config_dir.resolve()), version_base="1.3"):
+        config = hydra.compose(
+            config_name=config_file_name, return_hydra_config=True, overrides=overrides
+        )
+        HydraConfig.instance().set_config(config)
     config = remove_hydra_key_from_config(config)
     return config
 
