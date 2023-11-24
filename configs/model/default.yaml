@@ -1,6 +1,5 @@
 defaults:
   - _self_
-  - policy: default
   - action_encoder@policy.action_encoder: vima
   - action_decoder@policy.action_decoder: vima
   - transformer_decoder@policy.transformer_decoder: their_vima
@@ -42,8 +41,8 @@ policy:
       _target_: builtins.sum
       _convert_: all
       _args_:
-        - - ${model.policy.obj_encoder.transformer_emb_dim}
-          - ${model.policy.end_effector_encoder.embedding_dim}
+        - - ${.....obj_encoder.transformer_emb_dim}
+          - ${.....end_effector_encoder.embedding_dim}
     out_features: ${..embed_dim}
 
   prompt_embedding:

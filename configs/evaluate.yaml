@@ -1,24 +1,15 @@
 # @package _global_
 
 defaults:
-  - trainer: cpu.yaml
+  - trainer: default
 
   # Import the instance_preprocessor.yaml config into the model
   - /instance_preprocessor.yaml@model
 
-  # Get the datamodule from the other config file
   - datamodule: evaluation
-
-  # Set defaults for Hydra's logging and outputs
   - hydra: default.yaml
-
-  # Update with hardware-specific changes
-  - hardware: local.yaml
-
-  # If you want to debug, then just run like `python train.py debug=default`
+  - hardware: default
   - debug: null
-
-  # And override any of the other values with what is in this file
   - _self_
 
 task_name: "evaluate"

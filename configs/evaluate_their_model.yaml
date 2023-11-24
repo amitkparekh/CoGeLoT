@@ -1,11 +1,12 @@
 # @package _global_
 
 defaults:
-  - trainer: cpu.yaml
+  - trainer: default
   - /instance_preprocessor.yaml@model
+  - model@model.model: default
   - datamodule: evaluation
-  - hydra: default.yaml
-  - hardware: local.yaml
+  - hydra: default
+  - hardware: default
   - debug: null
   - _self_
 
@@ -19,22 +20,15 @@ seed: 42
 model:
   _target_: cogelot.models.EvaluationLightningModule
 
-  model:
-    _target_: cogelot.models.VIMALightningModule
-
-    policy:
-      _target_: cogelot.modules.policy.Policy.from_their_policy
-      their_policy:
-        _target_: vima.create_policy_from_ckpt
-        ckpt_path: ./storage/data/models/them.ckpt
-        device: cpu
-
   environment:
     _target_: cogelot.environment.VIMAEnvironment.from_config
     seed: ${seed}
     # We're just giving it any task here, it will get changed during the steps
     task: 1
     partition: 1
+    should_display_debug_window: true
+    should_render_prompt: true
+    should_hide_arm_rgb: false
 
 trainer:
   max_epochs: 1
@@ -49,6 +43,7 @@ trainer:
       project: cogelot-downstream
       entity: pyop
       log_model: False
+      offline: true
 
   # Override the callbacks with just the logging ones
   callbacks:

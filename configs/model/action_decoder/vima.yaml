@@ -2,7 +2,7 @@ _target_: cogelot.modules.action_decoders.VIMAActionDecoder
 action_decoder:
   _target_: vima.nn.ActionDecoder
   _convert_: all
-  input_dim: ${model.policy.embed_dim}
+  input_dim: ${...embed_dim}
   action_dims:
     pose0_position: [50, 100, 50]
     pose1_position: [50, 100, 50]

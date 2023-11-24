@@ -32,8 +32,8 @@ post_layer:
     _target_: builtins.sum
     _convert_: all
     _args_:
-      - - ${model.policy.action_encoder.embedder_per_pose_action.pose0_position.output_dim}
-        - ${model.policy.action_encoder.embedder_per_pose_action.pose1_position.output_dim}
-        - ${model.policy.action_encoder.embedder_per_pose_action.pose0_rotation.output_dim}
-        - ${model.policy.action_encoder.embedder_per_pose_action.pose1_rotation.output_dim}
-  out_features: ${model.policy.embed_dim}
+      - - ${.....embedder_per_pose_action.pose0_position.output_dim}
+        - ${.....embedder_per_pose_action.pose1_position.output_dim}
+        - ${.....embedder_per_pose_action.pose0_rotation.output_dim}
+        - ${.....embedder_per_pose_action.pose1_rotation.output_dim}
+  out_features: ${...embed_dim}
