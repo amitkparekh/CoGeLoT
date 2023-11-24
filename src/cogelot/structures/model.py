@@ -194,7 +194,7 @@ class ModelInstance(NamedTuple):
     # [batch, obs, obj]
     encoded_observations_mask: torch.Tensor
 
-    # [batch, actions, dim]
+    # [batch, obs, actions, dim]
     encoded_actions: torch.Tensor | None
-    # [batch, actions]
+    # [batch, obs, actions]
     encoded_actions_mask: torch.Tensor | None

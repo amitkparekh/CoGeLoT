@@ -181,10 +181,15 @@ class EvaluationLightningModule(pl.LightningModule):
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> None:
         """Add a pose action to the state."""
+        # Shape: (num action tokens, embed dim) and (num action tokens)
         encoded_actions, encoded_actions_mask = self.model.policy.encode_action_tokens(
             continuous_actions
         )
-        self.buffer.add_next_encoded_action(encoded_actions, encoded_actions_mask)
+        # We also need to add back in the timestep and batch dimension for consistency
+        self.buffer.add_next_encoded_action(
+            encoded_actions.unsqueeze(0).unsqueeze(0),
+            encoded_actions_mask.unsqueeze(0).unsqueeze(0),
+        )
 
     def predict_next_pose_action_token(self) -> dict[PoseActionType, torch.Tensor]:
         """Predict the next action tokens from the model."""
