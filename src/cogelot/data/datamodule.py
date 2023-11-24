@@ -208,7 +208,7 @@ class VIMABenchOnlineDataModule(VIMADataModule):
     def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
         """Setup each node to run the data."""
         if stage == "test":
-            super().setup(stage)
+            return super().setup(stage)
         raise ValueError("Don't use this datamodule if you are not testing online.")
 
     def _load_dataset(self) -> datasets.DatasetDict:  # pyright: ignore[reportGeneralTypeIssues]
