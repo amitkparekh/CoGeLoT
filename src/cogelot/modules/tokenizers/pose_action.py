@@ -20,7 +20,7 @@ from cogelot.structures.vima import (
     Z_MIN,
     PoseActionType,
 )
-from vima.utils import DataDict, any_slice
+from vima.utils import DataDict
 
 
 def create_mask_from_target_actions(
@@ -113,7 +113,7 @@ class PoseActionTokenizer:
         self, actions: dict[PoseActionType, torch.Tensor]
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert discrete actions to continuous actions."""
-        # Make all of the actions floats
+        actions = self._clamp_discrete_tokens_to_limits(actions)
         actions = {k: v.float() for k, v in actions.items()}
 
         actions = self._convert_discrete_to_rescaled_continuous(actions)
@@ -121,7 +121,7 @@ class PoseActionTokenizer:
 
         return actions
 
-    def convert_token_to_environment(
+    def convert_discrete_token_to_environment(
         self,
         action_token: dict[PoseActionType, torch.Tensor],
         *,
@@ -129,15 +129,14 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, npt.NDArray[np.float64]]:
         """Convert discrete pose aciton tokens to the environment."""
         actions = self.convert_discrete_to_continuous(action_token)
-        actions = self._clamp_continuous_actions_to_limits(actions)
 
         if should_remove_zth_position_dim:
-            actions["pose0_position"] = actions["pose0_position"][:, :, :2]
-            actions["pose1_position"] = actions["pose1_position"][:, :, :2]
+            actions["pose0_position"] = actions["pose0_position"][:2]
+            actions["pose1_position"] = actions["pose1_position"][:2]
 
         # Convert to numpy because it needs to be in numpy for the environment
         actions_numpy = {k: v.cpu().numpy() for k, v in actions.items()}
-        actions_numpy = any_slice(actions_numpy, np.s_[0, 0])
+        # actions_numpy = any_slice(actions_numpy, np.s_[0, 0])
 
         return cast(dict[PoseActionType, npt.NDArray[np.float64]], actions_numpy)
 
@@ -282,6 +281,24 @@ class PoseActionTokenizer:
         )
 
         return actions
+
+    def _clamp_discrete_tokens_to_limits(
+        self, discrete_actions: dict[PoseActionType, torch.Tensor]
+    ) -> dict[PoseActionType, torch.Tensor]:
+        """Clamp the discrete tokens to the limits of the axis.
+
+        Just in case the model predicts a value that is out of range.
+        """
+        device = discrete_actions["pose0_position"].device
+        position_max = torch.tensor(
+            [self._n_discrete_x_bins, self._n_discrete_y_bins, self._n_discrete_z_bins],
+            device=device,
+        )
+        discrete_actions["pose0_position"].clamp_(max=position_max)
+        discrete_actions["pose1_position"].clamp_(max=position_max)
+        discrete_actions["pose0_rotation"].clamp_(max=self._n_discrete_rot_bins)
+        discrete_actions["pose1_rotation"].clamp_(max=self._n_discrete_rot_bins)
+        return discrete_actions
 
     def _clamp_continuous_actions_to_limits(
         self, continuous_actions: dict[PoseActionType, torch.Tensor]

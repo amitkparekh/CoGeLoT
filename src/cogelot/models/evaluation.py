@@ -80,7 +80,7 @@ class EvaluationLightningModule(pl.LightningModule):
             self.add_pose_action_token_to_buffer(predicted_continuous_actions)
 
             # Convert the pose action token to the environment
-            actions_for_env = self.pose_action_tokenizer.convert_token_to_environment(
+            actions_for_env = self.pose_action_tokenizer.convert_discrete_token_to_environment(
                 predicted_action_tokens
             )
 
@@ -188,11 +188,13 @@ class EvaluationLightningModule(pl.LightningModule):
 
     def predict_next_pose_action_token(self) -> dict[PoseActionType, torch.Tensor]:
         """Predict the next action tokens from the model."""
-        predicted_actions = self.model.forward(self.buffer.to_model_instance())
-        # When we predict the next action, we only want the last action, so we need to index the
-        # last one only. As it still needs to be 3D though, we slice
+        logits = self.model(self.buffer.to_model_instance())
+        normalised_logits = logits - logits.logsumexp(dim=-1, keepdim=True)
+        predicted_actions = normalised_logits.argmax(dim=-1)[:, 0, -1]
         predicted_action_tokens: dict[PoseActionType, torch.Tensor] = {
-            pose_action_type: action_distribution.mode()[:, -1:]
-            for pose_action_type, action_distribution in predicted_actions.items()
+            "pose0_position": predicted_actions[:3],
+            "pose0_rotation": predicted_actions[3:7],
+            "pose1_position": predicted_actions[7:10],
+            "pose1_rotation": predicted_actions[10:14],
         }
         return predicted_action_tokens
