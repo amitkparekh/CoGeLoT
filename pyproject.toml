@@ -47,6 +47,7 @@ dependencies = [
     "importlib-resources>=6.0.1",
     "transforms3d>=0.4.1",
     "pyarrow<14",
+    "convert-case>=1.2.3",
 ]
 
 [tool.pdm]
@@ -71,6 +72,7 @@ lint = [
     "toml-sort>=0.23.1",
     "docformatter>=1.7.5",
 ]
+notebooks = ["ipykernel>=6.27.0"]
 
 [tool.pdm.build]
 package-dir = "src"
