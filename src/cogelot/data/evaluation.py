@@ -8,6 +8,19 @@ from cogelot.structures.vima import Partition, Task
 from vima_bench.tasks import PARTITION_TO_SPECS
 
 
+def get_every_partition_task_combination(
+    partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS
+) -> list[EvaluationEpisode]:
+    """Get every partition-task combo from VIMA's `PARTITION_TO_SPECS`."""
+    raw_instances_per_task_per_partition = partition_to_specs["test"]
+    episodes = [
+        EvaluationEpisode(partition=Partition[partition], task=Task[task])
+        for partition, tasks in raw_instances_per_task_per_partition.items()
+        for task in tasks
+    ]
+    return episodes
+
+
 class VIMAEvaluationDataset(Dataset[EvaluationEpisode]):
     """Create the evaluation dataset."""
 
@@ -30,16 +43,10 @@ class VIMAEvaluationDataset(Dataset[EvaluationEpisode]):
         num_repeats_per_episode: int = 100,
     ) -> Self:
         """Instantiate from VIMA's `PARTITION_TO_SPECS`."""
-        raw_instances_per_task_per_partition = partition_to_specs["test"]
-
-        instances = (
-            EvaluationEpisode(partition=Partition[partition], task=Task[task])
-            for partition, tasks in raw_instances_per_task_per_partition.items()
-            for task in tasks
-        )
+        episodes = get_every_partition_task_combination(partition_to_specs)
 
         instances = itertools.chain.from_iterable(
-            itertools.repeat(episode, num_repeats_per_episode) for episode in instances
+            itertools.repeat(episode, num_repeats_per_episode) for episode in episodes
         )
 
         return cls(list(instances))

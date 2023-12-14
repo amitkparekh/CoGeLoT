@@ -1,6 +1,6 @@
 import abc
 from collections.abc import Mapping
-from typing import Self, cast
+from typing import Any, Self, cast
 
 import torch
 from einops import rearrange
@@ -8,6 +8,23 @@ from einops import rearrange
 from cogelot.modules.tokenizers.pose_action import PoseActionTokenizer
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
+
+
+def _remove_zth_dimension(
+    module: torch.nn.Module,  # noqa: ARG001
+    *args: tuple[Any, ...],
+) -> dict[PoseActionType, torch.Tensor]:
+    """Remove the zth dimension from the continuous actions.
+
+    This is because the zth dimension is always 0 for the actions we care about.
+    """
+    continuous_actions: dict[PoseActionType, torch.Tensor] = args[0][0]
+    return {
+        "pose0_position": continuous_actions["pose0_position"][..., :2],
+        "pose0_rotation": continuous_actions["pose0_rotation"],
+        "pose1_position": continuous_actions["pose1_position"][..., :2],
+        "pose1_rotation": continuous_actions["pose1_rotation"],
+    }
 
 
 class ActionEncoder(abc.ABC, torch.nn.Module):
@@ -55,7 +72,7 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
         their_action_encoder: vnn.ActionEmbedding,
     ) -> Self:
         """Instantiate from the VIMA action encoder."""
-        return cls(
+        encoder = cls(
             pose_action_tokenizer=pose_action_tokenizer,
             embedder_per_pose_action=cast(
                 dict[PoseActionType, vnn.ContinuousActionEmbedding],
@@ -63,6 +80,9 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
             ),
             post_layer=cast(torch.nn.Linear, their_action_encoder._post_layer),  # noqa: SLF001
         )
+        encoder.register_forward_pre_hook(_remove_zth_dimension)
+
+        return encoder
 
     @property
     def num_action_tokens_per_timestep(self) -> int:

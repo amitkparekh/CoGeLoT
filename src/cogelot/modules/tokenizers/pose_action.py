@@ -74,6 +74,7 @@ class PoseActionTokenizer:
         rot_boundary_min: float = ROT_MIN,
         rot_boundary_max: float = ROT_MAX,
         n_discrete_rot_bins: int = N_DISCRETE_ROT_BINS,
+        remove_z_position_dim: bool = False,
     ) -> None:
         self._n_discrete_x_bins = n_discrete_x_bins
         self._n_discrete_y_bins = n_discrete_y_bins
@@ -91,6 +92,8 @@ class PoseActionTokenizer:
 
         self._rot_boundary_min = rot_boundary_min
         self._rot_boundary_max = rot_boundary_max
+
+        self._remove_z_position_dim = remove_z_position_dim
 
     def normalize_continuous_actions(
         self, actions: dict[PoseActionType, torch.Tensor]
@@ -176,22 +179,11 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, torch.Tensor]:
         """Rescale all the continuous actions to be between 0 and 1."""
         device = actions["pose0_position"].device
-
-        subtract_from_position = torch.tensor(
-            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min], device=device
-        )
-        divide_from_position = torch.tensor(
-            [
-                self._x_boundary_max - self._x_boundary_min,
-                self._y_boundary_max - self._y_boundary_min,
-                self._z_boundary_max - self._z_boundary_min,
-            ],
-            device=device,
-        )
+        subtract_from_position = self._position_minimum.to(device)
+        divide_from_position = self._position_range.to(device)
 
         actions["pose0_position"].subtract_(subtract_from_position).divide_(divide_from_position)
         actions["pose1_position"].subtract_(subtract_from_position).divide_(divide_from_position)
-
         actions["pose0_rotation"].subtract_(self._rot_boundary_min).divide_(
             self._rot_boundary_max - self._rot_boundary_min
         )
@@ -215,9 +207,6 @@ class PoseActionTokenizer:
         actions["pose0_position"][..., 1] = torch.bucketize(
             actions["pose0_position"][..., 1].contiguous(), y_boundary
         )
-        actions["pose0_position"][..., 2] = torch.bucketize(
-            actions["pose0_position"][..., 2].contiguous(), z_boundary
-        )
         actions["pose0_rotation"] = torch.bucketize(
             actions["pose0_rotation"].contiguous(), rot_boundary
         )
@@ -227,12 +216,16 @@ class PoseActionTokenizer:
         actions["pose1_position"][..., 1] = torch.bucketize(
             actions["pose1_position"][..., 1].contiguous(), y_boundary
         )
-        actions["pose1_position"][..., 2] = torch.bucketize(
-            actions["pose1_position"][..., 2].contiguous(), z_boundary
-        )
         actions["pose1_rotation"] = torch.bucketize(
             actions["pose1_rotation"].contiguous(), rot_boundary
         )
+        if not self._remove_z_position_dim:
+            actions["pose0_position"][..., 2] = torch.bucketize(
+                actions["pose0_position"][..., 2].contiguous(), z_boundary
+            )
+            actions["pose1_position"][..., 2] = torch.bucketize(
+                actions["pose1_position"][..., 2].contiguous(), z_boundary
+            )
         actions = {k: v.long() for k, v in actions.items()}
         return actions
 
@@ -241,10 +234,7 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the discrete values to rescaled continuous values."""
         device = actions["pose0_position"].device
-        divide_from_position = torch.tensor(
-            [self._n_discrete_x_bins, self._n_discrete_y_bins, self._n_discrete_z_bins],
-            device=device,
-        )
+        divide_from_position = self._position_bins.to(device)
 
         actions["pose0_position"].divide_(divide_from_position)
         actions["pose1_position"].divide_(divide_from_position)
@@ -258,17 +248,8 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, torch.Tensor]:
         """Restore the rescaled continuous values to the correct range."""
         device = actions["pose0_position"].device
-        add_to_position = torch.tensor(
-            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min], device=device
-        )
-        multiply_to_position = torch.tensor(
-            [
-                self._x_boundary_max - self._x_boundary_min,
-                self._y_boundary_max - self._y_boundary_min,
-                self._z_boundary_max - self._z_boundary_min,
-            ],
-            device=device,
-        )
+        add_to_position = self._position_minimum.to(device)
+        multiply_to_position = self._position_range.to(device)
 
         actions["pose0_position"].multiply_(multiply_to_position).add_(add_to_position)
         actions["pose1_position"].multiply_(multiply_to_position).add_(add_to_position)
@@ -290,10 +271,7 @@ class PoseActionTokenizer:
         Just in case the model predicts a value that is out of range.
         """
         device = discrete_actions["pose0_position"].device
-        position_max = torch.tensor(
-            [self._n_discrete_x_bins, self._n_discrete_y_bins, self._n_discrete_z_bins],
-            device=device,
-        )
+        position_max = self._position_bins.to(device)
         discrete_actions["pose0_position"].clamp_(max=position_max)
         discrete_actions["pose1_position"].clamp_(max=position_max)
         discrete_actions["pose0_rotation"].clamp_(max=self._n_discrete_rot_bins)
@@ -305,24 +283,70 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, torch.Tensor]:
         """Clamp continuous coordinates to the limits of the environment."""
         device = continuous_actions["pose0_position"].device
-        position_min = torch.tensor(
-            [self._x_boundary_min, self._y_boundary_min, self._z_boundary_min],
-            device=device,
-        )
-        position_max = torch.tensor(
-            [self._x_boundary_max, self._y_boundary_max, self._z_boundary_max],
-            device=device,
-        )
+        position_min = self._position_minimum.to(device)
+        position_max = self._position_maximum.to(device)
         continuous_actions["pose0_position"].clamp_(min=position_min, max=position_max)
         continuous_actions["pose1_position"].clamp_(min=position_min, max=position_max)
-        continuous_actions["pose0_position"].clamp_(
+        continuous_actions["pose0_rotation"].clamp_(
             min=self._rot_boundary_min, max=self._rot_boundary_max
         )
-        continuous_actions["pose1_position"].clamp_(
+        continuous_actions["pose1_rotation"].clamp_(
             min=self._rot_boundary_min, max=self._rot_boundary_max
         )
 
         return continuous_actions
+
+    @property
+    def _position_minimum(self) -> torch.Tensor:
+        """Get a tensor of minimum positions."""
+        return torch.tensor(
+            [
+                self._x_boundary_min,
+                self._y_boundary_min,
+                self._z_boundary_min,
+            ][: self._num_position_dims]
+        )
+
+    @property
+    def _position_maximum(self) -> torch.Tensor:
+        """Get a tensor of maximum positions."""
+        return torch.tensor(
+            [
+                self._x_boundary_max,
+                self._y_boundary_max,
+                self._z_boundary_max,
+            ][: self._num_position_dims]
+        )
+
+    @property
+    def _position_range(self) -> torch.Tensor:
+        """Get a tensor of position ranges."""
+        return torch.tensor(
+            [
+                self._x_boundary_max - self._x_boundary_min,
+                self._y_boundary_max - self._y_boundary_min,
+                self._z_boundary_max - self._z_boundary_min,
+            ][: self._num_position_dims],
+        )
+
+    @property
+    def _position_bins(self) -> torch.Tensor:
+        """Get a tensor of position bins."""
+        return torch.tensor(
+            [
+                self._n_discrete_x_bins,
+                self._n_discrete_y_bins,
+                self._n_discrete_z_bins,
+            ][: self._num_position_dims],
+        )
+
+    @property
+    def _num_position_dims(self) -> int:
+        """Get the number of position dimensions.
+
+        This changes depending on whether the z position dimension needs to be removed or not.
+        """
+        return 2 if self._remove_z_position_dim else 3
 
 
 @torch.no_grad()

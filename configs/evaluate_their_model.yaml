@@ -3,7 +3,7 @@
 defaults:
   - trainer: default
   - /instance_preprocessor.yaml@model
-  - model@model.model: default
+  - model@model.model: from_their_policy
   - datamodule: evaluation
   - hydra: default
   - hardware: default

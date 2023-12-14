@@ -1,6 +1,6 @@
 from typing import Any, NamedTuple, Self, cast
 
-from gym import Wrapper
+from gym import Env, Wrapper
 
 from cogelot.data.parse import parse_object_metadata
 from cogelot.environment.wrappers import ResetFaultToleranceWrapper, TimeLimitWrapper
@@ -14,6 +14,7 @@ from cogelot.structures.vima import (
 )
 from vima_bench import make
 from vima_bench.env.base import VIMAEnvBase
+from vima_bench.env.wrappers.prompt_renderer import PromptRenderer
 from vima_bench.tasks import PARTITION_TO_SPECS
 
 
@@ -27,7 +28,16 @@ class EnvironmentStepResult(NamedTuple):
     task_info: dict[str, Any]
 
 
-class VIMAEnvironment(Wrapper):
+def _find_prompt_renderer(env: Env[Any, Any]) -> PromptRenderer | None:
+    """Try to find the prompt renderer in the environment."""
+    if isinstance(env, PromptRenderer):
+        return env
+    if getattr(env, "env", None) is not None:
+        return _find_prompt_renderer(env.env)  # type: ignore[attr-defined] # pyright: ignore[reportGeneralTypeIssues]
+    return None
+
+
+class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
     """Environment wrapper for VIMA."""
 
     env: VIMAEnvBase
@@ -64,13 +74,23 @@ class VIMAEnvironment(Wrapper):
         env = TimeLimitWrapper(ResetFaultToleranceWrapper(vima_env), bonus_steps=2)
         return cls(env)
 
+    @property
+    def vima_environment(self) -> VIMAEnvBase:
+        """Get the VIMA environment (unwrapped)."""
+        assert isinstance(self.env.unwrapped, VIMAEnvBase)
+        return self.env.unwrapped
+
+    @property
+    def prompt_renderer(self) -> PromptRenderer | None:
+        """Try to get the prompt renderer."""
+        return _find_prompt_renderer(self.env)
+
     def create_vima_instance(self) -> VIMAInstance:
         """Create a VIMA instance from the metadata from the environment.
 
         It does not contain any observations or pose actions.
         """
         prompt = self.env.prompt
-        assert isinstance(prompt, str)
 
         prompt_assets = PromptAssets.from_raw_prompt_assets(
             cast(dict[str, Any], self.env.prompt_assets)
@@ -86,7 +106,7 @@ class VIMAEnvironment(Wrapper):
             generation_seed=0,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
-            prompt=prompt,
+            prompt=cast(str, prompt),
             prompt_assets=prompt_assets,
         )
 
@@ -95,9 +115,19 @@ class VIMAEnvironment(Wrapper):
         task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
         self.env.set_task(task.name, task_kwargs)
 
-    def reset(self, **kwargs: Any) -> Observation:
-        """Reset the environment and return the first observation."""
-        observation = self.env.reset(**kwargs)
+    def reset(self, **kwargs: Any) -> None:  # type: ignore[override]
+        """Reset the environment."""
+        self.env.reset(**kwargs)
+
+    def update_prompt(self, prompt: str) -> None:
+        """Update the prompt of the environment."""
+        self.vima_environment.prompt = prompt  # type: ignore[assignment]
+        if self.prompt_renderer is not None:
+            self.env.render()
+
+    def get_first_observation(self) -> Observation:
+        """Get the first observation of the environment."""
+        observation = self.env.unwrapped.step(None)[0]
         assert isinstance(observation, dict)
         return Observation.model_validate({"index": 0, **observation})
 

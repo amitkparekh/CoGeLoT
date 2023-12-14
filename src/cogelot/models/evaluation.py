@@ -14,9 +14,15 @@ from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import (
     EndEffector,
+    Partition,
     PoseActionType,
+    Task,
+    VIMAInstance,
 )
 from vima.utils import DataDict, add_batch_dim
+
+NUM_AXES = 14
+MAX_TIMESTEPS = 50
 
 
 class EvaluationLightningModule(pl.LightningModule):
@@ -43,15 +49,24 @@ class EvaluationLightningModule(pl.LightningModule):
     ) -> None:
         """Run a single episode online."""
         partition, task = batch
-        self.buffer.reset(task, partition)
-        self.environment.set_task(task, partition)
-
-        # Resetting the environment returns the first observation
-        observation = self.environment.reset()
-        self.environment.render()
+        self.reset_environment(task=task, partition=partition)
 
         # Create a VIMA instance from the environment, which parses all the metadata as we want it
         vima_instance = self.environment.create_vima_instance()
+        self.run_vima_instance(vima_instance, partition)
+
+    def reset_environment(self, task: Task, partition: Partition) -> None:
+        """Reset the environment."""
+        self.buffer.reset(task, partition)
+        self.environment.set_task(task, partition)
+
+        self.environment.reset()
+        self.environment.render()
+
+    def run_vima_instance(self, vima_instance: VIMAInstance, partition: Partition) -> None:
+        """Run the current instance in the environment."""
+        observation = self.environment.get_first_observation()
+
         # Add the prompt to the state
         self.add_prompt_to_buffer(
             prompt=vima_instance.prompt, prompt_assets=vima_instance.prompt_assets
@@ -61,7 +76,7 @@ class EvaluationLightningModule(pl.LightningModule):
         is_task_done = False
         is_task_successful = False
 
-        while not is_task_done:
+        while len(self.buffer) < MAX_TIMESTEPS:
             logger.info(f"Taking step {len(self.buffer)}")
 
             # Add the observation to the state
@@ -94,7 +109,7 @@ class EvaluationLightningModule(pl.LightningModule):
         # Update the metric
         self.metric.update(
             partition,
-            task,
+            vima_instance.task,
             is_successful=is_task_successful,
             num_steps_taken=len(self.buffer),
         )
@@ -196,10 +211,12 @@ class EvaluationLightningModule(pl.LightningModule):
         logits = self.model(self.buffer.to_model_instance())
         normalised_logits = logits - logits.logsumexp(dim=-1, keepdim=True)
         predicted_actions = normalised_logits.argmax(dim=-1)[:, 0, -1]
+        split_sizes = [3, 4, 3, 4] if predicted_actions.shape[-1] == NUM_AXES else [2, 4, 2, 4]
+        split_predicted_actions = predicted_actions.split(split_sizes, dim=-1)
         predicted_action_tokens: dict[PoseActionType, torch.Tensor] = {
-            "pose0_position": predicted_actions[:3],
-            "pose0_rotation": predicted_actions[3:7],
-            "pose1_position": predicted_actions[7:10],
-            "pose1_rotation": predicted_actions[10:14],
+            "pose0_position": split_predicted_actions[0],
+            "pose0_rotation": split_predicted_actions[1],
+            "pose1_position": split_predicted_actions[2],
+            "pose1_rotation": split_predicted_actions[3],
         }
         return predicted_action_tokens

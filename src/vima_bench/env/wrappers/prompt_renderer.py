@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import time
 
 import cv2
@@ -29,13 +29,13 @@ class PromptRenderer(gym.Wrapper):
 
     def reset(self, *args, **kwargs):
         rtn = self.env.reset(*args, **kwargs)
-        self._prompt_img = self.get_multi_modal_prompt_img()
         return rtn
 
     def step(self, *args, **kwargs):
         return self.env.step(*args, **kwargs)
 
     def render(self, mode="human", **kwargs):
+        self._prompt_img = self.get_multi_modal_prompt_img()
         self._display(self._prompt_img)
 
     def close(self):

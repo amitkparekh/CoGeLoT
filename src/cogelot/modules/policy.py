@@ -160,8 +160,8 @@ class Policy(torch.nn.Module):
         self._prompt_encoder = prompt_encoder
         self._prompt_encoder_post_layer = (
             torch.nn.Identity()
-            if embed_dim == self._prompt_encoder.output_dim
-            else torch.nn.Linear(self._prompt_encoder.output_dim, embed_dim, bias=False)
+            if embed_dim == self._prompt_encoder.config.d_model
+            else torch.nn.Linear(self._prompt_encoder.config.d_model, embed_dim, bias=False)
         )
         self._prompt_obj_post_layer = prompt_obj_post_layer
         self._transformer_decoder = transformer_decoder
@@ -179,7 +179,7 @@ class Policy(torch.nn.Module):
         has already been loaded with the correct weights so we can just rearrange the components as
         necessary.
         """
-        pose_action_tokenizer = PoseActionTokenizer()
+        pose_action_tokenizer = PoseActionTokenizer(remove_z_position_dim=True)
         policy = cls(
             embed_dim=their_policy.embed_dim,
             obj_encoder=their_policy.obj_encoder,

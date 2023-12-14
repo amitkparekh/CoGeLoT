@@ -14,7 +14,6 @@ from ..tasks.components.end_effectors import Spatula, Suction
 from ..tasks.task_suite.base import BaseTask
 from ..tasks.utils import misc_utils as utils, pybullet_utils
 
-
 PLACE_STEP = 0.0003
 PLACE_DELTA_THRESHOLD = 0.005
 
@@ -368,9 +367,9 @@ class VIMAEnvBase(gym.Env):
 
         self.meta_info["obj_id_to_info"] = self.obj_id_reverse_mapping
 
-        obs, *_ = self.step()
+        # obs, *_ = self.step()
 
-        return obs
+        # return obs
 
     def step(self, action=None, skip_oracle=True):
         """Execute action with specified primitive.
