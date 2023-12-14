@@ -17,7 +17,7 @@ EXPERIMENTS_DIR = CONFIG_DIR.joinpath("experiment")
 
 def test_experiments_dir_has_experiments() -> None:
     assert EXPERIMENTS_DIR.exists()
-    assert len(list(EXPERIMENTS_DIR.glob("*.yaml"))) > 0
+    assert len(list(EXPERIMENTS_DIR.glob("*.yaml")))
 
 
 experiment = param_fixture(
@@ -29,9 +29,6 @@ experiment = param_fixture(
 def hydra_config(
     experiment: str, torch_device: torch.device, embed_dim: int, pretrained_model: str
 ) -> DictConfig:
-    if experiment == "01_reproduce_vima":
-        pytest.xfail("Don't try to run VIMA's model")
-
     GlobalHydra.instance().clear()
 
     accelerator = "gpu" if torch_device.type == "cuda" else "cpu"
@@ -44,10 +41,28 @@ def hydra_config(
         f"model.policy.prompt_embedding.pretrained_model={pretrained_model}",
         f"model.policy.prompt_encoder.pretrained_model_name_or_path={pretrained_model}",
         "model.policy.obj_encoder.vit_heads=2",
-        "model.policy.obj_encoder.vit_layers=4",
-        "model.policy.transformer_decoder.attn_layers.depth=2",
-        "model.policy.transformer_decoder.attn_layers.heads=2",
+        "model.policy.obj_encoder.vit_layers=2",
     ]
+
+    # Custom overrides if we're testing the VIMA model.
+    if experiment == "01_their_vima":
+        overrides.extend(
+            [
+                "model.policy.transformer_decoder.vima_xattn_gpt.n_layer=2",
+                "model.policy.transformer_decoder.vima_xattn_gpt.n_head=2",
+                "model.policy.transformer_decoder.vima_xattn_gpt.xattn_n_head=2",
+                "model.policy.transformer_decoder.vima_xattn_gpt.xattn_ff_expanding=2",
+            ]
+        )
+    # Otherwise, custom overrides for xtransformers models
+    else:
+        overrides.extend(
+            [
+                "model.policy.transformer_decoder.attn_layers.depth=2",
+                "model.policy.transformer_decoder.attn_layers.heads=2",
+            ]
+        )
+
     config = load_hydra_config(
         config_dir=CONFIG_DIR, config_file_name=TRAIN_FILE.name, overrides=overrides
     )
