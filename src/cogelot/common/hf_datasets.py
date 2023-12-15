@@ -185,7 +185,9 @@ def _shard_dataset(
     embed_external_files: bool = True,
 ) -> Iterator[datasets.Dataset]:
     """Shard the dataset into multiple shards."""
-    shards = (dataset.shard(num_shards=num_shards, index=index) for index in range(num_shards))
+    shards: Iterator[datasets.Dataset] = (
+        dataset.shard(num_shards=num_shards, index=index) for index in range(num_shards)
+    )
 
     # Check if it has decodable columns
     # Find decodable columns, because if there are any, we need to:
