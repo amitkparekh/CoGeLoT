@@ -1,0 +1,3 @@
+neptune:
+  - _target_: pytorch_lightning.loggers.NeptuneLogger
+    project: pokerface/cogelot

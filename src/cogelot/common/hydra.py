@@ -9,6 +9,7 @@ import torch
 from hydra.core.hydra_config import HydraConfig
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf, open_dict, read_write
+from omegaconf.errors import ConfigAttributeError
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -60,6 +61,39 @@ def remove_hydra_key_from_config(config: DictConfig) -> DictConfig:
     return config
 
 
+def _rewrite_mapping_to_list(
+    config: DictConfig, *, key: str, blank_value: Any = None
+) -> DictConfig:
+    """Rewrite a mapping to a list in the config."""
+    try:
+        converted_mapping = list(OmegaConf.select(config, key).values())
+    except ConfigAttributeError as err:
+        # If it's already a list and raises an error, then we don't need to do anything.
+        if err.object_type_str != "list":
+            raise
+        # If it is a list, just make it be the list
+        converted_mapping = OmegaConf.select(config, key)
+
+    # If it is empty, then we need to set it to a blank value to truly disable it.
+    if not converted_mapping:
+        converted_mapping = blank_value
+
+    with read_write(config), open_dict(config):
+        OmegaConf.update(config, key, converted_mapping, merge=False)
+
+    return config
+
+
+def rewire_trainer_callbacks(config: DictConfig) -> DictConfig:
+    """Rewire the callbacks for the trainer from a mapping to a list."""
+    return _rewrite_mapping_to_list(config, key="trainer.callbacks", blank_value=None)
+
+
+def rewire_trainer_logger(config: DictConfig) -> DictConfig:
+    """Rewire the logger for the trainer from a mapping to a list."""
+    return _rewrite_mapping_to_list(config, key="trainer.logger", blank_value=False)
+
+
 def load_hydra_config(
     config_dir: Path, config_file_name: str, overrides: list[str] | None = None
 ) -> DictConfig:
@@ -73,6 +107,8 @@ def load_hydra_config(
         )
         HydraConfig.instance().set_config(config)
     config = remove_hydra_key_from_config(config)
+    config = rewire_trainer_callbacks(config)
+    config = rewire_trainer_logger(config)
     return config
 
 

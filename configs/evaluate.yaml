@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - trainer: default
+  - trainer: evaluation
 
   # Import the instance_preprocessor.yaml config into the model
   - /instance_preprocessor.yaml@model
@@ -18,7 +18,6 @@ output_dir: ${hydra:runtime.output_dir}
 # This is the seed they used in their example script
 seed: 42
 
-# We are going to download the checkpoint from this
 wandb:
   entity: pyop
   project: CoGeLoT
@@ -29,8 +28,8 @@ model:
 
   model:
     _target_: cogelot.models.VIMALightningModule.from_wandb_run
-    wandb_entity: ${wandb.entity}
-    wandb_project: ${wandb.project}
+    wandb_entity: ${trainer.logger.wandb.entity}
+    wandb_project: ${trainer.logger.wandb.project}
     wandb_run_id: ${wandb.run_id}
     checkpoint_save_dir: "./storage/data/models"
 
@@ -40,25 +39,3 @@ model:
     # We're just giving it any task here, it will get changed during the steps
     task: 1
     partition: 1
-
-trainer:
-  # The evaluation runs each task 100 times, so we do that here.
-  max_epochs: 100
-
-  # The evaluation is going to be deterministic so it's consistent per run/model
-  deterministic: True
-
-  logger:
-    - _target_: pytorch_lightning.loggers.WandbLogger
-      save_dir: ${output_dir}
-      project: ${wandb.project}
-      entity: ${wandb.entity}
-      id: ${wandb.run_id}
-      resume: True
-      log_model: False
-
-  # Override the callbacks with just the logging ones
-  callbacks:
-    - _target_: pytorch_lightning.callbacks.RichModelSummary
-      max_depth: -1
-    - _target_: pytorch_lightning.callbacks.RichProgressBar

@@ -1,0 +1,13 @@
+defaults:
+  - default
+  - callbacks:
+      - model_summary
+      - rich_progress
+  - logger: wandb_evaluation
+  - _self_
+
+# The evaluation runs each task 100 times, so we do that here.
+max_epochs: 100
+
+# The evaluation is going to be deterministic so it's consistent per run/model
+deterministic: True

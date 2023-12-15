@@ -1,3 +1,8 @@
+defaults:
+  - callbacks: default
+  - logger: wandb_training
+  - _self_
+
 _target_: pytorch_lightning.trainer.Trainer
 
 default_root_dir: ${output_dir}
@@ -24,30 +29,6 @@ check_val_every_n_epoch: 1
 # set True to to ensure deterministic results
 # makes training slower but gives more reproducibility than just setting seeds
 deterministic: False
-
-logger:
-  - _target_: pytorch_lightning.loggers.WandbLogger
-    save_dir: ${output_dir}
-    project: CoGeLoT
-    entity: pyop
-    log_model: True
-
-callbacks:
-  - _target_: pytorch_lightning.callbacks.RichModelSummary
-    max_depth: -1
-  - _target_: pytorch_lightning.callbacks.TQDMProgressBar
-  - _target_: pytorch_lightning.callbacks.LearningRateMonitor
-    logging_interval: step
-  - _target_: pytorch_lightning.callbacks.EarlyStopping
-    monitor: val_acc
-    min_delta: 0.001
-    patience: 2
-    mode: max
-    stopping_threshold: 1
-
-  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    dirpath: ${output_dir}/checkpoints
-    save_top_k: 4
-    monitor: val_loss
-    mode: min
-    filename: "{epoch:02d}-{val_loss:.2f}"
+# logger:
+#   - _target_: pytorch_lightning.loggers.NeptuneLogger
+#     project: pokerface/cogelot

@@ -48,6 +48,7 @@ dependencies = [
     "transforms3d>=0.4.1",
     "pyarrow<14",
     "convert-case>=1.2.3",
+    "neptune>=1.8.6",
 ]
 
 [tool.pdm]
