@@ -86,22 +86,47 @@ pre_train = "pytest --deselect tests/test_online_evaluation.py -E cuda"
 [tool.flake8]
 select = ["WPS"]
 extend-ignore = [
+    # Handled by RUFF
+    "WPS101",
+    "WPS102",
+    "WPS113",
+    "WPS125",
+    "WPS211",
+    "WPS212",
+    "WPS213",
+    "WPS300",
+    "WPS302",
+    "WPS308",
+    "WPS309",
+    "WPS313",
+    "WPS317",
+    "WPS318",
+    "WPS324",
+    "WPS326",
+    "WPS422",
+    "WPS425",
+    "WPS453",
+    "WPS454",
+    "WPS500",
+    "WPS502",
+    "WPS503",
+    "WPS511",
+    "WPS513",
+    "WPS515",
+    "WPS526",
+    "WPS531",
     # Disable the underscored numbers pattern (I don't like it)
     "WPS114",
     # Do not warn on too many imports.
     "WPS201",
     # Do not warn on too many module members
     "WPS202",
-    # Do not warn when too many arguments in functions
-    "WPS211",
     # Do not warn on too many methods
     "WPS214",
     # Allow lots of importing from the same module --- it can happen and thats okay!
     "WPS235",
     # Do not warn on complex f-string
     "WPS237",
-    # Allow relative module references
-    "WPS300",
     # Allow f-strings
     "WPS305",
     # Do not force base classes to inherit object
@@ -110,8 +135,6 @@ extend-ignore = [
     "WPS316",
     # Allow multi-line type annotations
     "WPS320",
-    # Do not flag implicit string concatenation since this is something Black does
-    "WPS326",
     # Allow return statement that simply returns a prior statement
     "WPS331",
     # Allow new lines to start with a dot (caused by Black)
