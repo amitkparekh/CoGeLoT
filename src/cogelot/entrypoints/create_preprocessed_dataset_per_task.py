@@ -20,7 +20,7 @@ settings = Settings()
 
 
 def _get_config_name_for_task(task: Task) -> str:
-    return f"{settings.preprocessed_config_name}--{task.name}"
+    return f"{settings.dataset_variant}/{settings.preprocessed_config_name}--{task.name}"
 
 
 def _get_preprocessed_instances_dir_per_task(preprocessed_instances_dir: Path) -> dict[Task, Path]:
