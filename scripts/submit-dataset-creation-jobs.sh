@@ -22,3 +22,11 @@ echo "Preprocess instances: $preprocess_instances_job_id"
 # Create the preprocessed HF datasets
 create_preprocessed_dataset_job_id=$(sbatch --parsable --dependency=afterok:"${preprocess_instances_job_id}" "$(get_abs_filename slurm/create-preprocessed-dataset.sh)")
 echo "Create preprocessed dataset: $create_preprocessed_dataset_job_id"
+
+# Upload the raw HF datasets (after we are done preprocessing instances)
+upload_raw_dataset_job_id=$(sbatch --parsable --dependency=afterok:"${create_preprocessed_dataset_job_id}" "$(get_abs_filename slurm/upload-raw-dataset.sh)")
+echo "Upload raw dataset: $upload_raw_dataset_job_id"
+
+# Upload the preprocessed HF datasets
+upload_preprocessed_dataset_job_id=$(sbatch --parsable --dependency=afterok:"${create_preprocessed_dataset_job_id}" "$(get_abs_filename slurm/upload-preprocessed-dataset.sh)")
+echo "Upload preprocessed dataset: $upload_preprocessed_dataset_job_id"
