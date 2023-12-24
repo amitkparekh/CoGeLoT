@@ -126,12 +126,10 @@ def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
         instance_dir.joinpath(TRAJECTORY_METADATA_FILE_NAME)
     )
 
-    pose_actions = parse_pose_actions(instance_dir)
     observations = parse_observations(instance_dir)
-
-    # Each observation should be able to be paired with a pose action that was taken
-    if len(observations) > len(pose_actions):
-        observations = observations[: len(pose_actions)]
+    pose_actions = parse_pose_actions(instance_dir)
+    # Add on a null action to mark the end of the movement
+    pose_actions.append(PoseAction.get_null_action())
 
     if len(observations) != len(pose_actions):
         raise ValueError(

@@ -44,6 +44,10 @@ Z_MAX = 0.32
 ROT_MIN = -1
 ROT_MAX = 1
 
+STARTING_POSITION_ENV = (0.5, 0)
+STARTING_POSITION = (0.5, 0, Z_MAX)
+STARTING_ROTATION = (0, 0, 0, 1)
+
 
 class Partition(Enum):
     """Different levels of difficulty for the tasks."""
@@ -164,10 +168,10 @@ PositionAxes = Literal["x", "y", "z"]
 RotationAxes = Literal["x", "y", "z", "w"]
 
 AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] = {
-    "pose0_position": PositionAxes,
-    "pose0_rotation": RotationAxes,
-    "pose1_position": PositionAxes,
-    "pose1_rotation": RotationAxes,
+    "pose0_position": PositionAxes,  # type: ignore[dict-item]
+    "pose0_rotation": RotationAxes,  # type: ignore[dict-item]
+    "pose1_position": PositionAxes,  # type: ignore[dict-item]
+    "pose1_rotation": RotationAxes,  # type: ignore[dict-item]
 }
 
 
@@ -233,12 +237,23 @@ class PoseAction(Action, PydanticHFDatasetMixin):
             }
         )
 
+    @classmethod
+    def get_null_action(cls, index: int = 0) -> Self:
+        """Create an action that has no movement."""
+        return cls(
+            pose0_position=torch.tensor(STARTING_POSITION, dtype=torch.float32),
+            pose0_rotation=torch.tensor(STARTING_ROTATION, dtype=torch.float32),
+            pose1_position=torch.tensor(STARTING_POSITION, dtype=torch.float32),
+            pose1_rotation=torch.tensor(STARTING_ROTATION, dtype=torch.float32),
+            index=index,
+        )
+
 
 T = TypeVar("T")
 
 
 def maybe_convert_dict_list_to_list_dict(
-    maybe_dict_list: dict[str, list[T]] | list[dict[str, T]]
+    maybe_dict_list: dict[str, list[T]] | list[dict[str, T]],
 ) -> list[dict[str, Any]]:
     """Convert a list of dicts to a dict of lists.
 
