@@ -10,6 +10,7 @@ from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.metrics.online import OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
+from cogelot.modules.tokenizers.pose_action import is_action_pointless
 from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import (
@@ -72,8 +73,7 @@ class EvaluationLightningModule(pl.LightningModule):
             prompt=vima_instance.prompt, prompt_assets=vima_instance.prompt_assets
         )
 
-        # Run the task until it is done
-        is_task_done = False
+        # Run the task until the model thinks it is done
         is_task_successful = False
 
         while len(self.buffer) < MAX_TIMESTEPS:
@@ -99,12 +99,14 @@ class EvaluationLightningModule(pl.LightningModule):
                 predicted_action_tokens
             )
 
+            if is_action_pointless(actions_for_env):
+                logger.info("Model returned pointless action; terminating early")
+                break
+
             # Take a step in the environment
-            (
-                observation,
-                is_task_done,
-                is_task_successful,
-            ) = self.take_step_in_environment(actions=actions_for_env)
+            observation, is_task_successful = self.take_step_in_environment(
+                actions=actions_for_env
+            )
 
         # Update the metric
         self.metric.update(
@@ -117,8 +119,8 @@ class EvaluationLightningModule(pl.LightningModule):
         logger.info("Task finished")
 
     def take_step_in_environment(
-        self, actions: dict[PoseActionType, npt.NDArray[np.float64]]
-    ) -> tuple[Observation, bool, bool]:
+        self, actions: dict[PoseActionType, npt.NDArray[np.float32]]
+    ) -> tuple[Observation, bool]:
         """Take a step in the environment, and return the next observation."""
         logger.debug("Taking step in the environment")
         step_result = self.environment.step(actions)
@@ -133,7 +135,7 @@ class EvaluationLightningModule(pl.LightningModule):
         is_successful = step_result.task_info["success"]
         assert isinstance(is_successful, bool)
 
-        return observation, step_result.done or step_result.truncated, is_successful
+        return observation, is_successful
 
     def add_prompt_to_buffer(self, prompt: str, prompt_assets: PromptAssets) -> None:
         """Prepare and encode the prompt."""

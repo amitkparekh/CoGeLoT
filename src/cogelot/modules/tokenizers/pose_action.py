@@ -12,6 +12,8 @@ from cogelot.structures.vima import (
     N_DISCRETE_Z_BINS,
     ROT_MAX,
     ROT_MIN,
+    STARTING_POSITION_ENV,
+    STARTING_ROTATION,
     X_MAX,
     X_MIN,
     Y_MAX,
@@ -129,7 +131,7 @@ class PoseActionTokenizer:
         action_token: dict[PoseActionType, torch.Tensor],
         *,
         should_remove_zth_position_dim: bool = True,
-    ) -> dict[PoseActionType, npt.NDArray[np.float64]]:
+    ) -> dict[PoseActionType, npt.NDArray[np.float32]]:
         """Convert discrete pose aciton tokens to the environment."""
         actions = self.convert_discrete_to_continuous(action_token)
 
@@ -141,7 +143,7 @@ class PoseActionTokenizer:
         actions_numpy = {k: v.cpu().numpy() for k, v in actions.items()}
         # actions_numpy = any_slice(actions_numpy, np.s_[0, 0])
 
-        return cast(dict[PoseActionType, npt.NDArray[np.float64]], actions_numpy)
+        return cast(dict[PoseActionType, npt.NDArray[np.float32]], actions_numpy)
 
     def _get_boundaries(
         self, device: torch.device
@@ -370,3 +372,26 @@ def prepare_target_actions(
     # Shape: (num action tokens per pose, batch size, num observations)
     discrete_target_actions_tensor = rearrange(discrete_target_actions_tensor, "B T A -> A B T")
     return discrete_target_actions_tensor
+
+
+def is_action_pointless(action_for_env: dict[PoseActionType, npt.NDArray[np.float32]]) -> bool:
+    """Figure out if the action is pointless, and therefore is the end-of-trajectory action.
+
+    If the robot performs a pointless action, it means that there are no other actions that it
+    feels that it should be doing. In this case, we that this as the end of the trajectory action.
+    """
+    is_pose0_position_pointless = np.allclose(
+        action_for_env["pose0_position"], STARTING_POSITION_ENV
+    )
+    is_pose0_rotation_pointless = np.allclose(action_for_env["pose0_rotation"], STARTING_ROTATION)
+    is_pose1_position_pointless = np.allclose(
+        action_for_env["pose1_position"], STARTING_POSITION_ENV
+    )
+    is_pose1_rotation_pointless = np.allclose(action_for_env["pose1_rotation"], STARTING_ROTATION)
+
+    return (
+        is_pose0_position_pointless
+        and is_pose0_rotation_pointless
+        and is_pose1_position_pointless
+        and is_pose1_rotation_pointless
+    )
