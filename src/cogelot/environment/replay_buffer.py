@@ -10,18 +10,38 @@ class ReplayBuffer:
     """Buffer for the current episode to allow replay."""
 
     def __init__(self) -> None:
+        self._task: Task | None = None
+        self._partition: Partition | None = None
+
+        self._success_per_step: list[bool] = []
+
         self._encoded_prompt: list[torch.Tensor] = []
         self._encoded_prompt_mask: list[torch.Tensor] = []
         self._encoded_observations: list[torch.Tensor] = []
         self._encoded_observation_masks: list[torch.Tensor] = []
         self._encoded_actions: list[torch.Tensor] = []
         self._encoded_action_masks: list[torch.Tensor] = []
-        self._task: Task | None = None
-        self._partition: Partition | None = None
 
     def __len__(self) -> int:
         """Get the number of steps taken."""
         return self.num_actions
+
+    @property
+    def success_per_step(self) -> list[bool]:
+        """Get the success per step."""
+        return self._success_per_step
+
+    @property
+    def is_successful(self) -> bool:
+        """Get whether the task is successful, as per the last step."""
+        try:
+            return self._success_per_step[-1]
+        except IndexError:
+            return False
+
+    def update_success_tracker(self, *, is_successful: bool) -> None:
+        """Update the success tracker."""
+        self._success_per_step.append(is_successful)
 
     @property
     def num_observations(self) -> int:
@@ -152,3 +172,4 @@ class ReplayBuffer:
 
         self._task = task
         self._partition = partition
+        self._success_per_step = []

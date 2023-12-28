@@ -78,8 +78,6 @@ class EvaluationLightningModule(pl.LightningModule):
         )
 
         # Run the task until the model thinks it is done
-        is_task_successful = False
-
         while len(self.buffer) < MAX_TIMESTEPS:
             logger.info(f"Taking step {len(self.buffer)}")
 
@@ -112,6 +110,7 @@ class EvaluationLightningModule(pl.LightningModule):
                 actions=actions_for_env
             )
 
+            self.buffer.update_success_tracker(is_successful=is_task_successful)
             if is_task_successful and self._should_stop_on_first_success:
                 logger.info("Task successful; terminating early")
                 break
