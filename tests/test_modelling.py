@@ -98,7 +98,7 @@ def test_model_forward_does_not_error(
         vima_lightning_module.embed_inputs(preprocessed_batch)
     )
     assert isinstance(forward_output, torch.Tensor)
-    assert torch.all(torch.isnan(forward_output)).item()
+    assert torch.isnan(forward_output).all().item() is False
 
 
 def test_training_step_does_not_error(
