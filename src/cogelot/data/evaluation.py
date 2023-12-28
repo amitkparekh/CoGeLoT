@@ -9,7 +9,7 @@ from vima_bench.tasks import PARTITION_TO_SPECS
 
 
 def get_every_partition_task_combination(
-    partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS
+    partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS,
 ) -> list[EvaluationEpisode]:
     """Get every partition-task combo from VIMA's `PARTITION_TO_SPECS`."""
     raw_instances_per_task_per_partition = partition_to_specs["test"]

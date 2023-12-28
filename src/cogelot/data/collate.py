@@ -128,7 +128,7 @@ def collate_preprocessed_instances(instances: list[PreprocessedInstance]) -> Pre
 
 
 def collate_preprocessed_instances_from_hf_dataset(
-    instances: list[dict[str, Any]]
+    instances: list[dict[str, Any]],
 ) -> PreprocessedBatch:
     """Collate a batch of preprocessed instances from the HF dataset."""
     parsed_instances = [PreprocessedInstance.model_validate(instance) for instance in instances]
