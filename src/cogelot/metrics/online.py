@@ -1,10 +1,11 @@
 import math
+from collections.abc import Mapping
 from typing import ClassVar
 
 import torch
 import wandb
 from loguru import logger
-from torchmetrics import MeanMetric, SumMetric
+from torchmetrics import MeanMetric, Metric, SumMetric
 
 from cogelot.structures.vima import Partition, Task, get_task_group_from_task
 
@@ -132,51 +133,31 @@ class OnlineEvaluationMetrics:
             for partition, task_counts in self.tasks_seen.items()
         }
 
-        # We want to remove any metrics where no tasks of that type have been seen
-        computed_tasks_seen = {
-            self.key_template.format(
-                partition=partition.value, task=str(task.value + 1).zfill(2), metric="seen"
-            ): count
-            for partition, task_counts in seen_per_task_per_partition.items()
-            for task, count in task_counts.items()
-            if count > 0
-        }
-
-        computed_steps = {
-            self.key_template.format(
-                partition=partition.value, task=str(task.value + 1).zfill(2), metric="steps"
-            ): steps.compute()
-            for partition, steps_per_task in self.steps_taken.items()
-            for task, steps in steps_per_task.items()
-            if seen_per_task_per_partition[partition][task] > 0
-        }
-
-        computed_success_rate = {
-            self.key_template.format(
-                partition=partition.value, task=str(task.value + 1).zfill(2), metric="success"
-            ): success_rate.compute()
-            for partition, success_rate_per_task in self.success_rate.items()
-            for task, success_rate in success_rate_per_task.items()
-            if seen_per_task_per_partition[partition][task] > 0
-        }
-
-        computed_hesitant_rate = {
-            self.key_template.format(
-                partition=partition.value, task=str(task.value + 1).zfill(2), metric="hesitant"
-            ): hesitant_rate.compute()
-            for partition, hesitant_rate_per_task in self.hesitance_rate.items()
-            for task, hesitant_rate in hesitant_rate_per_task.items()
-            if seen_per_task_per_partition[partition][task] > 0
-        }
-
-        computed_flailing_rate = {
-            self.key_template.format(
-                partition=partition.value, task=str(task.value + 1).zfill(2), metric="flailing"
-            ): flailing_rate.compute()
-            for partition, flailing_rate_per_task in self.flailing_rate.items()
-            for task, flailing_rate in flailing_rate_per_task.items()
-            if seen_per_task_per_partition[partition][task] > 0
-        }
+        computed_tasks_seen = self._compute_rates(
+            metrics_per_task_per_partition=seen_per_task_per_partition,
+            metric_name="seen",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_steps = self._compute_rates(
+            metrics_per_task_per_partition=self.steps_taken,
+            metric_name="steps",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_success_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.success_rate,
+            metric_name="success",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_hesitant_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.hesitance_rate,
+            metric_name="hesitant",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_flailing_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.flailing_rate,
+            metric_name="flailing",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
 
         return {
             **computed_tasks_seen,
@@ -185,3 +166,25 @@ class OnlineEvaluationMetrics:
             **computed_hesitant_rate,
             **computed_flailing_rate,
         }
+
+    def _compute_rates(
+        self,
+        *,
+        metrics_per_task_per_partition: Mapping[Partition, Mapping[Task, Metric | torch.Tensor]],
+        metric_name: str,
+        seen_per_task_per_partition: dict[Partition, dict[Task, torch.Tensor]],
+    ) -> dict[str, torch.Tensor]:
+        """Compute the various rates for a given metric into a flattened dictionary.
+
+        This involves a huge dictionary comprehension, but it's also the fastest way to do this
+        madness.
+        """
+        computed_metrics = {
+            self.key_template.format(
+                partition=partition.value, task=str(task.value + 1).zfill(2), metric=metric_name
+            ): metric.compute() if isinstance(metric, Metric) else metric
+            for partition, metrics_per_task in metrics_per_task_per_partition.items()
+            for task, metric in metrics_per_task.items()
+            if seen_per_task_per_partition[partition][task] > 0
+        }
+        return computed_metrics
