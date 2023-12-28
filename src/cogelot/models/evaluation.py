@@ -34,6 +34,8 @@ class EvaluationLightningModule(pl.LightningModule):
         environment: VIMAEnvironment,
         model: VIMALightningModule,
         instance_preprocessor: InstancePreprocessor,
+        *,
+        should_stop_on_first_success: bool = True,
     ) -> None:
         super().__init__()
         self.environment = environment
@@ -42,6 +44,8 @@ class EvaluationLightningModule(pl.LightningModule):
         self.pose_action_tokenizer = self.model.policy.pose_action_tokenizer
         self.buffer = ReplayBuffer()
         self.metric = OnlineEvaluationMetrics()
+
+        self._should_stop_on_first_success = should_stop_on_first_success
 
     def test_step(
         self,
@@ -107,6 +111,10 @@ class EvaluationLightningModule(pl.LightningModule):
             observation, is_task_successful = self.take_step_in_environment(
                 actions=actions_for_env
             )
+
+            if is_task_successful and self._should_stop_on_first_success:
+                logger.info("Task successful; terminating early")
+                break
 
         # Update the metric
         self.metric.update(
