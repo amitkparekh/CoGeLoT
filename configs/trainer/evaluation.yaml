@@ -3,7 +3,7 @@ defaults:
   - callbacks:
       - model_summary
       - rich_progress
-  - logger: wandb_evaluation
+  - override logger: none
   - _self_
 
 # The evaluation runs each task 100 times, so we do that here.

@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - trainer: default
+  - trainer: evaluation
   - /instance_preprocessor.yaml@model
   - model@model.model: from_their_policy
   - datamodule: evaluation
@@ -29,24 +29,3 @@ model:
     should_display_debug_window: true
     should_render_prompt: true
     should_hide_arm_rgb: false
-
-trainer:
-  max_epochs: 1
-
-  # The evaluation is going to be deterministic so it's consistent per run/model
-  deterministic: True
-
-  logger:
-    - _target_: pytorch_lightning.loggers.WandbLogger
-      save_dir: ${output_dir}
-      name: Their Model
-      project: cogelot-downstream
-      entity: pyop
-      log_model: False
-      offline: true
-
-  # Override the callbacks with just the logging ones
-  callbacks:
-    - _target_: pytorch_lightning.callbacks.RichModelSummary
-      max_depth: -1
-    - _target_: pytorch_lightning.callbacks.RichProgressBar
