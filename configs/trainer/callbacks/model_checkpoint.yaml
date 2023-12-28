@@ -1,5 +1,5 @@
 model_checkpoint:
-  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
   dirpath: ${output_dir}/checkpoints
   save_top_k: 4
   monitor: val_loss
