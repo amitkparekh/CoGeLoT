@@ -15,7 +15,7 @@ def download_model_from_wandb(
         return checkpoint_path
 
     # Get the run from wandb
-    import wandb
+    import wandb  # noqa: WPS433
 
     api = wandb.Api()
     run = api.run(f"{entity}/{project}/{run_id}")
@@ -36,7 +36,7 @@ def download_model_from_wandb(
 
 def get_id_from_current_run() -> str | None:
     """Get the current run ID from wandb, if there is a run in progress on the current machine."""
-    import wandb
+    import wandb  # noqa: WPS433
 
     if wandb.run is None:
         logger.warning(

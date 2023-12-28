@@ -43,7 +43,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.buffer = ReplayBuffer()
         self.metric = OnlineEvaluationMetrics()
 
-    def test_step(  # type: ignore[override]
+    def test_step(
         self,
         batch: EvaluationEpisode,
         batch_idx: int,  # noqa: ARG002

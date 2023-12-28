@@ -24,6 +24,11 @@ OBSERVATIONS_FILE_NAME = "obs.pkl"
 RGB_PATH_PER_VIEW: Mapping[str, str] = MappingProxyType({"top": "rgb_top", "front": "rgb_front"})
 
 
+def _load_data_from_pickle(pickled_file: Path) -> Any:
+    """Load the data from a pickle file."""
+    return pickle.load(pickled_file.open("rb"))  # noqa: S301
+
+
 def get_all_raw_instance_directories(
     raw_data_dir: Path, *, task_filter: Task | None = None
 ) -> Iterator[Path]:
@@ -50,13 +55,8 @@ def load_rgb_observation_image(
         return torch.from_numpy(np.asarray(image).copy()).moveaxis(-1, 0).contiguous()
 
 
-def load_data_from_pickle(pickled_file: Path) -> Any:
-    """Load the data from a pickle file."""
-    return pickle.load(pickled_file.open("rb"))  # noqa: S301
-
-
 def parse_object_metadata(trajectory_metadata: dict[str, Any]) -> list[ObjectMetadata]:
-    """Extract the object metadata from the trajectory metadata."""
+    """Extract and parse object metadata from the trajectory metadata."""
     object_metadata: list[ObjectMetadata] = []
 
     for object_id, object_info in trajectory_metadata["obj_id_to_info"].items():
@@ -74,7 +74,7 @@ def parse_object_metadata(trajectory_metadata: dict[str, Any]) -> list[ObjectMet
 
 def parse_pose_actions(instance_dir: Path) -> list[PoseAction]:
     """Parse the pose actions."""
-    raw_action_data = load_data_from_pickle(instance_dir.joinpath(ACTIONS_FILE_NAME))
+    raw_action_data = _load_data_from_pickle(instance_dir.joinpath(ACTIONS_FILE_NAME))
     num_actions = len(raw_action_data[POSE_ACTION_KEYS[0]])
     actions_dict = {key: torch.from_numpy(raw_action_data[key]) for key in POSE_ACTION_KEYS}
     actions = [
@@ -92,7 +92,7 @@ def parse_pose_actions(instance_dir: Path) -> list[PoseAction]:
 
 def parse_observations(instance_dir: Path) -> list[Observation]:
     """Parse observations from raw data."""
-    raw_obs_data = load_data_from_pickle(instance_dir.joinpath(OBSERVATIONS_FILE_NAME))
+    raw_obs_data = _load_data_from_pickle(instance_dir.joinpath(OBSERVATIONS_FILE_NAME))
     raw_segmentation_data = raw_obs_data["segm"]
     num_obserations = len(raw_segmentation_data["top"])
 
@@ -122,7 +122,7 @@ def parse_observations(instance_dir: Path) -> list[Observation]:
 
 def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
     """Create a VIMAInstance from their instance dir."""
-    trajectory_metadata = load_data_from_pickle(
+    trajectory_metadata = _load_data_from_pickle(
         instance_dir.joinpath(TRAJECTORY_METADATA_FILE_NAME)
     )
 
