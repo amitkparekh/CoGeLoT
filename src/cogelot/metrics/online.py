@@ -3,11 +3,10 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import torch
-import wandb
 from loguru import logger
 from torchmetrics import MeanMetric, Metric, SumMetric
 
-from cogelot.structures.vima import Partition, Task, get_task_group_from_task
+from cogelot.structures.vima import Partition, Task
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
@@ -60,17 +59,6 @@ class OnlineEvaluationMetrics:
 
     key_template: ClassVar[str] = "{metric}/L{partition}/Task{task}"
 
-    columns: ClassVar[list[str]] = [
-        "partition",
-        "partition_index",
-        "task",
-        "task_index",
-        "task_group",
-        "task_group_index",
-        "is_successful",
-        "num_steps",
-    ]
-
     def __init__(self) -> None:
         self.success_rate = {
             partition: {task: MeanMetric() for task in Task} for partition in Partition
@@ -88,8 +76,6 @@ class OnlineEvaluationMetrics:
             partition: {task: SumMetric() for task in Task} for partition in Partition
         }
 
-        self.episode_success_table = wandb.Table(columns=self.columns)
-
     def update(
         self,
         partition: Partition,
@@ -101,27 +87,12 @@ class OnlineEvaluationMetrics:
         """Update the metric with the result of an episode."""
         logger.debug(f"Updating metric for {partition}/{task}")
 
-        is_successful = success_tracker_per_step[-1]
-
         # To be successful means it ends successfully
         self.success_rate[partition][task](int(success_tracker_per_step[-1]))
         self.hesitance_rate[partition][task](compute_hesitance(success_tracker_per_step))
         self.flailing_rate[partition][task](compute_flailing(success_tracker_per_step))
         self.steps_taken[partition][task](num_steps_taken)
         self.tasks_seen[partition][task](1)
-
-        task_group = get_task_group_from_task(task)
-
-        self.episode_success_table.add_data(
-            partition.name,
-            partition.value,
-            task.name,
-            task.value + 1,
-            task_group.name,
-            task_group.value,
-            1 if is_successful else 0,
-            num_steps_taken,
-        )
 
     def compute(self) -> dict[str, torch.Tensor]:
         """Compute the metrics, returning a flattened dict of all metrics.
