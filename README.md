@@ -53,6 +53,10 @@ There were some errors when doing it all in one step, so the dataset creation ne
 
 The raw dataset is aronud 712GB.
 
+### Creating the different dataset variants
+
+Controlling how the datasets are made is done through the various Pydantic settings (which can be controlled with environment variables).
+
 ### Tokenising the instances, ready for modelling
 
 To make loading data efficient when modelling, all the instances were tokenized in advanced. Similarly, this is also available on HF, as a different config name.
