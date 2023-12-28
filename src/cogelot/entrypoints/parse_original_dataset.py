@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Annotated, Optional
@@ -8,13 +9,23 @@ from tqdm import tqdm
 
 from cogelot.common.io import save_pickle
 from cogelot.data.parse import (
-    create_vima_instance_from_instance_dir,
+    VIMAInstanceParser,
     get_all_raw_instance_directories,
 )
 from cogelot.entrypoints.settings import Settings
-from cogelot.structures.vima import Task
+from cogelot.structures.vima import Task, VIMAInstance
 
 settings = Settings()
+
+
+def _create_vima_instance_parser() -> VIMAInstanceParser:
+    """Create the VIMA instance parser, with the correct settings."""
+    if settings.dataset_variant == "original":
+        return VIMAInstanceParser(keep_null_action=False)
+    if settings.dataset_variant == "keep_null_action":
+        return VIMAInstanceParser(keep_null_action=True)
+
+    raise ValueError(f"Unknown dataset variant: {settings.dataset_variant}")
 
 
 def create_instance_filename_from_raw_instance_dir(instance_dir: Path) -> str:
@@ -29,6 +40,7 @@ def parse_and_save_instance(
     *,
     output_dir: Path,
     replace_if_exists: bool = False,
+    create_vima_instance_from_instance_dir: Callable[[Path], VIMAInstance],
 ) -> None:
     """Parse the raw instance and save it to the output dir.
 
@@ -78,6 +90,8 @@ def parse_original_dataset(
         )
     )
 
+    vima_instance_parser = _create_vima_instance_parser()
+
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         logger.info("Submit instance paths for processing")
         futures = {
@@ -86,6 +100,7 @@ def parse_original_dataset(
                 path,
                 output_dir=parsed_instances_dir,
                 replace_if_exists=replace_if_exists,
+                create_vima_instance_from_instance_dir=vima_instance_parser.create_partial(),
             )
             for path in tqdm(all_raw_instance_directories, desc="Submit instances for processing")
         }

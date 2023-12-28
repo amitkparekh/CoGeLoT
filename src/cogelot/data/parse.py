@@ -1,5 +1,6 @@
 import pickle
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from copy import deepcopy
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, get_args
@@ -120,32 +121,83 @@ def parse_observations(instance_dir: Path) -> list[Observation]:
     return observations
 
 
-def create_vima_instance_from_instance_dir(instance_dir: Path) -> VIMAInstance:
-    """Create a VIMAInstance from their instance dir."""
-    trajectory_metadata = _load_data_from_pickle(
-        instance_dir.joinpath(TRAJECTORY_METADATA_FILE_NAME)
-    )
+class VIMAInstanceParser:
+    """Parser for VIMA instances.
 
-    observations = parse_observations(instance_dir)
-    pose_actions = parse_pose_actions(instance_dir)
-    # Add on a null action to mark the end of the movement
-    pose_actions.append(PoseAction.get_null_action())
+    Since the logic can get complicated, this class makes it easier to control how we make variants
+    from the original dataset, without needing to change everything-else in all the other places.
 
-    if len(observations) != len(pose_actions):
-        raise ValueError(
-            f"Number of observations ({len(observations)}) does not match number of pose actions "
-            f"({len(pose_actions)}) for instance {instance_dir}"
+    The logic can be a little confusing, but this seemed like the best way to do it given that
+    things are handled a little confusingly in the original data. For more detail, check out the
+    tests.
+    """
+
+    def __init__(self, *, keep_null_action: bool) -> None:
+        self.keep_null_action = keep_null_action
+
+    def __call__(self, instance_dir: Path) -> VIMAInstance:
+        """Parse the instance from the instance directory."""
+        return self.parse_from_instance_dir(instance_dir)
+
+    def create_partial(self) -> Callable[[Path], VIMAInstance]:
+        """Create a partial function that parses the instances from the directory.
+
+        Note: This creates new objects to serve as the function, but it's not a problem because
+        this is a lightweight class.
+        """
+        return deepcopy(self).parse_from_instance_dir
+
+    def parse_from_instance_dir(self, instance_dir: Path) -> VIMAInstance:
+        """Create a VIMAInstance from their instance dir."""
+        trajectory_metadata = _load_data_from_pickle(
+            instance_dir.joinpath(TRAJECTORY_METADATA_FILE_NAME)
         )
 
-    return VIMAInstance(
-        index=int(instance_dir.stem),
-        task=Task[instance_dir.parent.stem],
-        total_steps=trajectory_metadata["steps"],
-        prompt=trajectory_metadata["prompt"],
-        prompt_assets=PromptAssets.from_raw_prompt_assets(trajectory_metadata["prompt_assets"]),
-        end_effector_type=trajectory_metadata["end_effector_type"],
-        object_metadata=parse_object_metadata(trajectory_metadata),
-        pose_actions=pose_actions,
-        observations=observations,
-        generation_seed=trajectory_metadata["seed"],
-    )
+        pose_actions = self._parse_pose_actions(instance_dir)
+        observations = self._parse_observations(instance_dir, num_pose_actions=len(pose_actions))
+
+        if len(observations) != len(pose_actions):
+            raise ValueError(
+                f"Number of observations ({len(observations)}) does not match number of pose actions "
+                f"({len(pose_actions)}) for instance {instance_dir}"
+            )
+
+        return VIMAInstance(
+            index=int(instance_dir.stem),
+            task=Task[instance_dir.parent.stem],
+            total_steps=trajectory_metadata["steps"],
+            prompt=trajectory_metadata["prompt"],
+            prompt_assets=PromptAssets.from_raw_prompt_assets(
+                trajectory_metadata["prompt_assets"]
+            ),
+            end_effector_type=trajectory_metadata["end_effector_type"],
+            object_metadata=parse_object_metadata(trajectory_metadata),
+            pose_actions=pose_actions,
+            observations=observations,
+            generation_seed=trajectory_metadata["seed"],
+        )
+
+    def _parse_pose_actions(self, instance_dir: Path) -> list[PoseAction]:
+        """Parse the pose actions for the instance."""
+        pose_actions = parse_pose_actions(instance_dir)
+
+        # If we are keeping the null action, then we need to add it on since the data does not come
+        # with it.
+        if self.keep_null_action:
+            pose_actions.append(PoseAction.get_null_action())
+
+        return pose_actions
+
+    def _parse_observations(
+        self, instance_dir: Path, *, num_pose_actions: int
+    ) -> list[Observation]:
+        """Parse the observations for the instance."""
+        observations = parse_observations(instance_dir)
+
+        # If we are not keeping the null action, then we need to make sure that we do not include
+        # any observations that are past the number of pose actions, since the original data
+        # contains the correct number of observations + 1 for after the final action took place.
+        if not self.keep_null_action:
+            observations = observations[:num_pose_actions]
+
+        return observations

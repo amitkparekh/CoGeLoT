@@ -19,7 +19,7 @@ settings = Settings()
 
 
 def _get_config_name_for_task(task: Task) -> str:
-    return f"{settings.dataset_variant}/{settings.raw_config_name}--{task.name}"
+    return f"{settings.dataset_variant}/{settings.parsed_config_name}--{task.name}"
 
 
 def _get_pickled_instance_paths(root_dir: Path) -> list[Path]:

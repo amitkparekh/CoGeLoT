@@ -11,14 +11,16 @@ from torch.testing._comparison import (
     not_close_error_metas,
 )
 
-from cogelot.data.parse import create_vima_instance_from_instance_dir
+from cogelot.data.parse import VIMAInstanceParser
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
 
-def test_parsing_vima_instance_does_not_error(raw_instance_dir: Path) -> None:
-    instance = create_vima_instance_from_instance_dir(raw_instance_dir)
+def test_parsing_vima_instance_does_not_error(
+    vima_instance_parser: VIMAInstanceParser, raw_instance_dir: Path
+) -> None:
+    instance = vima_instance_parser(raw_instance_dir)
     assert isinstance(instance, VIMAInstance)
     assert instance.num_observations == instance.num_actions
 

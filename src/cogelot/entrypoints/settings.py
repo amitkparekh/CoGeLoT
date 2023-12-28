@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings
 
-DATASET_VARIANT = Literal["original"]
+DATASET_VARIANT = Literal["original", "keep_null_action"]
 
 
 class Settings(BaseSettings):
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # The repository ID on HF
     hf_repo_id: str = "amitkparekh/vima"
-    raw_config_name: str = "raw"
+    parsed_config_name: str = "parsed"
     preprocessed_config_name: str = "preprocessed"
 
     dataset_variant: DATASET_VARIANT = "original"
