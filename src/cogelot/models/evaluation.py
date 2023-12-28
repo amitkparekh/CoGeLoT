@@ -119,7 +119,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.metric.update(
             partition,
             vima_instance.task,
-            is_successful=is_task_successful,
+            success_tracker_per_step=self.buffer.success_per_step,
             num_steps_taken=len(self.buffer),
         )
         self.log_dict(self.metric.compute(), logger=True, on_step=True, on_epoch=False)
