@@ -30,15 +30,9 @@ class Settings(BaseSettings):
     storage_data_dir: Path = storage_dir.joinpath("data/")
     raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
 
-    parsed_data_dir: Path = storage_data_dir.joinpath(dataset_variant, "parsed/")
-    parsed_instances_dir: Path = parsed_data_dir.joinpath("instances/")
-    parsed_hf_dataset_dir: Path = parsed_data_dir.joinpath("hf/")
-    parsed_hf_parquets_dir: Path = parsed_data_dir.joinpath("hf_parquets/")
-
-    preprocessed_data_dir: Path = storage_data_dir.joinpath(dataset_variant, "preprocessed/")
-    preprocessed_instances_dir: Path = preprocessed_data_dir.joinpath("instances/")
-    preprocessed_hf_dataset_dir: Path = preprocessed_data_dir.joinpath("hf/")
-    preprocessed_hf_parquets_dir: Path = preprocessed_data_dir.joinpath("hf_parquets/")
+    _instances_subdir: str = "instances/"
+    _hf_subdir: str = "hf/"
+    _hf_parquets_subdir: str = "hf_parquets/"
 
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")
@@ -55,3 +49,43 @@ class Settings(BaseSettings):
     def num_shards(self) -> dict[str, int]:
         """Get the number of shards per split."""
         return {"train": self.num_train_shards, "valid": self.num_valid_shards}
+
+    @property
+    def parsed_data_dir(self) -> Path:
+        """Location of all parsed data."""
+        return self.storage_data_dir.joinpath(self.dataset_variant, self.parsed_config_name)
+
+    @property
+    def parsed_instances_dir(self) -> Path:
+        """Location of all parsed instances."""
+        return self.parsed_data_dir.joinpath(self._instances_subdir)
+
+    @property
+    def parsed_hf_dataset_dir(self) -> Path:
+        """Location of the arrow files for the HF dataset."""
+        return self.parsed_data_dir.joinpath(self._hf_subdir)
+
+    @property
+    def parsed_hf_parquets_dir(self) -> Path:
+        """Location of the parquet files for the HF dataset."""
+        return self.parsed_data_dir.joinpath(self._hf_parquets_subdir)
+
+    @property
+    def preprocessed_data_dir(self) -> Path:
+        """Location of all preprocessed data."""
+        return self.storage_data_dir.joinpath(self.dataset_variant, self.preprocessed_config_name)
+
+    @property
+    def preprocessed_instances_dir(self) -> Path:
+        """Location of all preprocessed instances."""
+        return self.preprocessed_data_dir.joinpath(self._instances_subdir)
+
+    @property
+    def preprocessed_hf_dataset_dir(self) -> Path:
+        """Location of the arrow files for the HF dataset."""
+        return self.preprocessed_data_dir.joinpath(self._hf_subdir)
+
+    @property
+    def preprocessed_hf_parquets_dir(self) -> Path:
+        """Location of the parquet files for the HF dataset."""
+        return self.preprocessed_data_dir.joinpath(self._hf_parquets_subdir)
