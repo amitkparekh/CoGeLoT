@@ -351,9 +351,7 @@ def _upload_parquet_files_to_hub(
     use_multi_commits: bool = False,
 ) -> None:
     """Upload parquet files to the hub."""
-    # Ensure that the parquet files directory exists and is the same as the config name
     assert dataset_shards_output_dir.is_dir()
-    assert dataset_shards_output_dir.name == config_name
 
     api = HfApi(endpoint=HF_ENDPOINT)
 
