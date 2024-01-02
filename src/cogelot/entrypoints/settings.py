@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings
 
+from cogelot.structures.vima import Task
+
 DATASET_VARIANT = Literal["original", "keep_null_action"]
 
 
@@ -66,11 +68,6 @@ class Settings(BaseSettings):
         return self.parsed_data_dir.joinpath(self._hf_subdir)
 
     @property
-    def parsed_hf_parquets_dir(self) -> Path:
-        """Location of the parquet files for the HF dataset."""
-        return self.parsed_data_dir.joinpath(self._hf_parquets_subdir)
-
-    @property
     def preprocessed_data_dir(self) -> Path:
         """Location of all preprocessed data."""
         return self.storage_data_dir.joinpath(self.dataset_variant, self.preprocessed_config_name)
@@ -86,6 +83,16 @@ class Settings(BaseSettings):
         return self.preprocessed_data_dir.joinpath(self._hf_subdir)
 
     @property
-    def preprocessed_hf_parquets_dir(self) -> Path:
+    def hf_parquets_dir(self) -> Path:
         """Location of the parquet files for the HF dataset."""
-        return self.preprocessed_data_dir.joinpath(self._hf_parquets_subdir)
+        return self.storage_data_dir.joinpath(self._hf_parquets_subdir)
+
+    def get_config_name_for_task(
+        self, task: Task, *, stage: Literal["parsing", "preprocessing"]
+    ) -> str:
+        """Get the config name for the given task."""
+        name_for_stage = {
+            "parsing": self.parsed_config_name,
+            "preprocessing": self.preprocessed_config_name,
+        }
+        return f"{self.dataset_variant}/{name_for_stage[stage]}--{task.name}"

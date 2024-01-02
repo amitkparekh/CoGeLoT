@@ -25,18 +25,8 @@ submit_jobs() {
 	# Create the preprocessed HF datasets
 	create_preprocessed_dataset_job_id=$(sbatch --export=DATASET_VARIANT=$DATASET_VARIANT --parsable --dependency=afterok:"${preprocess_instances_job_id}" "$(get_abs_filename slurm/create-preprocessed-dataset.sh)")
 	echo "Create preprocessed dataset: $create_preprocessed_dataset_job_id"
-
-	# Upload the raw HF datasets (after we are done preprocessing instances)
-	upload_raw_dataset_job_id=$(sbatch --export=DATASET_VARIANT=$DATASET_VARIANT --parsable --dependency=afterok:"${preprocess_instances_job_id}" "$(get_abs_filename slurm/upload-raw-dataset.sh)")
-	echo "Upload raw dataset: $upload_raw_dataset_job_id"
-
-	# Upload the preprocessed HF datasets
-	upload_preprocessed_dataset_job_id=$(sbatch --export=DATASET_VARIANT=$DATASET_VARIANT --parsable --dependency=afterok:"${create_preprocessed_dataset_job_id}" "$(get_abs_filename slurm/upload-preprocessed-dataset.sh)")
-	echo "Upload preprocessed dataset: $upload_preprocessed_dataset_job_id"
 }
 
-DATASET_VARIANT='original'
-submit_jobs
-
+# DATASET_VARIANT='original'
 DATASET_VARIANT="keep_null_action"
 submit_jobs

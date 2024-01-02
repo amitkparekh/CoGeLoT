@@ -19,10 +19,6 @@ from cogelot.structures.vima import Task
 settings = Settings()
 
 
-def _get_config_name_for_task(task: Task) -> str:
-    return f"{settings.dataset_variant}/{settings.preprocessed_config_name}--{task.name}"
-
-
 def _get_preprocessed_instances_dir_per_task(preprocessed_instances_dir: Path) -> dict[Task, Path]:
     """Get the preprocessed instances directory for each task."""
     preprocessed_instances_dir_per_task: dict[Task, Path] = {
@@ -69,7 +65,7 @@ def create_preprocessed_hf_dataset(
         writer_batch_size=writer_batch_size,
         dataset_builder_kwargs={
             "dataset_name": dataset_name,
-            "config_name": _get_config_name_for_task(task),
+            "config_name": settings.get_config_name_for_task(task, stage="preprocessing"),
         },
     )
     preprocessed_valid_dataset = create_hf_dataset_from_paths(
@@ -80,7 +76,7 @@ def create_preprocessed_hf_dataset(
         writer_batch_size=writer_batch_size,
         dataset_builder_kwargs={
             "dataset_name": dataset_name,
-            "config_name": _get_config_name_for_task(task),
+            "config_name": settings.get_config_name_for_task(task, stage="preprocessing"),
         },
     )
     # Merge the two into a dataset dict
@@ -129,7 +125,7 @@ def create_preprocessed_dataset_per_task(
         create_preprocessed_hf_dataset(
             task=task,
             task_instances_dir=task_instances_dir,
-            output_dir=preprocessed_hf_dataset_dir.joinpath(_get_config_name_for_task(task)),
+            output_dir=preprocessed_hf_dataset_dir.joinpath(task.name),
             num_workers=num_workers,
             dataset_name=settings.safe_hf_repo_id,
             writer_batch_size=writer_batch_size,

@@ -18,10 +18,6 @@ from cogelot.structures.vima import Task, VIMAInstance
 settings = Settings()
 
 
-def _get_config_name_for_task(task: Task) -> str:
-    return f"{settings.dataset_variant}/{settings.parsed_config_name}--{task.name}"
-
-
 def _get_pickled_instance_paths(root_dir: Path) -> list[Path]:
     """Get all the pickled instances from the root dir."""
     path_iterator = root_dir.rglob("*.pkl.gz")
@@ -85,7 +81,7 @@ def create_hf_dataset_for_each_task(
             writer_batch_size=writer_batch_size,
             dataset_builder_kwargs={
                 "dataset_name": settings.safe_hf_repo_id,
-                "config_name": _get_config_name_for_task(task),
+                "config_name": settings.get_config_name_for_task(task, stage="parsing"),
             },
         )
 

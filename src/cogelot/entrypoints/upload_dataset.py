@@ -15,9 +15,9 @@ def upload_raw_dataset(
     parsed_hf_dataset_dir: Annotated[
         Path, typer.Argument(help="Location of the raw HF dataset")
     ] = settings.parsed_hf_dataset_dir,
-    parsed_hf_parquets_dir: Annotated[
-        Path, typer.Argument(help="Location of the raw HF parquets")
-    ] = settings.parsed_hf_parquets_dir,
+    hf_parquets_dir: Annotated[
+        Path, typer.Argument(help="Location of the HF parquets")
+    ] = settings.hf_parquets_dir,
     task_index_filter: Annotated[
         Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
     ] = None,
@@ -30,7 +30,7 @@ def upload_raw_dataset(
     """Upload the raw datasets to the hub."""
     logger.info("Uploading the raw datasets to the hub...")
 
-    parsed_hf_parquets_dir.mkdir(parents=True, exist_ok=True)
+    hf_parquets_dir.mkdir(parents=True, exist_ok=True)
 
     for task_dataset_path in parsed_hf_dataset_dir.iterdir():
         task = Task[task_dataset_path.name]
@@ -44,7 +44,7 @@ def upload_raw_dataset(
             task_dataset_path,
             hf_repo_id=settings.hf_repo_id,
             num_shards=settings.num_shards,
-            hf_parquets_dir=parsed_hf_parquets_dir,
+            hf_parquets_dir=hf_parquets_dir,
             use_custom_method=use_custom_method,
         )
 
@@ -55,9 +55,9 @@ def upload_preprocessed_dataset(
     preprocessed_hf_dataset_dir: Annotated[
         Path, typer.Argument(help="Location of the preprocessed HF dataset")
     ] = settings.preprocessed_hf_dataset_dir,
-    preprocessed_hf_parquets_dir: Annotated[
-        Path, typer.Argument(help="Location of the preprocessed HF parquets")
-    ] = settings.preprocessed_hf_parquets_dir,
+    hf_parquets_dir: Annotated[
+        Path, typer.Argument(help="Location of the HF parquets")
+    ] = settings.hf_parquets_dir,
     task_index_filter: Annotated[
         Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
     ] = None,
@@ -70,10 +70,10 @@ def upload_preprocessed_dataset(
     """Upload the preprocessed datasets to the hub."""
     logger.info("Uploading the preprocessed datasets to the hub...")
 
-    preprocessed_hf_parquets_dir.mkdir(parents=True, exist_ok=True)
+    hf_parquets_dir.mkdir(parents=True, exist_ok=True)
 
     for task_dataset_path in preprocessed_hf_dataset_dir.iterdir():
-        task = Task[task_dataset_path.name.removeprefix("preprocessed--")]
+        task = Task[task_dataset_path.name]
         if task_index_filter is not None and task_index_filter != task.value:
             logger.info(f"Skipping task {task}...")
             continue
@@ -83,7 +83,7 @@ def upload_preprocessed_dataset(
             task_dataset_path,
             hf_repo_id=settings.hf_repo_id,
             num_shards=settings.num_shards,
-            hf_parquets_dir=preprocessed_hf_parquets_dir,
+            hf_parquets_dir=hf_parquets_dir,
             use_custom_method=use_custom_method,
         )
 
