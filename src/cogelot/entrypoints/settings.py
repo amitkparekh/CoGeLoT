@@ -3,9 +3,8 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings
 
+from cogelot.structures.constants import DATASET_VARIANT
 from cogelot.structures.vima import Task
-
-DATASET_VARIANT = Literal["original", "keep_null_action"]
 
 
 class Settings(BaseSettings):
