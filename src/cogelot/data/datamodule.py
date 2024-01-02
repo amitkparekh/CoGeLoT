@@ -13,6 +13,7 @@ from cogelot.common.hf_datasets import (
     load_dataset_from_disk,
     maybe_split_dataset_by_node,
 )
+from cogelot.common.settings import CONFIG_STAGES, DATASET_VARIANT, Settings
 from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
 from cogelot.data.datasets import only_select_indices_within_range, repeat_dataset_for_batch_size
 from cogelot.data.evaluation import VIMAEvaluationDataset
@@ -27,6 +28,7 @@ class DataModuleKwargs(TypedDict):
 
     num_workers: int
     batch_size: int
+    dataset_variant: DATASET_VARIANT
     dataloader_kwargs: NotRequired[dict[str, Any]]
 
     # For filtering the dataset
@@ -38,11 +40,12 @@ class DataModuleKwargs(TypedDict):
 class VIMADataModule(abc.ABC, LightningDataModule):
     """Datamodule for the VIMA dataset."""
 
-    config_name: str = "preprocessed"
+    _desired_config_stage: CONFIG_STAGES = "preprocessing"
 
     def __init__(self, **kwargs: Unpack[DataModuleKwargs]) -> None:
         super().__init__()
         self._kwargs = kwargs
+        self._dataset_variant: DATASET_VARIANT = kwargs["dataset_variant"]
         self._num_workers = kwargs.get("num_workers", 0)
         self.batch_size = kwargs.get("batch_size", 1)
         self._dataloader_kwargs = kwargs.get("dataloader_kwargs", {})
@@ -134,12 +137,13 @@ class VIMADataModule(abc.ABC, LightningDataModule):
 
     def _maybe_get_config_for_task_index(self, task_index: int | None) -> str:
         """Get the config name for the task index, if the task index is provided."""
+        settings = Settings()
         if not task_index:
-            return self.config_name
+            return settings.get_config_name(stage=self._desired_config_stage)
 
         task = Task(task_index)
         logger.info(f"Limiting task to `{task}`")
-        return f"{self.config_name}--{task.name}"
+        return settings.get_config_name_for_task(task, stage=self._desired_config_stage)
 
 
 class VIMADataModuleFromHF(VIMADataModule):

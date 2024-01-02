@@ -56,7 +56,7 @@ def download_parquet_files_from_hub(
     """
     pattern = "*.parquet"
     if config_name_prefix:
-        pattern = f"**{config_name_prefix}*/*.parquet"
+        pattern = f"**{config_name_prefix}*/**/*.parquet"
 
     snapshot_download(
         repo_id=repo_id,

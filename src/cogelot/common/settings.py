@@ -88,10 +88,14 @@ class Settings(BaseSettings):
         """Location of the parquet files for the HF dataset."""
         return self.storage_data_dir.joinpath(self._hf_parquets_subdir)
 
-    def get_config_name_for_task(self, task: Task, *, stage: CONFIG_STAGES) -> str:
-        """Get the config name for the given task."""
+    def get_config_name(self, *, stage: CONFIG_STAGES) -> str:
+        """Get the config name for the given stage."""
         name_for_stage = {
             "parsing": self.parsed_config_name,
             "preprocessing": self.preprocessed_config_name,
         }
-        return f"{self.dataset_variant}/{name_for_stage[stage]}--{task.name}"
+        return f"{self.dataset_variant}/{name_for_stage[stage]}"
+
+    def get_config_name_for_task(self, task: Task, *, stage: CONFIG_STAGES) -> str:
+        """Get the config name for the given task."""
+        return f"{self.get_config_name(stage=stage)}--{task.name}"
