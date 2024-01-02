@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from cogelot.common.io import save_pickle
-from cogelot.entrypoints.settings import Settings
+from cogelot.common.settings import Settings
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.vima import Task, VIMAInstance
 

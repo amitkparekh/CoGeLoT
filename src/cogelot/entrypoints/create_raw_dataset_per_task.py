@@ -8,11 +8,11 @@ from loguru import logger
 from rich.progress import track
 
 from cogelot.common.io import load_pickle
+from cogelot.common.settings import Settings
 from cogelot.data.datasets import (
     create_hf_dataset_from_paths,
     load_instance_from_path,
 )
-from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task, VIMAInstance
 
 settings = Settings()

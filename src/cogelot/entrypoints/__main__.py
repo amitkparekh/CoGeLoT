@@ -8,6 +8,7 @@ from cogelot.common.hydra import (
     pretty_print_hydra_config,
     run_task_function_with_hydra,
 )
+from cogelot.common.settings import Settings
 from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
     create_preprocessed_dataset_per_task,
 )
@@ -15,7 +16,6 @@ from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_p
 from cogelot.entrypoints.evaluate import evaluate_model, validate_model
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
-from cogelot.entrypoints.settings import Settings
 from cogelot.entrypoints.train import train_model
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
 

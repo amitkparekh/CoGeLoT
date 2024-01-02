@@ -8,11 +8,11 @@ from loguru import logger
 from tqdm import tqdm
 
 from cogelot.common.io import save_pickle
+from cogelot.common.settings import Settings
 from cogelot.data.parse import (
     VIMAInstanceParser,
     get_all_raw_instance_directories,
 )
-from cogelot.entrypoints.settings import Settings
 from cogelot.structures.vima import Task, VIMAInstance
 
 settings = Settings()

@@ -3,8 +3,10 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings
 
-from cogelot.structures.constants import DATASET_VARIANT
 from cogelot.structures.vima import Task
+
+DATASET_VARIANT = Literal["original", "keep_null_action"]
+CONFIG_STAGES = Literal["parsing", "preprocessing"]
 
 
 class Settings(BaseSettings):
@@ -86,9 +88,7 @@ class Settings(BaseSettings):
         """Location of the parquet files for the HF dataset."""
         return self.storage_data_dir.joinpath(self._hf_parquets_subdir)
 
-    def get_config_name_for_task(
-        self, task: Task, *, stage: Literal["parsing", "preprocessing"]
-    ) -> str:
+    def get_config_name_for_task(self, task: Task, *, stage: CONFIG_STAGES) -> str:
         """Get the config name for the given task."""
         name_for_stage = {
             "parsing": self.parsed_config_name,
