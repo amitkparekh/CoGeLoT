@@ -12,11 +12,11 @@ from torchmetrics.classification import MulticlassAccuracy
 
 from cogelot.structures.vima import AxesPerPoseActionType, Task
 
-METRIC_LABELS = [
+METRIC_LABELS = tuple(
     f"{pose}_{axis}"
     for pose, axis_literal in AxesPerPoseActionType.items()
     for axis in get_args(axis_literal)
-]
+)
 
 
 class OfflineMetrics(torch.nn.Module):
@@ -35,9 +35,9 @@ class OfflineMetrics(torch.nn.Module):
 
         self.loss_per_axis = ClasswiseWrapper(
             MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
-            labels=METRIC_LABELS,
+            labels=list(METRIC_LABELS),
             prefix=f"{self.split_name}/",
-            postfix="_loss",
+            postfix="/loss",
         )
         self.accuracy_per_axis = ClasswiseWrapper(
             MulticlassAccuracy(
@@ -45,9 +45,9 @@ class OfflineMetrics(torch.nn.Module):
                 multidim_average="samplewise",
                 ignore_index=ignore_index,
             ),
-            labels=METRIC_LABELS,
+            labels=list(METRIC_LABELS),
             prefix=f"{self.split_name}/",
-            postfix="_acc",
+            postfix="/acc",
         )
 
     @torch.no_grad()
@@ -145,7 +145,7 @@ class TrainingMetrics(OfflineMetrics):
     def compute(self) -> dict[str, torch.Tensor]:
         """Compute and return the metrics."""
         metrics: dict[str, torch.Tensor] = super().compute()
-        metrics["trainer/examples_seen"] = self.examples_seen.compute()
+        metrics["examples_seen"] = self.examples_seen.compute()
         return metrics
 
 
@@ -169,9 +169,9 @@ class ValidationMetrics(OfflineMetrics):
         self.loss_per_axis_per_task = {
             task: ClasswiseWrapper(
                 MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
-                labels=METRIC_LABELS,
-                prefix=f"{self.split_name}/task{task.value + 1:02d}_",
-                postfix="_loss",
+                labels=list(METRIC_LABELS),
+                prefix=f"{self.split_name}/task{task.value + 1:02d}/",
+                postfix="/loss",
             )
             for task in Task
         }
@@ -182,9 +182,9 @@ class ValidationMetrics(OfflineMetrics):
                     multidim_average="samplewise",
                     ignore_index=ignore_index,
                 ),
-                labels=METRIC_LABELS,
-                prefix=f"{self.split_name}/task{task.value + 1:02d}_",
-                postfix="_acc",
+                labels=list(METRIC_LABELS),
+                prefix=f"{self.split_name}/task{task.value + 1:02d}/",
+                postfix="/acc",
             )
             for task in Task
         }
