@@ -170,8 +170,8 @@ class ValidationMetrics(OfflineMetrics):
             task: ClasswiseWrapper(
                 MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
                 labels=list(METRIC_LABELS),
-                prefix=f"{self.split_name}/task{task.value + 1:02d}/",
-                postfix="/loss",
+                prefix=f"{self.split_name}/",
+                postfix=f"/task{task.value + 1:02d}/loss",
             )
             for task in Task
         }
@@ -183,8 +183,8 @@ class ValidationMetrics(OfflineMetrics):
                     ignore_index=ignore_index,
                 ),
                 labels=list(METRIC_LABELS),
-                prefix=f"{self.split_name}/task{task.value + 1:02d}/",
-                postfix="/acc",
+                prefix=f"{self.split_name}/",
+                postfix=f"/task{task.value + 1:02d}/acc",
             )
             for task in Task
         }
