@@ -135,16 +135,6 @@ class VIMADataModule(abc.ABC, LightningDataModule):
                 batch_size=self.batch_size,
             )
 
-    def _maybe_get_config_for_task_index(self, task_index: int | None) -> str:
-        """Get the config name for the task index, if the task index is provided."""
-        settings = Settings()
-        if not task_index:
-            return settings.get_config_name(stage=self._desired_config_stage)
-
-        task = Task(task_index)
-        logger.info(f"Limiting task to `{task}`")
-        return settings.get_config_name_for_task(task, stage=self._desired_config_stage)
-
 
 class VIMADataModuleFromHF(VIMADataModule):
     """VIMA DataModule by explicitly downloading the dataset from HF."""
@@ -181,6 +171,16 @@ class VIMADataModuleFromHF(VIMADataModule):
         )
         return dataset
 
+    def _maybe_get_config_for_task_index(self, task_index: int | None) -> str:
+        """Get the config name for the task index, if the task index is provided."""
+        settings = Settings()
+        if not task_index:
+            return settings.get_config_name(stage=self._desired_config_stage)
+
+        task = Task(task_index)
+        logger.info(f"Limiting task to `{task}`")
+        return settings.get_config_name_for_task(task, stage=self._desired_config_stage)
+
 
 class VIMADataModuleFromLocalFiles(VIMADataModule):
     """VIMA DataModule which loads data from disk."""
@@ -192,7 +192,7 @@ class VIMADataModuleFromLocalFiles(VIMADataModule):
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset from the arrow files."""
         task_index_seen = self._kwargs.get("task_index_seen")
-        config_name = self._maybe_get_config_for_task_index(task_index_seen)
+        config_name: str = Task(task_index_seen).name if task_index_seen else ""
 
         dataset = load_dataset_from_disk(
             self._dataset_data_dir,

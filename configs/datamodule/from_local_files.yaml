@@ -3,4 +3,4 @@ defaults:
   - _self_
 
 _target_: cogelot.data.datamodule.VIMADataModuleFromLocalFiles
-dataset_data_dir: ./storage/data/preprocessed/hf
+dataset_data_dir: ./storage/data/${.dataset_variant}/preprocessed/hf/
