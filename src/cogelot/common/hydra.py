@@ -94,6 +94,16 @@ def rewire_trainer_logger(config: DictConfig) -> DictConfig:
     return _rewrite_mapping_to_list(config, key="trainer.logger", blank_value=False)
 
 
+def preprocess_config_for_hydra(config: DictConfig) -> DictConfig:
+    """Preprocess the config we load so that it works with Hydra.
+
+    This is because we do certain "tricks" to make certain aspects composable.
+    """
+    config = rewire_trainer_callbacks(config)
+    config = rewire_trainer_logger(config)
+    return config
+
+
 def load_hydra_config(
     config_dir: Path, config_file_name: str, overrides: list[str] | None = None
 ) -> DictConfig:
@@ -107,8 +117,7 @@ def load_hydra_config(
         )
         HydraConfig.instance().set_config(config)
     config = remove_hydra_key_from_config(config)
-    config = rewire_trainer_callbacks(config)
-    config = rewire_trainer_logger(config)
+    config = preprocess_config_for_hydra(config)
     return config
 
 
