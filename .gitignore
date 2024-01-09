@@ -4,6 +4,7 @@
 ### asdf ###
 .tool-versions
 .rtx.toml
+.mise.toml
 
 ### direnv ###
 .direnv
