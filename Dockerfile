@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime
 
 # Install basic dependencies
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,6 +18,7 @@ RUN conda install -y -c pytorch -c nvidia python=3.11 pytorch-cuda=12.1 && \
 	# Install PDM
 	conda install -y -c conda-forge pdm && \
 	# Install GitHub CLI
-	conda install -y -c conda-forge gh
+	conda install -y -c conda-forge gh && \
+	conda clean --all -y
 
 ENTRYPOINT [ "/bin/bash" ]
