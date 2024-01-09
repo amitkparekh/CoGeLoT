@@ -15,7 +15,7 @@ min_epochs: 1 # prevents early stopping
 # max_epochs: 10
 # Although they ran for 10 epochs, experiments have shown that nothing interesting happens after 6
 # epochs, because the LR rate has plummeted to 1e-7 by then.
-max_epochs: 6
+max_epochs: 10
 
 accelerator: cpu
 devices: 1
@@ -29,6 +29,3 @@ check_val_every_n_epoch: 1
 # set True to to ensure deterministic results
 # makes training slower but gives more reproducibility than just setting seeds
 deterministic: False
-# logger:
-#   - _target_: pytorch_lightning.loggers.NeptuneLogger
-#     project: pokerface/cogelot

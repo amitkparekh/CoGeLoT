@@ -1,0 +1,8 @@
+early_stopping_train_acc:
+  _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: train_acc
+  min_delta: 0.001
+  patience: 10
+  mode: max
+  stopping_threshold: 1
+  check_on_train_epoch_end: true

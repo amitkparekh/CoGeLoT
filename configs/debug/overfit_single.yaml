@@ -2,6 +2,11 @@
 defaults:
   - default.yaml
   - override /learning_rate_scheduler@model.lr_scheduler_partial_fn: constant
+  - override /trainer/logger: none
+  - override /trainer/callbacks:
+      - model_summary
+      - rich_progress
+      - early_stopping_train_acc
   - _self_
 
 task_name: "overfit-single-example"
@@ -18,14 +23,6 @@ model:
     # Make the LRs bigger so it drops faster
     lr: 0.0001
 
-  policy:
-    transformer_decoder:
-      attn_layers:
-        layer_dropout: 0
-
-    prompt_encoder:
-      dropout_rate: 0.0
-
 trainer:
   log_every_n_steps: 1
   max_epochs: 500
@@ -34,16 +31,3 @@ trainer:
   num_sanity_val_steps: 0
 
   enable_checkpointing: false
-  callbacks:
-    - _target_: pytorch_lightning.callbacks.RichModelSummary
-      max_depth: -1
-    - _target_: pytorch_lightning.callbacks.RichProgressBar
-    - _target_: pytorch_lightning.callbacks.EarlyStopping
-      monitor: train_acc
-      min_delta: 0.001
-      check_on_train_epoch_end: true
-      patience: 10
-      mode: max
-      stopping_threshold: 1
-
-  logger: false
