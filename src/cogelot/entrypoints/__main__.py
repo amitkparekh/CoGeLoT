@@ -8,7 +8,8 @@ from cogelot.common.hydra import (
     pretty_print_hydra_config,
     run_task_function_with_hydra,
 )
-from cogelot.common.settings import Settings
+from cogelot.common.settings import DATASET_VARIANT, Settings
+from cogelot.data.datamodule import VIMADataModuleFromHF
 from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
     create_preprocessed_dataset_per_task,
 )
@@ -91,6 +92,26 @@ def evaluate(ctx: typer.Context, config_file: Path = Path("configs/evaluate.yaml
         config_file_name=config_file.name,
         task_function=evaluate_model,
     )
+
+
+@app.command(rich_help_panel="Run Commands")
+def download_data_for_training(
+    dataset_variant: DATASET_VARIANT,
+    num_workers: int = 0,
+    hf_datasets_repo_name: str = "amitkparekh/vima",
+) -> None:
+    """Download the training data from HF in advance.
+
+    In can take a while when not using loads of workers for parallel downloads, which is the case
+    during the training command. So, this is a good way to do it quickly.
+    """
+    datamodule = VIMADataModuleFromHF(
+        hf_datasets_repo_name=hf_datasets_repo_name,
+        num_workers=num_workers,
+        dataset_variant=dataset_variant,
+        batch_size=0,
+    )
+    datamodule.prepare_data()
 
 
 if __name__ == "__main__":
