@@ -189,7 +189,7 @@ extend-exclude = [
 ]
 
 [tool.mypy]
-python_version = 3.11
+python_version = "3.11"
 exclude = [
     '^src\/vima',
     '^src\/vima_bench',
@@ -202,13 +202,15 @@ namespace_packages = true
 ignore_missing_imports = true
 # Dynamic typing
 disallow_any_generics = true
-disallow_any_explicit = false # Because sometimes it's just too complicated :/
+# Because sometimes it's just too complicated :/
+disallow_any_explicit = false
 disallow_any_decorated = false
 disallow_subclassing_any = true
 # Untyped definitions and calls
 check_untyped_defs = true
 disallow_incomplete_defs = true
-disallow_untyped_calls = false # We can't control all of these :(
+# We can't control all of these :(
+disallow_untyped_calls = false
 disallow_untyped_decorators = false
 disallow_untyped_defs = true
 # None and Optional handling
