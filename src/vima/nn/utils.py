@@ -161,5 +161,4 @@ def build_mlp(
     init_linear_fn = _create_init_linear_function(weight_init, bias_init)
     logger.debug("Initialising Linears in MLP...")
     # mlp.apply(init_linear_fn)
-    logger.debug("Done initialising Linears in MLP.")
     return mlp
