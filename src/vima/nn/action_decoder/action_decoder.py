@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Literal
 
 import torch
+from loguru import logger
 from torch import nn
 
 from vima.nn.action_decoder.dists import Categorical, MultiCategorical
@@ -69,6 +70,7 @@ def _build_mlp_distribution_net(
             Gaussian centered around 0.0 in the beginning.
             Set to None to use the default gain (dependent on the NN activation)
     """
+    logger.debug("Building MLP distribution net")
     mlp = build_mlp(
         input_dim=input_dim,
         output_dim=output_dim,
