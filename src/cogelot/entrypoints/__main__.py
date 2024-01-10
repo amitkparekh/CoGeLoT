@@ -3,13 +3,13 @@ from pathlib import Path
 
 import typer
 
+from cogelot.common.hf_datasets import download_parquet_files_from_hub
 from cogelot.common.hydra import (
     load_hydra_config,
     pretty_print_hydra_config,
     run_task_function_with_hydra,
 )
-from cogelot.common.settings import DATASET_VARIANT, Settings
-from cogelot.data.datamodule import VIMADataModuleFromHF
+from cogelot.common.settings import Settings
 from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
     create_preprocessed_dataset_per_task,
 )
@@ -95,8 +95,7 @@ def evaluate(ctx: typer.Context, config_file: Path = Path("configs/evaluate.yaml
 
 
 @app.command(rich_help_panel="Run Commands")
-def download_data_for_training(
-    dataset_variant: DATASET_VARIANT,
+def download_training_data(
     num_workers: int = 0,
     hf_datasets_repo_name: str = "amitkparekh/vima",
 ) -> None:
@@ -105,13 +104,7 @@ def download_data_for_training(
     In can take a while when not using loads of workers for parallel downloads, which is the case
     during the training command. So, this is a good way to do it quickly.
     """
-    datamodule = VIMADataModuleFromHF(
-        hf_datasets_repo_name=hf_datasets_repo_name,
-        num_workers=num_workers,
-        dataset_variant=dataset_variant,
-        batch_size=0,
-    )
-    datamodule.prepare_data()
+    download_parquet_files_from_hub(hf_datasets_repo_name, max_workers=num_workers)
 
 
 if __name__ == "__main__":
