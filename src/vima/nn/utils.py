@@ -29,17 +29,19 @@ def get_activation(activation: str | Callable | None) -> Callable:
 
 def get_initializer(method: str | Callable, activation: str) -> Callable:
     if isinstance(method, str):
+        if not method.endswith("_"):
+            method = f"{method}_"
         assert (
             getattr(nn.init, method, None) is not None
-        ), f"Unknown initializer: torch.nn.init.{method}_"
+        ), f"Unknown initializer: torch.nn.init.{method}"
 
-        if method == "orthogonal":
+        if method == "orthogonal_":
             try:
                 gain = nn.init.calculate_gain(activation)
             except ValueError:
                 gain = 1.0
             return partial(nn.init.orthogonal_, gain=gain)
-        return getattr(nn.init, f"{method}_")
+        return getattr(nn.init, method)
 
     assert callable(method)
     return method
