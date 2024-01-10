@@ -20,6 +20,7 @@ class ActionDecoder(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
+        num_workers_for_initialisation: int = 1,
     ) -> None:
         super().__init__()
 
@@ -34,6 +35,7 @@ class ActionDecoder(nn.Module):
                     activation=activation,
                     norm_type=norm_type,
                     last_layer_gain=last_layer_gain,
+                    num_workers_for_initialisation=num_workers_for_initialisation,
                 )
             elif isinstance(v, list):
                 self._decoders[k] = MultiCategoricalNet(
@@ -44,6 +46,7 @@ class ActionDecoder(nn.Module):
                     activation=activation,
                     norm_type=norm_type,
                     last_layer_gain=last_layer_gain,
+                    num_workers_for_initialisation=num_workers_for_initialisation,
                 )
             else:
                 raise ValueError(f"Invalid action_dims value: {v}")
@@ -61,6 +64,7 @@ def _build_mlp_distribution_net(
     activation: str | Callable = "relu",
     norm_type: Literal["batchnorm", "layernorm"] | None = None,
     last_layer_gain: float | None = 0.01,
+    num_workers_for_initialisation: int = 1,
 ):
     """Use orthogonal initialization to initialize the MLP policy.
 
@@ -80,6 +84,7 @@ def _build_mlp_distribution_net(
         weight_init="orthogonal",
         bias_init="zeros",
         norm_type=norm_type,
+        num_workers_for_initialisation=num_workers_for_initialisation,
     )
     if last_layer_gain:
         assert last_layer_gain > 0
@@ -98,6 +103,7 @@ class CategoricalNet(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
+        num_workers_for_initialisation: int = 1,
     ) -> None:
         """Use orthogonal initialization to initialize the MLP policy.
 
@@ -116,6 +122,7 @@ class CategoricalNet(nn.Module):
             activation=activation,
             norm_type=norm_type,
             last_layer_gain=last_layer_gain,
+            num_workers_for_initialisation=num_workers_for_initialisation,
         )
         self.head = CategoricalHead()
 
@@ -134,6 +141,7 @@ class MultiCategoricalNet(nn.Module):
         activation: str | Callable = "relu",
         norm_type: Literal["batchnorm", "layernorm"] | None = None,
         last_layer_gain: float | None = 0.01,
+        num_workers_for_initialisation: int = 1,
     ) -> None:
         """Use orthogonal initialization to initialize the MLP policy Split head, does not share
         the NN weights.
@@ -155,6 +163,7 @@ class MultiCategoricalNet(nn.Module):
                 activation=activation,
                 norm_type=norm_type,
                 last_layer_gain=last_layer_gain,
+                num_workers_for_initialisation=num_workers_for_initialisation,
             )
             self.mlps.append(net)
         self.head = MultiCategoricalHead(action_dims)

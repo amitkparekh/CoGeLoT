@@ -13,3 +13,4 @@ action_decoder:
   activation: "relu"
   norm_type: null
   last_layer_gain: 0.01
+  num_workers_for_initialisation: ${datamodule.num_workers}
