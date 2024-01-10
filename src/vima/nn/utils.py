@@ -2,7 +2,6 @@ from collections.abc import Callable
 from functools import partial
 from typing import Literal
 
-from loguru import logger
 from torch import nn
 from torch.nn import Embedding as _Embedding
 
@@ -58,6 +57,17 @@ def get_norm_layer(norm_type: Literal["batchnorm", "layernorm"] | None) -> Calla
         return nn.LayerNorm
 
     raise ValueError(f"Unsupported norm layer: {norm_type}")
+
+
+def _create_init_linear_function(
+    weight_init: Callable, bias_init: Callable
+) -> Callable[[nn.Module], None]:
+    def init_linear(module: nn.Module) -> None:
+        if isinstance(module, nn.Linear):
+            weight_init(module.weight)
+            bias_init(module.bias)
+
+    return init_linear
 
 
 class Embedding(_Embedding):
@@ -116,8 +126,6 @@ def build_mlp(
     hidden_depth = num_layers - 1 if hidden_depth is None else hidden_depth
 
     act_layer = get_activation(activation)
-    weight_init = get_initializer(weight_init, activation)
-    bias_init = get_initializer(bias_init, activation)
     norm_type = get_norm_layer(norm_type)
 
     modules = []
@@ -143,10 +151,10 @@ def build_mlp(
             act_layer = get_activation(add_output_activation)
         modules.append(act_layer())
 
-    logger.debug("Initialising weights/biases for linears in MLP...")
-    for mod in modules:
-        if isinstance(mod, nn.Linear):
-            weight_init(mod.weight)
-            bias_init(mod.bias)
+    mlp = nn.Sequential(*modules)
 
-    return nn.Sequential(*modules)
+    weight_init = get_initializer(weight_init, activation)
+    bias_init = get_initializer(bias_init, activation)
+    init_linear_fn = _create_init_linear_function(weight_init, bias_init)
+    mlp.apply(init_linear_fn)
+    return mlp
