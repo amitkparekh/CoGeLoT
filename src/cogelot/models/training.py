@@ -72,7 +72,7 @@ class VIMALightningModule(pl.LightningModule):
                 ignore_index=self.ignore_target_index,
             )
         )
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["policy"])
 
     @classmethod
     def from_wandb_run(
