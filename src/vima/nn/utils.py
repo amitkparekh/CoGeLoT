@@ -1,8 +1,61 @@
 from collections.abc import Callable
+from functools import partial
 from typing import Literal
 
+from loguru import logger
 from torch import nn
 from torch.nn import Embedding as _Embedding
+
+
+def get_activation(activation: str | Callable | None) -> Callable:
+    if not activation:
+        return nn.Identity
+    if callable(activation):
+        return activation
+
+    ACT_LAYER = {
+        "tanh": nn.Tanh,
+        "relu": partial(nn.ReLU, inplace=True),
+        "leaky_relu": partial(nn.LeakyReLU, inplace=True),
+        "swish": partial(nn.SiLU, inplace=True),  # SiLU is alias for Swish
+        "sigmoid": nn.Sigmoid,
+        "elu": partial(nn.ELU, inplace=True),
+        "gelu": nn.GELU,
+    }
+    activation = activation.lower()
+    assert activation in ACT_LAYER, f"Supported activations: {ACT_LAYER.keys()}"
+    return ACT_LAYER[activation]
+
+
+def get_initializer(method: str | Callable, activation: str) -> Callable:
+    if isinstance(method, str):
+        assert (
+            getattr(nn.init, method, None) is not None
+        ), f"Unknown initializer: torch.nn.init.{method}_"
+
+        if method == "orthogonal":
+            try:
+                gain = nn.init.calculate_gain(activation)
+            except ValueError:
+                gain = 1.0
+            return partial(nn.init.orthogonal_, gain=gain)
+        return getattr(nn.init, f"{method}_")
+
+    assert callable(method)
+    return method
+
+
+def get_norm_layer(norm_type: Literal["batchnorm", "layernorm"] | None) -> Callable:
+    if not norm_type:
+        return nn.Identity
+
+    norm_type = norm_type.lower()
+    if norm_type == "batchnorm":
+        return nn.BatchNorm1d
+    if norm_type == "layernorm":
+        return nn.LayerNorm
+
+    raise ValueError(f"Unsupported norm layer: {norm_type}")
 
 
 class Embedding(_Embedding):
@@ -58,87 +111,39 @@ def build_mlp(
         assert hidden_depth >= 0
     if num_layers is not None:
         assert num_layers >= 1
-    act_layer = get_activation(activation)
+    hidden_depth = num_layers - 1 if hidden_depth is None else hidden_depth
 
+    act_layer = get_activation(activation)
     weight_init = get_initializer(weight_init, activation)
     bias_init = get_initializer(bias_init, activation)
+    norm_type = get_norm_layer(norm_type)
 
-    if norm_type is not None:
-        norm_type = norm_type.lower()
+    modules = [nn.Linear(input_dim, output_dim)]
 
-    if not norm_type:
-        norm_type = nn.Identity
-    elif norm_type == "batchnorm":
-        norm_type = nn.BatchNorm1d
-    elif norm_type == "layernorm":
-        norm_type = nn.LayerNorm
-    else:
-        raise ValueError(f"Unsupported norm layer: {norm_type}")
-
-    hidden_depth = num_layers - 1 if hidden_depth is None else hidden_depth
-    if hidden_depth == 0:
-        mods = [nn.Linear(input_dim, output_dim)]
-    else:
-        mods = [nn.Linear(input_dim, hidden_dim), norm_type(hidden_dim), act_layer()]
-        for _i in range(hidden_depth - 1):
-            mods += [
-                nn.Linear(hidden_dim, hidden_dim),
-                norm_type(hidden_dim),
-                act_layer(),
-            ]
-        mods.append(nn.Linear(hidden_dim, output_dim))
+    if hidden_depth != 0:
+        modules.extend([norm_type(hidden_dim), act_layer()])
+        for _ in range(hidden_depth - 1):
+            modules.extend([nn.Linear(hidden_dim, hidden_dim), norm_type(hidden_dim), act_layer()])
+        modules.append(nn.Linear(hidden_dim, output_dim))
 
     if add_input_norm:
-        mods = [norm_type(input_dim), *mods]
+        modules = [norm_type(input_dim), *modules]
+
     if add_input_activation:
         if add_input_activation is not True:
             act_layer = get_activation(add_input_activation)
-        mods = [act_layer(), *mods]
+        modules = [act_layer(), *modules]
     if add_output_norm:
-        mods.append(norm_type(output_dim))
+        modules.append(norm_type(output_dim))
     if add_output_activation:
         if add_output_activation is not True:
             act_layer = get_activation(add_output_activation)
-        mods.append(act_layer())
+        modules.append(act_layer())
 
-    for mod in mods:
+    logger.debug("Initialising weights/biases for linears in MLP...")
+    for mod in modules:
         if isinstance(mod, nn.Linear):
             weight_init(mod.weight)
             bias_init(mod.bias)
 
-    return nn.Sequential(*mods)
-
-
-def get_activation(activation: str | Callable | None) -> Callable:
-    if not activation:
-        return nn.Identity
-    elif callable(activation):
-        return activation
-    ACT_LAYER = {
-        "tanh": nn.Tanh,
-        "relu": lambda: nn.ReLU(inplace=True),
-        "leaky_relu": lambda: nn.LeakyReLU(inplace=True),
-        "swish": lambda: nn.SiLU(inplace=True),  # SiLU is alias for Swish
-        "sigmoid": nn.Sigmoid,
-        "elu": lambda: nn.ELU(inplace=True),
-        "gelu": nn.GELU,
-    }
-    activation = activation.lower()
-    assert activation in ACT_LAYER, f"Supported activations: {ACT_LAYER.keys()}"
-    return ACT_LAYER[activation]
-
-
-def get_initializer(method: str | Callable, activation: str) -> Callable:
-    if isinstance(method, str):
-        assert hasattr(nn.init, f"{method}_"), f"Initializer nn.init.{method}_ does not exist"
-        if method == "orthogonal":
-            try:
-                gain = nn.init.calculate_gain(activation)
-            except ValueError:
-                gain = 1.0
-            return lambda x: nn.init.orthogonal_(x, gain=gain)
-        else:
-            return getattr(nn.init, f"{method}_")
-    else:
-        assert callable(method)
-        return method
+    return nn.Sequential(*modules)
