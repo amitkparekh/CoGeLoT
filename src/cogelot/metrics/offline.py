@@ -166,28 +166,32 @@ class ValidationMetrics(OfflineMetrics):
             max_num_classes=max_num_classes,
             ignore_index=ignore_index,
         )
-        self.loss_per_axis_per_task = {
-            task: ClasswiseWrapper(
-                MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
-                labels=list(METRIC_LABELS),
-                prefix=f"{self.split_name}/",
-                postfix=f"/task{task.value + 1:02d}/loss",
-            )
-            for task in Task
-        }
-        self.accuracy_per_axis_per_task = {
-            task: ClasswiseWrapper(
-                MulticlassAccuracy(
-                    num_classes=max_num_classes,
-                    multidim_average="samplewise",
-                    ignore_index=ignore_index,
-                ),
-                labels=list(METRIC_LABELS),
-                prefix=f"{self.split_name}/",
-                postfix=f"/task{task.value + 1:02d}/acc",
-            )
-            for task in Task
-        }
+        self.loss_per_axis_per_task = torch.nn.ModuleDict(
+            {
+                task.name: ClasswiseWrapper(
+                    MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
+                    labels=list(METRIC_LABELS),
+                    prefix=f"{self.split_name}/",
+                    postfix=f"/task{task.value + 1:02d}/loss",
+                )
+                for task in Task
+            }
+        )
+        self.accuracy_per_axis_per_task = torch.nn.ModuleDict(
+            {
+                task.name: ClasswiseWrapper(
+                    MulticlassAccuracy(
+                        num_classes=max_num_classes,
+                        multidim_average="samplewise",
+                        ignore_index=ignore_index,
+                    ),
+                    labels=list(METRIC_LABELS),
+                    prefix=f"{self.split_name}/",
+                    postfix=f"/task{task.value + 1:02d}/acc",
+                )
+                for task in Task
+            }
+        )
 
     @classmethod
     def without_per_task_metrics(
@@ -213,7 +217,7 @@ class ValidationMetrics(OfflineMetrics):
         super().update_loss(fine_grained_loss, tasks=tasks)
 
         for task, loss in zip(tasks, fine_grained_loss.unbind(dim=0), strict=True):
-            self.loss_per_axis_per_task[task].update(loss)
+            self.loss_per_axis_per_task[task.name].update(loss)
 
     @torch.no_grad()
     def update_accuracy(
@@ -231,7 +235,7 @@ class ValidationMetrics(OfflineMetrics):
         for task, predicted, target in zip(
             tasks, predicted_actions.unbind(dim=2), target_actions.unbind(dim=1), strict=True
         ):
-            self.accuracy_per_axis_per_task[task].update(predicted, target)
+            self.accuracy_per_axis_per_task[task.name].update(predicted, target)
 
     @torch.no_grad()
     def compute(self) -> dict[str, torch.Tensor]:
