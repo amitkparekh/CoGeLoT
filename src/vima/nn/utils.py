@@ -2,6 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from typing import Literal
 
+import torch
 from loguru import logger
 from torch import nn
 from torch.nn import Embedding as _Embedding
@@ -63,6 +64,7 @@ def get_norm_layer(norm_type: Literal["batchnorm", "layernorm"] | None) -> Calla
 def _create_init_linear_function(
     weight_init: Callable, bias_init: Callable
 ) -> Callable[[nn.Module], None]:
+    @torch.no_grad()
     def init_linear(module: nn.Module) -> None:
         if isinstance(module, nn.Linear):
             weight_init(module.weight)
