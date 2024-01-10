@@ -120,10 +120,11 @@ def build_mlp(
     bias_init = get_initializer(bias_init, activation)
     norm_type = get_norm_layer(norm_type)
 
-    modules = [nn.Linear(input_dim, output_dim)]
-
-    if hidden_depth != 0:
-        modules.extend([norm_type(hidden_dim), act_layer()])
+    modules = []
+    if hidden_depth == 0:
+        modules.append(nn.Linear(input_dim, output_dim))
+    else:
+        modules.extend([nn.Linear(input_dim, hidden_dim), norm_type(hidden_dim), act_layer()])
         for _ in range(hidden_depth - 1):
             modules.extend([nn.Linear(hidden_dim, hidden_dim), norm_type(hidden_dim), act_layer()])
         modules.append(nn.Linear(hidden_dim, output_dim))
