@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from functools import partial
-from multiprocessing import Pool
 from typing import Literal
 
 from loguru import logger
@@ -61,29 +60,6 @@ def get_norm_layer(norm_type: Literal["batchnorm", "layernorm"] | None) -> Calla
     raise ValueError(f"Unsupported norm layer: {norm_type}")
 
 
-def _initialise_linears(
-    modules: nn.Module, weight_init: Callable, bias_init: Callable, *, num_workers: int = 1
-) -> list[nn.Module]:
-    logger.debug("Initialising weights/biases for linears in MLP...")
-    linears = [mod for mod in modules if isinstance(mod, nn.Linear)]
-    weights = [mod.weight.detach().clone() for mod in linears]
-    biases = [mod.bias.detach().clone() for mod in linears]
-
-    with Pool(num_workers) as pool:
-        weights = pool.map(weight_init, weights)
-        biases = pool.map(bias_init, biases)
-
-    for mod, weight, bias in zip(linears, weights, biases):
-        mod.weight.data = weight
-        mod.bias.data = bias
-
-    # for mod in modules:
-    #     if isinstance(mod, nn.Linear):
-    #         weight_init(mod.weight)
-    #         bias_init(mod.bias)
-    return modules
-
-
 class Embedding(_Embedding):
     @property
     def output_dim(self):
@@ -105,7 +81,6 @@ def build_mlp(
     add_input_norm: bool = False,
     add_output_activation: bool | str | Callable = False,
     add_output_norm: bool = False,
-    num_workers_for_initialisation: int = 1,
 ) -> nn.Sequential:
     """In other popular RL implementations, tanh is typically used with orthogonal initialization,
     which may perform better than ReLU.
@@ -168,8 +143,10 @@ def build_mlp(
             act_layer = get_activation(add_output_activation)
         modules.append(act_layer())
 
-    modules = _initialise_linears(
-        modules, weight_init, bias_init, num_workers=num_workers_for_initialisation
-    )
+    logger.debug("Initialising weights/biases for linears in MLP...")
+    for mod in modules:
+        if isinstance(mod, nn.Linear):
+            weight_init(mod.weight)
+            bias_init(mod.bias)
 
     return nn.Sequential(*modules)
