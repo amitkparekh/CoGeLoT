@@ -42,7 +42,7 @@ def maybe_split_dataset_by_node(dataset: T) -> T:
 
 
 def download_parquet_files_from_hub(
-    repo_id: str, *, config_name_prefix: str | None = None, max_workers: int = 8
+    repo_id: str, *, pattern: str = "*.parquet", max_workers: int = 8
 ) -> None:
     """Download the parquet data files from the dataset on the hub.
 
@@ -50,14 +50,10 @@ def download_parquet_files_from_hub(
     fast as it could do. Even if we are not being rate limited, it is only downloading one SPLIT at
     a time. Not one file, not one shard, but per split.
 
-    If providing the `config_name_prefix`, then only the parquet files for that subset is
-    downloaded. If no `config_name_prefix` is provided, then we just download all the parquet
+    If providing the `pattern`, then only the files for that pattern is
+    downloaded. If no `pattern` is provided, then we just download all the parquet
     files.
     """
-    pattern = "*.parquet"
-    if config_name_prefix:
-        pattern = f"**{config_name_prefix}*/**/*.parquet"
-
     snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",

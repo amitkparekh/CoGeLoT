@@ -104,7 +104,9 @@ def download_training_data(
     In can take a while when not using loads of workers for parallel downloads, which is the case
     during the training command. So, this is a good way to do it quickly.
     """
-    download_parquet_files_from_hub(hf_datasets_repo_name, max_workers=num_workers)
+    download_parquet_files_from_hub(
+        hf_datasets_repo_name, pattern="**/preprocessed-*/**/*.parquet", max_workers=num_workers
+    )
 
 
 if __name__ == "__main__":

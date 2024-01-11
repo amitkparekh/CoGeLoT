@@ -148,7 +148,11 @@ class VIMADataModuleFromHF(VIMADataModule):
 
         This is just making sure the dataset has already been downloaded.
         """
-        download_parquet_files_from_hub(self._hf_datasets_repo_name, max_workers=self._num_workers)
+        download_parquet_files_from_hub(
+            self._hf_datasets_repo_name,
+            pattern=f"{self._dataset_variant}/preprocessed-*/**/*.parquet",
+            max_workers=self._num_workers,
+        )
 
     def _load_dataset(self) -> datasets.DatasetDict:
         """Load the dataset from the parquet files.
