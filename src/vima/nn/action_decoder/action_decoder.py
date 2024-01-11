@@ -83,7 +83,7 @@ def _build_mlp_distribution_net(
     )
     if last_layer_gain:
         assert last_layer_gain > 0
-        # nn.init.orthogonal_(mlp[-1].weight, gain=last_layer_gain)
+        nn.init.orthogonal_(mlp[-1].weight, gain=last_layer_gain)
     return mlp
 
 

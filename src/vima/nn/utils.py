@@ -160,5 +160,5 @@ def build_mlp(
     bias_init = get_initializer(bias_init, activation)
     init_linear_fn = _create_init_linear_function(weight_init, bias_init)
     logger.debug("Initialising Linears in MLP...")
-    # mlp.apply(init_linear_fn)
+    mlp.apply(init_linear_fn)
     return mlp
