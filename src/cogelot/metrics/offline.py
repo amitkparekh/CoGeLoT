@@ -14,7 +14,7 @@ from cogelot.structures.vima import AxesPerPoseActionType, Task
 
 METRIC_LABELS = tuple(
     f"{pose}_{axis}"
-    for pose, axis_literal in AxesPerPoseActionType.items()
+    for pose, axis_literal in sorted(AxesPerPoseActionType.items())
     for axis in get_args(axis_literal)
 )
 

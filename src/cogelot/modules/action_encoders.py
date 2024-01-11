@@ -101,7 +101,7 @@ class VIMAContinuousActionEmbedder(ActionEncoder):
             )
             for pose_action_type in normalized_continuous_actions
         }
-
+        # (batch, num obs, combined dim)
         combined_embedding = torch.cat(
             [
                 embedded_continuous_action_tokens[pose_action_type]

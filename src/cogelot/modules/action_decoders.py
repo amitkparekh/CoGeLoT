@@ -57,7 +57,7 @@ class VIMAActionDecoder(ActionDecoder):
         """
         logits_list = [
             axis.logits
-            for action_dist in predicted_action_distributions.values()
+            for _, action_dist in sorted(predicted_action_distributions.items())
             for axis in action_dist.dists
         ]
         logits_list = cast(list[torch.Tensor], logits_list)
