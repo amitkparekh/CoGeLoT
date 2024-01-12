@@ -6,7 +6,7 @@ hydra:
       NCCL_DEBUG_SUBSYS: ALL
       NCCL_DEBUG_FILE: "${hydra:runtime.output_dir}/nccl_debug.%h.%p.log"
       TORCH_CPP_LOG_LEVEL: INFO
-      TORCH_DISTRIBUTED_DEBUG: DETAIL
+      TORCH_DISTRIBUTED_DEBUG: INFO
       TORCH_SHOW_CPP_STACKTRACES: 1
       NCCL_P2P_DISABLE: 1
 
