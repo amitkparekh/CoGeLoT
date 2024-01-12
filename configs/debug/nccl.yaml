@@ -3,4 +3,4 @@ hydra:
   job:
     env_set:
       NCCL_DEBUG: "INFO"
-      NCCL_DEBUG_FILE: "${output_dir}/nccl_debug.%h.%p.log"
+      NCCL_DEBUG_FILE: "${hydra:runtime.output_dir}/nccl_debug.%h.%p.log"
