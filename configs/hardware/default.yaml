@@ -3,6 +3,11 @@
 defaults:
   - _self_
 
+hydra:
+  job:
+    env_set:
+      OMP_NUM_THREADS: 1
+
 datamodule:
   batch_size: 2
   num_workers: 2
