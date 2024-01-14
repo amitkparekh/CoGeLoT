@@ -31,7 +31,6 @@ def hydra_config(
     torch_device: torch.device,
     embed_dim: int,
     pretrained_model: str,
-    use_flash_attn: bool,  # noqa: FBT001
 ) -> DictConfig:
     GlobalHydra.instance().clear()
 
@@ -58,8 +57,6 @@ def hydra_config(
                 "model.policy.transformer_decoder.vima_xattn_gpt.xattn_ff_expanding=2",
             ]
         )
-        if use_flash_attn:
-            pytest.skip("VIMA model does not support FlashAttn")
 
     # Otherwise, custom overrides for xtransformers models
     else:
@@ -70,9 +67,6 @@ def hydra_config(
                 "model.policy.transformer_decoder.attn_layers.ff_mult=2",
             ]
         )
-        # Optionally, use flash attention
-        if use_flash_attn:
-            overrides.append("model.policy.transformer_decoder.attn_layers.attn_flash=true")
 
     config = load_hydra_config(
         config_dir=CONFIG_DIR, config_file_name=TRAIN_FILE.name, overrides=overrides
