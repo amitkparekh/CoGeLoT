@@ -8,7 +8,7 @@ from torchmetrics import (
     MultioutputWrapper,
     SumMetric,
 )
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import MulticlassAccuracy, MulticlassExactMatch
 
 from cogelot.structures.vima import AxesPerPoseActionType, Task
 
@@ -32,6 +32,10 @@ class OfflineMetrics(torch.nn.Module):
         super().__init__()
         self.split_name = split_name_prefix
         self.num_axes = num_axes
+
+        self.accuracy = MulticlassExactMatch(
+            num_classes=max_num_classes, ignore_index=ignore_index
+        )
 
         self.loss_per_axis = ClasswiseWrapper(
             MultioutputWrapper(MeanMetric(), num_outputs=self.num_axes),
@@ -85,10 +89,16 @@ class OfflineMetrics(torch.nn.Module):
         predicted_actions = rearrange(predicted_actions, "pose bsz obs dim -> pose dim bsz obs")
         self.accuracy_per_axis.update(predicted_actions, target_actions)
 
+        self.accuracy.update(
+            preds=rearrange(predicted_actions, "pose dim bsz obs -> (pose bsz obs) dim"),
+            target=rearrange(target_actions, "pose bsz obs -> (pose bsz obs)"),
+        )
+
     @torch.no_grad()
     def compute(self) -> dict[str, torch.Tensor]:
         """Compute and return the metrics."""
         metrics: dict[str, torch.Tensor] = {}
+        metrics[f"{self.split_name}_acc"] = self.accuracy.compute()
         metrics.update(self.loss_per_axis.compute())
         metrics.update(self.accuracy_per_axis.compute())
         return metrics
@@ -97,6 +107,7 @@ class OfflineMetrics(torch.nn.Module):
         """Reset the metrics."""
         self.loss_per_axis.reset()
         self.accuracy_per_axis.reset()
+        self.accuracy.reset()
 
 
 class TrainingMetrics(OfflineMetrics):
