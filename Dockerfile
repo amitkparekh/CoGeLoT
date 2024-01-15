@@ -13,7 +13,7 @@ RUN conda install --name base --revision 0 -y && \
 	conda clean --all -y
 
 # Install python 3.11 and cuda deps for pytorch (as pytorch do)
-RUN conda install -y -c pytorch -c nvidia python=3.11 pytorch-cuda=12.1 && \
+RUN conda install -y -c pytorch -c nvidia python=3.11 pytorch-cuda=11.8 && \
 	conda install -y -c pytorch pytorch && \
 	# Install PDM
 	conda install -y -c conda-forge pdm && \
