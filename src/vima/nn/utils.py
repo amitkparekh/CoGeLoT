@@ -3,6 +3,7 @@ from functools import partial
 from typing import Literal
 
 import torch
+from loguru import logger
 from torch import nn
 from torch.nn import Embedding as _Embedding
 
@@ -158,6 +159,6 @@ def build_mlp(
     weight_init = get_initializer(weight_init, activation)
     bias_init = get_initializer(bias_init, activation)
     init_linear_fn = _create_init_linear_function(weight_init, bias_init)
-    # logger.debug("Initialising Linears in MLP...")
-    # mlp.apply(init_linear_fn)
+    logger.debug("Initialising Linears in MLP...")
+    mlp.apply(init_linear_fn)
     return mlp
