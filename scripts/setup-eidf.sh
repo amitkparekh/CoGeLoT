@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 # Make the various directories we'll need
-mkdir -p /mnt/ceph_rbd/wandb /mnt/ceph_rbd/huggingface /mnt/ceph_rbd/data /mnt/ceph_rbd/torch
+mkdir -p /mnt/ceph_rbd/wandb /mnt/ceph_rbd/huggingface /mnt/ceph_rbd/data /mnt/ceph_rbd/torch /mnt/ceph_rbd/cache
+
+# Cache pip downloads for faster startups
+ln -s /mnt/ceph_rbd/cache /root/.cache
 
 apt update -y
 apt install -y --no-install-recommends gcc g++
