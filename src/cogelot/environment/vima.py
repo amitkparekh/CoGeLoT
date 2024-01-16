@@ -91,6 +91,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         It does not contain any observations or pose actions.
         """
         prompt = self.env.prompt
+        assert isinstance(prompt, str)
 
         prompt_assets = PromptAssets.from_raw_prompt_assets(
             cast(dict[str, Any], self.env.prompt_assets)
@@ -106,7 +107,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
             generation_seed=0,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
-            prompt=cast(str, prompt),
+            prompt=prompt,
             prompt_assets=prompt_assets,
         )
 
