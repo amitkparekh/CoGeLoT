@@ -223,5 +223,5 @@ class VIMABenchOnlineDataModule(VIMADataModule):
         """This is not used whatsoever by this class.
 
         To prevent abstract method errors, we just override it and pass. Is this the best solution?
-        No. Am I writing a dissertation? No.
+        No. Does it work well enough? Yes.
         """
