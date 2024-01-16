@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - override /model/transformer_decoder@model.policy.transformer_decoder:
+      - decoder_only.yaml
+      - attn_layers/default.yaml
+      - positional/absolute.yaml
+      - xattn_positional/absolute.yaml
+  - override /model/action_decoder@model.policy.action_decoder: token_per_axis
+  - override /model/action_encoder@model.policy.action_encoder: token_per_axis
+architecture: decoder_only
+attn_layers: default
+positional_encoding: absolute
+xattn_positional_encoding: absolute
+source: x-transformers
+prompt_input: decoder
+observation_input: decoder
+num_action_tokens: 14
