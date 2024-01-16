@@ -6,6 +6,7 @@ import torch
 from loguru import logger
 from numpy import typing as npt
 
+from cogelot.data.instance_transform import NullTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.metrics.online import OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
@@ -34,6 +35,7 @@ class EvaluationLightningModule(pl.LightningModule):
         environment: VIMAEnvironment,
         model: VIMALightningModule,
         instance_preprocessor: InstancePreprocessor,
+        vima_instance_transform: VIMAInstanceTransform = NullTransform(),  # noqa: WPS404
         *,
         should_stop_on_first_success: bool = True,
     ) -> None:
@@ -45,6 +47,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.buffer = ReplayBuffer()
         self.metric = OnlineEvaluationMetrics()
 
+        self._vima_instance_transform = vima_instance_transform
         self._should_stop_on_first_success = should_stop_on_first_success
 
     def test_step(
@@ -58,6 +61,8 @@ class EvaluationLightningModule(pl.LightningModule):
 
         # Create a VIMA instance from the environment, which parses all the metadata as we want it
         vima_instance = self.environment.create_vima_instance()
+        # Transform the instance as desired
+        vima_instance = self._vima_instance_transform(vima_instance)
         self.run_vima_instance(vima_instance, partition)
 
     def reset_environment(self, task: Task, partition: Partition) -> None:

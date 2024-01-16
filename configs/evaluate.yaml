@@ -6,6 +6,8 @@ defaults:
   # Import the instance_preprocessor.yaml config into the model
   - /instance_preprocessor.yaml@model
 
+  - evaluation_instance_transform@model.vima_instance_transform: none
+
   - datamodule: evaluation
   - hydra: default.yaml
   - hardware: default
@@ -19,8 +21,6 @@ output_dir: ${hydra:runtime.output_dir}
 seed: 42
 
 wandb:
-  entity: pyop
-  project: CoGeLoT
   run_id: null
 
 model:
@@ -28,8 +28,8 @@ model:
 
   model:
     _target_: cogelot.models.VIMALightningModule.from_wandb_run
-    wandb_entity: ${trainer.logger.wandb.entity}
-    wandb_project: ${trainer.logger.wandb.project}
+    wandb_entity: pyop
+    wandb_project: CoGeLoT
     wandb_run_id: ${wandb.run_id}
     checkpoint_save_dir: "./storage/data/models"
 
