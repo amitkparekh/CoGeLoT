@@ -74,6 +74,9 @@ lint = [
     "docformatter>=1.7.5",
 ]
 notebooks = ["ipykernel>=6.27.0"]
+monitoring = [
+    "nvitop>=1.3.2",
+]
 
 [tool.pdm.build]
 package-dir = "src"
