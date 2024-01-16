@@ -6,11 +6,10 @@ from typing import Any, Self
 
 import pytorch_lightning as pl
 import torch
-from loguru import logger
 
 from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
-from cogelot.metrics.offline import TrainingMetrics, ValidationMetrics
+from cogelot.metrics.offline import OfflineMetrics
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers.pose_action import prepare_target_actions
 from cogelot.nn.loss import compute_fine_grained_loss, reduce_fine_grained_loss
@@ -40,43 +39,28 @@ class VIMALightningModule(pl.LightningModule):
         policy: Policy,
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
-        enable_validation_per_task_metrics: bool = True,
-        _disable_all_metrics: bool = False,
     ) -> None:
         super().__init__()
-
-        self._disable_all_metrics = _disable_all_metrics
-        if self._disable_all_metrics:
-            logger.warning("All metrics are disabled for this model.")
-
         self.policy = policy
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
 
-        self.training_metrics = TrainingMetrics(
+        self.training_metrics = OfflineMetrics(
+            split_name_prefix="train",
             num_axes=14,
             max_num_classes=max(
                 N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
             ),
             ignore_index=self.ignore_target_index,
         )
-        self.validation_metrics = (
-            ValidationMetrics(
-                num_axes=14,
-                max_num_classes=max(
-                    N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
-                ),
-                ignore_index=self.ignore_target_index,
-            )
-            if enable_validation_per_task_metrics
-            else ValidationMetrics.without_per_task_metrics(
-                num_axes=14,
-                max_num_classes=max(
-                    N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
-                ),
-                ignore_index=self.ignore_target_index,
-            )
+        self.validation_metrics = OfflineMetrics(
+            split_name_prefix="val",
+            num_axes=14,
+            max_num_classes=max(
+                N_DISCRETE_X_BINS, N_DISCRETE_Y_BINS, N_DISCRETE_Z_BINS, N_DISCRETE_ROT_BINS
+            ),
+            ignore_index=self.ignore_target_index,
         )
         self.save_hyperparameters(ignore=["policy"])
 
@@ -133,22 +117,21 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
-        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self.training_metrics.update(
+            fine_grained_loss=fine_grained_loss,
+            predicted_actions=predicted_actions,
+            target_actions=discrete_target_actions,
+            tasks=batch.task,
+        )
 
-        if not self._disable_all_metrics:
-            self.training_metrics.update(
-                fine_grained_loss=fine_grained_loss,
-                predicted_actions=predicted_actions,
-                target_actions=discrete_target_actions,
-                tasks=batch.task,
-            )
-            self.log_dict(
-                self.training_metrics.compute(),
-                prog_bar=True,
-                logger=True,
-                batch_size=len(batch),
-                sync_dist=True,
-            )
+        self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
+        self.log_dict(
+            self.training_metrics.compute(),
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=True,
+        )
         return loss
 
     def validation_step(
@@ -169,24 +152,23 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
+        self.validation_metrics.update(
+            fine_grained_loss=fine_grained_loss,
+            predicted_actions=predicted_actions,
+            target_actions=discrete_target_actions,
+            tasks=batch.task,
+        )
+
         self.log(
             "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
-
-        if not self._disable_all_metrics:
-            self.validation_metrics.update(
-                fine_grained_loss=fine_grained_loss,
-                predicted_actions=predicted_actions,
-                target_actions=discrete_target_actions,
-                tasks=batch.task,
-            )
-            self.log_dict(
-                self.validation_metrics.compute(),
-                prog_bar=True,
-                logger=True,
-                batch_size=len(batch),
-                sync_dist=True,
-            )
+        self.log_dict(
+            self.validation_metrics.compute(),
+            prog_bar=True,
+            logger=True,
+            batch_size=len(batch),
+            sync_dist=True,
+        )
         return loss
 
     def configure_optimizers(self) -> Any:
