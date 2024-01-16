@@ -1,7 +1,0 @@
-early_stopping_val_acc:
-  _target_: pytorch_lightning.callbacks.EarlyStopping
-  monitor: val_acc
-  min_delta: 0.001
-  patience: 2
-  mode: max
-  stopping_threshold: 1
