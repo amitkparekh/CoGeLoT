@@ -6,6 +6,7 @@ from typing import Any, Self
 
 import pytorch_lightning as pl
 import torch
+from loguru import logger
 
 from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
@@ -40,8 +41,13 @@ class VIMALightningModule(pl.LightningModule):
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
         enable_validation_per_task_metrics: bool = True,
+        _disable_all_metrics: bool = False,
     ) -> None:
         super().__init__()
+
+        self._disable_all_metrics = _disable_all_metrics
+        if self._disable_all_metrics:
+            logger.warning("All metrics are disabled for this model.")
 
         self.policy = policy
 
@@ -127,21 +133,22 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
-        self.training_metrics.update(
-            fine_grained_loss=fine_grained_loss,
-            predicted_actions=predicted_actions,
-            target_actions=discrete_target_actions,
-            tasks=batch.task,
-        )
-
         self.log("train_loss", loss, prog_bar=True, logger=True, batch_size=len(batch))
-        self.log_dict(
-            self.training_metrics.compute(),
-            prog_bar=True,
-            logger=True,
-            batch_size=len(batch),
-            sync_dist=True,
-        )
+
+        if not self._disable_all_metrics:
+            self.training_metrics.update(
+                fine_grained_loss=fine_grained_loss,
+                predicted_actions=predicted_actions,
+                target_actions=discrete_target_actions,
+                tasks=batch.task,
+            )
+            self.log_dict(
+                self.training_metrics.compute(),
+                prog_bar=True,
+                logger=True,
+                batch_size=len(batch),
+                sync_dist=True,
+            )
         return loss
 
     def validation_step(
@@ -162,23 +169,24 @@ class VIMALightningModule(pl.LightningModule):
         )
         loss = reduce_fine_grained_loss(fine_grained_loss)
 
-        self.validation_metrics.update(
-            fine_grained_loss=fine_grained_loss,
-            predicted_actions=predicted_actions,
-            target_actions=discrete_target_actions,
-            tasks=batch.task,
-        )
-
         self.log(
             "val_loss", loss, prog_bar=True, logger=True, batch_size=len(batch), sync_dist=True
         )
-        self.log_dict(
-            self.validation_metrics.compute(),
-            prog_bar=True,
-            logger=True,
-            batch_size=len(batch),
-            sync_dist=True,
-        )
+
+        if not self._disable_all_metrics:
+            self.validation_metrics.update(
+                fine_grained_loss=fine_grained_loss,
+                predicted_actions=predicted_actions,
+                target_actions=discrete_target_actions,
+                tasks=batch.task,
+            )
+            self.log_dict(
+                self.validation_metrics.compute(),
+                prog_bar=True,
+                logger=True,
+                batch_size=len(batch),
+                sync_dist=True,
+            )
         return loss
 
     def configure_optimizers(self) -> Any:
