@@ -22,6 +22,7 @@ def train_model(config: DictConfig) -> None:
 
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
 
+    logger.info("Saving hyperparameters...")
     model.save_hyperparameters(flatten_config(config))
 
     logger.info("Starting training...")
