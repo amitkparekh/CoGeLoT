@@ -2,6 +2,5 @@ defaults:
   - model_summary
   - model_checkpoint
   - lr_monitor
-  - early_stopping_val_loss
   - tqdm_progress
   - _self_
