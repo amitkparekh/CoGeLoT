@@ -1,0 +1,5 @@
+wandb_model_watcher:
+  _target_: cogelot.common.wandb.WandBWatchModelCallback
+  log: all
+  log_freq: 100
+  log_graph: true

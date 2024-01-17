@@ -3,4 +3,5 @@ defaults:
   - model_checkpoint
   - lr_monitor
   - tqdm_progress
+  - wandb_model_watcher
   - _self_

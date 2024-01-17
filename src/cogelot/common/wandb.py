@@ -1,6 +1,9 @@
 from pathlib import Path
+from typing import Literal
 
 from loguru import logger
+from pytorch_lightning import Callback, LightningModule, Trainer
+from pytorch_lightning.loggers import WandbLogger
 
 
 def download_model_from_wandb(
@@ -45,3 +48,46 @@ def get_id_from_current_run() -> str | None:
         return None
 
     return wandb.run.id
+
+
+class WandBWatchModelCallback(Callback):
+    """When training with wandb, watch the model parameters and gradients."""
+
+    def __init__(
+        self,
+        *,
+        log: Literal["parameters", "gradients", "all"] = "all",
+        log_freq: int = 1000,
+        log_graph: bool = True,
+    ) -> None:
+        super().__init__()
+        self._log = log
+        self._log_freq = log_freq
+        self._log_graph = log_graph
+
+        self._wandb_logger: WandbLogger | None = None
+
+    def setup(self, trainer: Trainer, pl_module: LightningModule, stage: str) -> None:  # noqa: ARG002
+        """Setup the callback."""
+        self._get_wandb_logger_from_trainer(trainer)
+        if self._wandb_logger is None:
+            logger.warning(
+                "`WandbLogger` is not found within the trainer. Make sure you ware using WandB to log your experiments otherwise this callback will not work."
+            )
+            return
+
+        logger.info("Watching model parameters and gradients.")
+        self._wandb_logger.watch(
+            pl_module,
+            log=self._log,
+            log_freq=self._log_freq,
+            log_graph=self._log_graph,
+        )
+
+    def _get_wandb_logger_from_trainer(self, trainer: Trainer) -> None:
+        """Get the WandbLogger from the trainer, if it exists."""
+        if self._wandb_logger is None:
+            for trainer_logger in trainer.loggers:
+                if isinstance(trainer_logger, WandbLogger):
+                    self._wandb_logger = trainer_logger
+                    break
