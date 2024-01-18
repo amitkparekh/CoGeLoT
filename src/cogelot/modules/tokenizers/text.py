@@ -93,3 +93,10 @@ class TextTokenizer:
             for placeholder in self.placeholder_tokens
             for token in placeholder.all_placeholders
         }
+
+    @cached_property
+    def placeholder_token_ids(self) -> set[int]:
+        """Get the list of all the token IDs that connect to placeholders."""
+        token_ids = self.tokenizer.convert_tokens_to_ids(list(self.all_placeholders))
+        assert isinstance(token_ids, list)
+        return set(token_ids)
