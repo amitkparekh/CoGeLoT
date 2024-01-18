@@ -45,8 +45,19 @@ class TransformerDecoderProtocol(abc.ABC, torch.nn.Module):
         """Forward pass of the decoder."""
         ...  # noqa: WPS428
 
+
+class TransformerDecoderGreedyGenerateWrapper(TransformerDecoderProtocol):
+    """During inference, wrap the forward call with greedy generation."""
+
+    def __init__(
+        self, decoder: TransformerDecoderProtocol, *, num_tokens_to_generate_per_timestep: int = 1
+    ) -> None:
+        super().__init__()
+        self.decoder = decoder
+        self._num_tokens_to_generate_per_timestep = num_tokens_to_generate_per_timestep
+
     @torch.no_grad()
-    def generate(
+    def forward(
         self,
         tgt: torch.Tensor,
         memory: torch.Tensor,
@@ -54,18 +65,16 @@ class TransformerDecoderProtocol(abc.ABC, torch.nn.Module):
         memory_mask: torch.Tensor | None = None,
         tgt_key_padding_mask: torch.Tensor | None = None,
         memory_key_padding_mask: torch.Tensor | None = None,
-        *,
-        num_generated_tokens: int = 1,
     ) -> torch.Tensor:
         """Greedily generate multiple tokens until you reach the desired number."""
         # For a number of generated tokens, the desired output sequence length is
-        # (seq_length + num_generated_tokens - 1), so we keep going until we have that. Since the
+        # (seq_length + num_tokens_to_generate_per_timestep - 1), so we keep going until we have that. Since the
         # `range` function starts from 0, we can iterate from the starting length to
-        # (starting length + num_generated_tokens)
-        desired_seq_length = tgt.size(1) + num_generated_tokens
+        # (starting length + num_tokens_to_generate_per_timestep)
+        desired_seq_length = tgt.size(1) + self._num_tokens_to_generate_per_timestep
 
         # Shape (batch size, seq length, dim)
-        transformer_output = self(
+        transformer_output = self.decoder(
             tgt,
             memory,
             tgt_mask,
@@ -84,7 +93,7 @@ class TransformerDecoderProtocol(abc.ABC, torch.nn.Module):
                 tgt_key_padding_mask = torch.cat(
                     [tgt_key_padding_mask, tgt_key_padding_mask[:, -1:]], dim=1
                 )
-            transformer_output = self(
+            transformer_output = self.decoder(
                 tgt,
                 memory,
                 tgt_mask,
