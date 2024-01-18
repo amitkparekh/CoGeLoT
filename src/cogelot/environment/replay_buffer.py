@@ -2,16 +2,15 @@ import torch
 from loguru import logger
 
 from cogelot.data.collate import collate_variable_ndim_batch
+from cogelot.structures.common import Observation
 from cogelot.structures.model import ModelInstance
-from cogelot.structures.vima import Partition, Task
 
 
 class ReplayBuffer:
     """Buffer for the current episode to allow replay."""
 
     def __init__(self) -> None:
-        self._task: Task | None = None
-        self._partition: Partition | None = None
+        self._observations: list[Observation] = []
 
         self._success_per_step: list[bool] = []
 
@@ -52,6 +51,11 @@ class ReplayBuffer:
     def num_actions(self) -> int:
         """Get the number of actions."""
         return len(self._encoded_actions)
+
+    @property
+    def observations(self) -> list[Observation]:
+        """Get the observations."""
+        return self._observations
 
     @property
     def encoded_prompt(self) -> torch.Tensor:
@@ -134,6 +138,10 @@ class ReplayBuffer:
         collated_masks = collated_masks.unsqueeze(0)
         return collated_masks
 
+    def add_observation(self, observation: Observation) -> None:
+        """Add an observation to the buffer."""
+        self._observations.append(observation)
+
     def add_next_encoded_observation(
         self, encoded_observation: torch.Tensor, encoded_observation_mask: torch.Tensor
     ) -> None:
@@ -159,7 +167,7 @@ class ReplayBuffer:
             encoded_actions_mask=self.encoded_actions_mask,
         )
 
-    def reset(self, task: Task, partition: Partition) -> None:
+    def reset(self) -> None:
         """Reset the buffer."""
         logger.info("Resetting the state")
 
@@ -170,6 +178,5 @@ class ReplayBuffer:
         self._encoded_actions = []
         self._encoded_action_masks = []
 
-        self._task = task
-        self._partition = partition
         self._success_per_step = []
+        self._observations = []

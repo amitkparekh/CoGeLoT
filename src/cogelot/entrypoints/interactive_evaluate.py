@@ -174,7 +174,7 @@ def interactive_evaluate(
     with torch.inference_mode():
         evaluation.run_vima_instance(vima_instance, partition)
 
-    console.print(evaluation.metric.compute())
+    console.print(evaluation._metric.compute())  # noqa: SLF001
     typer.confirm("Press enter to exit")
 
 

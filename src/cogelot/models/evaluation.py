@@ -6,9 +6,10 @@ import torch
 from loguru import logger
 from numpy import typing as npt
 
+from cogelot.common.wandb import log_table_to_wandb
 from cogelot.data.instance_transform import NullTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
-from cogelot.metrics.online import OnlineEvaluationMetrics
+from cogelot.metrics.online import EvaluationEpisodeTracker, OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.modules.tokenizers.pose_action import is_action_pointless
@@ -24,7 +25,7 @@ from cogelot.structures.vima import (
 from vima.utils import DataDict, add_batch_dim
 
 NUM_AXES = 14
-MAX_TIMESTEPS = 50
+MAX_TIMESTEPS = 20
 
 
 class EvaluationLightningModule(pl.LightningModule):
@@ -38,17 +39,21 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance_transform: VIMAInstanceTransform = NullTransform(),  # noqa: WPS404
         *,
         should_stop_on_first_success: bool = True,
+        max_timesteps: int = MAX_TIMESTEPS,
     ) -> None:
         super().__init__()
         self.environment = environment
         self.model = model
         self.preprocessor = instance_preprocessor
         self.pose_action_tokenizer = self.model.policy.pose_action_tokenizer
+
         self.buffer = ReplayBuffer()
-        self.metric = OnlineEvaluationMetrics()
+        self._metric = OnlineEvaluationMetrics()
+        self._episode_tracker = EvaluationEpisodeTracker()
 
         self._vima_instance_transform = vima_instance_transform
         self._should_stop_on_first_success = should_stop_on_first_success
+        self._max_timesteps = max_timesteps
 
     def test_step(
         self,
@@ -65,9 +70,13 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance = self._vima_instance_transform(vima_instance)
         self.run_vima_instance(vima_instance, partition)
 
+    def on_test_end(self) -> None:
+        """Upload table to wandb on test end."""
+        log_table_to_wandb(name="episodes", table=self._episode_tracker.wandb_table)
+
     def reset_environment(self, task: Task, partition: Partition) -> None:
         """Reset the environment."""
-        self.buffer.reset(task, partition)
+        self.buffer.reset()
         self.environment.set_task(task, partition)
 
         self.environment.reset()
@@ -83,7 +92,7 @@ class EvaluationLightningModule(pl.LightningModule):
         )
 
         # Run the task until the model thinks it is done
-        while len(self.buffer) < MAX_TIMESTEPS:
+        while len(self.buffer) < self._max_timesteps:
             logger.info(f"Taking step {len(self.buffer)}")
 
             # Add the observation to the state
@@ -111,7 +120,7 @@ class EvaluationLightningModule(pl.LightningModule):
                 break
 
             # Take a step in the environment
-            observation, is_task_successful = self.take_step_in_environment(
+            observation, is_task_successful = self.take_action_in_environment(
                 actions=actions_for_env
             )
 
@@ -121,16 +130,28 @@ class EvaluationLightningModule(pl.LightningModule):
                 break
 
         # Update the metric
-        self.metric.update(
+        self._metric.update(
             partition,
             vima_instance.task,
             success_tracker_per_step=self.buffer.success_per_step,
             num_steps_taken=len(self.buffer),
         )
-        self.log_dict(self.metric.compute(), logger=True, on_step=True, on_epoch=False)
+
+        logger.debug("Logging all the episode details.")
+        self._episode_tracker.update(
+            partition=partition,
+            task=vima_instance.task,
+            seed=vima_instance.generation_seed,
+            success_tracker_per_step=self.buffer.success_per_step,
+            end_effector=vima_instance.end_effector_type,
+            prompt=vima_instance.prompt,
+            observations=self.buffer.observations,
+        )
+
+        self.log_dict(self._metric.compute(), logger=True, on_step=True, on_epoch=False)
         logger.info("Task finished")
 
-    def take_step_in_environment(
+    def take_action_in_environment(
         self, actions: dict[PoseActionType, npt.NDArray[np.float32]]
     ) -> tuple[Observation, bool]:
         """Take a step in the environment, and return the next observation."""
@@ -205,20 +226,23 @@ class EvaluationLightningModule(pl.LightningModule):
         ) = self.model.policy.encode_observation_token(prepared_observations)
 
         self.buffer.add_next_encoded_observation(encoded_observations, encoded_observation_masks)
+        self.buffer.add_observation(observation)
 
     def add_pose_action_token_to_buffer(
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> None:
         """Add a pose action to the state."""
-        # Shape: (num action tokens, embed dim) and (num action tokens)
+        # We also need to add back in the timestep and batch dimension for consistency and thats
+        # what the model wants.
+        continuous_actions = {
+            pose_action_type: action.unsqueeze(0).unsqueeze(0)
+            for pose_action_type, action in continuous_actions.items()
+        }
+
         encoded_actions, encoded_actions_mask = self.model.policy.encode_action_tokens(
             continuous_actions
         )
-        # We also need to add back in the timestep and batch dimension for consistency
-        self.buffer.add_next_encoded_action(
-            encoded_actions.unsqueeze(0).unsqueeze(0),
-            encoded_actions_mask.unsqueeze(0).unsqueeze(0),
-        )
+        self.buffer.add_next_encoded_action(encoded_actions, encoded_actions_mask)
 
     def predict_next_pose_action_token(self) -> dict[PoseActionType, torch.Tensor]:
         """Predict the next action tokens from the model."""
@@ -233,4 +257,7 @@ class EvaluationLightningModule(pl.LightningModule):
             "pose1_position": split_predicted_actions[2],
             "pose1_rotation": split_predicted_actions[3],
         }
-        return predicted_action_tokens
+        predicted_continuous_actions = self.pose_action_tokenizer.convert_discrete_to_continuous(
+            predicted_action_tokens
+        )
+        return predicted_continuous_actions
