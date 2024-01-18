@@ -3,10 +3,20 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 import torch
+import wandb
+from einops import rearrange, repeat
 from loguru import logger
+from pydantic import BaseModel, ConfigDict
 from torchmetrics import MeanMetric, Metric, SumMetric
 
-from cogelot.structures.vima import Partition, Task
+from cogelot.common.system_deps import verify_ffmpeg_is_available
+from cogelot.structures.common import ImageType, Observation, View
+from cogelot.structures.vima import (
+    EndEffector,
+    Partition,
+    Task,
+    get_task_group_from_task,
+)
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
@@ -62,6 +72,117 @@ def compute_flailing(success_tracker_per_step: list[bool]) -> float:
     except ValueError:
         flail_value = 0
     return flail_value
+
+
+class ObservationVideos(BaseModel):
+    """Observation videos for a single episode."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    front_rgb: torch.Tensor
+    front_segm: torch.Tensor
+    top_rgb: torch.Tensor
+    top_segm: torch.Tensor
+
+
+def extract_multiple_videos_from_observations(
+    observations: list[Observation],
+) -> ObservationVideos:
+    """Extract multiple videos from a list of observations."""
+    rgb_front_frames = []
+    segm_front_frames = []
+    rgb_top_frames = []
+    segm_top_frames = []
+
+    for observation in observations:
+        obs = observation.to_image_per_type_per_view()
+        rgb_front_frames.append(obs[View.front][ImageType.rgb])
+        segm_front_frames.append(obs[View.front][ImageType.segmentation])
+        rgb_top_frames.append(obs[View.top][ImageType.rgb])
+        segm_top_frames.append(obs[View.top][ImageType.segmentation])
+
+    return ObservationVideos(
+        front_rgb=rearrange(rgb_front_frames, "t c h w -> t c w h"),
+        top_rgb=rearrange(rgb_top_frames, "t c h w -> t c w h"),
+        # For segmentation, as they are 1-channel images, we need to add an additional channel
+        # and we need to multiply by 255 to get the right values.
+        front_segm=repeat(
+            rearrange(segm_front_frames, "t h w -> t 1 w h") * 255, "t 1 w h -> t 3 w h"
+        ),
+        top_segm=repeat(
+            rearrange(segm_top_frames, "t h w -> t 1 w h") * 255, "t 1 w h -> t 3 w h"
+        ),
+    )
+
+
+class EvaluationEpisodeTracker:
+    """Track and compute metrics during online evaluation.
+
+    Frame width and height are from manual inspection of the data during debugging.
+    """
+
+    def __init__(self) -> None:
+        verify_ffmpeg_is_available()
+
+        self.wandb_table = wandb.Table(
+            columns=[
+                "partition",
+                "task",
+                "task_group",
+                "end_effector",
+                "prompt",
+                "seed",
+                "steps_taken",
+                "is_successful_at_end",
+                # We want to be able to track whether or not the agent completed the task at all
+                # timestep.
+                "success_per_step",
+                "flailing_rate",
+                "hesitance_rate",
+                # Observations need to be a numpy array with shape: (time, channels, width, height)
+                "front_rgb",
+                "front_segm",
+                "top_rgb",
+                "top_segm",
+                # Each action has 14 DOF/axes to predict
+                # "actions": pl.List(pl.Array(pl.Float32, width=14)),
+            ]
+        )
+
+    def update(
+        self,
+        *,
+        partition: Partition,
+        task: Task,
+        seed: int,
+        success_tracker_per_step: list[bool],
+        end_effector: EndEffector,
+        prompt: str,
+        observations: list[Observation],
+        # actions,
+    ) -> None:
+        """Add the result of an episode to the metric."""
+        observation_videos = extract_multiple_videos_from_observations(observations)
+
+        self.wandb_table.add_data(
+            partition.name,
+            task.name,
+            get_task_group_from_task(task).name,
+            end_effector,
+            prompt,
+            seed,
+            len(success_tracker_per_step),
+            success_tracker_per_step[-1],
+            success_tracker_per_step,
+            compute_flailing(success_tracker_per_step),
+            compute_hesitance(success_tracker_per_step),
+            wandb.Video(observation_videos.front_rgb.numpy(), caption="Front RGB", fps=1),
+            wandb.Video(
+                observation_videos.front_segm.numpy(), caption="Front Segmentation", fps=1
+            ),
+            wandb.Video(observation_videos.top_rgb.numpy(), caption="Top RGB", fps=1),
+            wandb.Video(observation_videos.top_segm.numpy(), caption="Top Segmentation", fps=1),
+        )
 
 
 class OnlineEvaluationMetrics:
