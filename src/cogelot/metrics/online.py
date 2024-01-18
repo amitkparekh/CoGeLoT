@@ -17,7 +17,12 @@ def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
     If hesitance is ever < 1, then it means that the model succeeded at some point, but decided
     against it.
     """
-    first_success_index = success_tracker_per_step.index(True)
+    # If there are no successes, then the hesitance is nan
+    try:
+        first_success_index = success_tracker_per_step.index(True)
+    except ValueError:
+        return float("nan")
+
     # +1 beacuse we don't want to include the first success
     tracker_after_first_success = success_tracker_per_step[first_success_index + 1 :]
 
@@ -42,7 +47,12 @@ def compute_flailing(success_tracker_per_step: list[bool]) -> float:
     is 0, we just return 0. This function is incredibly strict, as flailing for 2 steps returns a
     value of 0.6.
     """
-    first_success_index = success_tracker_per_step.index(True)
+    # If there are no successes, then the hesitance is nan
+    try:
+        first_success_index = success_tracker_per_step.index(True)
+    except ValueError:
+        return float("nan")
+
     # +1 beacuse we don't want to include the first success
     tracker_after_first_success = success_tracker_per_step[first_success_index + 1 :]
 
@@ -64,10 +74,12 @@ class OnlineEvaluationMetrics:
             partition: {task: MeanMetric() for task in Task} for partition in Partition
         }
         self.hesitance_rate = {
-            partition: {task: MeanMetric() for task in Task} for partition in Partition
+            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
+            for partition in Partition
         }
         self.flailing_rate = {
-            partition: {task: MeanMetric() for task in Task} for partition in Partition
+            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
+            for partition in Partition
         }
         self.steps_taken = {
             partition: {task: MeanMetric() for task in Task} for partition in Partition
