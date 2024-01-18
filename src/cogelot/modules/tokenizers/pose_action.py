@@ -134,6 +134,7 @@ class PoseActionTokenizer:
     ) -> dict[PoseActionType, npt.NDArray[np.float32]]:
         """Convert discrete pose aciton tokens to the environment."""
         actions = self.convert_discrete_to_continuous(action_token)
+        actions = self._clamp_continuous_actions_to_limits(actions)
 
         if should_remove_zth_position_dim:
             actions["pose0_position"] = actions["pose0_position"][:2]
