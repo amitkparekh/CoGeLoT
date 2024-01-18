@@ -91,11 +91,17 @@ class VIMALightningModule(pl.LightningModule):
     def forward(self, batch: ModelInstance) -> torch.Tensor:
         """Perform the forward on a batch of instances."""
         return self.policy.predict_action_logits(
+            # Shape: (bsz, prompt seq length, dim)
             encoded_prompt=batch.encoded_prompt,
+            # Shape: (bsz, prompt seq length)
             encoded_prompt_mask=batch.encoded_prompt_mask,
+            # Shape: (bsz, timesteps, max num objects, dim)
             encoded_observations=batch.encoded_observations,
+            # Shape: (bsz, timesteps, max num objects)
             encoded_observations_mask=batch.encoded_observations_mask,
+            # Shape: (bsz, timesteps, num axes, dim)
             encoded_actions=batch.encoded_actions,
+            # Shape: (bsz, timesteps, num axes)
             encoded_actions_mask=batch.encoded_actions_mask,
         )
 
