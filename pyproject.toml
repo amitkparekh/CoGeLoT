@@ -49,6 +49,7 @@ dependencies = [
     "pyarrow<14",
     "convert-case>=1.2.3",
     "neptune>=1.8.6",
+    "polars[numpy,pandas]>=0.20.5",
 ]
 
 [tool.pdm]
