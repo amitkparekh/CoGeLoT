@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
+import wandb
 from loguru import logger
 from pytorch_lightning import Callback, LightningModule, Trainer
 from pytorch_lightning.loggers import WandbLogger
@@ -18,8 +19,6 @@ def download_model_from_wandb(
         return checkpoint_path
 
     # Get the run from wandb
-    import wandb  # noqa: WPS433
-
     api = wandb.Api()
     run = api.run(f"{entity}/{project}/{run_id}")
 
@@ -39,8 +38,6 @@ def download_model_from_wandb(
 
 def get_id_from_current_run() -> str | None:
     """Get the current run ID from wandb, if there is a run in progress on the current machine."""
-    import wandb  # noqa: WPS433
-
     if wandb.run is None:
         logger.warning(
             "Wandb is not initialized. Please initialize wandb before calling this function."
@@ -91,3 +88,16 @@ class WandBWatchModelCallback(Callback):
                 if isinstance(trainer_logger, WandbLogger):
                     self._wandb_logger = trainer_logger
                     break
+
+
+def log_table_to_wandb(*, name: str, table: wandb.Table) -> None:
+    """Log a table to wandb."""
+    # Make sure wandb is initialized
+    if wandb.run is None:
+        logger.warning(
+            "Wandb is not initialized. Please initialize wandb before calling this function."
+        )
+        return
+
+    # Log the table
+    wandb.log({name: table})
