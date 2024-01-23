@@ -20,7 +20,7 @@ from cogelot.structures.vima import (
 )
 
 # Create a tensor of colors for the segmentation masks
-COLOR_MAP: torch.Tensor = (plt.cm.tab20(torch.arange(20))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues] # noqa: WPS221
+COLOR_MAP: torch.Tensor = (torch.tensor(plt.cm.tab20(range(20)))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues] # noqa: WPS221
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
