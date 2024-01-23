@@ -64,9 +64,7 @@ class VIMAActionDecoder(ActionDecoder):
 
         # To prevent the model from incorrectly attending to the padded logits, we set those values
         # to be absolutely tiny but still > 0, so not to contribute to the overall loss
-        logits = collate_variable_ndim_batch(
-            logits_list, padding_value=torch.finfo(logits_list[0].dtype).tiny
-        )
+        logits = collate_variable_ndim_batch(logits_list, padding_value=-1e9)
         # Shape (axes, batch size, num action tokens per timestep, dim)
         return logits
 

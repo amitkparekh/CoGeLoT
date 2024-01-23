@@ -34,7 +34,7 @@ def test_creating_model_instance_from_buffer_works(
 
     # 3. Predict the next pose action and add to state
     next_pose_action_token = evaluation_module.predict_next_pose_action_token()
-    evaluation_module.add_pose_action_token_to_buffer(next_pose_action_token)
+    evaluation_module.add_continuous_actions_to_buffer(next_pose_action_token)
     assert evaluation_module.buffer.num_actions == 1
 
     # 4. Add another observation to the state
@@ -47,7 +47,7 @@ def test_creating_model_instance_from_buffer_works(
 
     # 5. Predict another pose action and add to state
     next_pose_action_token = evaluation_module.predict_next_pose_action_token()
-    evaluation_module.add_pose_action_token_to_buffer(next_pose_action_token)
+    evaluation_module.add_continuous_actions_to_buffer(next_pose_action_token)
     assert evaluation_module.buffer.num_actions == 2
 
     # 6. Add another observation to the state
@@ -115,7 +115,7 @@ def test_creating_model_instance_from_buffer_works(
 
 
 def test_evaluation_runs_with_trainer(evaluation_module: EvaluationLightningModule) -> None:
-    datamodule = VIMABenchOnlineDataModule(num_workers=0, batch_size=1, dataset_variant="original")
+    datamodule = VIMABenchOnlineDataModule()
     datamodule.setup("test")
 
     trainer = pl.Trainer(fast_dev_run=True)

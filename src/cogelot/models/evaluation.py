@@ -106,16 +106,18 @@ class EvaluationLightningModule(pl.LightningModule):
             )
 
             # Predict the next pose action token
-            predicted_action_tokens = self.predict_next_pose_action_token()
+            predicted_discrete_action_tokens = self.predict_next_pose_action_token()
             predicted_continuous_actions = (
-                self.pose_action_tokenizer.convert_discrete_to_continuous(predicted_action_tokens)
+                self.pose_action_tokenizer.convert_discrete_to_continuous(
+                    predicted_discrete_action_tokens
+                )
             )
 
-            self.add_pose_action_token_to_buffer(predicted_continuous_actions)
+            self.add_continuous_actions_to_buffer(predicted_continuous_actions)
 
             # Convert the pose action token to the environment
-            actions_for_env = self.pose_action_tokenizer.convert_discrete_token_to_environment(
-                predicted_action_tokens
+            actions_for_env = self.pose_action_tokenizer.convert_continuous_token_to_environment(
+                predicted_continuous_actions
             )
 
             if is_action_pointless(actions_for_env):
@@ -231,10 +233,10 @@ class EvaluationLightningModule(pl.LightningModule):
         self.buffer.add_next_encoded_observation(encoded_observations, encoded_observation_masks)
         self.buffer.add_observation(observation)
 
-    def add_pose_action_token_to_buffer(
+    def add_continuous_actions_to_buffer(
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> None:
-        """Add a pose action to the state."""
+        """Add the continuous actions to the buffer."""
         # We also need to add back in the timestep and batch dimension for consistency and thats
         # what the model wants.
         continuous_actions = {
@@ -248,10 +250,9 @@ class EvaluationLightningModule(pl.LightningModule):
         self.buffer.add_next_encoded_action(encoded_actions, encoded_actions_mask)
 
     def predict_next_pose_action_token(self) -> dict[PoseActionType, torch.Tensor]:
-        """Predict the next action tokens from the model."""
+        """Predict the next discrete action tokens from the model."""
         logits = self.model(self.buffer.to_model_instance())
-        normalised_logits = logits - logits.logsumexp(dim=-1, keepdim=True)
-        predicted_actions = normalised_logits.argmax(dim=-1)[:, 0, -1]
+        predicted_actions = logits.softmax(dim=-1).argmax(dim=-1)[:, 0, -1]
         split_sizes = [3, 4, 3, 4] if predicted_actions.shape[-1] == NUM_AXES else [2, 4, 2, 4]
         split_predicted_actions = predicted_actions.split(split_sizes, dim=-1)
         predicted_action_tokens: dict[PoseActionType, torch.Tensor] = {
@@ -260,7 +261,4 @@ class EvaluationLightningModule(pl.LightningModule):
             "pose1_position": split_predicted_actions[2],
             "pose1_rotation": split_predicted_actions[3],
         }
-        predicted_continuous_actions = self.pose_action_tokenizer.convert_discrete_to_continuous(
-            predicted_action_tokens
-        )
-        return predicted_continuous_actions
+        return predicted_action_tokens

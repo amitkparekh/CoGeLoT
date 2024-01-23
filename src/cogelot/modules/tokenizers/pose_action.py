@@ -126,15 +126,14 @@ class PoseActionTokenizer:
 
         return actions
 
-    def convert_discrete_token_to_environment(
+    def convert_continuous_token_to_environment(
         self,
-        action_token: dict[PoseActionType, torch.Tensor],
+        continuous_actions: dict[PoseActionType, torch.Tensor],
         *,
         should_remove_zth_position_dim: bool = True,
     ) -> dict[PoseActionType, npt.NDArray[np.float32]]:
-        """Convert discrete pose aciton tokens to the environment."""
-        actions = self.convert_discrete_to_continuous(action_token)
-        actions = self._clamp_continuous_actions_to_limits(actions)
+        """Convert continuous pose action tokens to the environment."""
+        actions = self._clamp_continuous_actions_to_limits(continuous_actions)
 
         if should_remove_zth_position_dim:
             actions["pose0_position"] = actions["pose0_position"][:2]
