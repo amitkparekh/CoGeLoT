@@ -7,7 +7,7 @@ from loguru import logger
 from numpy import typing as npt
 
 from cogelot.common.wandb import log_table_to_wandb
-from cogelot.data.instance_transform import NullTransform, VIMAInstanceTransform
+from cogelot.data.instance_transform import NoopTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.metrics.online import EvaluationEpisodeTracker, OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
@@ -36,11 +36,14 @@ class EvaluationLightningModule(pl.LightningModule):
         environment: VIMAEnvironment,
         model: VIMALightningModule,
         instance_preprocessor: InstancePreprocessor,
-        vima_instance_transform: VIMAInstanceTransform = NullTransform(),  # noqa: WPS404
+        vima_instance_transform: VIMAInstanceTransform | None = None,
         *,
         should_stop_on_first_success: bool = True,
         max_timesteps: int = MAX_TIMESTEPS,
     ) -> None:
+        if vima_instance_transform is None:
+            vima_instance_transform = NoopTransform()
+
         super().__init__()
         self.environment = environment
         self.model = model
