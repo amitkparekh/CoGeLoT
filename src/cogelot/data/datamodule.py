@@ -217,6 +217,7 @@ class VIMABenchOnlineDataModule(LightningDataModule):
             self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(
                 num_repeats_per_episode=self._num_repeats_per_episode
             )
+            return
         raise ValueError("Don't use this datamodule if you are not testing online.")
 
     def test_dataloader(self) -> DataLoader[EvaluationEpisode]:
