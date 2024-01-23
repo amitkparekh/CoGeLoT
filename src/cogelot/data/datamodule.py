@@ -202,7 +202,10 @@ class VIMABenchOnlineDataModule(LightningDataModule):
     """Evaluation datamodule to run VIMA online."""
 
     def __init__(
-        self, *, num_repeats_per_episode: int = 100, dataloader_kwargs: dict[str, Any] | None
+        self,
+        *,
+        num_repeats_per_episode: int = 100,
+        dataloader_kwargs: dict[str, Any] | None = None,
     ) -> None:
         if dataloader_kwargs is None:
             dataloader_kwargs = {}
