@@ -18,15 +18,15 @@ def convert_language_prompt_to_gobbledygook(prompt: str) -> str:
     """Convert language in prompt to gobbledygook (i.e., nonsense), keeping the word count."""
     # Break up the prompt into words
     words = prompt.split(" ")
+
     # For any word that is not the special token, replace it with nonsense
-    for word in words:
+    for idx, word in enumerate(words):
         if word.startswith(LEFT_SYMBOL):
             continue
 
-        new_word = _generate_random_characters(length=len(word))
-        prompt = prompt.replace(word, new_word, 1)
+        words[idx] = _generate_random_characters(length=len(word))
 
-    return prompt
+    return " ".join(words)
 
 
 class VIMAInstanceTransform:
