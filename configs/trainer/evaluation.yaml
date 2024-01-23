@@ -1,6 +1,6 @@
 defaults:
   - default
-  - callbacks:
+  - override callbacks:
       - model_summary
       - rich_progress
   - override logger: wandb_evaluation
