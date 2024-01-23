@@ -140,10 +140,10 @@ class EvaluationEpisodeTracker:
                 "flailing_rate",
                 "hesitance_rate",
                 # Observations need to be a numpy array with shape: (time, channels, width, height)
-                "front_rgb",
-                "front_segm",
                 "top_rgb",
+                "front_rgb",
                 "top_segm",
+                "front_segm",
                 # Each action has 14 DOF/axes to predict
                 # "actions": pl.List(pl.Array(pl.Float32, width=14)),
             ]
@@ -176,12 +176,12 @@ class EvaluationEpisodeTracker:
             success_tracker_per_step,
             compute_flailing(success_tracker_per_step),
             compute_hesitance(success_tracker_per_step),
+            wandb.Video(observation_videos.top_rgb.numpy(), caption="Top RGB", fps=1),
             wandb.Video(observation_videos.front_rgb.numpy(), caption="Front RGB", fps=1),
+            wandb.Video(observation_videos.top_segm.numpy(), caption="Top Segmentation", fps=1),
             wandb.Video(
                 observation_videos.front_segm.numpy(), caption="Front Segmentation", fps=1
             ),
-            wandb.Video(observation_videos.top_rgb.numpy(), caption="Top RGB", fps=1),
-            wandb.Video(observation_videos.top_segm.numpy(), caption="Top Segmentation", fps=1),
         )
 
 
