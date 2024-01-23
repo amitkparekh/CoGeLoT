@@ -4,8 +4,9 @@ from typing import ClassVar
 
 import torch
 import wandb
-from einops import rearrange, repeat
+from einops import rearrange
 from loguru import logger
+from matplotlib import pyplot as plt
 from pydantic import BaseModel, ConfigDict
 from torchmetrics import MeanMetric, Metric, SumMetric
 
@@ -17,6 +18,9 @@ from cogelot.structures.vima import (
     Task,
     get_task_group_from_task,
 )
+
+# Create a tensor of colors for the segmentation masks
+COLOR_MAP: torch.Tensor = (plt.cm.tab20(torch.arange(20))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues] # noqa: WPS221
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
@@ -101,17 +105,16 @@ def extract_multiple_videos_from_observations(
         rgb_top_frames.append(obs[View.top][ImageType.rgb])
         segm_top_frames.append(obs[View.top][ImageType.segmentation])
 
+    front_segmentation = torch.stack(segm_front_frames, dim=0).long()
+    top_segmentation = torch.stack(segm_top_frames, dim=0).long()
+    colored_front_segmentation = COLOR_MAP[front_segmentation]
+    colored_top_segmentation = COLOR_MAP[top_segmentation]
+
     return ObservationVideos(
-        front_rgb=rearrange(rgb_front_frames, "t c h w -> t c w h"),
-        top_rgb=rearrange(rgb_top_frames, "t c h w -> t c w h"),
-        # For segmentation, as they are 1-channel images, we need to add an additional channel
-        # and we need to multiply by 255 to get the right values.
-        front_segm=repeat(
-            rearrange(segm_front_frames, "t h w -> t 1 w h") * 255, "t 1 w h -> t 3 w h"
-        ),
-        top_segm=repeat(
-            rearrange(segm_top_frames, "t h w -> t 1 w h") * 255, "t 1 w h -> t 3 w h"
-        ),
+        front_rgb=rearrange(rgb_front_frames, "t c h w -> t c h w"),
+        top_rgb=rearrange(rgb_top_frames, "t c h w -> t c h w"),
+        front_segm=rearrange(colored_front_segmentation, "t h w c -> t c h w"),
+        top_segm=rearrange(colored_top_segmentation, "t h w c -> t c h w"),
     )
 
 
