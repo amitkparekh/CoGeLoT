@@ -1,1 +1,5 @@
 _target_: cogelot.data.instance_transform.GobbledyGookPromptTokenTransform
+text_tokenizer:
+  _target_: cogelot.modules.tokenizers.TextTokenizer
+  pretrained_model: t5-base
+  model_max_length: 512
