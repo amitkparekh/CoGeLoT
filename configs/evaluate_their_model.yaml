@@ -21,6 +21,9 @@ seed: 42
 model:
   _target_: cogelot.models.EvaluationLightningModule
 
+  max_timesteps: 10
+  should_stop_on_first_success: true
+
   environment:
     _target_: cogelot.environment.VIMAEnvironment.from_config
     seed: ${seed}
