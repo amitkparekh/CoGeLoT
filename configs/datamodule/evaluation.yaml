@@ -1,7 +1,3 @@
-defaults:
-  - default
-  - _self_
-
 _target_: cogelot.data.datamodule.VIMABenchOnlineDataModule
 dataloader_kwargs:
   drop_last: False
