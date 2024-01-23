@@ -1,5 +1,5 @@
 import math
-from functools import partial
+from collections.abc import Mapping
 from typing import ClassVar
 
 import torch
@@ -8,6 +8,7 @@ from einops import rearrange
 from loguru import logger
 from matplotlib import pyplot as plt
 from pydantic import BaseModel, ConfigDict
+from torchmetrics import MeanMetric, Metric, SumMetric
 
 from cogelot.common.system_deps import verify_ffmpeg_is_available
 from cogelot.structures.common import ImageType, Observation, View
@@ -193,31 +194,104 @@ class OnlineEvaluationMetrics:
     key_template: ClassVar[str] = "{metric}/L{partition}/Task{task}"
 
     def __init__(self) -> None:
-        self.tasks_seen = {partition: {task: 0 for task in Task} for partition in Partition}
+        self.success_rate = {
+            partition: {task: MeanMetric() for task in Task} for partition in Partition
+        }
+        self.hesitance_rate = {
+            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
+            for partition in Partition
+        }
+        self.flailing_rate = {
+            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
+            for partition in Partition
+        }
+        self.steps_taken = {
+            partition: {task: MeanMetric() for task in Task} for partition in Partition
+        }
+        self.tasks_seen = {
+            partition: {task: SumMetric() for task in Task} for partition in Partition
+        }
 
-    def create_log_dict(
+    def update(
         self,
         partition: Partition,
         task: Task,
         *,
         success_tracker_per_step: list[bool],
         num_steps_taken: int,
-    ) -> dict[str, float]:
-        """Create a dictionary for logging the current run."""
+    ) -> None:
+        """Update the metric with the result of an episode."""
         logger.debug(f"Updating metric for {partition}/{task}")
-        self.tasks_seen[partition][task] += 1
 
-        metric_key = partial(self._create_metric_key, partition, task)
+        # To be successful means it ends successfully
+        self.success_rate[partition][task](int(success_tracker_per_step[-1]))
+        self.hesitance_rate[partition][task](compute_hesitance(success_tracker_per_step))
+        self.flailing_rate[partition][task](compute_flailing(success_tracker_per_step))
+        self.steps_taken[partition][task](num_steps_taken)
+        self.tasks_seen[partition][task](1)
 
-        return {
-            metric_key("seen"): self.tasks_seen[partition][task],
-            metric_key("success"): int(success_tracker_per_step[-1]),
-            metric_key("steps"): num_steps_taken,
-            metric_key("hesitance"): compute_hesitance(success_tracker_per_step),
-            metric_key("flailing"): compute_flailing(success_tracker_per_step),
+    def compute(self) -> dict[str, torch.Tensor]:
+        """Compute the metrics, returning a flattened dict of all metrics.
+
+        For any partition/task, if the number of steps taken is 0, we do not report it at all.
+        """
+        seen_per_task_per_partition = {
+            partition: {task: count.compute() for task, count in task_counts.items()}
+            for partition, task_counts in self.tasks_seen.items()
         }
 
-    def _create_metric_key(self, partition: Partition, task: Task, metric: str) -> str:
-        return self.key_template.format(
-            partition=partition.value, task=str(task.value + 1).zfill(2), metric=metric
+        computed_tasks_seen = self._compute_rates(
+            metrics_per_task_per_partition=seen_per_task_per_partition,
+            metric_name="seen",
+            seen_per_task_per_partition=seen_per_task_per_partition,
         )
+        computed_steps = self._compute_rates(
+            metrics_per_task_per_partition=self.steps_taken,
+            metric_name="steps",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_success_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.success_rate,
+            metric_name="success",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_hesitant_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.hesitance_rate,
+            metric_name="hesitant",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+        computed_flailing_rate = self._compute_rates(
+            metrics_per_task_per_partition=self.flailing_rate,
+            metric_name="flailing",
+            seen_per_task_per_partition=seen_per_task_per_partition,
+        )
+
+        return {
+            **computed_tasks_seen,
+            **computed_steps,
+            **computed_success_rate,
+            **computed_hesitant_rate,
+            **computed_flailing_rate,
+        }
+
+    def _compute_rates(
+        self,
+        *,
+        metrics_per_task_per_partition: Mapping[Partition, Mapping[Task, Metric | torch.Tensor]],
+        metric_name: str,
+        seen_per_task_per_partition: dict[Partition, dict[Task, torch.Tensor]],
+    ) -> dict[str, torch.Tensor]:
+        """Compute the various rates for a given metric into a flattened dictionary.
+
+        This involves a huge dictionary comprehension, but it's also the fastest way to do this
+        madness.
+        """
+        computed_metrics = {
+            self.key_template.format(
+                partition=partition.value, task=str(task.value + 1).zfill(2), metric=metric_name
+            ): metric.compute() if isinstance(metric, Metric) else metric
+            for partition, metrics_per_task in metrics_per_task_per_partition.items()
+            for task, metric in metrics_per_task.items()
+            if seen_per_task_per_partition[partition][task] > 0
+        }
+        return computed_metrics

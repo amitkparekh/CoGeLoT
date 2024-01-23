@@ -134,6 +134,14 @@ class EvaluationLightningModule(pl.LightningModule):
                 logger.info("Task successful; terminating early")
                 break
 
+        # Update the metric
+        self._metric.update(
+            partition,
+            vima_instance.task,
+            success_tracker_per_step=self.buffer.success_per_step,
+            num_steps_taken=len(self.buffer),
+        )
+
         logger.debug("Logging all the episode details.")
         self._episode_tracker.update(
             partition=partition,
@@ -145,19 +153,7 @@ class EvaluationLightningModule(pl.LightningModule):
             observations=self.buffer.observations,
         )
 
-        self.log_dict(
-            self._metric.create_log_dict(
-                partition,
-                vima_instance.task,
-                success_tracker_per_step=self.buffer.success_per_step,
-                num_steps_taken=len(self.buffer),
-            ),
-            logger=True,
-            on_step=True,
-            on_epoch=False,
-        )
-        self.log("success", int(self.buffer.success_per_step[-1]), on_step=True, on_epoch=False)
-
+        self.log_dict(self._metric.compute(), logger=True, on_step=True, on_epoch=False)
         logger.info("Task finished")
 
     def take_action_in_environment(
