@@ -52,6 +52,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         should_render_prompt: bool = False,
         should_display_debug_window: bool = False,
         should_hide_arm_rgb: bool = True,
+        record_gui: bool = False,
     ) -> Self:
         """Create the VIMA environment."""
         if isinstance(partition, int):
@@ -70,6 +71,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
             render_prompt=should_render_prompt,
             display_debug_window=should_display_debug_window,
             hide_arm_rgb=should_hide_arm_rgb,
+            record_gui=record_gui,
         )
         env = TimeLimitWrapper(ResetFaultToleranceWrapper(vima_env), bonus_steps=2)
         return cls(env)
