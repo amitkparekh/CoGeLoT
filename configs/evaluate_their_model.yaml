@@ -3,7 +3,7 @@
 defaults:
   - trainer: evaluation
   - /instance_preprocessor.yaml@model
-  - evaluation_instance_transform@model.vima_instance_transform: none
+  - evaluation_instance_transform@model.vima_instance_transform: noop
   - model@model.model: from_their_policy
   - datamodule: evaluation
   - hydra: default
