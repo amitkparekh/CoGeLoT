@@ -1,15 +1,15 @@
 from cogelot.data.instance_transform import (
     GobbledyGookPromptTokenTransform,
     GobbledyGookPromptWordTransform,
-    NullTransform,
+    NoopTransform,
 )
 from cogelot.modules.tokenizers.text import TextTokenizer
 from cogelot.structures.vima import VIMAInstance
 
 
-def test_null_transform(vima_instance: VIMAInstance) -> None:
-    null_transform = NullTransform()
-    new_instance = null_transform(vima_instance)
+def test_noop_transform(vima_instance: VIMAInstance) -> None:
+    transform = NoopTransform()
+    new_instance = transform(vima_instance)
 
     assert new_instance == vima_instance
 
