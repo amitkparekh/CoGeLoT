@@ -66,7 +66,7 @@ class VIMADataModule(abc.ABC, LightningDataModule):
             self.valid_dataset = maybe_split_dataset_by_node(dataset["valid"])
 
         if stage == "test":
-            self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs()
+            raise ValueError("Don't use this class for testing.")
 
         self._maybe_filter_datasets()
 
@@ -90,18 +90,6 @@ class VIMADataModule(abc.ABC, LightningDataModule):
             shuffle=False,
             collate_fn=collate_preprocessed_instances_from_hf_dataset,
             **self._dataloader_kwargs,
-        )
-
-    def test_dataloader(self) -> DataLoader[EvaluationEpisode]:
-        """Get a dataloader to use for creating environment during evaluation.
-
-        Disable the `batch_size` and `batch_sampler` to ensure that we get a single instance at a time.
-        """
-        return DataLoader[EvaluationEpisode](
-            self.evaluation_dataset,
-            batch_size=None,
-            shuffle=False,
-            batch_sampler=None,
         )
 
     @abc.abstractmethod
@@ -210,18 +198,36 @@ class VIMADataModuleFromLocalFiles(VIMADataModule):
         return dataset
 
 
-class VIMABenchOnlineDataModule(VIMADataModule):
+class VIMABenchOnlineDataModule(LightningDataModule):
     """Evaluation datamodule to run VIMA online."""
+
+    def __init__(
+        self, *, num_repeats_per_episode: int = 100, dataloader_kwargs: dict[str, Any] | None
+    ) -> None:
+        if dataloader_kwargs is None:
+            dataloader_kwargs = {}
+
+        super().__init__()
+        self._num_repeats_per_episode = num_repeats_per_episode
+        self._dataloader_kwargs = dataloader_kwargs
 
     def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
         """Setup each node to run the data."""
         if stage == "test":
-            return super().setup(stage)
+            self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(
+                num_repeats_per_episode=self._num_repeats_per_episode
+            )
         raise ValueError("Don't use this datamodule if you are not testing online.")
 
-    def _load_dataset(self) -> datasets.DatasetDict:  # pyright: ignore[reportGeneralTypeIssues]
-        """This is not used whatsoever by this class.
+    def test_dataloader(self) -> DataLoader[EvaluationEpisode]:
+        """Get a dataloader to use for creating environment during evaluation.
 
-        To prevent abstract method errors, we just override it and pass. Is this the best solution?
-        No. Does it work well enough? Yes.
+        Disable the `batch_size` and `batch_sampler` to ensure that we get a single instance at a time.
         """
+        dataloader_kwargs: dict[str, Any] = {
+            "batch_size": None,
+            "shuffle": False,
+            "batch_sampler": None,
+            **self._dataloader_kwargs,
+        }
+        return DataLoader[EvaluationEpisode](self.evaluation_dataset, **dataloader_kwargs)

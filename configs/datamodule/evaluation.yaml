@@ -3,7 +3,6 @@ defaults:
   - _self_
 
 _target_: cogelot.data.datamodule.VIMABenchOnlineDataModule
-batch_size: 1
-num_workers: 1
 dataloader_kwargs:
   drop_last: False
+num_repeats_per_episode: 100
