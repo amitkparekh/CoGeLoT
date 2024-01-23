@@ -6,8 +6,7 @@ defaults:
   - override logger: wandb_evaluation
   - _self_
 
-# The evaluation runs each task 100 times, so we do that here.
-max_epochs: 100
+max_epochs: 1
 
 # The evaluation is going to be deterministic so it's consistent per run/model
 deterministic: True
