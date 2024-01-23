@@ -41,7 +41,7 @@ class VIMAInstanceTransform:
         raise NotImplementedError
 
 
-class NullTransform(VIMAInstanceTransform):
+class NoopTransform(VIMAInstanceTransform):
     """Do not transform the instance."""
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:

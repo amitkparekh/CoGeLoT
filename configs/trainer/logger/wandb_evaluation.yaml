@@ -1,8 +1,6 @@
 wandb:
   _target_: pytorch_lightning.loggers.WandbLogger
   save_dir: ${output_dir}
-  project: CoGeLoT
+  project: cogelot-evaluation
   entity: pyop
-  id: null
-  resume: True
   log_model: False
