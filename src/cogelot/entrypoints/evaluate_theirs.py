@@ -8,7 +8,7 @@ from cogelot.common.hydra import instantiate_modules_from_hydra, preprocess_conf
 from cogelot.entrypoints.train import CONFIG_DIR
 
 
-@hydra.main(config_path=CONFIG_DIR, config_name="evaluate.yaml", version_base="1.3")
+@hydra.main(config_path=CONFIG_DIR, config_name="evaluate_their_model.yaml", version_base="1.3")
 def evaluate_model(config: DictConfig) -> None:
     """Run the evaluation."""
     # Set the internal precision to be slightly lower than the default
