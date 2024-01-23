@@ -2,6 +2,7 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig
 
+from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra, preprocess_config_for_hydra
 
 
@@ -13,6 +14,9 @@ def validate_model(config: DictConfig) -> None:
 
     config = preprocess_config_for_hydra(config)
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
+
+    logger.info("Saving hyperparameters...")
+    model.save_hyperparameters(flatten_config(config))
 
     logger.info("Starting validation...")
     trainer.validate(model, datamodule=datamodule)
@@ -26,6 +30,9 @@ def evaluate_model(config: DictConfig) -> None:
 
     config = preprocess_config_for_hydra(config)
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
+
+    logger.info("Saving hyperparameters...")
+    model.save_hyperparameters(flatten_config(config))
 
     logger.info("Starting evaluation...")
     trainer.test(model, datamodule=datamodule)
