@@ -89,6 +89,13 @@ class EvaluationLightningModule(pl.LightningModule):
         """Run the current instance in the environment."""
         observation = self.environment.get_first_observation()
 
+        # Add the observation to the state
+        self.add_observation_to_buffer(
+            observation=observation,
+            object_ids=vima_instance.object_ids,
+            end_effector=vima_instance.end_effector_type,
+        )
+
         # Add the prompt to the state
         self.add_prompt_to_buffer(
             prompt=vima_instance.prompt, prompt_assets=vima_instance.prompt_assets
@@ -97,13 +104,6 @@ class EvaluationLightningModule(pl.LightningModule):
         # Run the task until the model thinks it is done
         while len(self.buffer) < self._max_timesteps:
             logger.info(f"Taking step {len(self.buffer)}")
-
-            # Add the observation to the state
-            self.add_observation_to_buffer(
-                observation=observation,
-                object_ids=vima_instance.object_ids,
-                end_effector=vima_instance.end_effector_type,
-            )
 
             # Predict the next pose action token
             predicted_discrete_action_tokens = self.predict_next_pose_action_token()
@@ -127,6 +127,13 @@ class EvaluationLightningModule(pl.LightningModule):
             # Take a step in the environment
             observation, is_task_successful = self.take_action_in_environment(
                 actions=actions_for_env
+            )
+
+            # Add the observation to the state
+            self.add_observation_to_buffer(
+                observation=observation,
+                object_ids=vima_instance.object_ids,
+                end_effector=vima_instance.end_effector_type,
             )
 
             self.buffer.update_success_tracker(is_successful=is_task_successful)
