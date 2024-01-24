@@ -7,17 +7,14 @@ from cogelot.common.hf_datasets import download_parquet_files_from_hub
 from cogelot.common.hydra import (
     load_hydra_config,
     pretty_print_hydra_config,
-    run_task_function_with_hydra,
 )
 from cogelot.common.settings import Settings
 from cogelot.entrypoints.create_preprocessed_dataset_per_task import (
     create_preprocessed_dataset_per_task,
 )
 from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_per_task
-from cogelot.entrypoints.evaluate import evaluate_model, validate_model
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
-from cogelot.entrypoints.train import train_model
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
 
 settings = Settings()
@@ -58,43 +55,7 @@ def print_config(config_file: Path, ctx: typer.Context) -> None:
     pretty_print_hydra_config(config)
 
 
-@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
-def train(ctx: typer.Context, config_file: Path = Path("configs/train.yaml")) -> None:
-    """Run the training loop for the model."""
-    overrides = ctx.args
-    config = load_hydra_config(
-        config_dir=config_file.parent, config_file_name=config_file.name, overrides=overrides
-    )
-    train_model(config)
-
-
-@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
-def validate(
-    ctx: typer.Context, config_file: Path = Path("configs/validate_their_model.yaml")
-) -> None:
-    """Run the validate loop for the model."""
-    override_sys_args_with_context(ctx)
-
-    run_task_function_with_hydra(
-        config_dir=config_file.parent,
-        config_file_name=config_file.name,
-        task_function=validate_model,
-    )
-
-
-@app.command(context_settings={"allow_extra_args": True}, rich_help_panel="Run Commands")
-def evaluate(ctx: typer.Context, config_file: Path = Path("configs/evaluate.yaml")) -> None:
-    """Run the evaluation loop for the model."""
-    override_sys_args_with_context(ctx)
-
-    run_task_function_with_hydra(
-        config_dir=config_file.parent,
-        config_file_name=config_file.name,
-        task_function=evaluate_model,
-    )
-
-
-@app.command(rich_help_panel="Run Commands")
+@app.command()
 def download_training_data(
     num_workers: int = 0,
     hf_datasets_repo_name: str = "amitkparekh/vima",
