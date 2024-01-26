@@ -64,14 +64,14 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
 
     space_token_id = 103
 
-    def __init__(self, text_tokenizer: TextTokenizer) -> None:
+    def __init__(self, text_tokenizer: TextTokenizer, *, timeout: int = 10) -> None:
         self.text_tokenizer = text_tokenizer
 
         self.encode = self.text_tokenizer.tokenizer.encode
         self.decode = self.text_tokenizer.tokenizer.decode
         self.tokenize = self.text_tokenizer.tokenizer
 
-        self._timeout = 10
+        self._timeout = timeout
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Replace the words with gobbledygook."""
