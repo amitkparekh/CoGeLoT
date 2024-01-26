@@ -1,8 +1,9 @@
 import os
+from concurrent.futures import Future, wait
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, overload
 
-from huggingface_hub import HfApi, create_repo, hf_hub_download
+from huggingface_hub import CommitInfo, HfApi, create_repo, hf_hub_download
 from huggingface_hub.utils import HfHubHTTPError
 from loguru import logger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
@@ -39,9 +40,38 @@ def create_model_repository(repo_id: str, *, is_private: bool = True) -> None:
     create_repo(repo_id, private=is_private, exist_ok=True)
 
 
+@overload
 def upload_model_checkpoint(
-    checkpoint_path: Path, run_id: str, repo_id: str, *, checkpoint_name: str | None = None
+    checkpoint_path: Path,
+    run_id: str,
+    repo_id: str,
+    *,
+    checkpoint_name: str | None = ...,
+    run_as_future: Literal[False] = ...,
 ) -> None:
+    ...
+
+
+@overload
+def upload_model_checkpoint(
+    checkpoint_path: Path,
+    run_id: str,
+    repo_id: str,
+    *,
+    checkpoint_name: str | None = ...,
+    run_as_future: Literal[True] = ...,
+) -> Future[CommitInfo]:
+    ...
+
+
+def upload_model_checkpoint(
+    checkpoint_path: Path,
+    run_id: str,
+    repo_id: str,
+    *,
+    checkpoint_name: str | None = None,
+    run_as_future: bool = False,
+) -> None | Future[CommitInfo]:
     """Upload a model checkpoint to the repository on the hub.
 
     If the run name is provied,
@@ -55,13 +85,17 @@ def upload_model_checkpoint(
         checkpoint_name = checkpoint_path.name
 
     api = HfApi()
-    api.upload_file(
+    commit_info = api.upload_file(
         path_or_fileobj=checkpoint_path,
         path_in_repo=f"{run_id}/{checkpoint_name}",
         repo_id=repo_id,
         repo_type="model",
         commit_message=f"Upload {run_id}/{checkpoint_name}",
+        run_as_future=run_as_future,  # pyright: ignore[reportGeneralTypeIssues]
     )
+    if run_as_future:
+        return commit_info
+    return None
 
 
 def upload_model_checkpoint_dir(checkpoint_dir: Path, run_id: str, repo_id: str) -> None:
@@ -98,14 +132,24 @@ class HuggingFaceModelLogger(Logger):
     Currently, we are only uploading the best checkpoint for each run.
     """
 
-    def __init__(self, repo_id: str, *, use_hf_transfer: bool = False) -> None:
+    def __init__(
+        self,
+        repo_id: str,
+        *,
+        use_hf_transfer: bool = False,
+        upload_in_background_each_checkpoint: bool = False,
+        experiment_id_override: str | None = None,
+    ) -> None:
         super().__init__()
 
         self._repo_id = repo_id
 
         self._checkpoint_dir: Path | None = None
         self._checkpoint_callback: ModelCheckpoint | None = None
-        self._experiment_id: str | None = None
+        self._experiment_id: str | None = experiment_id_override
+
+        self._upload_in_background_each_checkpoint = upload_in_background_each_checkpoint
+        self._upload_futures: list[Future] = []
 
         if use_hf_transfer:
             enable_hf_transfer()
@@ -150,9 +194,17 @@ class HuggingFaceModelLogger(Logger):
         if not self._checkpoint_dir and checkpoint_callback.dirpath is not None:
             self._checkpoint_dir = Path(checkpoint_callback.dirpath)
 
+        if self._upload_in_background_each_checkpoint:
+            self._upload_last_model_in_background(checkpoint_callback)
+
     @rank_zero_only
     def finalize(self, status: str) -> None:
         """Upload the model to HF after the training has successfully finished."""
+        if self._upload_futures:
+            logger.info("Waiting for background uploads to finish...")
+            wait(self._upload_futures)
+            logger.info("Background uploads finished.")
+
         if status != "success":
             logger.info("Not uploading model because training was not successful.")
             return
@@ -172,5 +224,25 @@ class HuggingFaceModelLogger(Logger):
             )
             return
 
-        logger.info(f"Uploading model checkpoints to `{self._repo_id}/{self._experiment_id}/`")
-        upload_model_checkpoint_dir(self._checkpoint_dir, self._experiment_id, self._repo_id)
+        if not self._upload_in_background_each_checkpoint:
+            logger.info(f"Uploading model checkpoints to `{self._repo_id}/{self._experiment_id}/`")
+            upload_model_checkpoint_dir(self._checkpoint_dir, self._experiment_id, self._repo_id)
+
+    def _upload_last_model_in_background(self, checkpoint_callback: ModelCheckpoint) -> None:
+        """Upload the last model in the background."""
+        if self._checkpoint_dir is None:
+            logger.warning(
+                "There is no checkpoint directory to upload. Does the ModelCheckpoint callback have a directory? Surely it must right?"
+            )
+            return
+        if self._experiment_id is None:
+            logger.error("There is no wandb run in progress, and we need one to group the models.")
+            return
+
+        upload_future = upload_model_checkpoint(  # pyright: ignore[reportGeneralTypeIssues]
+            Path(checkpoint_callback._last_checkpoint_saved),  # noqa: SLF001
+            run_id=self._experiment_id,
+            repo_id=self._repo_id,
+            run_as_future=True,
+        )
+        self._upload_futures.append(upload_future)
