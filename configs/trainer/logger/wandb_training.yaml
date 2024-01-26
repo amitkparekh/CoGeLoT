@@ -3,4 +3,4 @@ wandb:
   save_dir: ${output_dir}
   project: CoGeLoT
   entity: pyop
-  log_model: True
+  log_model: False
