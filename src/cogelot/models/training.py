@@ -6,6 +6,7 @@ from typing import Any, Self
 
 import pytorch_lightning as pl
 import torch
+from loguru import logger
 
 from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
 from cogelot.common.wandb import download_model_from_wandb
@@ -65,6 +66,20 @@ class VIMALightningModule(pl.LightningModule):
         self.save_hyperparameters(ignore=["policy"])
 
     @classmethod
+    def from_checkpoint(cls, checkpoint_path: Path, *args: Any, **kwargs: Any) -> Self:
+        """Instantiate the model from the checkpoint."""
+        logger.info(f"Loading model from checkpoint: `{checkpoint_path}`")
+        try:
+            return cls.load_from_checkpoint(checkpoint_path, *args, **kwargs)
+        except TypeError:
+            return cls.load_from_checkpoint(
+                checkpoint_path,
+                *args,
+                **kwargs,
+                **instantiate_module_hparams_from_checkpoint(checkpoint_path),
+            )
+
+    @classmethod
     def from_wandb_run(
         cls,
         wandb_entity: str,
@@ -80,13 +95,7 @@ class VIMALightningModule(pl.LightningModule):
             run_id=wandb_run_id,
             save_dir=checkpoint_save_dir,
         )
-        try:
-            return cls.load_from_checkpoint(model_checkpoint_path)
-        except TypeError:
-            return cls.load_from_checkpoint(
-                model_checkpoint_path,
-                **instantiate_module_hparams_from_checkpoint(model_checkpoint_path),
-            )
+        return cls.from_checkpoint(model_checkpoint_path)
 
     def forward(self, batch: ModelInstance) -> torch.Tensor:
         """Perform the forward on a batch of instances."""
