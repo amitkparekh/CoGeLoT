@@ -73,6 +73,11 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
 
         self._timeout = timeout
 
+        # We are going to have a memory of previously valid token sequences in case we come across
+        # a timeout. In these situations, we can grab from the list and only if one doesn't exist
+        # there, we raise the error.
+        self._tokenized_word_memory: dict[tuple[int, ...], set[tuple[int, ...]]] = {}
+
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Replace the words with gobbledygook."""
         # Tokenize each word in the prompt separately
@@ -83,8 +88,8 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
 
         # For each word in the prompt, randomise the token IDs AND ensure that when the prompt is
         # re-tokenized, it will be the exact same length as before.
-        new_prompt_tokens: list[list[int]] = [
-            self._get_new_token_sequence_for_word(tokenized_word)
+        new_prompt_tokens: list[tuple[int, ...]] = [
+            self._get_new_token_sequence_for_word(tuple(tokenized_word))
             for tokenized_word in token_ids_per_word
         ]
 
@@ -94,8 +99,8 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
         return instance.model_copy(deep=True, update={"prompt": new_prompt})
 
     def _randomise_order_of_non_special_words(
-        self, tokenized_words: list[list[int]]
-    ) -> list[list[int]]:
+        self, tokenized_words: list[tuple[int, ...]]
+    ) -> list[tuple[int, ...]]:
         """Randomise the order of any token that does not contain 'special' characters.
 
         Note: 103 is the space token in T5.
@@ -124,26 +129,42 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
 
         return shuffled_list
 
-    def _get_new_token_sequence_for_word(self, tokenized_word: list[int]) -> list[int]:
+    def _get_new_token_sequence_for_word(self, tokenized_word: tuple[int, ...]) -> tuple[int, ...]:
         """Randomise the token IDs and verify the new sequence is the same length as the old."""
+        # Add the tokenized word to the memory
+        if tokenized_word not in self._tokenized_word_memory:
+            self._tokenized_word_memory[tokenized_word] = set()
+
         iteration_count = 0
-        random_token_sequence: list[int] = []
+        random_token_sequence: tuple[int, ...] = ()
 
         while len(tokenized_word) != len(random_token_sequence):
             random_token_sequence = self._randomise_token_ids_in_sequence(tokenized_word)
-            random_token_sequence = self.encode(
-                self.decode(random_token_sequence), add_special_tokens=False
+            random_token_sequence = tuple(
+                self.encode(self.decode(random_token_sequence), add_special_tokens=False)
             )
             iteration_count += 1
+
             if iteration_count > self._timeout:
+                break
+
+        # If we have a timeout, we are going to try and find a random token sequence from the
+        # memory and hope we have one
+        if iteration_count > self._timeout:
+            try:
+                random_token_sequence = self._get_random_alternative_from_memory(tokenized_word)
+            except (KeyError, IndexError) as err:
                 raise RuntimeError(
                     "Could not find a random token sequence that is the same length as the "
                     "original token word."
-                )
+                ) from err
+
+        # Add the new token sequence to the memory
+        self._tokenized_word_memory[tokenized_word].add(random_token_sequence)
 
         return random_token_sequence
 
-    def _randomise_token_ids_in_sequence(self, sequence: list[int]) -> list[int]:
+    def _randomise_token_ids_in_sequence(self, sequence: tuple[int, ...]) -> tuple[int, ...]:
         """Randomise the token IDs in a sequence with some alphabet characters.
 
         Sometimes, words that have only a single token are special and replacing them with anything
@@ -161,7 +182,7 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
             else token
             for token in sequence[1:]
         ]
-        return [sequence[0], *randomised_sequence]
+        return (sequence[0], *randomised_sequence)
 
     @cached_property
     def _non_special_token_ids(self) -> list[int]:
@@ -183,3 +204,12 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
         token_ids = self.text_tokenizer.tokenizer.convert_tokens_to_ids(ALPHABET)
         assert isinstance(token_ids, list)
         return token_ids
+
+    def _get_random_alternative_from_memory(
+        self, tokenized_word: tuple[int, ...]
+    ) -> tuple[int, ...]:
+        """Get a random alternative from the memory.
+
+        Is the data structure swapping silly? Yes.
+        """
+        return random.choice(tuple(self._tokenized_word_memory[tokenized_word]))  # noqa: S311
