@@ -30,7 +30,7 @@ model:
     # We're just giving it any task here, it will get changed during the steps
     task: 1
     partition: 1
-    should_display_debug_window: false
-    should_render_prompt: false
-    should_hide_arm_rgb: true
+    should_display_debug_window: true
+    should_render_prompt: true
+    should_hide_arm_rgb: false
     record_gui: false

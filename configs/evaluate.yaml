@@ -2,14 +2,10 @@
 
 defaults:
   - trainer: evaluation
-
-  # Import the instance_preprocessor.yaml config into the model
   - /instance_preprocessor.yaml@model
-
-  - evaluation_instance_transform@model.vima_instance_transform: none
-
+  - evaluation_instance_transform@model.vima_instance_transform: noop
   - datamodule: evaluation
-  - hydra: default.yaml
+  - hydra: default
   - hardware: default
   - debug: null
   - _self_
@@ -26,12 +22,14 @@ wandb:
 model:
   _target_: cogelot.models.EvaluationLightningModule
 
+  max_timesteps: 10
+  should_stop_on_first_success: true
+
   model:
-    _target_: cogelot.models.VIMALightningModule.from_wandb_run
-    wandb_entity: pyop
-    wandb_project: CoGeLoT
-    wandb_run_id: ${wandb.run_id}
-    checkpoint_save_dir: "./storage/data/models"
+    _target_: cogelot.models.VIMALightningModule.from_checkpoint
+    checkpoint_path: "./storage/data/models/their_vima/model-epoch-0.ckpt"
+    map_location: cpu
+    strict: true
 
   environment:
     _target_: cogelot.environment.VIMAEnvironment.from_config
@@ -39,3 +37,7 @@ model:
     # We're just giving it any task here, it will get changed during the steps
     task: 1
     partition: 1
+    should_display_debug_window: false
+    should_render_prompt: false
+    should_hide_arm_rgb: true
+    record_gui: false
