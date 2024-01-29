@@ -1,0 +1,5 @@
+_target_: cogelot.nn.lr_scheduler.get_cosine_schedule_with_warmup_and_lr_end_to_end
+_partial_: true
+num_warmup_steps: 7000
+# https://github.com/vimalabs/VIMA/issues/16#issuecomment-1623627926
+lr_end: 1e-7

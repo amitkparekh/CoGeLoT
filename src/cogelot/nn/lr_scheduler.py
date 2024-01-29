@@ -62,6 +62,34 @@ def get_cosine_schedule_with_warmup_and_lr_end(
     return LambdaLR(optimizer, lr_lambda, last_epoch)
 
 
+def get_cosine_schedule_with_warmup_and_lr_end_to_end(
+    optimizer: Optimizer,
+    *,
+    num_warmup_steps: int,
+    total_steps: int,
+    num_cycles: float = 0.5,
+    lr_end: float = 1e-7,
+    last_epoch: int = -1,
+) -> LambdaLR:
+    """Get the cosine schedule with warmup multiplier for a given step.
+
+    This includes ensuring that the learning rate does not go below the minimum.
+    """
+    lr_init: float = optimizer.defaults["lr"]
+    if lr_init <= lr_end:
+        raise ValueError(f"lr_end ({lr_end}) must be be smaller than initial lr ({lr_init})")
+
+    lr_lambda = partial(
+        get_cosine_with_warmup_and_lr_end_lambda,
+        num_warmup_steps=num_warmup_steps,
+        num_training_steps=total_steps,
+        lr_end=lr_end,
+        lr_init=lr_init,
+        num_cycles=num_cycles,
+    )
+    return LambdaLR(optimizer, lr_lambda, last_epoch)
+
+
 def get_cosine_schedule_with_ratio_warmup_and_lr_end(
     optimizer: Optimizer,
     *,
