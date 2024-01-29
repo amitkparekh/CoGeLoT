@@ -1,0 +1,26 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - hardware=eidf_4gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/entrypoints/train.py
+
+name: Their VIMA again
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    values:
+      - 01_their_vima_new_lr
+      - 01_their_vima
+      - 02_vima_xattn_decoder_abs_1tok_newlr
+
+  datamodule.dataset_variant:
+    values:
+      - original
