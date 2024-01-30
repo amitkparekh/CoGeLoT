@@ -112,18 +112,41 @@ def upload_model_checkpoint_dir(checkpoint_dir: Path, run_id: str, repo_id: str)
     )
 
 
-def download_model_checkpoint(
-    repo_id: str, run_id: str, checkpoint_name: str, output_dir: Path
-) -> None:
+def get_model_checkpoint_file_in_remote_repo_for_epoch(
+    repo_id: str, run_id: str, epoch: int
+) -> str:
+    """Get the filename of the checkpoint that we want to download, from the epoch.
+
+    This is needed because the checkpoint filenames are not just the epoch number, and need
+    parsing.
+    """
+    # Get all the files in the right folder
+    api = HfApi()
+    remote_files = api.list_files_info(repo_id=repo_id, paths=run_id, repo_type="model")
+    all_file_names = [remote_file.path for remote_file in remote_files]
+
+    # If epoch is negative, we want the last checkpoint
+    if epoch < 0:
+        epoch = len(all_file_names) - 1
+
+    for file_name in all_file_names:
+        if f"epoch={epoch:02}" in file_name:
+            return file_name
+
+    raise FileNotFoundError(
+        f"Could not find a checkpoint for epoch {epoch} in the repo {repo_id}/{run_id}."
+    )
+
+
+def download_model_checkpoint(repo_id: str, run_id: str, file_path_in_repo: str) -> Path:
     """Download a model checkpoint from the repository on the hub."""
-    hf_hub_download(
+    checkpoint_path = hf_hub_download(
         repo_id=repo_id,
-        filename=checkpoint_name,
+        filename=file_path_in_repo,
         subfolder=run_id,
         repo_type="model",
-        local_dir=output_dir,
-        local_dir_use_symlinks=False,
     )
+    return Path(checkpoint_path)
 
 
 class HuggingFaceModelLogger(Logger):

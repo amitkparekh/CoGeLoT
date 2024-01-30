@@ -8,8 +8,11 @@ import pytorch_lightning as pl
 import torch
 from loguru import logger
 
+from cogelot.common.hf_models import (
+    download_model_checkpoint,
+    get_model_checkpoint_file_in_remote_repo_for_epoch,
+)
 from cogelot.common.hydra import instantiate_module_hparams_from_checkpoint
-from cogelot.common.wandb import download_model_from_wandb
 from cogelot.metrics.offline import OfflineMetrics
 from cogelot.modules.policy import Policy
 from cogelot.modules.tokenizers.pose_action import prepare_target_actions
@@ -80,20 +83,18 @@ class VIMALightningModule(pl.LightningModule):
             )
 
     @classmethod
-    def from_wandb_run(
+    def from_hf_repo(
         cls,
-        wandb_entity: str,
-        wandb_project: str,
         wandb_run_id: str,
-        checkpoint_save_dir: Path | str,
+        hf_repo_id: str,
+        epoch: int = -1,
     ) -> Self:
         """Instantiate the model by getting the checkpoint from a wandb run."""
-        checkpoint_save_dir = Path(checkpoint_save_dir)
-        model_checkpoint_path = download_model_from_wandb(
-            entity=wandb_entity,
-            project=wandb_project,
-            run_id=wandb_run_id,
-            save_dir=checkpoint_save_dir,
+        model_path_in_repo = get_model_checkpoint_file_in_remote_repo_for_epoch(
+            repo_id=hf_repo_id, run_id=wandb_run_id, epoch=epoch
+        )
+        model_checkpoint_path = download_model_checkpoint(
+            repo_id=hf_repo_id, run_id=wandb_run_id, file_path_in_repo=model_path_in_repo
         )
         return cls.from_checkpoint(model_checkpoint_path)
 
