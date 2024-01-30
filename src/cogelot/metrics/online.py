@@ -124,8 +124,10 @@ class EvaluationEpisodeTracker:
     Frame width and height are from manual inspection of the data during debugging.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_rows_before_push: int = 100) -> None:
         verify_ffmpeg_is_available()
+
+        self._max_rows_before_push = max_rows_before_push
 
         self.wandb_table = wandb.Table(
             columns=[
@@ -151,6 +153,11 @@ class EvaluationEpisodeTracker:
                 # "actions": pl.List(pl.Array(pl.Float32, width=14)),
             ]
         )
+
+    @property
+    def should_log_table(self) -> bool:
+        """Check if the table should be logged."""
+        return len(self.wandb_table.data) >= self._max_rows_before_push
 
     def update(
         self,
@@ -186,6 +193,10 @@ class EvaluationEpisodeTracker:
                 observation_videos.front_segm.numpy(), caption="Front Segmentation", fps=1
             ),
         )
+
+    def reset(self) -> None:
+        """Reset the table."""
+        self.wandb_table = wandb.Table(self.wandb_table.columns)
 
 
 class OnlineEvaluationMetrics:

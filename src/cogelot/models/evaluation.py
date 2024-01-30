@@ -73,9 +73,9 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance = self._vima_instance_transform(vima_instance)
         self.run_vima_instance(vima_instance, partition)
 
-    def on_test_end(self) -> None:
-        """Upload table to wandb on test end."""
-        log_table_to_wandb(name="episodes", table=self._episode_tracker.wandb_table)
+        if self._episode_tracker.should_log_table:
+            log_table_to_wandb(name="episodes", table=self._episode_tracker.wandb_table)
+            self._episode_tracker.reset()
 
     def reset_environment(self, task: Task, partition: Partition) -> None:
         """Reset the environment."""
