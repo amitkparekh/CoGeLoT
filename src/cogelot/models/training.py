@@ -93,8 +93,9 @@ class VIMALightningModule(pl.LightningModule):
         model_path_in_repo = get_model_checkpoint_file_in_remote_repo_for_epoch(
             repo_id=hf_repo_id, run_id=wandb_run_id, epoch=epoch
         )
+        logger.info(f"Downloading model from remote path: `{model_path_in_repo}`")
         model_checkpoint_path = download_model_checkpoint(
-            repo_id=hf_repo_id, run_id=wandb_run_id, file_path_in_repo=model_path_in_repo
+            repo_id=hf_repo_id, file_path_in_repo=model_path_in_repo
         )
         return cls.from_checkpoint(model_checkpoint_path)
 
