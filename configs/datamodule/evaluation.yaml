@@ -1,4 +1,4 @@
 _target_: cogelot.data.datamodule.VIMABenchOnlineDataModule
 dataloader_kwargs:
   drop_last: False
-num_repeats_per_episode: 100
+num_repeats_per_episode: 200
