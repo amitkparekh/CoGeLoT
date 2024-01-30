@@ -266,15 +266,28 @@ class OnlineEvaluationMetrics:
             seen_per_task_per_partition=seen_per_task_per_partition,
         )
 
+        seen_tensor_per_task = torch.cat(
+            [
+                count.flatten()
+                for partition in seen_per_task_per_partition.values()
+                for count in partition.values()
+            ],
+            dim=0,
+        )
+
+        success_tensor_per_task = torch.cat(
+            [success.flatten() for success in computed_success_rate.values()],
+            dim=0,
+        )
+
+        # To get the total success properly, we need to compute the weighted mean over all the seens
+        total_success = (
+            success_tensor_per_task @ seen_tensor_per_task
+        ) / seen_tensor_per_task.sum()
+
         return {
-            "total_seen": torch.cat(
-                [
-                    count.flatten()
-                    for partition in seen_per_task_per_partition.values()
-                    for count in partition.values()
-                ],
-                dim=0,
-            ).sum(),
+            "total/seen": seen_tensor_per_task.sum(),
+            "total/success": total_success,
             **computed_tasks_seen,
             **computed_steps,
             **computed_success_rate,
