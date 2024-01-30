@@ -267,6 +267,14 @@ class OnlineEvaluationMetrics:
         )
 
         return {
+            "total_seen": torch.cat(
+                [
+                    count.flatten()
+                    for partition in seen_per_task_per_partition.values()
+                    for count in partition.values()
+                ],
+                dim=0,
+            ).sum(),
             **computed_tasks_seen,
             **computed_steps,
             **computed_success_rate,
