@@ -103,7 +103,7 @@ class EvaluationLightningModule(pl.LightningModule):
 
         # Run the task until the model thinks it is done
         while len(self.buffer) < self._max_timesteps:
-            logger.info(f"Taking step {len(self.buffer)}")
+            logger.info(f"[rank {self.local_rank}] Taking step {len(self.buffer)}")
 
             # Predict the next pose action token
             predicted_discrete_action_tokens = self.predict_next_pose_action_token()
@@ -121,7 +121,9 @@ class EvaluationLightningModule(pl.LightningModule):
             )
 
             if is_action_pointless(actions_for_env):
-                logger.info("Model returned pointless action; terminating early")
+                logger.info(
+                    f"[rank {self.local_rank}] Model returned pointless action; terminating early"
+                )
                 break
 
             # Take a step in the environment
@@ -138,7 +140,7 @@ class EvaluationLightningModule(pl.LightningModule):
 
             self.buffer.update_success_tracker(is_successful=is_task_successful)
             if is_task_successful and self._should_stop_on_first_success:
-                logger.info("Task successful; terminating early")
+                logger.info(f"[rank {self.local_rank}] Task successful; terminating early")
                 break
 
         # Update the metric
@@ -149,7 +151,7 @@ class EvaluationLightningModule(pl.LightningModule):
             num_steps_taken=len(self.buffer),
         )
 
-        logger.debug("Logging all the episode details.")
+        logger.debug(f"[rank {self.local_rank}] Updating all the episode details.")
         self._episode_tracker.update(
             partition=partition,
             task=vima_instance.task,
@@ -160,8 +162,9 @@ class EvaluationLightningModule(pl.LightningModule):
             observations=self.buffer.observations,
         )
 
+        logger.debug(f"[rank {self.local_rank}] Logging all the episode details.")
         self.log_dict(self._metric.compute(), logger=True, on_step=True, on_epoch=False)
-        logger.info("Task finished")
+        logger.info(f"[rank {self.local_rank}] Task finished")
 
     def take_action_in_environment(
         self, actions: dict[PoseActionType, npt.NDArray[np.float32]]
