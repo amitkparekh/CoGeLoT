@@ -26,10 +26,10 @@ model:
   should_stop_on_first_success: true
 
   model:
-    _target_: cogelot.models.VIMALightningModule.from_checkpoint
-    checkpoint_path: "./storage/data/models/their_vima/model-epoch-0.ckpt"
-    map_location: cpu
-    strict: true
+    _target_: cogelot.models.VIMALightningModule.from_hf_repo
+    hf_repo_id: amitkparekh/vima
+    wandb_run_id: ???
+    epoch: ???
 
   environment:
     _target_: cogelot.environment.VIMAEnvironment.from_config
