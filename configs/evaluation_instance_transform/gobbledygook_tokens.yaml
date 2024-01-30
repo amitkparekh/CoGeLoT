@@ -1,4 +1,5 @@
 _target_: cogelot.data.instance_transform.GobbledyGookPromptTokenTransform
+timeout: 100
 text_tokenizer:
   _target_: cogelot.modules.tokenizers.TextTokenizer
   pretrained_model: t5-base
