@@ -266,27 +266,21 @@ class OnlineEvaluationMetrics:
             seen_per_task_per_partition=seen_per_task_per_partition,
         )
 
-        seen_tensor_per_task = torch.cat(
+        total_seen = torch.cat(
             [
                 count.flatten()
                 for partition in seen_per_task_per_partition.values()
                 for count in partition.values()
             ],
             dim=0,
-        )
+        ).sum()
 
-        success_tensor_per_task = torch.cat(
-            [success.flatten() for success in computed_success_rate.values()],
-            dim=0,
+        total_success = self._compute_overall_success_rate(
+            seen_per_task_per_partition=seen_per_task_per_partition, total_seen=total_seen
         )
-
-        # To get the total success properly, we need to compute the weighted mean over all the seens
-        total_success = (
-            success_tensor_per_task @ seen_tensor_per_task
-        ) / seen_tensor_per_task.sum()
 
         return {
-            "total/seen": seen_tensor_per_task.sum(),
+            "total/seen": total_seen,
             "total/success": total_success,
             **computed_tasks_seen,
             **computed_steps,
@@ -316,3 +310,34 @@ class OnlineEvaluationMetrics:
             if seen_per_task_per_partition[partition][task] > 0
         }
         return computed_metrics
+
+    def _compute_overall_success_rate(
+        self,
+        seen_per_task_per_partition: dict[Partition, dict[Task, torch.Tensor]],
+        total_seen: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute the overall success rate across all tasks."""
+        total_seen = torch.cat(
+            [
+                count
+                for partition in seen_per_task_per_partition.values()
+                for count in partition.values()
+            ],
+            dim=0,
+        )
+
+        total_successes = (
+            torch.cat(
+                [
+                    metric.compute() * seen_per_task_per_partition[partition][task]
+                    for partition, metrics_per_task in self.success_rate.items()
+                    for task, metric in metrics_per_task.items()
+                    if seen_per_task_per_partition[partition][task] > 0
+                ]
+            )
+            .flatten()
+            .sum()
+        )
+
+        total_success = total_successes / total_seen
+        return total_success
