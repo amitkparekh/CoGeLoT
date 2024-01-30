@@ -122,7 +122,7 @@ def get_model_checkpoint_file_in_remote_repo_for_epoch(
     """
     # Get all the files in the right folder
     api = HfApi()
-    remote_files = api.list_files_info(repo_id=repo_id, paths=run_id, repo_type="model")
+    remote_files = api.list_repo_tree(repo_id=repo_id, path_in_repo=run_id, repo_type="model")
     all_file_names = [remote_file.path for remote_file in remote_files]
 
     # If epoch is negative, we want the last checkpoint
@@ -138,12 +138,11 @@ def get_model_checkpoint_file_in_remote_repo_for_epoch(
     )
 
 
-def download_model_checkpoint(repo_id: str, run_id: str, file_path_in_repo: str) -> Path:
+def download_model_checkpoint(repo_id: str, file_path_in_repo: str) -> Path:
     """Download a model checkpoint from the repository on the hub."""
     checkpoint_path = hf_hub_download(
         repo_id=repo_id,
         filename=file_path_in_repo,
-        subfolder=run_id,
         repo_type="model",
     )
     return Path(checkpoint_path)
