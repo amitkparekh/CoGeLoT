@@ -7,7 +7,7 @@ defaults:
   - datamodule: from_local_files
   - model: default
 
-  - learning_rate_scheduler@model.lr_scheduler_partial_fn: vima
+  - learning_rate_scheduler@model.lr_scheduler_partial_fn: full
 
   - trainer: default
   - hardware: default
