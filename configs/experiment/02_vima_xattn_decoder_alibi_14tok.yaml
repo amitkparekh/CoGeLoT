@@ -1,14 +1,14 @@
 # @package _global_
 
 defaults:
-  - override /transformer_decoder@model.policy.transformer_decoder:
+  - override /model/transformer_decoder@model.policy.transformer_decoder:
       - prompt_encoder_history_decoder.yaml
       - attn_layers/vima.yaml
       - attn_layers/with_cross_attn.yaml
       - positional/alibi.yaml
       - xattn_positional/none.yaml
-  - override /action_decoder@model.policy.action_decoder: token_per_axis
-  - override /action_encoder@model.policy.action_encoder: token_per_axis
+  - override /model/action_decoder@model.policy.action_decoder: token_per_axis
+  - override /model/action_encoder@model.policy.action_encoder: token_per_axis
 
 architecture: encoder_decoder
 attn_layers: vima

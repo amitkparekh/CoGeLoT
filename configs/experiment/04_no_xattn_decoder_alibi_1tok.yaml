@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /transformer_decoder@model.policy.transformer_decoder:
+  - override /model/transformer_decoder@model.policy.transformer_decoder:
       - decoder_only.yaml
       - attn_layers/default.yaml
       - positional/alibi.yaml
