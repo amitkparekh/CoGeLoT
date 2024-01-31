@@ -3,14 +3,14 @@
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
       - prompt_encoder_history_decoder.yaml
-      - attn_layers/default.yaml
+      - attn_layers/vima.yaml
       - attn_layers/with_cross_attn.yaml
-      - positional/xpos.yaml
+      - positional/rope.yaml
       - xattn_positional/none.yaml
 
 architecture: encoder_decoder
-attn_layers: default
-positional_encoding: xpos
+attn_layers: vima
+positional_encoding: rope
 xattn_positional_encoding: none
 source: x-transformers
 prompt_input: encoder

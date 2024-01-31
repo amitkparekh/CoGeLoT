@@ -2,17 +2,16 @@
 
 defaults:
   - override /transformer_decoder@model.policy.transformer_decoder:
-      - prompt_encoder_history_decoder.yaml
+      - decoder_only.yaml
       - attn_layers/default.yaml
-      - attn_layers/with_cross_attn.yaml
-      - positional/t5.yaml
+      - positional/rope.yaml
       - xattn_positional/none.yaml
 
-architecture: encoder_decoder
+architecture: decoder_only
 attn_layers: default
-positional_encoding: t5
+positional_encoding: rope
 xattn_positional_encoding: none
 source: x-transformers
-prompt_input: encoder
+prompt_input: decoder
 observation_input: decoder
 num_action_tokens: 1
