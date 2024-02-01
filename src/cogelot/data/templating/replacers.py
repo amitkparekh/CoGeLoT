@@ -315,7 +315,7 @@ class PerTaskTemplateReplacer:
                     ],
                 },
                 key_replacements={
-                    "stack_verb": {*STACK_VERBS, "organise"},
+                    "stack_verb": {*STACK_VERBS, "organize"},
                     "stack_noun": {"stack", "pile", "tower", "structure"},
                     "order_word": ORDER_ALTERNATIVES,
                     "plural_noun": GENERIC_PLURAL_NOUNS,
