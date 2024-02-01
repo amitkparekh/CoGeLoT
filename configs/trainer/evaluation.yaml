@@ -10,3 +10,4 @@ max_epochs: 1
 
 # The evaluation is going to be deterministic so it's consistent per run/model
 deterministic: True
+inference_mode: True
