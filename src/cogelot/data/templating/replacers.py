@@ -263,12 +263,12 @@ class PerTaskTemplateReplacer:
                             [f" {{frame{idx}}}" for idx in range(1, 4)]
                         )
                     ],
-                    *[
-                        "{follow_verb} this {motion_word}:" + subset
-                        for subset in _consecutive_subsets(
-                            [f" {{frame{idx}}}" for idx in range(1, 4)]
-                        )
-                    ],
+                    # *[
+                    #     "{follow_verb} this {motion_word}:" + subset
+                    #     for subset in _consecutive_subsets(
+                    #         [f" {{frame{idx}}}" for idx in range(1, 4)]
+                    #     )
+                    # ],
                     *[
                         "{follow_verb} this {motion_word} for {object1}:" + subset
                         for subset in _consecutive_subsets(
@@ -341,7 +341,6 @@ class PerTaskTemplateReplacer:
                     "{sweep_verb} {quantity} {object1} {preposition} {bounds} without {touching_constraint} {constraint}",
                     "{sweep_verb} {quantity} {object1} {preposition} the {bounds} without {touching_constraint} the {constraint}",
                     "without {touching_constraint} the {constraint}, {sweep_verb} {quantity} {object1} {preposition} the {bounds}",
-                    "{sweep_verb} {quantity} {object1} {preposition}",
                 },
                 key_replacements={
                     "sweep_verb": SWEEP_VERBS,
