@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint", "notebooks", "monitoring"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:21e01aabfe16f419b8b3a05c42b2bc1f79e1961298a002c402e6c45dc5db38cf"
+content_hash = "sha256:71b0da6ed1dab30d9f0012a7b14010a80716aa6893f0fd8db25528785102f305"
 
 [[package]]
 name = "aiohttp"
@@ -1974,6 +1974,20 @@ summary = "plugin and hook calling mechanisms for python"
 files = [
     {file = "pluggy-1.3.0-py3-none-any.whl", hash = "sha256:d89c696a773f8bd377d18e5ecda92b7a3793cbe66c87060a6fb58c7b6e1061f7"},
     {file = "pluggy-1.3.0.tar.gz", hash = "sha256:cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12"},
+]
+
+[[package]]
+name = "polars"
+version = "0.20.6"
+requires_python = ">=3.8"
+summary = "Blazingly fast DataFrame library"
+files = [
+    {file = "polars-0.20.6-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:59845bae0b614b3291baa889cfc2a251e1024129696bb655596f2b5556e9f9a1"},
+    {file = "polars-0.20.6-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:9e86736f68440bf97a9100fa0a79ae7ce616d1af6fd4669fff1345f03aab14c0"},
+    {file = "polars-0.20.6-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e4f4e3335fdcc863f6aac0616510b1baa5e13d5e818ebbfcb980ad534bd6edc2"},
+    {file = "polars-0.20.6-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:7c7b494beea914a54bcae8868dee3988a88ecb48525df948e07aacf2fb83e711"},
+    {file = "polars-0.20.6-cp38-abi3-win_amd64.whl", hash = "sha256:a96b157d68697c8d6ef2f7c2cc1734d498c3c6cc0c9c18d4fff7283ccfabdd1d"},
+    {file = "polars-0.20.6.tar.gz", hash = "sha256:b53553308bc7e2b4f841b18f1949b61ed7f2cf155c5c64712298efa5af67a997"},
 ]
 
 [[package]]

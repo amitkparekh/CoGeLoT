@@ -1,16 +1,20 @@
 import math
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, cast
 
+import polars as pl
 import torch
 import wandb
 from einops import rearrange
 from loguru import logger
 from matplotlib import pyplot as plt
 from pydantic import BaseModel, ConfigDict
+from torch import distributed as dist
 from torchmetrics import MeanMetric, Metric, SumMetric
 
 from cogelot.common.system_deps import verify_ffmpeg_is_available
+from cogelot.common.wandb import log_table_to_wandb
+from cogelot.metrics.online_tasks import parse_base_task
 from cogelot.structures.common import ImageType, Observation, View
 from cogelot.structures.vima import (
     EndEffector,
@@ -18,9 +22,10 @@ from cogelot.structures.vima import (
     Task,
     get_task_group_from_task,
 )
+from vima_bench.tasks.task_suite.base import BaseTask
 
 # Create a tensor of colors for the segmentation masks
-COLOR_MAP: torch.Tensor = (torch.tensor(plt.cm.tab20(range(20)))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues] # noqa: WPS221
+COLOR_MAP: torch.Tensor = (torch.tensor(plt.cm.tab20(range(20)))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues,reportAttributeAccessIssue] # noqa: WPS221
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
@@ -124,79 +129,85 @@ class EvaluationEpisodeTracker:
     Frame width and height are from manual inspection of the data during debugging.
     """
 
-    def __init__(self, max_rows_before_push: int = 100) -> None:
-        verify_ffmpeg_is_available()
+    def __init__(self, *, save_observations: bool = False) -> None:
+        self._save_observations = save_observations
+        if self._save_observations:
+            verify_ffmpeg_is_available()
 
-        self._max_rows_before_push = max_rows_before_push
-
-        self.wandb_table = wandb.Table(
-            columns=[
-                "partition",
-                "task",
-                "task_group",
-                "end_effector",
-                "prompt",
-                "seed",
-                "steps_taken",
-                "is_successful_at_end",
-                # We want to be able to track whether or not the agent completed the task at all
-                # timestep.
-                "success_per_step",
-                "flailing_rate",
-                "hesitance_rate",
-                # Observations need to be a numpy array with shape: (time, channels, width, height)
-                "top_rgb",
-                "front_rgb",
-                "top_segm",
-                "front_segm",
-                # Each action has 14 DOF/axes to predict
-                # "actions": pl.List(pl.Array(pl.Float32, width=14)),
-            ]
-        )
-
-    @property
-    def should_log_table(self) -> bool:
-        """Check if the table should be logged."""
-        return len(self.wandb_table.data) >= self._max_rows_before_push
+        self._schema_overrides = {"success_per_step": pl.List(pl.Boolean)}
+        self.table: pl.DataFrame
 
     def update(
         self,
         *,
         partition: Partition,
         task: Task,
-        seed: int,
         success_tracker_per_step: list[bool],
         end_effector: EndEffector,
         prompt: str,
         observations: list[Observation],
+        environment_task: BaseTask,
+        env_seed: int,
+        task_seed: int,
         # actions,
     ) -> None:
         """Add the result of an episode to the metric."""
-        observation_videos = extract_multiple_videos_from_observations(observations)
+        parsed_environment = parse_base_task(environment_task)
+        new_row = {
+            "partition": partition.name,
+            "task": task.name,
+            "task_group": get_task_group_from_task(task).name,
+            "end_effector": end_effector,
+            "prompt": prompt,
+            "env_seed": env_seed,
+            "task_seed": task_seed,
+            "steps_taken": len(success_tracker_per_step),
+            "is_successful_at_end": success_tracker_per_step[-1],
+            "success_per_step": success_tracker_per_step,
+            "flailing_rate": compute_flailing(success_tracker_per_step),
+            "hesitance_rate": compute_hesitance(success_tracker_per_step),
+            **parsed_environment["task_meta"],
+            "placeholders": parsed_environment["placeholders"],
+        }
 
-        self.wandb_table.add_data(
-            partition.name,
-            task.name,
-            get_task_group_from_task(task).name,
-            end_effector,
-            prompt,
-            seed,
-            len(success_tracker_per_step),
-            success_tracker_per_step[-1],
-            success_tracker_per_step,
-            compute_flailing(success_tracker_per_step),
-            compute_hesitance(success_tracker_per_step),
-            wandb.Video(observation_videos.top_rgb.numpy(), caption="Top RGB", fps=1),
-            wandb.Video(observation_videos.front_rgb.numpy(), caption="Front RGB", fps=1),
-            wandb.Video(observation_videos.top_segm.numpy(), caption="Top Segmentation", fps=1),
-            wandb.Video(
-                observation_videos.front_segm.numpy(), caption="Front Segmentation", fps=1
-            ),
-        )
+        if self._save_observations:
+            observation_videos = extract_multiple_videos_from_observations(observations)
+            new_row["top_rgb"] = observation_videos.top_rgb.numpy()
+            new_row["front_rgb"] = observation_videos.front_rgb.numpy()
+            new_row["top_segm"] = observation_videos.top_segm.numpy()
+            new_row["front_segm"] = observation_videos.front_segm.numpy()
 
-    def reset(self) -> None:
-        """Reset the table."""
-        self.wandb_table = wandb.Table(self.wandb_table.columns)
+        # Every value needs to be wrapped in a list because dataframes.
+        new_row = {k: [v] for k, v in new_row.items()}
+        table = pl.DataFrame(new_row, schema_overrides=self._schema_overrides)
+
+        try:
+            self.table = pl.concat([self.table, table], how="diagonal_relaxed")
+        except AttributeError:
+            self.table = table
+
+    def compute_table(self) -> wandb.Table:
+        """Compute and return the table."""
+        # if update has not been called yet, this WILL fail and crash things. That's the point.
+        wandb_table = wandb.Table(columns=self.table.columns)
+        for row in self.table.to_dicts():
+            wandb_table.add_data(*list(row.values()))
+        return wandb_table
+
+    def sync(self) -> None:
+        """Sync all the tables across processes."""
+        dist.barrier()
+        all_tables: list[None] | list[pl.DataFrame] = [None for _ in range(dist.get_world_size())]
+        dist.gather_object(self.table, all_tables if dist.get_rank() == 0 else None, dst=0)
+        if dist.get_rank() == 0:
+            self.table = pl.concat(cast(list[pl.DataFrame], all_tables), how="diagonal_relaxed")
+
+    def upload_table(self) -> None:
+        """Upload the table to wandb."""
+        self.sync()
+        if dist.get_rank() == 0:
+            wandb_table = self.compute_table()
+            log_table_to_wandb(name="episodes", table=wandb_table)
 
 
 class OnlineEvaluationMetrics:

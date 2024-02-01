@@ -6,7 +6,6 @@ import torch
 from loguru import logger
 from numpy import typing as npt
 
-from cogelot.common.wandb import log_table_to_wandb
 from cogelot.data.instance_transform import NoopTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.metrics.online import EvaluationEpisodeTracker, OnlineEvaluationMetrics
@@ -73,9 +72,9 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance = self._vima_instance_transform(vima_instance)
         self.run_vima_instance(vima_instance, partition)
 
-        if self._episode_tracker.should_log_table:
-            log_table_to_wandb(name="episodes", table=self._episode_tracker.wandb_table)
-            self._episode_tracker.reset()
+    def on_test_end(self) -> None:
+        """Log the episode details."""
+        self._episode_tracker.upload_table()
 
     def reset_environment(self, task: Task, partition: Partition) -> None:
         """Reset the environment."""
@@ -155,11 +154,13 @@ class EvaluationLightningModule(pl.LightningModule):
         self._episode_tracker.update(
             partition=partition,
             task=vima_instance.task,
-            seed=vima_instance.generation_seed,
             success_tracker_per_step=self.buffer.success_per_step,
             end_effector=vima_instance.end_effector_type,
             prompt=vima_instance.prompt,
             observations=self.buffer.observations,
+            environment_task=self.environment.vima_environment.task,
+            env_seed=self.environment.global_seed[0],
+            task_seed=self.environment.global_seed[1],
         )
 
         logger.debug(f"[rank {self.local_rank}] Logging all the episode details.")
