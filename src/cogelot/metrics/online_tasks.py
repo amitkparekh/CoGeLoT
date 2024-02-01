@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from contextlib import suppress
 from typing import Any
 
 from vima_bench.tasks.components.placeholders import (
@@ -53,7 +54,8 @@ def parse_base_task(task: BaseTask) -> dict[str, Any]:
 
     # This one causes a bunch of issues with logging tables and I don't even know what it means, so
     # we just don't log it.
-    task_meta.pop("sample_prob")
+    with suppress(KeyError):
+        task_meta.pop("sample_prob")
 
     return {
         "task_meta": task_meta,
