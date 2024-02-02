@@ -432,6 +432,10 @@ class PerTaskTemplateReplacer:
             ),
         }
 
+    def __getitem__(self, task: Task) -> TemplateReplacer:
+        """Get the template replacer for the task."""
+        return self.replacers[task]
+
     def regenerate_instruction(self, task: Task, prompt: str) -> str:
         """Regenerate an original template for a task."""
         return self.replacers[task].regenerate_original_prompt(prompt)

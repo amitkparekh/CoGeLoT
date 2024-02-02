@@ -29,7 +29,7 @@ def _instantiate_instance_preprocessor_from_config(config_file: Path) -> Instanc
     return instance_preprocessor
 
 
-def _load_parsed_datasets_for_each_task(
+def load_parsed_datasets_for_each_task(
     parsed_hf_datasets_dir: Path, *, task_index_filter: int | None = None
 ) -> Iterator[tuple[Task, datasets.DatasetDict]]:
     """Load the parsed datasets for each task."""
@@ -186,7 +186,7 @@ def preprocess_instances(
     )
 
     logger.info("Loading the parsed datasets for each task...")
-    parsed_datasets_per_task_iterator = _load_parsed_datasets_for_each_task(
+    parsed_datasets_per_task_iterator = load_parsed_datasets_for_each_task(
         parsed_hf_dataset_dir, task_index_filter=task_index_filter
     )
 

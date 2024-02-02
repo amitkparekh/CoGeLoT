@@ -46,6 +46,10 @@ class TemplateReplacer(BaseModel):
     templates: set[str]
     key_replacements: dict[str, set[str]]
 
+    def __call__(self, prompt: str) -> str:
+        """Regenerate the prompt into a new one."""
+        return self.regenerate_original_prompt(prompt)
+
     def regenerate_original_prompt(self, prompt: str) -> str:
         """Regenerate an original prompt into a new one."""
         keys_from_original = self._get_keys_from_original(prompt)
