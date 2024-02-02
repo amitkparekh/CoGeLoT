@@ -189,7 +189,7 @@ class EvaluationEpisodeTracker:
     def compute_table(self) -> wandb.Table:
         """Compute and return the table."""
         # if update has not been called yet, this WILL fail and crash things. That's the point.
-        wandb_table = wandb.Table(columns=self.table.columns)
+        wandb_table = wandb.Table(columns=self.table.columns, allow_mixed_types=True)
         for row in self.table.to_dicts():
             wandb_table.add_data(*list(row.values()))
         return wandb_table
