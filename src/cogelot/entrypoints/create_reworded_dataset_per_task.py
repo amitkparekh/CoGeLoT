@@ -5,9 +5,9 @@ import typer
 from loguru import logger
 
 from cogelot.common.settings import Settings
-from cogelot.data.templating.replacers import PerTaskTemplateReplacer
+from cogelot.data.transforms import VIMAInstanceRewordTransform
 from cogelot.entrypoints.preprocess_instances import load_parsed_datasets_for_each_task
-from cogelot.structures.vima import Task
+from cogelot.structures.vima import Task, VIMAInstance
 
 
 def create_reworded_dataset_per_task(
@@ -35,22 +35,21 @@ def create_reworded_dataset_per_task(
     new_parsed_hf_dataset_dir = Settings(dataset_variant="reworded").parsed_hf_dataset_dir
     new_parsed_hf_dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    task_template_replacers = PerTaskTemplateReplacer()
-
     logger.info("Loading parsed dataset for each task...")
     dataset_per_task_iterator = load_parsed_datasets_for_each_task(old_parsed_hf_dataset_dir)
 
+    instance_transformer = VIMAInstanceRewordTransform()
     for task, dataset in dataset_per_task_iterator:  # noqa: WPS426
         if task_index_filter is not None and task_index_filter != task.value:
             continue
 
-        replacer_for_task = task_template_replacers[task]
-
         logger.info(f"Augmenting data for {task}")
         augmented_dataset = dataset.map(
             partial(
-                lambda example, replacer: {**example, "prompt": replacer(example["prompt"])},
-                replacer=replacer_for_task,
+                lambda example, instance_transformer: instance_transformer(
+                    VIMAInstance.model_validate(example).model_dump()
+                ),
+                instance_transformer=instance_transformer,
             ),
             num_proc=num_workers,
             writer_batch_size=writer_batch_size,

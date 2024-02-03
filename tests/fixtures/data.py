@@ -16,9 +16,25 @@ from cogelot.structures.model import PreprocessedInstance
 from cogelot.structures.vima import VIMAInstance
 
 mission_task = param_fixture(
-    "mission_task", ["sweep", "follow_order", "twist", "novel_adj"], scope="session"
+    "mission_task",
+    [
+        "follow_order",
+        "manipulate_old_neighbor",
+        "novel_adj",
+        "novel_noun",
+        "pick_in_order_then_restore",
+        "rearrange",
+        "rearrange_then_restore",
+        "rotate",
+        "same_shape",
+        "scene_understanding",
+        "sweep_without_exceeding",
+        "twist",
+        "visual_manipulation",
+    ],
+    scope="session",
 )
-mission_id = param_fixture("mission_id", ["000000"], scope="session")
+# mission_id = param_fixture("mission_id", ["000000"], scope="session")
 
 keep_null_action = param_fixture(
     "keep_null_action",
@@ -35,8 +51,9 @@ def fixture_storage_dir() -> Path:
 
 
 @fixture(scope="session")
-def raw_instance_dir(fixture_storage_dir: Path, mission_task: str, mission_id: str) -> Path:
+def raw_instance_dir(fixture_storage_dir: Path, mission_task: str) -> Path:
     """Fixture storage directory."""
+    mission_id = "000000"
     return fixture_storage_dir.joinpath(mission_task, f"{mission_id}/")
 
 
