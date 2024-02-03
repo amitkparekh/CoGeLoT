@@ -22,7 +22,15 @@ def create_reworded_dataset_per_task(
         Optional[int], typer.Option(min=Task.minimum(), max=Task.maximum())  # noqa: UP007
     ] = None,
 ) -> None:
-    """Augment an existing dataset variant into a new one."""
+    """Augment an existing dataset variant into the reworded one.
+
+    This seems to just be a slow thing to run, and something that is very RAM hungry. I'm not sure
+    on how to optimise this but I'm sure that going to and from a strictly-validated Pydantic model
+    probably doesn't help. That said, I'm not sure how to get around that, so we just wait.
+
+    If you're able to break apart the tasks into multiple jobs, then I'd recommend a RAM size of
+    200G for 20 workers. That's what I did. Each task was processed in about 2-3 hours.
+    """
     # Make sure the dataset variants are valid
     assert old_dataset_variant in {"original", "keep_null_action"}
     assert new_dataset_variant in {"reworded", "reworded_keep_null_action"}
