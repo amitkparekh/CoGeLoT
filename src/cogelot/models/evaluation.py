@@ -6,7 +6,7 @@ import torch
 from loguru import logger
 from numpy import typing as npt
 
-from cogelot.data.instance_transform import NoopTransform, VIMAInstanceTransform
+from cogelot.data.transforms import NoopTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
 from cogelot.metrics.online import EvaluationEpisodeTracker, OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule

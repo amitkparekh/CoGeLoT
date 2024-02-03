@@ -1,4 +1,4 @@
-from cogelot.data.instance_transform import (
+from cogelot.data.transforms import (
     GobbledyGookPromptTokenTransform,
     GobbledyGookPromptWordTransform,
     NoopTransform,
