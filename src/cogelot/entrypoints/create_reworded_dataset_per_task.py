@@ -47,8 +47,8 @@ def create_reworded_dataset_per_task(
         augmented_dataset = dataset.map(
             partial(
                 lambda example, instance_transformer: instance_transformer(
-                    VIMAInstance.model_validate(example).model_dump()
-                ),
+                    VIMAInstance.model_validate(example)
+                ).model_dump(),
                 instance_transformer=instance_transformer,
             ),
             num_proc=num_workers,
