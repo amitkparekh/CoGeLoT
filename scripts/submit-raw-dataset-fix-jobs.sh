@@ -19,6 +19,8 @@ submit_jobs() {
 	echo "fix raw dataset: $fix_raw_dataset_job_id"
 }
 
-# DATASET_VARIANT='original'
+DATASET_VARIANT='original'
+submit_jobs
+
 DATASET_VARIANT="keep_null_action"
 submit_jobs

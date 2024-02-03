@@ -4,8 +4,8 @@
 #SBATCH --mem=500G
 #SBATCH --time=12:00:00
 #SBATCH --partition=nodes
-#SBATCH --job-name=create-raw-dataset
-#SBATCH --output=jobs/%x/%J.out
+#SBATCH --job-name=fix-raw-dataset
+#SBATCH --output=jobs/create-raw-dataset/%J.out
 
 export DATASETS_VERBOSITY=info
 
