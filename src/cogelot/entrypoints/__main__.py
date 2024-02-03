@@ -16,6 +16,7 @@ from cogelot.entrypoints.create_raw_dataset_per_task import create_raw_dataset_p
 from cogelot.entrypoints.create_reworded_dataset_per_task import (
     create_reworded_dataset_per_task,
 )
+from cogelot.entrypoints.fix_raw_dataset_per_task import fix_raw_dataset_per_task
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
 from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
@@ -47,6 +48,8 @@ app.command(rich_help_panel="Dataset Creation Commands")(create_reworded_dataset
 
 app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)
+
+app.command(rich_help_panel="Dataset Creation Commands")(fix_raw_dataset_per_task)
 
 
 @app.command(context_settings={"allow_extra_args": True})

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 import datasets
 import torch
@@ -92,3 +93,14 @@ def test_preprocessed_instance_can_be_saved_into_hf(
     )
     if error_metas:
         raise error_metas[0].to_error(None)
+
+
+def test_using_seed_when_splitting_is_deterministic(
+    vima_instances_dataset: datasets.Dataset,
+) -> None:
+    seed = 100
+    dataset_split_1 = vima_instances_dataset.train_test_split(test_size=0.2, seed=seed)
+    dataset_split_2 = vima_instances_dataset.train_test_split(test_size=0.2, seed=seed)
+
+    assert cast(torch.Tensor, dataset_split_1["test"]["task"]).tolist() == [4, 11, 16]
+    assert cast(torch.Tensor, dataset_split_2["test"]["task"]).tolist() == [4, 11, 16]

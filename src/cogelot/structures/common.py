@@ -237,6 +237,8 @@ class PromptAsset(Asset):
     """A single prompt asset within the environment."""
 
     name: str
+    obj_name: str = ""
+    obj_color: str = ""
 
     @classmethod
     def dataset_features(cls) -> datasets.Features:
@@ -244,6 +246,8 @@ class PromptAsset(Asset):
         return datasets.Features(
             {
                 "name": datasets.Value("string"),
+                "obj_name": datasets.Value("string"),
+                "obj_color": datasets.Value("string"),
                 **Asset.dataset_features(),
             }
         )
@@ -259,7 +263,18 @@ class PromptAssets(RootModel[list[PromptAsset]]):
         """Instantiate from the raw trajectory metadata, from the environment."""
         return cls(
             root=[
-                PromptAsset.model_validate({"name": asset_name, **asset_data})
+                PromptAsset.model_validate(
+                    {
+                        "name": asset_name,
+                        "obj_name": asset_data["segm"]["obj_info"]["obj_name"]
+                        if asset_data["placeholder_type"] == "object"
+                        else "",
+                        "obj_color": asset_data["segm"]["obj_info"]["obj_color"]
+                        if asset_data["placeholder_type"] == "object"
+                        else "",
+                        **asset_data,
+                    }
+                )
                 for asset_name, asset_data in raw_prompt_assets.items()
             ]
         )
