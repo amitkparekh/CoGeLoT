@@ -4,3 +4,4 @@ from cogelot.data.transforms.gobbledygook import (
     GobbledyGookPromptWordTransform,
 )
 from cogelot.data.transforms.reword import RewordPromptTransform
+from cogelot.data.transforms.textual import TextualDescriptionTransform

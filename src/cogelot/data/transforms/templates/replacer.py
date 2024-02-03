@@ -2,6 +2,7 @@ import random
 
 from pydantic import BaseModel
 
+from cogelot.data.transforms.templates.formatter import TemplateFormatter
 from cogelot.structures.vima import Task
 
 
@@ -83,6 +84,36 @@ class TemplateReplacer(BaseModel):
             if key not in key_replacements:
                 key_replacements[key] = original_value
         return key_replacements
+
+    def generate_new_prompt(
+        self,
+        original_prompt: str,
+        keys_from_original: dict[str, str],
+        necessary_placeholders: list[str],
+        *,
+        skip_key_value_randomisation: bool = False,
+    ) -> str:
+        """Generate a new prompt."""
+        key_replacements = keys_from_original
+        if not skip_key_value_randomisation:
+            key_replacements = self.randomly_choose_key_replacements(keys_from_original)
+
+        is_valid = False
+        counter = 0
+        while not is_valid:
+            template = self.choose_random_template()
+            new_prompt = TemplateFormatter().format(template, **key_replacements)
+
+            is_valid = is_new_prompt_valid(new_prompt, necessary_placeholders)
+            # If we don't allow reuse of the original prompt, we need to check
+            if original_prompt.lower() == new_prompt.lower() and not self.original_reuse_allowed:
+                is_valid = False
+
+            counter += 1
+            if counter > self._max_attempts:
+                raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
+
+        return new_prompt
 
     def _get_templates_with_same_length(self, original: str) -> list[str]:
         """Get all templates with the same length as the original prompt."""

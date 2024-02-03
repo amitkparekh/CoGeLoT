@@ -252,6 +252,11 @@ class PromptAsset(Asset):
             }
         )
 
+    @property
+    def as_natural_language(self) -> str | None:
+        """Convert the properties to natural language."""
+        return f"{self.obj_color} {self.obj_name}" if self.obj_name else None
+
 
 class PromptAssets(RootModel[list[PromptAsset]]):
     """Structure to group all the assets."""
