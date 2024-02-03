@@ -5,7 +5,7 @@ import typer
 from loguru import logger
 
 from cogelot.common.settings import Settings
-from cogelot.data.transforms import VIMAInstanceRewordTransform
+from cogelot.data.transforms import RewordPromptTransform
 from cogelot.entrypoints.preprocess_instances import load_parsed_datasets_for_each_task
 from cogelot.structures.vima import Task, VIMAInstance
 
@@ -46,7 +46,7 @@ def create_reworded_dataset_per_task(
     logger.info("Loading parsed dataset for each task...")
     dataset_per_task_iterator = load_parsed_datasets_for_each_task(old_parsed_hf_dataset_dir)
 
-    instance_transformer = VIMAInstanceRewordTransform()
+    instance_transformer = RewordPromptTransform()
     for task, dataset in dataset_per_task_iterator:  # noqa: WPS426
         if task_index_filter is not None and task_index_filter != task.value:
             continue

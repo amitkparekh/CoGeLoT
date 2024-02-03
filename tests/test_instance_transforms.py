@@ -2,7 +2,7 @@ from cogelot.data.transforms import (
     GobbledyGookPromptTokenTransform,
     GobbledyGookPromptWordTransform,
     NoopTransform,
-    VIMAInstanceRewordTransform,
+    RewordPromptTransform,
 )
 from cogelot.modules.tokenizers.text import TextTokenizer
 from cogelot.structures.vima import VIMAInstance
@@ -38,6 +38,6 @@ def test_gobbledygook_token_transform(
 
 
 def test_reword_transform(vima_instance: VIMAInstance) -> None:
-    reword_transform = VIMAInstanceRewordTransform(allow_original_reuse=False)
+    reword_transform = RewordPromptTransform(allow_original_reuse=False)
     new_instance = reword_transform(vima_instance)
     assert new_instance.prompt != vima_instance.prompt

@@ -81,7 +81,7 @@ def _consecutive_subsets(iterable: list[str]) -> list[str]:
     return ["".join(subset) for subset in subsets]
 
 
-class VIMAInstanceRewordTransform(VIMAInstanceTransform):
+class RewordPromptTransform(VIMAInstanceTransform):
     """Overhaul the prompt of a VIMA instance."""
 
     def __init__(self, *, allow_original_reuse: bool = True, max_attempts: int = 100) -> None:

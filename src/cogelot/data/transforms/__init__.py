@@ -3,4 +3,4 @@ from cogelot.data.transforms.gobbledygook import (
     GobbledyGookPromptTokenTransform,
     GobbledyGookPromptWordTransform,
 )
-from cogelot.data.transforms.reword import VIMAInstanceRewordTransform
+from cogelot.data.transforms.reword import RewordPromptTransform
