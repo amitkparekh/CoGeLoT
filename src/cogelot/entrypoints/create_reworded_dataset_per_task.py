@@ -44,7 +44,9 @@ def create_reworded_dataset_per_task(
     new_parsed_hf_dataset_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading parsed dataset for each task...")
-    dataset_per_task_iterator = load_parsed_datasets_for_each_task(old_parsed_hf_dataset_dir)
+    dataset_per_task_iterator = load_parsed_datasets_for_each_task(
+        old_parsed_hf_dataset_dir, task_index_filter=task_index_filter
+    )
 
     instance_transformer = RewordPromptTransform()
     for task, dataset in dataset_per_task_iterator:  # noqa: WPS426
@@ -71,4 +73,6 @@ def create_reworded_dataset_per_task(
 
 
 if __name__ == "__main__":
-    create_reworded_dataset_per_task(old_dataset_variant="original")
+    create_reworded_dataset_per_task(
+        old_dataset_variant="original", task_index_filter=5, num_workers=20
+    )
