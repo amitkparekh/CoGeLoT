@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated
 
 import datasets
-import torch
 import typer
 from loguru import logger
 
@@ -56,8 +55,8 @@ def fix_raw_dataset_per_task(  # noqa: WPS210
 
         # Get all the indices within the train and valid split separately.
         logger.info(f"Getting indices for {task}...")
-        train_indices: list[int] = cast(torch.Tensor, dataset["train"]["index"]).flatten().tolist()
-        valid_indices: list[int] = cast(torch.Tensor, dataset["valid"]["index"]).flatten().tolist()
+        train_indices: list[int] = dataset["train"]["index"]
+        valid_indices: list[int] = dataset["valid"]["index"]
 
         # Because the index for each instance is just the index in the raw path, we can use that to
         # get the instance path for each instance
@@ -81,7 +80,7 @@ def fix_raw_dataset_per_task(  # noqa: WPS210
             },
         )
 
-        logger.info(f"Task {task}: Got {len(train_instance_paths)} valid instances to fix")
+        logger.info(f"Task {task}: Got {len(valid_instance_paths)} valid instances to fix")
         valid_instances = create_hf_dataset_from_paths(
             valid_instance_paths,
             load_instance_from_path_fn=load_vima_instance_from_path_fn,
