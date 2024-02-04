@@ -1,4 +1,5 @@
 _target_: cogelot.nn.decoders.PromptEncoderHistoryDecoder
 max_seq_len: 512
+emb_dropout: 0.1
 
 attn_layers: ???
