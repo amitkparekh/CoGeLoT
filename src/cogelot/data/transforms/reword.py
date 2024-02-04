@@ -475,11 +475,19 @@ class RewordPromptTransform(VIMAInstanceTransform):
         # First, check if there are any textures within the prompt itself, and if so, convert them
         # to texture placeholders
         texture_placeholders = {}
-        for metadata in instance.object_metadata:
-            if metadata.texture_name in prompt:
+        sorted_texture_names = [
+            metadata.texture_name
+            for metadata in sorted(
+                instance.object_metadata,
+                key=lambda metadata: len(metadata.texture_name),
+                reverse=True,
+            )
+        ]
+        for texture_name in sorted_texture_names:
+            if texture_name in prompt:
                 texture_counter = len(texture_placeholders)
-                texture_placeholders[f"texture_{texture_counter}"] = metadata.texture_name
-                prompt = prompt.replace(metadata.texture_name, f"{{texture_{texture_counter}}}", 1)
+                texture_placeholders[f"texture_{texture_counter}"] = texture_name
+                prompt = prompt.replace(texture_name, f"{{texture_{texture_counter}}}", 1)
 
         # Then we get the template that matches the prompt
         template = self.replacers[instance.task].get_template_that_best_matches_prompt(prompt)
