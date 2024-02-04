@@ -188,6 +188,11 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {novel_adj} {demo_blicker_obj_3} {contain_preposition} the {demo_blicker_obj_4}.",
                     "{object1} {object3} and {object5} are all {novel_adj} than {plural_noun} {object2} {object4} and {object6} respectively. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
                     "{object1} and {object3} are both {novel_adj} than {plural_noun} {object2} and {object4} respectively. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {demo_blicker_obj_5} is {novel_adj} than {demo_blicker_obj_6}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_7} {contain_preposition} the {demo_blicker_obj_8}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_5} {contain_preposition} the {demo_blicker_obj_6}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_3} {contain_preposition} the {demo_blicker_obj_4}.",
+                    "{object1} {object3} and {object5} are all {novel_adj} than {plural_noun} {object2} {object4} and {object6} respectively. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
+                    "{object1} and {object3} are both {novel_adj} than {plural_noun} {object2} and {object4} respectively. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
                 ],
                 key_replacements={
                     "rearrange_verb": REARRANGE_VERBS,
