@@ -66,6 +66,7 @@ PROFILE_ALTERNATIVES = {"profile", "shape", "form", "structure"}
 STARTING_ALTERNATIVES = {"starting", "original", "initial"}
 FINALLY_ALTERNATIVES = {"finally", "last", "then"}
 MOTION_ALTERNATIVES = {"motion", "movement", "maneuver"}
+BUILD_ALTERNATIVES = {"build", "create", "construct", "form", "make"}
 
 
 def _consecutive_subsets(iterable: list[str]) -> list[str]:
@@ -106,7 +107,7 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "placing_verb": PLACING_VERBS,
                     "article1": ARTICLE,
                     "article2": ARTICLE,
-                    "preposition2": PREPOSITIONS,
+                    "preposition": PREPOSITIONS,
                 },
             ),
             Task.scene_understanding: TemplateReplacer(
@@ -143,6 +144,7 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "{pickup_verb} {article1} {dragged_obj} and {rotate_verb} it {angle_in_degree} {angle_unit}",
                 ],
                 key_replacements={
+                    "pickup_verb": LIFTING_VERBS,
                     "rotate_verb": ROTATING_VERBS,
                     "article1": ARTICLE,
                     "precision_adverb1": PRECISION_ADVERBS,
@@ -339,6 +341,7 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "stack_noun": {"stack", "pile", "tower", "structure"},
                     "order_word": ORDER_ALTERNATIVES,
                     "plural_noun": GENERIC_PLURAL_NOUNS,
+                    "build_noun": BUILD_ALTERNATIVES,
                 },
             ),
             Task.sweep_without_exceeding: TemplateReplacer(
@@ -416,9 +419,9 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "{placing_verb} {object1} {contain_preposition} {object2} then {placing_verb2} {article1} {singular_noun} that was at its {direction} before you {moved_verb} it into the same {object2}",
                     "{placing_verb} {object1} {contain_preposition} {object2} then {placing_verb2} {article1} {singular_noun} that was at its {direction} before you {moved_verb} it into the same as {object1}",
                     "{placing_verb} {object1} {contain_preposition} {object2} then {placing_verb2} {article1} {singular_noun} that was at its {direction} before you {moved_verb} it into the same {container_noun}",
-                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {container_preposition} {object2} starting with {object1}",
-                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {container_preposition} {object2} with {object1} first",
-                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {container_preposition} {object2} with {object1} at the bottom",
+                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {contain_preposition} {object2} starting with {object1}",
+                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {contain_preposition} {object2} with {object1} first",
+                    "{placing_verb} {object1} and {article1} {singular_noun} at its {direction} {contain_preposition} {object2} with {object1} at the bottom",
                 ],
                 key_replacements={
                     "placing_verb": PLACING_VERBS,
