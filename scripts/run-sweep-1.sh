@@ -13,5 +13,5 @@ CUDA_VISIBLE_DEVICES=3 wandb agent pyop/CoGeLoT/3he2lhl7 &
 echo "Started agent 4: ROPE orig"
 
 echo "Waiting for processes to finish"
-wait "$(jobs -p)"
+wait
 echo "All processes finished"
