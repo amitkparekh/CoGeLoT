@@ -156,7 +156,7 @@ class Policy(torch.nn.Module):
         self._obs_fusion_layer = obs_fusion_layer
         self._action_encoder = action_encoder
         self._action_decoder = action_decoder
-        self.prompt_embedding = prompt_embedding
+        self._prompt_embedding = prompt_embedding
         self._prompt_encoder = prompt_encoder
         self._prompt_encoder_post_layer = (
             torch.nn.Identity()
@@ -170,6 +170,15 @@ class Policy(torch.nn.Module):
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features
         )
+
+    @property
+    def prompt_embedding(self) -> T5TextEmbedder:
+        """The text embedding.
+
+        I could make the private a public attribute, but that means I then need to do model surgery
+        on the checkpoints for the weights and I don't want to be dirty.
+        """
+        return self._prompt_embedding
 
     @classmethod
     def from_their_policy(cls, their_policy: VIMAPolicy) -> Self:
@@ -246,7 +255,7 @@ class Policy(torch.nn.Module):
         device = prompts[1].device
         raw_prompts_token_type, word_batch, image_batch = prompts
 
-        embedded_words = self.prompt_embedding(word_batch)
+        embedded_words = self._prompt_embedding(word_batch)
         embedded_images = self._obj_encoder(**image_batch)
         embedded_images = self._prompt_obj_post_layer(embedded_images)
 
