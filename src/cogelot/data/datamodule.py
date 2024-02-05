@@ -138,7 +138,7 @@ class VIMADataModuleFromHF(VIMADataModule):
         """
         download_parquet_files_from_hub(
             self._hf_datasets_repo_name,
-            pattern=f"{self._dataset_variant}/preprocessed-*/**/*.parquet",
+            pattern=f"{self._dataset_variant}/preprocessed*",
             max_workers=self._num_workers if self._num_workers > 0 else 1,
         )
 
