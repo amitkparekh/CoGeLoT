@@ -196,6 +196,10 @@ class EvaluationEpisodeTracker:
 
     def sync(self) -> None:
         """Sync all the tables across processes."""
+        # Nothing happens if we're not in distributed mode
+        if not dist.is_initialized():
+            return
+
         dist.barrier()
         all_tables: list[None] | list[pl.DataFrame] = [None for _ in range(dist.get_world_size())]
         dist.gather_object(self.table, all_tables if dist.get_rank() == 0 else None, dst=0)
