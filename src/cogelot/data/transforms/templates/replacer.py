@@ -28,14 +28,6 @@ def is_new_prompt_valid(new_prompt: str, necessary_placeholders: list[str]) -> b
     """
     return all(f"{{{placeholder}}}" in new_prompt for placeholder in necessary_placeholders)
 
-    # new_placeholders = {
-    #     placeholder[1:-1]
-    #     for placeholder in template.split(" ")
-    #     if placeholder.startswith("{") and placeholder.endswith("}")
-    # }
-    # original_placeholders = set(necessary_placeholders)
-    # return original_placeholders.issubset(new_placeholders)
-
 
 class TemplateReplacer(BaseModel):
     """Replace a provided prompt with one generated from templates."""
@@ -112,6 +104,9 @@ class TemplateReplacer(BaseModel):
             counter += 1
             if counter > self._max_attempts:
                 raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
+
+        # HACK: This is a hack. Forgive me. #noqa: FIX004
+        new_prompt = new_prompt.replace("{adv}", "").replace("  ", " ")
 
         return new_prompt
 

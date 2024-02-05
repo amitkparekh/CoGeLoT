@@ -27,4 +27,5 @@ class TemplateFormatter(DefaultFormatter):
         formatted_string = formatted_string.capitalize()
         if not formatted_string.endswith("."):
             formatted_string += "."  # noqa: WPS336
+        formatted_string = formatted_string.replace("  ", " ")
         return formatted_string
