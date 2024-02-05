@@ -28,6 +28,13 @@ from vima_bench.tasks.task_suite.base import BaseTask
 COLOR_MAP: torch.Tensor = (torch.tensor(plt.cm.tab20(range(20)))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues,reportAttributeAccessIssue] # noqa: WPS221
 
 
+def _is_zero_rank() -> bool:
+    """Return true if currently zero-rank."""
+    if not dist.is_initialized():
+        return True
+    return dist.get_rank() == 0
+
+
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
     """Compute the hesitance of an episode from the tracked success statuses.
 
@@ -209,7 +216,7 @@ class EvaluationEpisodeTracker:
     def upload_table(self) -> None:
         """Upload the table to wandb."""
         self.sync()
-        if dist.get_rank() == 0:
+        if _is_zero_rank():
             wandb_table = self.compute_table()
             log_table_to_wandb(name="episodes", table=wandb_table)
 
@@ -222,14 +229,6 @@ class OnlineEvaluationMetrics:
     def __init__(self) -> None:
         self.success_rate = {
             partition: {task: MeanMetric() for task in Task} for partition in Partition
-        }
-        self.hesitance_rate = {
-            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
-            for partition in Partition
-        }
-        self.flailing_rate = {
-            partition: {task: MeanMetric(nan_strategy="ignore") for task in Task}
-            for partition in Partition
         }
         self.steps_taken = {
             partition: {task: MeanMetric() for task in Task} for partition in Partition
@@ -251,8 +250,6 @@ class OnlineEvaluationMetrics:
 
         # To be successful means it ends successfully
         self.success_rate[partition][task](int(success_tracker_per_step[-1]))
-        self.hesitance_rate[partition][task](compute_hesitance(success_tracker_per_step))
-        self.flailing_rate[partition][task](compute_flailing(success_tracker_per_step))
         self.steps_taken[partition][task](num_steps_taken)
         self.tasks_seen[partition][task](1)
 
@@ -281,16 +278,6 @@ class OnlineEvaluationMetrics:
             metric_name="success",
             seen_per_task_per_partition=seen_per_task_per_partition,
         )
-        computed_hesitant_rate = self._compute_rates(
-            metrics_per_task_per_partition=self.hesitance_rate,
-            metric_name="hesitant",
-            seen_per_task_per_partition=seen_per_task_per_partition,
-        )
-        computed_flailing_rate = self._compute_rates(
-            metrics_per_task_per_partition=self.flailing_rate,
-            metric_name="flailing",
-            seen_per_task_per_partition=seen_per_task_per_partition,
-        )
 
         total_seen = sum(computed_tasks_seen.values())
         total_success = self._compute_overall_success_rate(
@@ -303,8 +290,6 @@ class OnlineEvaluationMetrics:
             **computed_tasks_seen,
             **computed_steps,
             **computed_success_rate,
-            **computed_hesitant_rate,
-            **computed_flailing_rate,
         }
 
     def _compute_rates(
