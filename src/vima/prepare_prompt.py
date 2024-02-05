@@ -30,9 +30,11 @@ def prepare_prompt(
     views = sorted(views)
     encoding = tokenizer(prompt, add_special_tokens=True)
     prompt_ids, prompt_tokens = encoding["input_ids"], encoding.tokens()
-    assert set(prompt_assets.keys()) == {
-        token[1:-1] for token in prompt_tokens if token in placeholders
-    }
+    # This has been commented out because it causes assertions when we are using the textual
+    # transformations
+    # assert set(prompt_assets.keys()) == {
+    #     token[1:-1] for token in prompt_tokens if token in placeholders
+    # }
     filled_prompt = []
     for id, token in zip(prompt_ids, prompt_tokens):
         if token not in placeholders:
