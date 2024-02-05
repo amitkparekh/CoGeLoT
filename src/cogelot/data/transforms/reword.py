@@ -7,7 +7,6 @@ from cogelot.data.transforms.templates.formatter import TemplateFormatter
 from cogelot.data.transforms.templates.replacer import (
     TemplateReplacer,
     extract_keys_from_original,
-    is_new_prompt_valid,
 )
 from cogelot.structures.vima import Task, VIMAInstance
 
@@ -466,8 +465,8 @@ class RewordPromptTransform(VIMAInstanceTransform):
         keys_from_original = self._extract_keys_from_original(instance)
 
         # Then we need to generate a new prompt
-        new_prompt = self._generate_new_prompt(
-            instance.task, original_prompt, keys_from_original, necessary_placeholders
+        new_prompt = self.replacers[instance.task].generate_new_prompt(
+            original_prompt, keys_from_original, necessary_placeholders
         )
 
         # And then we return the instance
@@ -504,33 +503,3 @@ class RewordPromptTransform(VIMAInstanceTransform):
                 keys_from_original[key] = extracted_value.format_map(texture_placeholders)
 
         return keys_from_original
-
-    def _generate_new_prompt(
-        self,
-        task: Task,
-        original_prompt: str,
-        keys_from_original: dict[str, str],
-        necessary_placeholders: list[str],
-    ) -> str:
-        """Generate a new prompt."""
-        key_replacements = self.replacers[task].randomly_choose_key_replacements(
-            keys_from_original
-        )
-
-        is_valid = False
-        counter = 0
-        while not is_valid:
-            template = self.replacers[task].choose_random_template()
-            new_prompt = self.formatter.format(template, **key_replacements)
-
-            is_valid = is_new_prompt_valid(new_prompt, necessary_placeholders)
-
-            # If we don't allow reuse of the original prompt, we need to check
-            if new_prompt == original_prompt and not self.allow_original_reuse:
-                is_valid = False
-
-            counter += 1
-            if counter > self._max_attempts:
-                raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
-
-        return new_prompt
