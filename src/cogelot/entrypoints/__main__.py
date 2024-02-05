@@ -2,8 +2,13 @@ import sys
 from pathlib import Path
 
 import typer
+from loguru import logger
 
 from cogelot.common.hf_datasets import download_parquet_files_from_hub
+from cogelot.common.hf_models import (
+    download_model_checkpoint,
+    get_model_checkpoint_file_in_remote_repo_for_epoch,
+)
 from cogelot.common.hydra import (
     load_hydra_config,
     pretty_print_hydra_config,
@@ -62,7 +67,7 @@ def print_config(config_file: Path, ctx: typer.Context) -> None:
     pretty_print_hydra_config(config)
 
 
-@app.command()
+@app.command(rich_help_panel="Downloading")
 def download_training_data(
     num_workers: int = 0,
     hf_datasets_repo_name: str = "amitkparekh/vima",
@@ -73,8 +78,23 @@ def download_training_data(
     during the training command. So, this is a good way to do it quickly.
     """
     download_parquet_files_from_hub(
-        hf_datasets_repo_name, pattern="**/preprocessed-*/**/*.parquet", max_workers=num_workers
+        hf_datasets_repo_name, pattern="**/preprocessed*/**", max_workers=num_workers
     )
+
+
+@app.command(rich_help_panel="Downloading")
+def download_model(
+    wandb_run_id: str, hf_repo_id: str = "amitkparekh/vima", epoch: int = -1
+) -> None:
+    """Download the model checkpoint from HF."""
+    model_path_in_repo = get_model_checkpoint_file_in_remote_repo_for_epoch(
+        repo_id=hf_repo_id, run_id=wandb_run_id, epoch=epoch
+    )
+    logger.info(f"Downloading model from remote path: `{model_path_in_repo}`")
+    model_checkpoint_path = download_model_checkpoint(
+        repo_id=hf_repo_id, file_path_in_repo=model_path_in_repo
+    )
+    logger.info(f"Model downloaded to {model_checkpoint_path}")
 
 
 if __name__ == "__main__":
