@@ -207,12 +207,19 @@ class EvaluationLightningModule(pl.LightningModule):
         word_batch = cast(torch.Tensor, add_batch_dim(word_batch))
         image_batch = cast(DataDict, add_batch_dim(image_batch))
 
-        (
-            embedded_prompt,
-            embedded_prompt_mask,
-        ) = self.model.policy.embed_multimodal_prompt(
-            (raw_prompts_token_type, word_batch, image_batch)
-        )
+        # The image_batch is none when we are using the textual instance transformation. Otherwise
+        # it shouldn't be none.
+        if image_batch:
+            (
+                embedded_prompt,
+                embedded_prompt_mask,
+            ) = self.model.policy.embed_multimodal_prompt(
+                (raw_prompts_token_type, word_batch, image_batch)
+            )
+        else:
+            embedded_prompt = self.model.policy.prompt_embedding(word_batch)
+            embedded_prompt_mask = torch.zeros_like(word_batch, dtype=torch.bool)
+
         encoded_prompt = self.model.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
         self.buffer.encoded_prompt = encoded_prompt
         self.buffer.encoded_prompt_mask = embedded_prompt_mask

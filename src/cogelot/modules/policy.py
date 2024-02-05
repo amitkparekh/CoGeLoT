@@ -156,7 +156,7 @@ class Policy(torch.nn.Module):
         self._obs_fusion_layer = obs_fusion_layer
         self._action_encoder = action_encoder
         self._action_decoder = action_decoder
-        self._prompt_embedding = prompt_embedding
+        self.prompt_embedding = prompt_embedding
         self._prompt_encoder = prompt_encoder
         self._prompt_encoder_post_layer = (
             torch.nn.Identity()
@@ -246,7 +246,7 @@ class Policy(torch.nn.Module):
         device = prompts[1].device
         raw_prompts_token_type, word_batch, image_batch = prompts
 
-        embedded_words = self._prompt_embedding(word_batch)
+        embedded_words = self.prompt_embedding(word_batch)
         embedded_images = self._obj_encoder(**image_batch)
         embedded_images = self._prompt_obj_post_layer(embedded_images)
 
