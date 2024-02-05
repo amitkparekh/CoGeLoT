@@ -1,1 +1,1 @@
-_target_: cogelot.data.tranforms.NoopTransform
+_target_: cogelot.data.transforms.NoopTransform

@@ -1,1 +1,1 @@
-_target_: cogelot.data.tranforms.GobbledyGookPromptWordTransform
+_target_: cogelot.data.transforms.GobbledyGookPromptWordTransform

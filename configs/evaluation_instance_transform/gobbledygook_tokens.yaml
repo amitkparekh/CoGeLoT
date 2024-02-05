@@ -1,4 +1,4 @@
-_target_: cogelot.data.tranforms.GobbledyGookPromptTokenTransform
+_target_: cogelot.data.transforms.GobbledyGookPromptTokenTransform
 timeout: 100
 text_tokenizer:
   _target_: cogelot.modules.tokenizers.TextTokenizer
