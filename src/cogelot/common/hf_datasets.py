@@ -6,11 +6,10 @@ from pathlib import Path
 from typing import Literal, TypeVar, cast
 
 import datasets
-from datasets.config import HF_ENDPOINT
 from datasets.distributed import split_dataset_by_node
 from datasets.features.features import require_decoding
 from datasets.table import embed_table_storage
-from huggingface_hub import HfApi, HfFolder, snapshot_download
+from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.utils._errors import (  # noqa: WPS436  # noqa: WPS436
     BadRequestError,
     HfHubHTTPError,
@@ -344,23 +343,13 @@ def _upload_parquet_files_to_hub(
     config_name: str,
     dataset_shards_output_dir: Path,
     is_private_repo: bool = True,
-    use_multi_commits: bool = False,
 ) -> None:
     """Upload parquet files to the hub."""
     assert dataset_shards_output_dir.is_dir()
 
-    api = HfApi(endpoint=HF_ENDPOINT)
-
-    token = HfFolder.get_token()
-    if token is None:
-        raise OSError(
-            "You need to provide a `token` or be logged in to Hugging Face with `huggingface-cli"
-            " login`."
-        )
-
+    api = HfApi()
     api.create_repo(
         hf_repo_id,
-        token=token,
         repo_type="dataset",
         private=is_private_repo,
         exist_ok=True,
@@ -375,8 +364,6 @@ def _upload_parquet_files_to_hub(
         allow_patterns="*.parquet",
         delete_patterns="*.parquet",
         commit_message=f"Upload {config_name} with huggingface_hub",
-        multi_commits=use_multi_commits,
-        multi_commits_verbose=use_multi_commits,
     )
 
     logger.info("Finished uploading the parquet files to the hub.")
