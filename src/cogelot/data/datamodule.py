@@ -73,7 +73,7 @@ class VIMADataModule(abc.ABC, LightningDataModule):
     def train_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the training set."""
         return DataLoader[list[PreprocessedInstance]](
-            self.train_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+            self.train_dataset,  # pyright: ignore[reportArgumentType]
             batch_size=self.batch_size,
             num_workers=self._num_workers,
             shuffle=True,
@@ -84,7 +84,7 @@ class VIMADataModule(abc.ABC, LightningDataModule):
     def val_dataloader(self) -> DataLoader[list[PreprocessedInstance]]:
         """Create the dataloader for the validation set."""
         return DataLoader[list[PreprocessedInstance]](
-            self.valid_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+            self.valid_dataset,  # pyright: ignore[reportArgumentType]
             batch_size=self.batch_size,
             num_workers=self._num_workers,
             shuffle=False,
