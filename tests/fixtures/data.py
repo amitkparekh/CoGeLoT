@@ -62,7 +62,7 @@ def vima_instance_parser(keep_null_action: bool) -> VIMAInstanceParser:  # noqa:
     return VIMAInstanceParser(keep_null_action=keep_null_action)
 
 
-@fixture
+@fixture(scope="session")
 def vima_instance(
     raw_instance_dir: Path, vima_instance_parser: VIMAInstanceParser
 ) -> VIMAInstance:
@@ -70,7 +70,7 @@ def vima_instance(
     return vima_instance_parser(raw_instance_dir)
 
 
-@fixture
+@fixture(scope="session")
 def all_vima_instances(
     fixture_storage_dir: Path, vima_instance_parser: VIMAInstanceParser
 ) -> list[VIMAInstance]:
@@ -82,7 +82,7 @@ def all_vima_instances(
     return list(parsed_instances)
 
 
-@fixture
+@fixture(scope="session")
 def vima_instances_dataset(all_vima_instances: list[VIMAInstance]) -> datasets.Dataset:
     """All normalized VIMA instances."""
     dataset = datasets.Dataset.from_list(
@@ -93,7 +93,7 @@ def vima_instances_dataset(all_vima_instances: list[VIMAInstance]) -> datasets.D
     return dataset
 
 
-@fixture
+@fixture(scope="session")
 def preprocessed_instance(
     vima_instance: VIMAInstance,
     instance_preprocessor: InstancePreprocessor,
@@ -103,7 +103,7 @@ def preprocessed_instance(
     return instance_preprocessor.preprocess(vima_instance).transfer_to_device(torch_device)
 
 
-@fixture
+@fixture(scope="session")
 def all_preprocessed_instances(
     vima_instance_parser: VIMAInstanceParser,
     fixture_storage_dir: Path,
@@ -122,7 +122,7 @@ def all_preprocessed_instances(
     return list(preprocessed_instances)
 
 
-@fixture
+@fixture(scope="session")
 def preprocessed_instances_dataset(
     all_preprocessed_instances: list[PreprocessedInstance],
 ) -> datasets.Dataset:
@@ -141,7 +141,7 @@ def preprocessed_instances_dataset(
     return dataset
 
 
-@fixture
+@fixture(scope="session")
 def vima_dataloader(
     preprocessed_instances_dataset: datasets.Dataset,
 ) -> DataLoader[list[PreprocessedInstance]]:
