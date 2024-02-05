@@ -8,14 +8,16 @@ from cogelot.structures.vima import Task
 
 def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
     """Extract keys from the original prompt."""
-    extracted_key_values = {}
     # Remove any '.'s from the end before splittings
-    words = prompt.lower().rstrip(".").split(" ")
-    placeholders = template.split(" ")
+    words = [word.rstrip(".").rstrip(":") for word in prompt.lower().split(" ")]
+    placeholders = [
+        placeholder.strip().rstrip(".").rstrip(":") for placeholder in template.lower().split(" ")
+    ]
 
+    extracted_key_values = {}
     for placeholder, word in zip(placeholders, words, strict=True):
-        if placeholder.startswith("{") and placeholder.rstrip(".").endswith("}"):
-            extracted_key_values[placeholder.rstrip(".")[1:-1]] = word.rstrip(".")
+        if placeholder.startswith("{") and placeholder.endswith("}"):
+            extracted_key_values[placeholder[1:-1]] = word
 
     return extracted_key_values
 
@@ -51,17 +53,19 @@ class TemplateReplacer(BaseModel):
         # For each of the possible templates, extract the keys from the prompt for the template and
         # then for each key, ensure that its value is already in the list of possible replacements
         # since that's how they've been made.
-        for template in templates_with_correct_length:
-            if not self._do_words_match_with_replacements(template, original):
-                templates_with_correct_length.remove(template)
+        valid_templates = [
+            template
+            for template in templates_with_correct_length
+            if self._do_words_match_with_replacements(template, original)
+        ]
 
         # If there are no templates left, then we have a problem
-        if not templates_with_correct_length:
+        if not valid_templates:
             raise RuntimeError(
                 "No template with the correct length and keys found. This should not be possible."
             )
 
-        return random.choice(templates_with_correct_length)  # noqa: S311
+        return random.choice(valid_templates)  # noqa: S311
 
     def choose_random_template(self) -> str:
         """Randomly choose a template."""

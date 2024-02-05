@@ -229,13 +229,35 @@ class RewordPromptTransform(VIMAInstanceTransform):
                 task=Task.novel_adj_and_noun,
                 original_reuse_allowed=self.allow_original_reuse,
                 templates=[
-                    "This is a {novel_noun1} {object1}. This is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
-                    "This is a {novel_noun2} {object2}. This is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
-                    "{object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. This is a {novel_noun2} {object2}. This is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} {object5} and {object7} are all {novel_adj} than {plural_noun} {object4} {object6} and {object8} respectively. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} {object5} and {object7} are all {novel_adj} than {plural_noun} {object4} {object6} and {object8} respectively. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    # Same as above but with 2 adj compares
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
                     # Same as above, but with one less adj comparison
-                    "This is a {novel_noun1} {object1}. This is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
-                    "This is a {novel_noun2} {object2}. This is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
-                    "{object3} is {novel_adj} than {object4}. This is a {novel_noun2} {object2}. This is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {adv} {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    # and without {adv}
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} {object5} and {object7} are all {novel_adj} than {plural_noun} {object4} {object6} and {object8} respectively. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {object7} is {novel_adj} than {object8}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} {object5} and {object7} are all {novel_adj} than {plural_noun} {object4} {object6} and {object8} respectively. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    # Same as above but with 2 adj compares
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {object5} is {novel_adj} than {object6}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    # Same as above, but with one less adj comparison
+                    "{this} is a {novel_noun1} {object1}. {this} is a {novel_noun2} {object2}. {object3} is {novel_adj} than {object4}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {object3} is {novel_adj} than {object4}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
+                    "{object3} is {novel_adj} than {object4}. {this} is a {novel_noun2} {object2}. {this} is a {novel_noun1} {object1}. {placing_verb} the {novel_adj} {novel_noun1} {contain_preposition} the {novel_noun2}.",
                 ],
                 key_replacements={
                     "rearrange_verb": REARRANGE_VERBS,
@@ -245,6 +267,7 @@ class RewordPromptTransform(VIMAInstanceTransform):
                     "restore_word": RESTORE_WORDS,
                     "placing_verb": PLACING_VERBS,
                     "contain_preposition": CONTAIN_PREPOSITION,
+                    "this": {"this"},
                 },
             ),
             Task.twist: TemplateReplacer(
