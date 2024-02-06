@@ -136,7 +136,8 @@ class EvaluationEpisodeTracker:
     Frame width and height are from manual inspection of the data during debugging.
     """
 
-    def __init__(self, *, save_observations: bool = False) -> None:
+    def __init__(self, *, save_observations: bool = False, disable_upload: bool = True) -> None:
+        self._disable_upload = disable_upload
         self._save_observations = save_observations
         if self._save_observations:
             verify_ffmpeg_is_available()
@@ -216,6 +217,8 @@ class EvaluationEpisodeTracker:
     def upload_table(self) -> None:
         """Upload the table to wandb."""
         self.sync()
+        if self._disable_upload:
+            return
         if _is_zero_rank():
             wandb_table = self.compute_table()
             log_table_to_wandb(name="episodes", table=wandb_table)
