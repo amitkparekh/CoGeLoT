@@ -58,6 +58,16 @@ def hydra_config(
             ]
         )
 
+    # Custom overrides if we're testing the torch transformer model.
+    elif experiment.startswith("05_torch"):
+        overrides.extend(
+            [
+                "model.policy.transformer_decoder.decoder.num_layers=2",
+                "model.policy.transformer_decoder.decoder.decoder_layer.nhead=2",
+                "model.policy.transformer_decoder.decoder.decoder_layer.dim_feedforward=1024",
+            ]
+        )
+
     # Otherwise, custom overrides for xtransformers models
     else:
         overrides.extend(

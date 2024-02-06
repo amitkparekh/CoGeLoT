@@ -7,7 +7,7 @@ from cogelot.nn.decoders.interfaces import TransformerDecoderProtocol
 from cogelot.nn.embedder import EmbedderProtocol
 
 
-def _create_padding_mask_from_tensor(tensor: torch.Tensor) -> torch.Tensor:
+def create_padding_mask_from_tensor(tensor: torch.Tensor) -> torch.Tensor:
     """Create a padding mask from a tensor."""
     return torch.ones(
         size=tensor.shape[:-1],
@@ -56,9 +56,9 @@ class PromptEncoderHistoryDecoder(TransformerDecoder):
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
         if tgt_key_padding_mask is None:
-            tgt_key_padding_mask = _create_padding_mask_from_tensor(tgt)
+            tgt_key_padding_mask = create_padding_mask_from_tensor(tgt)
         if memory_key_padding_mask is None:
-            memory_key_padding_mask = _create_padding_mask_from_tensor(memory)
+            memory_key_padding_mask = create_padding_mask_from_tensor(memory)
 
         # Create the position ids from the mask (just how they do in the Policy)
         position_ids = (torch.cumsum(~tgt_key_padding_mask, dim=1) - 1).long().clamp(min=0)
@@ -118,9 +118,9 @@ class DecoderOnly(TransformerDecoder):
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
         if tgt_key_padding_mask is None:
-            tgt_key_padding_mask = _create_padding_mask_from_tensor(tgt)
+            tgt_key_padding_mask = create_padding_mask_from_tensor(tgt)
         if memory_key_padding_mask is None:
-            memory_key_padding_mask = _create_padding_mask_from_tensor(memory)
+            memory_key_padding_mask = create_padding_mask_from_tensor(memory)
 
         # Add separate position embeddings to the memory
         memory = self._add_position_embedding_to_memory(memory, memory_key_padding_mask)
