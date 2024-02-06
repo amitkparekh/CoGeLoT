@@ -140,7 +140,9 @@ def prepare_prompt(
         image_batch
     )
     word_batch = any_stack(word_batch, dim=0)
-    image_batch = any_to_datadict(stack_sequence_fields(image_batch))
+    image_batch = (
+        any_to_datadict(stack_sequence_fields(image_batch)) if image_batch else DataDict({})
+    )
 
     word_batch = any_to_torch_tensor(word_batch)
     image_batch = image_batch.to_torch_tensor()
