@@ -237,11 +237,7 @@ class Policy(torch.nn.Module):
             num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
         )
 
-        transformer_decoder = (
-            self._transformer_decoder if self.training else self._transformer_decoder.generate
-        )
-
-        transformer_output = transformer_decoder(
+        transformer_output = self._transformer_decoder(
             tgt=tokens,
             tgt_key_padding_mask=masks,
             memory=encoded_prompt,
