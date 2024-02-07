@@ -68,6 +68,16 @@ def hydra_config(
             ]
         )
 
+    # overrirdes for t5 decoder
+    elif experiment.startswith("06_t5"):
+        overrides.extend(
+            [
+                "model.policy.transformer_decoder.n_layer=2",
+                "model.policy.transformer_decoder.n_head=2",
+                "model.policy.transformer_decoder.d_ff=1024",
+            ]
+        )
+
     # Otherwise, custom overrides for xtransformers models
     else:
         overrides.extend(

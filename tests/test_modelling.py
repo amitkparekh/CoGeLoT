@@ -59,6 +59,16 @@ def test_encoded_actions_tensor_is_correct(
     assert encoded_actions.size(3) == embed_dim
 
 
+@parametrize_with_cases("action_encoder_decoder", cases=ActionEncoderDecoderCases, scope="session")
+def test_action_encoder_output_shape(
+    action_encoder_decoder: tuple[ActionEncoder, ActionDecoder],
+    preprocessed_batch: PreprocessedBatch,
+) -> None:
+    action_encoder = action_encoder_decoder[0]
+    encoded_actions = action_encoder(preprocessed_batch.actions)
+    assert isinstance(encoded_actions, torch.Tensor)
+
+
 @given(
     batch_size=st.integers(min_value=1, max_value=10),
     max_num_objects=st.integers(min_value=4, max_value=20),

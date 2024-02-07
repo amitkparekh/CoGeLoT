@@ -1,0 +1,7 @@
+_target_: cogelot.nn.decoders.t5.T5Decoder
+embd_dim: ${model.policy.embed_dim}
+n_layer: 11
+n_head: 24
+dropout: 0.1
+d_ff: 3072
+feed_forward_proj: gated-gelu
