@@ -1,5 +1,5 @@
 from cogelot.nn.decoders.interfaces import (
-    TransformerDecoderLayerProtocol,
+    TransformerDecoderGreedyGenerateWrapper,
     TransformerDecoderProtocol,
 )
 from cogelot.nn.decoders.vima import VIMADecoder

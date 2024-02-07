@@ -14,7 +14,7 @@ from cogelot.modules.tokenizers.pose_action import (
     PoseActionTokenizer,
     create_mask_from_target_actions,
 )
-from cogelot.nn.decoders import TransformerDecoderProtocol
+from cogelot.nn.decoders import TransformerDecoderGreedyGenerateWrapper, TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
@@ -237,11 +237,20 @@ class Policy(torch.nn.Module):
             num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
         )
 
-        transformer_output = self._transformer_decoder(
+        transformer_decoder = (
+            self._transformer_decoder.__call__  # noqa: WPS609
+            if self.training
+            else self._transformer_decoder.generate
+        )
+
+        transformer_output = transformer_decoder(
             tgt=tokens,
             tgt_key_padding_mask=masks,
             memory=encoded_prompt,
             memory_key_padding_mask=encoded_prompt_mask,
+            num_tokens_to_generate=self.num_action_tokens_per_timestep
+            if not self.training
+            else None,
         )
         predicted_actions = self.decode_action_logits(
             transformer_output, max_num_objects=encoded_observations.size(-2)
@@ -363,3 +372,14 @@ class Policy(torch.nn.Module):
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the continuous actions into a discrete form to work with cross-entropy."""
         return self.pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
+
+    def prepare_policy_for_greedy_generation(self) -> None:
+        """Prepare the policy for greedy generation."""
+        if self.training:
+            raise AssertionError(
+                "The policy is in training mode, so we should not prepare it for greedy generation since that is just inefficient."
+            )
+        self._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(
+            self._transformer_decoder,
+            num_tokens_to_generate_per_timestep=self.num_action_tokens_per_timestep,
+        )
