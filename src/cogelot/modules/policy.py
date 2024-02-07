@@ -237,20 +237,11 @@ class Policy(torch.nn.Module):
             num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
         )
 
-        transformer_decoder = (
-            self._transformer_decoder.__call__  # noqa: WPS609
-            if self.training
-            else self._transformer_decoder.generate
-        )
-
-        transformer_output = transformer_decoder(
+        transformer_output = self._transformer_decoder(
             tgt=tokens,
             tgt_key_padding_mask=masks,
             memory=encoded_prompt,
             memory_key_padding_mask=encoded_prompt_mask,
-            num_tokens_to_generate=self.num_action_tokens_per_timestep
-            if not self.training
-            else None,
         )
         predicted_actions = self.decode_action_logits(
             transformer_output, max_num_objects=encoded_observations.size(-2)

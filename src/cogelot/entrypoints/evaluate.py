@@ -6,6 +6,7 @@ from omegaconf import DictConfig
 from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra, preprocess_config_for_hydra
 from cogelot.entrypoints.train import CONFIG_DIR
+from cogelot.models.evaluation import EvaluationLightningModule
 
 
 @hydra.main(config_path=CONFIG_DIR, config_name="evaluate.yaml", version_base="1.3")
@@ -20,6 +21,10 @@ def evaluate_model(config: DictConfig) -> None:
 
     logger.info("Saving hyperparameters...")
     model.save_hyperparameters(flatten_config(config))
+
+    # Patch the transformer decoder to enable greedy token generation
+    assert isinstance(model, EvaluationLightningModule)
+    model.model.policy.prepare_policy_for_greedy_generation()
 
     logger.info("Starting evaluation...")
     trainer.test(model, datamodule=datamodule)
