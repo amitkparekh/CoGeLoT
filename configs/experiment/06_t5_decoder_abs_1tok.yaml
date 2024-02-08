@@ -6,9 +6,9 @@ defaults:
 
 architecture: encoder_decoder
 attn_layers: default
-positional_encoding: absolute
-xattn_positional_encoding: absolute
-source: xtorch
+positional_encoding: t5
+xattn_positional_encoding: none
+source: hf
 prompt_input: encoder
 observation_input: decoder
 num_action_tokens: 1
