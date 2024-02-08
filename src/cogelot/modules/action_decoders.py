@@ -98,7 +98,7 @@ class TokenPerAxisActionDecoder(ActionDecoder):
 
         # Shape (batch size, timesteps, num action tokens per timestep, embed dim)
         action_tokens_from_transformer = transformer_output_per_timestep[
-            :, :, -self.num_action_tokens_per_timestep :
+            :, :, max_num_objects - 1 : -1, :
         ]
 
         # Shape (batch size, timesteps, num action tokens per timestep, max num action bins)
