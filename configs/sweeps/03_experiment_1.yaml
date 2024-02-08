@@ -8,7 +8,7 @@ command:
 
 program: src/cogelot/entrypoints/train.py
 
-name: Decoder Flavours (orig dataset)
+name: 14tok
 entity: pyop
 project: CoGeLoT
 
@@ -17,27 +17,32 @@ method: grid
 parameters:
   experiment:
     values:
+      # - 07_roformer_decoder_abs_1tok
       # - 01_their_vima
+      - 01_their_vima_14tok
+      - 05_torch_vanilla_decoder_abs_14tok
+      - 06_t5_decoder_abs_14tok
       # - 02_vima_xattn_decoder_abs_1tok
       # - 02_vima_xattn_decoder_abs_14tok
-      - 03_vanilla_xattn_decoder_abs_1tok
+      # - 03_vanilla_xattn_decoder_abs_1tok
       # - 03_vanilla_xattn_decoder_abs_14tok
-      - 04_no_xattn_decoder_abs_1tok
+      # - 04_no_xattn_decoder_abs_1tok
       # - 04_no_xattn_decoder_abs_14tok
       # - 02_vima_xattn_decoder_alibi_1tok
       # - 02_vima_xattn_decoder_alibi_14tok
-      - 03_vanilla_xattn_decoder_alibi_1tok
+      # - 03_vanilla_xattn_decoder_alibi_1tok
       # - 03_vanilla_xattn_decoder_alibi_14tok
-      - 04_no_xattn_decoder_alibi_1tok
+      # - 04_no_xattn_decoder_alibi_1tok
       # - 04_no_xattn_decoder_alibi_14tok
       # - 02_vima_xattn_decoder_rope_1tok
       # - 02_vima_xattn_decoder_rope_14tok
-      - 03_vanilla_xattn_decoder_rope_1tok
+      # - 03_vanilla_xattn_decoder_rope_1tok
       # - 03_vanilla_xattn_decoder_rope_14tok
-      - 04_no_xattn_decoder_rope_1tok
+      # - 04_no_xattn_decoder_rope_1tok
       # - 04_no_xattn_decoder_rope_14tok
 
   datamodule.dataset_variant:
     values:
       - original
       # - keep_null_action
+      - reworded
