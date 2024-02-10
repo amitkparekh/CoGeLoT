@@ -24,7 +24,7 @@ class NoopTransform(VIMAInstanceTransform):
 class ChainTransform(VIMAInstanceTransform):
     """Do GobbledygookWord on top of the textual transform."""
 
-    def __init__(self, *transforms: VIMAInstanceTransform) -> None:
+    def __init__(self, transforms: list[VIMAInstanceTransform]) -> None:
         self._transforms = transforms
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
