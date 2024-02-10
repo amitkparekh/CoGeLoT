@@ -19,3 +19,16 @@ class NoopTransform(VIMAInstanceTransform):
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Return the instance without transforming it.."""
         return instance
+
+
+class ChainTransform(VIMAInstanceTransform):
+    """Do GobbledygookWord on top of the textual transform."""
+
+    def __init__(self, *transforms: VIMAInstanceTransform) -> None:
+        self._transforms = transforms
+
+    def __call__(self, instance: VIMAInstance) -> VIMAInstance:
+        """Process the instance."""
+        for transform in self._transforms:
+            instance = transform(instance)
+        return instance

@@ -1,0 +1,9 @@
+_target_: cogelot.data.transforms.ChainTransform
+transforms:
+  - _target_: cogelot.data.transforms.TextualDescriptionTransform
+  - _target_: cogelot.data.transforms.GobbledyGookPromptTokenTransform
+    timeout: 100
+    text_tokenizer:
+      _target_: cogelot.modules.tokenizers.TextTokenizer
+      pretrained_model: t5-base
+      model_max_length: 512
