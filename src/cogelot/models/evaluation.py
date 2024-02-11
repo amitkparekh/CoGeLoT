@@ -64,11 +64,6 @@ class EvaluationLightningModule(pl.LightningModule):
     ) -> None:
         """Run a single episode online."""
         partition, task = batch
-
-        if task in self._vima_instance_transform.tasks_to_avoid:
-            logger.info(f"[rank {self.local_rank}] Skipping task {task} due to transform")
-            return
-
         self.reset_environment(task=task, partition=partition)
 
         # Create a VIMA instance from the environment, which parses all the metadata as we want it
