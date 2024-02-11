@@ -1,4 +1,6 @@
-from cogelot.structures.vima import VIMAInstance
+from typing import ClassVar
+
+from cogelot.structures.vima import Task, VIMAInstance
 
 
 class VIMAInstanceTransform:
@@ -7,6 +9,8 @@ class VIMAInstanceTransform:
     This will allow us to, especially during evaluation, to modify the instance before we actually
     provide it to the environment.
     """
+
+    tasks_to_avoid: ClassVar[set[Task]] = set()
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Return the instance without transforming it.."""
@@ -26,6 +30,9 @@ class ChainTransform(VIMAInstanceTransform):
 
     def __init__(self, transforms: list[VIMAInstanceTransform]) -> None:
         self._transforms = transforms
+
+        for transform in transforms:
+            self.tasks_to_avoid.update(transform.tasks_to_avoid)
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Process the instance."""
