@@ -10,6 +10,10 @@ from cogelot.structures.vima import VIMAInstance
 ALPHABET = list(string.ascii_uppercase + string.ascii_lowercase)
 
 
+class WordTooLongError(Exception):
+    """Raise when the word is too long."""
+
+
 def _generate_random_characters(*, length: int) -> str:
     """Generate a string of random characters."""
     return "".join(random.choices(ALPHABET, k=length))  # noqa: S311
@@ -116,17 +120,15 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
         if tokenized_word not in self._tokenized_word_memory:
             self._tokenized_word_memory[tokenized_word] = set()
 
+        # Keep trying to randomise the token sequence until we have one that is the same length as
+        # the original tokenized word
         iteration_count = 0
-        random_token_sequence: tuple[int, ...] = ()
-
-        while len(tokenized_word) != len(random_token_sequence):
-            random_token_sequence = self._randomise_token_ids_in_sequence(tokenized_word)
-            random_token_sequence = tuple(
-                self.encode(self.decode(random_token_sequence), add_special_tokens=False)
-            )
-            iteration_count += 1
-
-            if iteration_count > self._timeout:
+        while iteration_count <= self._timeout:
+            try:
+                random_token_sequence = self._randomise_token_ids_in_sequence(tokenized_word)
+            except WordTooLongError:
+                iteration_count += 1
+            else:
                 break
 
         # If we have a timeout, we are going to try and find a random token sequence from the
@@ -146,24 +148,33 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
         return random_token_sequence
 
     def _randomise_token_ids_in_sequence(self, sequence: tuple[int, ...]) -> tuple[int, ...]:
-        """Randomise the token IDs in a sequence with some alphabet characters.
+        """Randomise the token IDs in a sequence.
 
-        Sometimes, words that have only a single token are special and replacing them with anything
-        else will result in their length being > 1. This then results in a valid solution not able
-        to be found, and we don't want this. As a result, we always return the first token in the
-        sequence as it is, even if its a sequence of length 1, so that it is always the same
-        length.
-
-        This is fine because in the grand scheme of things, having one word that is "normal" is not
-        going to be a drastic problem.
+        If a sequence has a special token, it is likely going to be incredibly small and we can
+        return it on its own to avoid any issues with the length of the sequence or trying to
+        regenerate around it.
         """
-        randomised_sequence = [
-            random.choice(self._alphabet_token_ids)  # noqa: S311
-            if token in self._non_special_token_ids
-            else token
-            for token in sequence[1:]
-        ]
-        return (sequence[0], *randomised_sequence)
+        # Return the sequence as is if it has any special tokens in it
+        if any(token not in self._non_special_token_ids for token in sequence):
+            return sequence
+
+        new_token_sequence = []
+        re_tokenized_sequence_len = 0
+
+        while re_tokenized_sequence_len != len(sequence):
+            # Pick a random token, non-special, to add to the sequence
+            random_token = random.choice(self._non_special_token_ids)  # noqa: S311
+            new_token_sequence.append(random_token)
+
+            # Token sequence length after re-tokenizing
+            re_tokenized_sequence_len = len(
+                self.encode(self.decode(tuple(new_token_sequence)), add_special_tokens=False)
+            )
+
+            if re_tokenized_sequence_len > len(sequence):
+                raise WordTooLongError
+
+        return tuple(new_token_sequence)
 
     @cached_property
     def _non_special_token_ids(self) -> list[int]:
@@ -178,13 +189,6 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
             - set(self.encode(".", add_special_tokens=False))
         )
         return all_non_special
-
-    @cached_property
-    def _alphabet_token_ids(self) -> list[int]:
-        """Get all token IDs for the alphabet."""
-        token_ids = self.text_tokenizer.tokenizer.convert_tokens_to_ids(ALPHABET)
-        assert isinstance(token_ids, list)
-        return token_ids
 
     def _get_random_alternative_from_memory(
         self, tokenized_word: tuple[int, ...]

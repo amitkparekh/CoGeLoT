@@ -26,9 +26,8 @@ def test_gobbledygook_word_transform_works(vima_instance: VIMAInstance) -> None:
     assert len(new_instance.prompt.split(" ")) == len(vima_instance.prompt.split(" "))
 
 
-def test_gobbledygook_token_transform_works(
-    vima_instance: VIMAInstance, text_tokenizer: TextTokenizer
-) -> None:
+def test_gobbledygook_token_transform_works(vima_instance: VIMAInstance) -> None:
+    text_tokenizer = TextTokenizer("t5-base")
     gobbledygook_transform = GobbledyGookPromptTokenTransform(text_tokenizer)
     new_instance = gobbledygook_transform(vima_instance)
 
