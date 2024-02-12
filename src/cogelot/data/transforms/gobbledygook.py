@@ -1,7 +1,8 @@
 import random
 import string
+from collections.abc import Callable
 from functools import cached_property
-from typing import cast
+from typing import TypeVar, cast
 
 from cogelot.data.transforms.base import VIMAInstanceTransform
 from cogelot.modules.tokenizers.text import LEFT_SYMBOL, TextTokenizer
@@ -34,13 +35,54 @@ def convert_language_prompt_to_gobbledygook(prompt: str) -> str:
     return " ".join(words)
 
 
+T = TypeVar("T", str, tuple[int, ...])
+
+
+def randomise_non_special_aspects_in_sequence(
+    word_sequence: list[T], *, is_special_fn: Callable[[T], bool]
+) -> list[T]:
+    """Randomise the non-special aspects of a word sequence."""
+    shuffled_sequence = word_sequence.copy()
+
+    # Determine which words can change their positions
+    locked_positions = []
+    unlocked_words = []
+    for word_index, word in enumerate(word_sequence):
+        is_special = is_special_fn(word)
+        if not is_special:
+            unlocked_words.append(word)
+        if is_special:
+            locked_positions.append(word_index)
+
+    # Randomise the order of the unlocked positions
+    random.shuffle(unlocked_words)
+
+    # Put the unlocked words back into the shuffled list
+    for idx, _ in enumerate(shuffled_sequence):
+        if idx not in locked_positions:
+            shuffled_sequence[idx] = unlocked_words.pop(0)
+
+    return shuffled_sequence
+
+
 class GobbledyGookPromptWordTransform(VIMAInstanceTransform):
     """For each word in the prompt, randomise the characters but keep the word length."""
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Replace the words with gobbledygook."""
-        return instance.model_copy(
-            deep=True, update={"prompt": convert_language_prompt_to_gobbledygook(instance.prompt)}
+        gobbledygook_prompt = convert_language_prompt_to_gobbledygook(instance.prompt)
+        gobbledygook_prompt = self._randomise_order_of_non_special_words(gobbledygook_prompt)
+        return instance.model_copy(deep=True, update={"prompt": gobbledygook_prompt})
+
+    def _randomise_order_of_non_special_words(self, prompt: str) -> str:
+        """Randomise the order of any word that does not contain 'special' characters.
+
+        Basically, any word that doesn't start with the `LEFT_SYMBOL`.
+        """
+        return " ".join(
+            randomise_non_special_aspects_in_sequence(
+                prompt.split(" "), is_special_fn=lambda word: word.startswith(LEFT_SYMBOL)
+            )
         )
 
 
@@ -90,29 +132,12 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
 
         Note: 103 is the space token in T5.
         """
-        shuffled_list = tokenized_words.copy()
-
-        # Determine which words can change their positions
-        locked_positions = []
-        unlocked_words = []
-        for word_index, tokenized_word in enumerate(tokenized_words):
-            has_special_token = bool(
+        return randomise_non_special_aspects_in_sequence(
+            tokenized_words,
+            is_special_fn=lambda tokenized_word: bool(
                 set(tokenized_word) - set(self._non_special_token_ids) - {self.space_token_id}
-            )
-            if not has_special_token:
-                unlocked_words.append(tokenized_word)
-            if has_special_token:
-                locked_positions.append(word_index)
-
-        # Randomise the order of the unlocked positions
-        random.shuffle(unlocked_words)
-
-        # Put the unlocked words back into the shuffled list
-        for idx, _ in enumerate(shuffled_list):
-            if idx not in locked_positions:
-                shuffled_list[idx] = unlocked_words.pop(0)
-
-        return shuffled_list
+            ),
+        )
 
     def _get_new_token_sequence_for_word(self, tokenized_word: tuple[int, ...]) -> tuple[int, ...]:
         """Randomise the token IDs and verify the new sequence is the same length as the old."""
@@ -186,7 +211,7 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
             - set(self.text_tokenizer.placeholder_token_ids)
             # Changing this token can cause a lot of problems in the new token creation, so we are
             # not going to be replacing it.
-            - set(self.encode(".", add_special_tokens=False))
+            # - set(self.encode(".", add_special_tokens=False))
         )
         return all_non_special
 

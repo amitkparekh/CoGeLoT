@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from cogelot.data.transforms.base import VIMAInstanceTransform
 from cogelot.data.transforms.reword import (
+    ASSOCIATION_PREPOSITIONS,
     CONTAIN_PREPOSITION,
     CONTAINER_NOUN,
     EXCEEDING_CONSTRAINTS,
@@ -10,13 +11,18 @@ from cogelot.data.transforms.reword import (
     GENERIC_SINGULAR_NOUNS,
     MOVED_VERBS,
     PLACING_VERBS,
+    PLURAL_PRONOUNS,
     PRECEEDING_ADJECTIVES,
+    PREPOSITION_ARTICLE,
+    PROFILE_ALTERNATIVES,
     REARRANGE_PREPOSITIONS,
     REARRANGE_VERBS,
     RESTORE_WORDS,
+    SAME_ALTERNATIVES,
     SCENE_WORDS,
     STARTING_ALTERNATIVES,
     SWEEP_VERBS,
+    TEXTURE_ALTERNATIVES,
     TOUCHING_CONSTRAINTS,
 )
 from cogelot.data.transforms.templates.formatter import DefaultFormatter
@@ -35,8 +41,6 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
         Task.rearrange,
         Task.rearrange_then_restore,
         Task.novel_adj_and_noun,
-        Task.same_texture,
-        Task.same_shape,
         Task.scene_understanding,
     }
 
@@ -129,6 +133,52 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
                     "moved_verb": MOVED_VERBS,
                 },
             ),
+            Task.same_shape: TemplateReplacer(
+                task=Task.same_shape,
+                original_reuse_allowed=False,
+                templates=[
+                    # Originals
+                    "{placing_verb} {quantity} {plural_noun} {association_preposition} {article1} {same} {profile} as {object1} {contain_preposition} it",
+                    "{placing_verb} {quantity} {article2} {plural_noun} {association_preposition} {article1} {same} {profile} as {object1} {contain_preposition} it",
+                    # Alternatives
+                    "{placing_verb} {quantity} {plural_noun} {association_preposition} {article1} {same} {profile} as the {object1} {contain_preposition} it",
+                    "{placing_verb} {quantity} {article2} {plural_noun} {association_preposition} {article1} {same} {profile} as the {object1} {contain_preposition} it",
+                ],
+                key_replacements={
+                    "placing_verb": PLACING_VERBS,
+                    "quantity": PLURAL_PRONOUNS,
+                    "plural_noun": GENERIC_PLURAL_NOUNS,
+                    "association_preposition": ASSOCIATION_PREPOSITIONS,
+                    "contain_preposition": CONTAIN_PREPOSITION,
+                    "article1": {"the"},
+                    "article2": PREPOSITION_ARTICLE,
+                    "profile": PROFILE_ALTERNATIVES,
+                    "same": SAME_ALTERNATIVES,
+                },
+            ),
+            Task.same_texture: TemplateReplacer(
+                task=Task.same_texture,
+                original_reuse_allowed=False,
+                templates=[
+                    # Originasl
+                    "{placing_verb} {quantity} {plural_noun} {association_preposition} {article1} {same} {texture} as {object1} {contain_preposition} it",
+                    "{placing_verb} {quantity} {article2} {plural_noun} {association_preposition} {article1} {same} {texture} as {object1} {contain_preposition} it",
+                    # Alternaties
+                    "{placing_verb} {quantity} {plural_noun} {association_preposition} {article1} {same} {texture} as the {object1} {contain_preposition} it",
+                    "{placing_verb} {quantity} {article2} {plural_noun} {association_preposition} {article1} {same} {texture} as the {object1} {contain_preposition} it",
+                ],
+                key_replacements={
+                    "placing_verb": PLACING_VERBS,
+                    "quantity": PLURAL_PRONOUNS,
+                    "plural_noun": GENERIC_PLURAL_NOUNS,
+                    "association_preposition": ASSOCIATION_PREPOSITIONS,
+                    "contain_preposition": CONTAIN_PREPOSITION,
+                    "article1": {"the"},
+                    "article2": PREPOSITION_ARTICLE,
+                    "texture": TEXTURE_ALTERNATIVES,
+                    "same": SAME_ALTERNATIVES,
+                },
+            ),
         }
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
@@ -162,6 +212,7 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
             keys_from_original,
             list(instance.prompt_assets.as_dict.keys()),
             skip_key_value_randomisation=True,
+            fill_in_missing_keys=True,
         )
 
         return new_prompt

@@ -81,6 +81,14 @@ class TemplateReplacer(BaseModel):
                 key_replacements[key] = original_value
         return key_replacements
 
+    def fill_in_missing_keys(self, keys_from_original: dict[str, str]) -> dict[str, str]:
+        """Fill in missing keys."""
+        key_replacements = self._randomly_choose_key_replacements()
+        for key, original_value in keys_from_original.items():
+            if key in keys_from_original:
+                key_replacements[key] = original_value
+        return key_replacements
+
     def generate_new_prompt(
         self,
         original_prompt: str,
@@ -88,11 +96,15 @@ class TemplateReplacer(BaseModel):
         necessary_placeholders: list[str],
         *,
         skip_key_value_randomisation: bool = False,
+        fill_in_missing_keys: bool = False,
     ) -> str:
         """Generate a new prompt."""
         key_replacements = keys_from_original
         if not skip_key_value_randomisation:
             key_replacements = self.randomly_choose_key_replacements(keys_from_original)
+
+        if fill_in_missing_keys:
+            key_replacements = self.fill_in_missing_keys(key_replacements)
 
         is_valid = False
         counter = 0
