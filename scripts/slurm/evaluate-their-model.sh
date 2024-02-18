@@ -5,7 +5,6 @@
 #SBATCH --time=12:00:00
 #SBATCH --partition=gpu
 #SBATCH --job-name=eval
-#SBATCH --error=jobs/eval.%J.err
 #SBATCH --output=jobs/eval.%J.out
 #SBATCH --gres gpu:1
 

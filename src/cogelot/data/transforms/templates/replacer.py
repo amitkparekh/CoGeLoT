@@ -1,9 +1,23 @@
 import random
+from typing import TYPE_CHECKING
 
+from loguru import logger
 from pydantic import BaseModel
+from tqdm.contrib.itertools import product
 
 from cogelot.data.transforms.templates.formatter import TemplateFormatter
 from cogelot.structures.vima import Task
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+
+def prompt_fix_hacks(prompt: str) -> str:
+    """Hacks to fix the prompt.
+
+    Couldn't figure out another way.
+    """
+    return prompt.replace("{adv}", "").replace("  ", " ")
 
 
 def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
@@ -11,7 +25,8 @@ def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
     # Remove any '.'s from the end before splittings
     words = [word.rstrip(".").rstrip(":") for word in prompt.lower().split(" ")]
     placeholders = [
-        placeholder.strip().rstrip(".").rstrip(":") for placeholder in template.lower().split(" ")
+        placeholder.strip().rstrip(".").rstrip(":")
+        for placeholder in template.lower().split(" ")
     ]
 
     extracted_key_values = {}
@@ -28,7 +43,20 @@ def is_new_prompt_valid(new_prompt: str, necessary_placeholders: list[str]) -> b
     Check that all the placeholders from the original prompt are in the new one. This is to ensure
     that the new prompt is still valid.
     """
-    return all(f"{{{placeholder}}}" in new_prompt for placeholder in necessary_placeholders)
+    return all(
+        f"{{{placeholder}}}" in new_prompt for placeholder in necessary_placeholders
+    )
+
+
+def is_remaining_placeholders_are_expected(
+    prompt: str, necessary_placeholders: list[str]
+) -> bool:
+    """Check that any remaining placeholders one of the necessary ones."""
+    return all(
+        word.strip().rstrip(".").rstrip(":")[1:-1] in necessary_placeholders
+        for word in prompt.split(" ")
+        if word.startswith("{")
+    )
 
 
 class TemplateReplacer(BaseModel):
@@ -81,7 +109,9 @@ class TemplateReplacer(BaseModel):
                 key_replacements[key] = original_value
         return key_replacements
 
-    def fill_in_missing_keys(self, keys_from_original: dict[str, str]) -> dict[str, str]:
+    def fill_in_missing_keys(
+        self, keys_from_original: dict[str, str]
+    ) -> dict[str, str]:
         """Fill in missing keys."""
         key_replacements = self._randomly_choose_key_replacements()
         for key, original_value in keys_from_original.items():
@@ -114,17 +144,62 @@ class TemplateReplacer(BaseModel):
 
             is_valid = is_new_prompt_valid(new_prompt, necessary_placeholders)
             # If we don't allow reuse of the original prompt, we need to check
-            if original_prompt.lower() == new_prompt.lower() and not self.original_reuse_allowed:
+            if (
+                original_prompt.lower() == new_prompt.lower()
+                and not self.original_reuse_allowed
+            ):
                 is_valid = False
 
             counter += 1
             if counter > self._max_attempts:
-                raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
+                raise RuntimeError(
+                    f"Could not generate a valid prompt after {counter} attempts."
+                )
 
-        # HACK: This is a hack. Forgive me. #noqa: FIX004
-        new_prompt = new_prompt.replace("{adv}", "").replace("  ", " ")
-
+        new_prompt = prompt_fix_hacks(new_prompt)
         return new_prompt
+
+    def generate_all_possible_prompts(
+        self, keys_from_original: dict[str, str], necessary_placeholders: list[str]
+    ) -> set[str]:
+        """Generate all possible prompts."""
+        keys_from_original = self.fill_in_missing_keys(keys_from_original)
+        key_replacements = self.get_all_possible_key_replacements(keys_from_original)
+
+        all_template_key_combinations: Generator[tuple[str, ...], None, None] = product(
+            self.templates,
+            *key_replacements.values(),
+            desc=f"Generating possible templates for {self.task}",
+        )
+
+        valid_prompts = set()
+        for template, *replacements in all_template_key_combinations:
+            new_prompt = TemplateFormatter().format(
+                template,
+                **dict(zip(key_replacements.keys(), replacements, strict=False)),
+            )
+            new_prompt = prompt_fix_hacks(new_prompt)
+
+            if is_remaining_placeholders_are_expected(
+                new_prompt, necessary_placeholders
+            ):
+                valid_prompts.add(new_prompt)
+
+        logger.info(f"Generated {len(valid_prompts)} unique prompts")
+        return valid_prompts
+
+    def get_all_possible_key_replacements(
+        self, keys_from_original: dict[str, str]
+    ) -> dict[str, set[str]]:
+        """Get a list of all possible key replacemnts from the prompt."""
+        key_replacements = self.key_replacements
+        for key, original_value in keys_from_original.items():
+            if key not in key_replacements:
+                key_replacements[key] = {original_value}
+            else:
+                key_replacements[key].add(original_value)
+
+        return key_replacements
 
     def _get_templates_with_same_length(self, original: str) -> list[str]:
         """Get all templates with the same length as the original prompt."""
@@ -151,7 +226,10 @@ class TemplateReplacer(BaseModel):
         keys_from_template = extract_keys_from_original(original, template)
 
         for key, extracted_value in keys_from_template.items():
-            if key in self.key_replacements and extracted_value not in self.key_replacements[key]:
+            if (
+                key in self.key_replacements
+                and extracted_value not in self.key_replacements[key]
+            ):
                 return False
 
         return True

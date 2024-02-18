@@ -41,6 +41,7 @@ def load_datamodule(
         dataset_data_dir=dataset_data_dir,
         num_workers=0,
         batch_size=1,
+        dataset_variant="original",
         task_index_seen=task_index_seen,
         dataset_start_index=dataset_start_index,
         max_num_instances_seen=1,
@@ -61,13 +62,9 @@ def simplify_predicted_actions(actions: Any) -> dict[str, dict[str, torch.Tensor
 
 TASK_INDEX_SEEN = 14
 DATASET_START_INDEX = 9
-RUN_TIME = "18-34-29"
-
-RUN_DIR_NAME = f"2023-10-28_{RUN_TIME}"
 
 
-RUNS_DIR = Path("./storage/data/outputs/overfit-single-example/runs/").joinpath(RUN_DIR_NAME)
-CHECKPOINT_PATH = RUNS_DIR.joinpath("checkpoints", "last.ckpt")
+CHECKPOINT_PATH = Path("./storage/data/models").joinpath("checkpoints", "model1.ckpt")
 
 
 with console.status("Loading lightning module..."):
@@ -77,10 +74,14 @@ with console.status("Loading datamodule..."):
     datamodule = load_datamodule(TASK_INDEX_SEEN, DATASET_START_INDEX)
 
 with console.status("Running module on instance..."):
-    instance = collate_preprocessed_instances_from_hf_dataset([datamodule.train_dataset[0]])
+    instance = collate_preprocessed_instances_from_hf_dataset(
+        [datamodule.train_dataset[0]]
+    )
     discretized_target_actions = lightning_module.prepare_target_actions(instance)
 
-    predicted_actions_logits = lightning_module.forward(lightning_module.embed_inputs(instance))
+    predicted_actions_logits = lightning_module.forward(
+        lightning_module.embed_inputs(instance)
+    )
 
 renderables = [
     Panel(

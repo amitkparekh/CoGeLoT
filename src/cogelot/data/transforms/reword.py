@@ -14,7 +14,16 @@ ANGLE_UNITS = {"degrees"}
 LIFTING_VERBS = {"pick up", "take", "lift", "grab"}
 PLACING_VERBS = {"put", "place", "move", "position", "drop", "store", "stick", "set"}
 MOVING_VERBS = {"move", "relocate", "shift", "place"}
-SWEEP_VERBS = {"put", "place", "position", "sweep", "push", "shove", "move", *MOVING_VERBS}
+SWEEP_VERBS = {
+    "put",
+    "place",
+    "position",
+    "sweep",
+    "push",
+    "shove",
+    "move",
+    *MOVING_VERBS,
+}
 STACK_VERBS = {"stack", "place", "put", "rearrange"}
 ROTATING_VERBS = {"rotate", "turn", "spin", "pivot", "swivel"}
 REARRANGE_VERBS = {"rearrange", "reposition", "reorder", "reorganize"}
@@ -22,7 +31,14 @@ HOLDING_VERBS = {"hold", "contain", "have"}
 DOING_VERB = {"make"}
 FOLLOW_VERBS = {"follow", "copy", "imitate"}
 MOVED_VERBS = {"moved", "relocated", "shifted", "placed"}
-ROTATING_ALTERNATIVES = {"rotating", "turning", "spinning", "placing", "moving", "positioning"}
+ROTATING_ALTERNATIVES = {
+    "rotating",
+    "turning",
+    "spinning",
+    "placing",
+    "moving",
+    "positioning",
+}
 PRECEEDING_ADJECTIVES = {"first", "start by", "begin by", "initially"}
 
 ARTICLE = {"the", "one"}
@@ -44,9 +60,23 @@ SINGULAR_PRONOUNS = {"it"}
 GENERIC_SINGULAR_NOUNS = {"object", "item", "thing"}
 GENERIC_PLURAL_NOUNS = {"objects", "items", "things"}
 GENERIC_LOCATION = {"place", "location", "spot", "position", "area", "zone"}
-PRECISION_ADVERBS = {"exactly", "precisely", "about", "around", "approximately", "roughly"}
+PRECISION_ADVERBS = {
+    "exactly",
+    "precisely",
+    "about",
+    "around",
+    "approximately",
+    "roughly",
+}
 ORDER_ALTERNATIVES = {"order", "way", "manner", "sequence"}
-SCENE_WORDS = {"scene", "arrangement", "configuration", "layout", "setup", "composition"}
+SCENE_WORDS = {
+    "scene",
+    "arrangement",
+    "configuration",
+    "layout",
+    "setup",
+    "composition",
+}
 RESTORE_WORDS = {"restore", "put it back", "undo", "reverse", "revert back"}
 EXCEEDING_CONSTRAINTS = {
     "exceeding",
@@ -84,7 +114,9 @@ def _consecutive_subsets(iterable: list[str]) -> list[str]:
 class RewordPromptTransform(VIMAInstanceTransform):
     """Overhaul the prompt of a VIMA instance."""
 
-    def __init__(self, *, allow_original_reuse: bool = True, max_attempts: int = 100) -> None:
+    def __init__(
+        self, *, allow_original_reuse: bool = True, max_attempts: int = 100
+    ) -> None:
         self.allow_original_reuse = allow_original_reuse
         self._max_attempts = max_attempts
 
@@ -185,14 +217,14 @@ class RewordPromptTransform(VIMAInstanceTransform):
                 task=Task.novel_adj,
                 original_reuse_allowed=self.allow_original_reuse,
                 templates=[
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {demo_blicker_obj_5} is {novel_adj} than {demo_blicker_obj_6}. {placing_verb} the {novel_adj} {demo_blicker_obj_7} {contain_preposition} the {demo_blicker_obj_8}.",
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {placing_verb} the {novel_adj} {demo_blicker_obj_5} {contain_preposition} the {demo_blicker_obj_6}.",
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {novel_adj} {demo_blicker_obj_3} {contain_preposition} the {demo_blicker_obj_4}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {demo_blicker_obj_5} is {novel_adj} than {demo_blicker_obj_6}. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
                     "{object1} {object3} and {object5} are all {novel_adj} than {plural_noun} {object2} {object4} and {object6} respectively. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
                     "{object1} and {object3} are both {novel_adj} than {plural_noun} {object2} and {object4} respectively. {placing_verb} the {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {demo_blicker_obj_5} is {novel_adj} than {demo_blicker_obj_6}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_7} {contain_preposition} the {demo_blicker_obj_8}.",
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_5} {contain_preposition} the {demo_blicker_obj_6}.",
-                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {adv} {novel_adj} {demo_blicker_obj_3} {contain_preposition} the {demo_blicker_obj_4}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {demo_blicker_obj_5} is {novel_adj} than {demo_blicker_obj_6}. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {demo_blicker_obj_3} is {novel_adj} than {demo_blicker_obj_4}. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
+                    "{demo_blicker_obj_1} is {novel_adj} than {demo_blicker_obj_2}. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}.",
                     "{object1} {object3} and {object5} are all {novel_adj} than {plural_noun} {object2} {object4} and {object6} respectively. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
                     "{object1} and {object3} are both {novel_adj} than {plural_noun} {object2} and {object4} respectively. {placing_verb} the {adv} {novel_adj} {dragged_obj} {contain_preposition} the {base_obj}",
                 ],
@@ -495,6 +527,15 @@ class RewordPromptTransform(VIMAInstanceTransform):
         # And then we return the instance
         return instance.model_copy(deep=True, update={"prompt": new_prompt})
 
+    def generate_all_possible_prompts(self, instance: VIMAInstance) -> set[str]:
+        """Generate all possible prompts for a given prompt."""
+        necessary_placeholders = list(instance.prompt_assets.as_dict.keys())
+        keys_from_original = self._extract_keys_from_original(instance)
+        all_generated_templates = self.replacers[
+            instance.task
+        ].generate_all_possible_prompts(keys_from_original, necessary_placeholders)
+        return all_generated_templates
+
     def _extract_keys_from_original(self, instance: VIMAInstance) -> dict[str, str]:
         """Extract keys from the original prompt."""
         prompt = instance.prompt
@@ -513,16 +554,22 @@ class RewordPromptTransform(VIMAInstanceTransform):
             if texture_name in prompt:
                 texture_counter = len(texture_placeholders)
                 texture_placeholders[f"texture_{texture_counter}"] = texture_name
-                prompt = prompt.replace(texture_name, f"{{texture_{texture_counter}}}", 1)
+                prompt = prompt.replace(
+                    texture_name, f"{{texture_{texture_counter}}}", 1
+                )
 
         # Then we get the template that matches the prompt
-        template = self.replacers[instance.task].get_template_that_best_matches_prompt(prompt)
+        template = self.replacers[instance.task].get_template_that_best_matches_prompt(
+            prompt
+        )
 
         keys_from_original = extract_keys_from_original(prompt, template)
 
         # Put all the textures back
         for key, extracted_value in keys_from_original.items():
             with suppress(KeyError):
-                keys_from_original[key] = extracted_value.format_map(texture_placeholders)
+                keys_from_original[key] = extracted_value.format_map(
+                    texture_placeholders
+                )
 
         return keys_from_original

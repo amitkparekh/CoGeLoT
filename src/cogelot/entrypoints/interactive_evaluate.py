@@ -11,13 +11,15 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from cogelot.common.hydra import load_hydra_config
-from cogelot.data.evaluation import get_every_partition_task_combination
+from cogelot.data.evaluation import get_every_test_partition_task_combination
 from cogelot.models.evaluation import EvaluationLightningModule
 from cogelot.structures.vima import Partition, Task
 
-all_evaluation_episodes = get_every_partition_task_combination()
+all_evaluation_episodes = get_every_test_partition_task_combination()
 map_task_to_partitions = {
-    task: [episode.partition for episode in all_evaluation_episodes if episode.task == task]
+    task: [
+        episode.partition for episode in all_evaluation_episodes if episode.task == task
+    ]
     for task in Task
 }
 console = Console()
@@ -62,12 +64,16 @@ def _parse_task(task: int | str | Task | None) -> Task:
     raise ValueError(f"Invalid task: {task}")
 
 
-def _parse_partition(partition: int | str | Partition | None, *, task: Task) -> Partition:
+def _parse_partition(
+    partition: int | str | Partition | None, *, task: Task
+) -> Partition:
     if partition is None:
         raise ValueError("Partition cannot be None")
     if isinstance(partition, str):
         partition = int(partition) if partition.isnumeric() else Partition[partition]
-    if isinstance(partition, int) or (isinstance(partition, str) and partition.isnumeric()):
+    if isinstance(partition, int) or (
+        isinstance(partition, str) and partition.isnumeric()
+    ):
         partition = Partition(int(partition))
     if partition not in map_task_to_partitions[task]:
         raise ValueError(f"Invalid partition `{partition}` for task `{task}`")
@@ -144,11 +150,16 @@ def interactive_evaluate(
     # If the task is not specified, ask the user to pick one
     if not isinstance(task, Task):
         task = typer.prompt(
-            "Pick a task, either by name or number", type=TaskChoices(), show_choices=False
+            "Pick a task, either by name or number",
+            type=TaskChoices(),
+            show_choices=False,
         )
         assert isinstance(task, Task)
 
-    if isinstance(partition, Partition) and partition not in map_task_to_partitions[task]:
+    if (
+        isinstance(partition, Partition)
+        and partition not in map_task_to_partitions[task]
+    ):
         logger.error("Invalid partition for task.")
         partition = None
 

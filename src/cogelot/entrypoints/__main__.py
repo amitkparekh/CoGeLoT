@@ -22,9 +22,13 @@ from cogelot.entrypoints.create_reworded_dataset_per_task import (
     create_reworded_dataset_per_task,
 )
 from cogelot.entrypoints.fix_raw_dataset_per_task import fix_raw_dataset_per_task
+from cogelot.entrypoints.paper_metrics import print_performance
 from cogelot.entrypoints.parse_original_dataset import parse_original_dataset
 from cogelot.entrypoints.preprocess_instances import preprocess_instances
-from cogelot.entrypoints.upload_dataset import upload_preprocessed_dataset, upload_raw_dataset
+from cogelot.entrypoints.upload_dataset import (
+    upload_preprocessed_dataset,
+    upload_raw_dataset,
+)
 
 settings = Settings()
 
@@ -48,13 +52,19 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 app.command(rich_help_panel="Dataset Creation Commands")(parse_original_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset_per_task)
 app.command(rich_help_panel="Dataset Creation Commands")(preprocess_instances)
-app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset_per_task)
-app.command(rich_help_panel="Dataset Creation Commands")(create_reworded_dataset_per_task)
+app.command(rich_help_panel="Dataset Creation Commands")(
+    create_preprocessed_dataset_per_task
+)
+app.command(rich_help_panel="Dataset Creation Commands")(
+    create_reworded_dataset_per_task
+)
 
 app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)
 
 app.command(rich_help_panel="Dataset Creation Commands")(fix_raw_dataset_per_task)
+
+app.command(rich_help_panel="Paper")(print_performance)
 
 
 @app.command(context_settings={"allow_extra_args": True})
@@ -62,7 +72,9 @@ def print_config(config_file: Path, ctx: typer.Context) -> None:
     """Parse the hydra config file and pretty-print it."""
     overrides = ctx.args
     config = load_hydra_config(
-        config_dir=config_file.parent, config_file_name=config_file.name, overrides=overrides
+        config_dir=config_file.parent,
+        config_file_name=config_file.name,
+        overrides=overrides,
     )
     pretty_print_hydra_config(config)
 
