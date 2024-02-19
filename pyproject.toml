@@ -190,113 +190,6 @@ extend-exclude = [
     'scripts/example.py',
 ]
 
-[tool.lint]
-line-length = 99
-ignore-init-module-imports = true
-unsafe-fixes = true
-target-version = "py311"
-src = ["src"]
-external = [
-    "WPS",
-    "WPS110",
-    "WPS118",
-    "WPS210",
-    "WPS213",
-    "WPS221",
-    "WPS362",
-    "WPS428",
-    "WPS436",
-    "WPS601",
-]
-# Enable every possible rule
-select = ["ALL"]
-ignore = [
-    # Allow function call as argument default
-    "B008",
-    # Don't ask for docstring at top of module --- put it in the functions/classes
-    "D100",
-    # Do not check for docstring within __init__ method
-    "D107",
-    # Don't ask about line length, Black recommends using bugbear B950 instead
-    "E501",
-    # Disable because this project uses jaxtyping (https://github.com/google/jaxtyping/blob/main/FAQ.md#flake8-is-throwing-an-error)
-    "F722",
-    # Allow import to be uppercase, because torch.nn.functional as F
-    "N812",
-    # Allow asserts to be used because they're just convenient for type-narrowing. Type-narrowing
-    # is more important than the possibility that someone is running python with -O (in optimized
-    # mode).
-    # https://stackoverflow.com/a/68429294
-    "S101",
-    # Do not enforce annotations for self, cls, or similar
-    "ANN1",
-    # Do not block using 'Any' type since it happens
-    "ANN401",
-    # Let Black handle commas
-    "COM",
-    # Let logging use f-strings
-    "G004",
-    # Disable 'flake8-errmsg' because we assume users of this project can read tracebacks
-    "EM",
-    # Allow TODO comments
-    "FIX002",
-    # We don't need to care about creating separate exception classes for every single type of
-    # error
-    "TRY003",
-    # Allow assigning variables before returning them
-    "RET504",
-    # Don't care about requiring an author name or issue link for a todo
-    "TD002",
-    "TD003",
-    # Disable flagging commented-out code because it's false-positives on shape comments
-    "ERA001",
-    # Things to ignore because ruff's formatter says so
-    "D206",
-    "ISC001",
-    "Q000",
-    "Q001",
-    "Q002",
-    "Q003",
-    "W191",
-]
-unfixable = [
-    # Do not remove unused variables
-    "F841",
-    # Do not auto-remove commented out code
-    "ERA001",
-]
-
-[tool.lint.flake8-quotes]
-inline-quotes = "double"
-
-[tool.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
-
-[tool.lint.flake8-type-checking]
-exempt-modules = ["typing", "typing_extensions", "pydantic_numpy"]
-runtime-evaluated-base-classes = [
-    "pydantic.BaseModel",
-    "pydantic.generics.GenericModel",
-]
-
-[tool.lint.isort]
-combine-as-imports = true
-known-first-party = ["vima", "cogelot", "vima_bench"]
-
-[tool.lint.mccabe]
-max-complexity = 18
-
-[tool.lint.per-file-ignores]
-"tests/*" = ["D", "S101", "INP001", "PLR2004"]
-"scripts/*" = ["INP001"]
-"src/**/__init__.py" = ["D", "F401", "I002"]
-
-[tool.lint.pydocstyle]
-convention = "google"
-
-[tool.lint.pylint]
-max-args = 20
-
 [tool.mypy]
 python_version = "3.11"
 exclude = [
@@ -368,6 +261,124 @@ reportShadowedImports = "error"
 [tool.pytest.ini_options]
 # addopts = "--jaxtyping-packages=cogelot,beartype.beartype"
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 99
+target-version = "py311"
+unsafe-fixes = true
+src = ["src"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+ignore-init-module-imports = true
+external = [
+    "WPS",
+    "WPS110",
+    "WPS118",
+    "WPS210",
+    "WPS213",
+    "WPS221",
+    "WPS362",
+    "WPS428",
+    "WPS436",
+    "WPS601",
+]
+# Enable every possible rule
+select = ["ALL"]
+ignore = [
+    # Allow function call as argument default
+    "B008",
+    # Don't ask for docstring at top of module --- put it in the functions/classes
+    "D100",
+    # Do not check for docstring within __init__ method
+    "D107",
+    # Don't ask about line length, Black recommends using bugbear B950 instead
+    "E501",
+    # Disable because this project uses jaxtyping (https://github.com/google/jaxtyping/blob/main/FAQ.md#flake8-is-throwing-an-error)
+    "F722",
+    # Allow import to be uppercase, because torch.nn.functional as F
+    "N812",
+    # Allow asserts to be used because they're just convenient for type-narrowing. Type-narrowing
+    # is more important than the possibility that someone is running python with -O (in optimized
+    # mode).
+    # https://stackoverflow.com/a/68429294
+    "S101",
+    # Do not enforce annotations for self, cls, or similar
+    "ANN1",
+    # Do not block using 'Any' type since it happens
+    "ANN401",
+    # Let Black handle commas
+    "COM",
+    # Let logging use f-strings
+    "G004",
+    # Disable 'flake8-errmsg' because we assume users of this project can read tracebacks
+    "EM",
+    # Allow TODO comments
+    "FIX002",
+    # We don't need to care about creating separate exception classes for every single type of
+    # error
+    "TRY003",
+    # Allow assigning variables before returning them
+    "RET504",
+    # Don't care about requiring an author name or issue link for a todo
+    "TD002",
+    "TD003",
+    # Disable flagging commented-out code because it's false-positives on shape comments
+    "ERA001",
+    # Things to ignore because ruff's formatter says so
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "D206",
+    "D300",
+    "E111",
+    "E114",
+    "E117",
+    "ISC001",
+    "ISC002",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "W191",
+]
+unfixable = [
+    # Do not remove unused variables
+    "F841",
+    # Do not auto-remove commented out code
+    "ERA001",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-type-checking]
+exempt-modules = ["typing", "typing_extensions", "pydantic_numpy"]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "pydantic.generics.GenericModel",
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["vima", "cogelot", "vima_bench"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "S101", "INP001", "PLR2004"]
+"scripts/*" = ["INP001"]
+"src/**/__init__.py" = ["D", "F401", "I002"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pylint]
+max-args = 20
 
 [tool.sync-pre-commit-lock.dependency-mapping]
 toml-sort = {"repo" = "https://github.com/pappasam/toml-sort", "rev" = "v${rev}"}
