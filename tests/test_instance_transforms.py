@@ -48,14 +48,8 @@ def test_reword_transform_works(vima_instance: VIMAInstance) -> None:
 # @pytest.mark.skip()
 def test_count_all_reword_transforms(vima_instance: VIMAInstance) -> None:
     reword_transform = RewordPromptTransform()
-    all_possible_templates = reword_transform.generate_all_possible_prompts(
-        vima_instance
-    )
+    all_possible_templates = reword_transform.generate_all_possible_prompts(vima_instance)
     assert all_possible_templates
-
-    print(
-        f"{vima_instance.task}: Generated {len(all_possible_templates)} unique prompts"
-    )  # noqa: T201 WPS421
 
 
 def test_textual_description_transform_works(vima_instance: VIMAInstance) -> None:

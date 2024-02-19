@@ -49,9 +49,7 @@ def print_performance(run_id: str) -> None:
             }
 
         average = statistics.mean(
-            task_value
-            for task_value in task_success.values()
-            if isinstance(task_value, Decimal)
+            task_value for task_value in task_success.values() if isinstance(task_value, Decimal)
         )
 
         console.print(f"{level} Success")
@@ -65,14 +63,10 @@ def print_performance(run_id: str) -> None:
 def print_prompt_lengths() -> None:
     """Get the lengths of different types of prompts."""
     text_tokenizer = TextTokenizer("t5-base")
-    evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(
-        num_repeats_per_episode=1
-    )
+    evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(num_repeats_per_episode=1)
     environment = VIMAEnvironment.from_config(task=1, partition=1, seed=0)
     gobbledygook_word_transform = GobbledyGookPromptWordTransform()
-    gobbledygook_token_transform = GobbledyGookPromptTokenTransform(
-        text_tokenizer, timeout=100
-    )
+    gobbledygook_token_transform = GobbledyGookPromptTokenTransform(text_tokenizer, timeout=100)
 
     original_instructions: list[tuple[str, list[int]]] = []
     gobbledygook_words: list[tuple[str, list[int]]] = []
@@ -108,9 +102,7 @@ def print_prompt_lengths() -> None:
         )
 
     console.print("Original Instructions")
-    original_instruction_words = [
-        len(prompt[0].split(" ")) for prompt in original_instructions
-    ]
+    original_instruction_words = [len(prompt[0].split(" ")) for prompt in original_instructions]
     original_instruction_tokens = [len(prompt[1]) for prompt in original_instructions]
 
     console.print("Avg Words:", statistics.mean(original_instruction_words))
@@ -120,9 +112,7 @@ def print_prompt_lengths() -> None:
     console.print("Std Dev Tokens:", statistics.stdev(original_instruction_tokens))
 
     console.print("Gobbledygook Words")
-    gobbledygook_words_words = [
-        len(prompt[0].split(" ")) for prompt in gobbledygook_words
-    ]
+    gobbledygook_words_words = [len(prompt[0].split(" ")) for prompt in gobbledygook_words]
     gobbledygook_words_tokens = [len(prompt[1]) for prompt in gobbledygook_words]
 
     console.print("Avg Words:", statistics.mean(gobbledygook_words_words))
@@ -132,9 +122,7 @@ def print_prompt_lengths() -> None:
     console.print("Std Dev Tokens:", statistics.stdev(gobbledygook_words_tokens))
 
     console.print("Gobbledygook Tokens")
-    gobbledygook_tokens_words = [
-        len(prompt[0].split(" ")) for prompt in gobbledygook_tokens
-    ]
+    gobbledygook_tokens_words = [len(prompt[0].split(" ")) for prompt in gobbledygook_tokens]
     gobbledygook_tokens_tokens = [len(prompt[1]) for prompt in gobbledygook_tokens]
 
     console.print("Avg Words:", statistics.mean(gobbledygook_tokens_words))

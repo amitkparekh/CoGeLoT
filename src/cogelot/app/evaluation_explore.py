@@ -84,9 +84,7 @@ def get_evaluation_runs_from_wandb() -> list[EvaluationRun]:
     runs = api.runs(f"{WANDB_ENTITY}/{WANDB_PROJECT}")
     all_runs = []
     for run in runs:
-        instance_transform = run.config["model.vima_instance_transform._target_"].split(
-            "."
-        )[-1]
+        instance_transform = run.config["model.vima_instance_transform._target_"].split(".")[-1]
         success_metrics = {
             name.replace("success/", "").lower().replace("/", "_"): v
             for name, v in run.summary.items()
@@ -103,9 +101,7 @@ def get_evaluation_runs_from_wandb() -> list[EvaluationRun]:
             run_id=run.id,
             training_run_id=run.config.get("model.model.wandb_run_id", None),
             instance_transform=instance_transform,
-            should_stop_on_first_success=run.config[
-                "model.should_stop_on_first_success"
-            ],
+            should_stop_on_first_success=run.config["model.should_stop_on_first_success"],
             total_success=run.summary["total/success"],
             total_seen=run.summary["total/seen"],
             steps=PerTaskPerPartitionNumbers.model_validate(steps_metrics),

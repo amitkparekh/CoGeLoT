@@ -114,9 +114,7 @@ def _consecutive_subsets(iterable: list[str]) -> list[str]:
 class RewordPromptTransform(VIMAInstanceTransform):
     """Overhaul the prompt of a VIMA instance."""
 
-    def __init__(
-        self, *, allow_original_reuse: bool = True, max_attempts: int = 100
-    ) -> None:
+    def __init__(self, *, allow_original_reuse: bool = True, max_attempts: int = 100) -> None:
         self.allow_original_reuse = allow_original_reuse
         self._max_attempts = max_attempts
 
@@ -531,9 +529,9 @@ class RewordPromptTransform(VIMAInstanceTransform):
         """Generate all possible prompts for a given prompt."""
         necessary_placeholders = list(instance.prompt_assets.as_dict.keys())
         keys_from_original = self._extract_keys_from_original(instance)
-        all_generated_templates = self.replacers[
-            instance.task
-        ].generate_all_possible_prompts(keys_from_original, necessary_placeholders)
+        all_generated_templates = self.replacers[instance.task].generate_all_possible_prompts(
+            keys_from_original, necessary_placeholders
+        )
         return all_generated_templates
 
     def _extract_keys_from_original(self, instance: VIMAInstance) -> dict[str, str]:
@@ -554,22 +552,16 @@ class RewordPromptTransform(VIMAInstanceTransform):
             if texture_name in prompt:
                 texture_counter = len(texture_placeholders)
                 texture_placeholders[f"texture_{texture_counter}"] = texture_name
-                prompt = prompt.replace(
-                    texture_name, f"{{texture_{texture_counter}}}", 1
-                )
+                prompt = prompt.replace(texture_name, f"{{texture_{texture_counter}}}", 1)
 
         # Then we get the template that matches the prompt
-        template = self.replacers[instance.task].get_template_that_best_matches_prompt(
-            prompt
-        )
+        template = self.replacers[instance.task].get_template_that_best_matches_prompt(prompt)
 
         keys_from_original = extract_keys_from_original(prompt, template)
 
         # Put all the textures back
         for key, extracted_value in keys_from_original.items():
             with suppress(KeyError):
-                keys_from_original[key] = extracted_value.format_map(
-                    texture_placeholders
-                )
+                keys_from_original[key] = extracted_value.format_map(texture_placeholders)
 
         return keys_from_original

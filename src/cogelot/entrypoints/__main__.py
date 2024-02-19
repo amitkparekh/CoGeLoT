@@ -52,12 +52,8 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 app.command(rich_help_panel="Dataset Creation Commands")(parse_original_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(create_raw_dataset_per_task)
 app.command(rich_help_panel="Dataset Creation Commands")(preprocess_instances)
-app.command(rich_help_panel="Dataset Creation Commands")(
-    create_preprocessed_dataset_per_task
-)
-app.command(rich_help_panel="Dataset Creation Commands")(
-    create_reworded_dataset_per_task
-)
+app.command(rich_help_panel="Dataset Creation Commands")(create_preprocessed_dataset_per_task)
+app.command(rich_help_panel="Dataset Creation Commands")(create_reworded_dataset_per_task)
 
 app.command(rich_help_panel="Dataset Creation Commands")(upload_raw_dataset)
 app.command(rich_help_panel="Dataset Creation Commands")(upload_preprocessed_dataset)

@@ -74,14 +74,10 @@ with console.status("Loading datamodule..."):
     datamodule = load_datamodule(TASK_INDEX_SEEN, DATASET_START_INDEX)
 
 with console.status("Running module on instance..."):
-    instance = collate_preprocessed_instances_from_hf_dataset(
-        [datamodule.train_dataset[0]]
-    )
+    instance = collate_preprocessed_instances_from_hf_dataset([datamodule.train_dataset[0]])
     discretized_target_actions = lightning_module.prepare_target_actions(instance)
 
-    predicted_actions_logits = lightning_module.forward(
-        lightning_module.embed_inputs(instance)
-    )
+    predicted_actions_logits = lightning_module.forward(lightning_module.embed_inputs(instance))
 
 renderables = [
     Panel(

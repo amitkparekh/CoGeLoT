@@ -25,8 +25,7 @@ def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
     # Remove any '.'s from the end before splittings
     words = [word.rstrip(".").rstrip(":") for word in prompt.lower().split(" ")]
     placeholders = [
-        placeholder.strip().rstrip(".").rstrip(":")
-        for placeholder in template.lower().split(" ")
+        placeholder.strip().rstrip(".").rstrip(":") for placeholder in template.lower().split(" ")
     ]
 
     extracted_key_values = {}
@@ -43,14 +42,10 @@ def is_new_prompt_valid(new_prompt: str, necessary_placeholders: list[str]) -> b
     Check that all the placeholders from the original prompt are in the new one. This is to ensure
     that the new prompt is still valid.
     """
-    return all(
-        f"{{{placeholder}}}" in new_prompt for placeholder in necessary_placeholders
-    )
+    return all(f"{{{placeholder}}}" in new_prompt for placeholder in necessary_placeholders)
 
 
-def is_remaining_placeholders_are_expected(
-    prompt: str, necessary_placeholders: list[str]
-) -> bool:
+def is_remaining_placeholders_are_expected(prompt: str, necessary_placeholders: list[str]) -> bool:
     """Check that any remaining placeholders one of the necessary ones."""
     return all(
         word.strip().rstrip(".").rstrip(":")[1:-1] in necessary_placeholders
@@ -109,9 +104,7 @@ class TemplateReplacer(BaseModel):
                 key_replacements[key] = original_value
         return key_replacements
 
-    def fill_in_missing_keys(
-        self, keys_from_original: dict[str, str]
-    ) -> dict[str, str]:
+    def fill_in_missing_keys(self, keys_from_original: dict[str, str]) -> dict[str, str]:
         """Fill in missing keys."""
         key_replacements = self._randomly_choose_key_replacements()
         for key, original_value in keys_from_original.items():
@@ -144,17 +137,12 @@ class TemplateReplacer(BaseModel):
 
             is_valid = is_new_prompt_valid(new_prompt, necessary_placeholders)
             # If we don't allow reuse of the original prompt, we need to check
-            if (
-                original_prompt.lower() == new_prompt.lower()
-                and not self.original_reuse_allowed
-            ):
+            if original_prompt.lower() == new_prompt.lower() and not self.original_reuse_allowed:
                 is_valid = False
 
             counter += 1
             if counter > self._max_attempts:
-                raise RuntimeError(
-                    f"Could not generate a valid prompt after {counter} attempts."
-                )
+                raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
 
         new_prompt = prompt_fix_hacks(new_prompt)
         return new_prompt
@@ -180,9 +168,7 @@ class TemplateReplacer(BaseModel):
             )
             new_prompt = prompt_fix_hacks(new_prompt)
 
-            if is_remaining_placeholders_are_expected(
-                new_prompt, necessary_placeholders
-            ):
+            if is_remaining_placeholders_are_expected(new_prompt, necessary_placeholders):
                 valid_prompts.add(new_prompt)
 
         logger.info(f"Generated {len(valid_prompts)} unique prompts")
@@ -226,10 +212,7 @@ class TemplateReplacer(BaseModel):
         keys_from_template = extract_keys_from_original(original, template)
 
         for key, extracted_value in keys_from_template.items():
-            if (
-                key in self.key_replacements
-                and extracted_value not in self.key_replacements[key]
-            ):
+            if key in self.key_replacements and extracted_value not in self.key_replacements[key]:
                 return False
 
         return True
