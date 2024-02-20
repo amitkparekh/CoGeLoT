@@ -45,9 +45,8 @@ class TransformerDecoderGreedyGenerateWrapper(TransformerDecoderProtocol):
     ) -> torch.Tensor:
         """Greedily generate multiple tokens until you reach the desired number."""
         # For a number of generated tokens, the desired output sequence length is
-        # (seq_length + num_tokens_to_generate_per_timestep - 1), so we keep going until we have that. Since the
-        # `range` function starts from 0, we can iterate from the starting length to
-        # (starting length + num_tokens_to_generate_per_timestep)
+        # (seq_length + num_tokens_to_generate_per_timestep - 1), so we keep going until we have
+        # that.
         desired_seq_length = tgt.size(1) + self._num_tokens_to_generate_per_timestep
 
         # Shape (batch size, seq length, dim)
@@ -65,10 +64,30 @@ class TransformerDecoderGreedyGenerateWrapper(TransformerDecoderProtocol):
             tgt = torch.cat([tgt, transformer_output[:, -1:]], dim=1)
 
             if tgt_mask is not None:
-                tgt_mask = torch.cat([tgt_mask, tgt_mask[:, -1:]], dim=1)
+                tgt_mask = torch.cat(
+                    [
+                        tgt_mask,
+                        torch.zeros(
+                            tgt.size(0),
+                            tgt.size(1) - tgt_mask.size(1),
+                            device=tgt_mask.device,
+                            dtype=tgt_mask.dtype,
+                        ),
+                    ],
+                    dim=-1,
+                )
             if tgt_key_padding_mask is not None:
                 tgt_key_padding_mask = torch.cat(
-                    [tgt_key_padding_mask, tgt_key_padding_mask[:, -1:]], dim=1
+                    [
+                        tgt_key_padding_mask,
+                        torch.zeros(
+                            tgt.size(0),
+                            tgt.size(1) - tgt_key_padding_mask.size(1),
+                            device=tgt_key_padding_mask.device,
+                            dtype=tgt_key_padding_mask.dtype,
+                        ),
+                    ],
+                    dim=-1,
                 )
             transformer_output = self.decoder(
                 tgt,
