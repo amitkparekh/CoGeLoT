@@ -14,11 +14,13 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
         decoder: torch.nn.TransformerDecoder,
         pos_embedder: torch.nn.Embedding,
         xattn_embedder: torch.nn.Embedding,
+        use_casual_mask: bool = True,
     ) -> None:
         super().__init__()
         self.decoder = decoder
         self.pos_embedder = pos_embedder
         self.xattn_embedder = xattn_embedder
+        self._use_casual_mask = use_casual_mask
 
     def forward(
         self,
@@ -47,7 +49,7 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
         embedded_memory_position = self.xattn_embedder(memory_position_ids)
         memory_with_position = memory + embedded_memory_position
 
-        if tgt_mask is None:
+        if tgt_mask is None and self._use_casual_mask:
             tgt_mask = _generate_square_subsequent_mask(tgt.size(1), device=tgt.device)
 
         transformer_output = self.decoder(
