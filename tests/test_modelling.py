@@ -101,6 +101,41 @@ def test_action_decoder_output_shape_is_correct(
     assert decoded_logits.size(3) != embed_dim
 
 
+@given(
+    max_num_objects=st.integers(min_value=3, max_value=10),
+    num_observations=st.integers(min_value=1, max_value=5),
+    instruction_length=st.integers(min_value=5, max_value=30),
+)
+def test_greedy_decoder_outputs_correct_shape(
+    vima_lightning_module_for_inference: VIMALightningModule,
+    max_num_objects: int,
+    num_observations: int,
+    instruction_length: int,
+    embed_dim: int,
+) -> None:
+    num_tokens_to_generate_per_timestep = (
+        vima_lightning_module_for_inference.policy.num_action_tokens_per_timestep
+    )
+    tgt_seq_length = (
+        (max_num_objects + num_tokens_to_generate_per_timestep) * (num_observations - 1)
+    ) + max_num_objects
+
+    tgt = torch.ones((1, tgt_seq_length, embed_dim))
+    memory = torch.randn((1, instruction_length, embed_dim))
+    tgt_key_padding_mask = torch.zeros((1, tgt_seq_length), dtype=torch.bool)
+    memory_key_padding_mask = torch.zeros((1, instruction_length), dtype=torch.bool)
+
+    with torch.inference_mode():
+        generated_tokens = vima_lightning_module_for_inference.policy._transformer_decoder(  # noqa: SLF001
+            tgt,
+            memory,
+            tgt_key_padding_mask=tgt_key_padding_mask,
+            memory_key_padding_mask=memory_key_padding_mask,
+        )
+
+    assert isinstance(generated_tokens, torch.Tensor)
+
+
 def test_model_forward_does_not_error(
     vima_lightning_module: VIMALightningModule, preprocessed_batch: PreprocessedBatch
 ) -> None:
