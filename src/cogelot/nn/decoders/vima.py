@@ -19,12 +19,17 @@ class VIMADecoder(TransformerDecoderProtocol):
         self,
         tgt: torch.Tensor,
         memory: torch.Tensor,
-        tgt_mask: torch.Tensor | None = None,  # noqa: ARG002
-        memory_mask: torch.Tensor | None = None,  # noqa: ARG002
+        tgt_mask: torch.Tensor | None = None,
+        memory_mask: torch.Tensor | None = None,
         tgt_key_padding_mask: torch.Tensor | None = None,
         memory_key_padding_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
+        if tgt_mask is not None:
+            raise ValueError("`tgt_mask` is not used and nothing should be passed in to it.")
+        if memory_mask is not None:
+            raise ValueError("`memory_mask` is not used and nothing should be passed in to it.")
+
         if tgt_key_padding_mask is None:
             tgt_key_padding_mask = torch.zeros(
                 size=tgt.shape[:-1],
