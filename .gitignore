@@ -295,10 +295,10 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,direnv,visualstudiocode,intellij+all
 
-storage/
-!storage/fixtures
-
 outputs/
 jobs/
 .hydra/
 wandb/
+
+storage/*
+!storage/fixtures/
