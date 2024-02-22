@@ -2,6 +2,7 @@ import math
 from collections.abc import Mapping
 from typing import ClassVar, cast
 
+import numpy as np
 import polars as pl
 import torch
 import wandb
@@ -136,14 +137,29 @@ class EvaluationEpisodeTracker:
     Frame width and height are from manual inspection of the data during debugging.
     """
 
-    def __init__(self, *, save_observations: bool = False, disable_upload: bool = True) -> None:
+    video_columns: ClassVar[list[str]] = ["top_rgb", "front_rgb", "top_segm", "front_segm"]
+
+    def __init__(self, *, save_observations: bool = True, disable_upload: bool = False) -> None:
         self._disable_upload = disable_upload
         self._save_observations = save_observations
-        if self._save_observations:
-            verify_ffmpeg_is_available()
 
         self._schema_overrides = {"success_per_step": pl.List(pl.Boolean)}
-        self.table: pl.DataFrame
+
+        if self._save_observations:
+            verify_ffmpeg_is_available()
+            observation_dtype = pl.List(
+                pl.Array(pl.Array(pl.Array(pl.UInt8, 256), 128), 3),
+            )
+            self._schema_overrides.update(
+                {
+                    "top_rgb": observation_dtype,
+                    "front_rgb": observation_dtype,
+                    "top_segm": observation_dtype,
+                    "front_segm": observation_dtype,
+                }
+            )
+
+        self.table: pl.DataFrame = pl.DataFrame(schema_overrides=self._schema_overrides)
 
     def update(
         self,
@@ -180,26 +196,51 @@ class EvaluationEpisodeTracker:
 
         if self._save_observations:
             observation_videos = extract_multiple_videos_from_observations(observations)
-            new_row["top_rgb"] = observation_videos.top_rgb.numpy()
-            new_row["front_rgb"] = observation_videos.front_rgb.numpy()
-            new_row["top_segm"] = observation_videos.top_segm.numpy()
-            new_row["front_segm"] = observation_videos.front_segm.numpy()
+            new_row["top_rgb"] = observation_videos.top_rgb.tolist()
+            new_row["front_rgb"] = observation_videos.front_rgb.tolist()
+            new_row["top_segm"] = observation_videos.top_segm.tolist()
+            new_row["front_segm"] = observation_videos.front_segm.tolist()
 
         # Every value needs to be wrapped in a list because dataframes.
         new_row = {k: [v] for k, v in new_row.items()}
         table = pl.DataFrame(new_row, schema_overrides=self._schema_overrides)
 
-        try:
-            self.table = pl.concat([self.table, table], how="diagonal_relaxed")
-        except AttributeError:
-            self.table = table
+        self.table = (
+            table
+            if self.table.is_empty()
+            else pl.concat([self.table, table], how="diagonal_relaxed")
+        )
 
     def compute_table(self) -> wandb.Table:
         """Compute and return the table."""
         # if update has not been called yet, this WILL fail and crash things. That's the point.
-        wandb_table = wandb.Table(columns=self.table.columns, allow_mixed_types=True)
-        for row in self.table.to_dicts():
+        wandb_table = wandb.Table(
+            columns=[column for column in self.table.columns if column not in self.video_columns],
+            allow_mixed_types=True,
+        )
+
+        # We want to split off the videos from the metadata
+        metadata_table = self.table.select(
+            *[column for column in self.table.columns if column not in self.video_columns]
+        )
+        # Add all the metadata to the table
+        logger.info("Converting metadata to wandb table")
+        for row in metadata_table.to_dicts():
             wandb_table.add_data(*list(row.values()))
+
+        try:
+            videos_table = self.table.select(*self.video_columns)
+        except pl.exceptions.ColumnNotFoundError:
+            return wandb_table
+
+        # Convert each row into a wandb Video
+        for column_name in videos_table.columns:
+            videos_per_row = [
+                wandb.Video(np.array(array, dtype=np.uint8), caption=column_name, fps=1)
+                for array in videos_table[column_name].to_list()
+            ]
+            wandb_table.add_column(column_name, videos_per_row)
+
         return wandb_table
 
     def sync(self) -> None:
@@ -221,6 +262,7 @@ class EvaluationEpisodeTracker:
             return
         if _is_zero_rank():
             wandb_table = self.compute_table()
+            logger.info("Uploading episodes table to WandB")
             log_table_to_wandb(name="episodes", table=wandb_table)
 
 
