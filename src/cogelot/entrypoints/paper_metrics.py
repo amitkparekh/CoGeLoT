@@ -1,10 +1,13 @@
 import statistics
 from contextlib import suppress
 from decimal import Decimal
+from typing import Annotated, ClassVar, Literal
 
+import typer
 import wandb
 from loguru import logger
 from rich.console import Console
+from wandb.sdk.wandb_run import Run
 
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.data.transforms import (
@@ -18,46 +21,109 @@ from cogelot.structures.vima import Task
 
 console = Console()
 
+PasteTarget = Literal["paper", "excel"]
+Level = Literal["L1", "L2", "L3", "L4"]
 
-def print_performance(run_id: str) -> None:
-    """Get the evaluation performance from WandB for easy pasting in the paper."""
-    # Load the run
-    run = wandb.Api().run(f"pyop/cogelot-evaluation/{run_id}")
 
-    # Print information about the run
-    console.print("Run:", run.id)
-    console.print("Name:", run.name)
-    with suppress(KeyError):
-        console.print("Training dataset:", run.config["training_data"])
+class EvaluationPerformancePrinter:
+    """Print the evaluation performance in a format that can be easily pasted."""
 
-    is_textual = "textual" in run.name.lower()
+    delimiter_per_target: ClassVar[dict[PasteTarget, str]] = {
+        "paper": " & ",
+        "excel": ",",
+    }
+    success_prefix: ClassVar[str] = "success/"
+    levels: ClassVar[list[Level]] = ["L1", "L2", "L3", "L4"]
+    textual_override: ClassVar[str] = "{---}"
 
-    # Get all the success metrics per partition
-    for level in ("L1", "L2", "L3", "L4"):
-        task_success = {
-            int(key[-2:]): Decimal(success * 100).quantize(Decimal("1.0"))  # noqa: WPS221
-            for key, success in sorted(run.summary.items())
-            if key.startswith(f"success/{level}")
-        }
+    def __init__(self, *, target: PasteTarget) -> None:
+        self.target = target
+        self.delimiter = self.delimiter_per_target[target]
 
-        if is_textual:
+    def __call__(self, run_id: str) -> None:
+        """Print the performance in a format that can be easily pasted."""
+        run = self.get_run(run_id)
+        is_textual = "textual" in run.name.lower()
+        performances = self.get_evaluation_performance(run)
+
+        if self.target == "paper":
+            self.print_for_paper(performances, is_textual=is_textual)
+        if self.target == "excel":
+            self.print_for_excel(performances, is_textual=is_textual)
+
+    def get_run(self, run_id: str) -> Run:
+        """Get the run from WandB."""
+        run = wandb.Api().run(f"pyop/cogelot-evaluation/{run_id}")
+        # Print information about the run
+        console.print("Run:", run.id)
+        console.print("Name:", run.name)
+        with suppress(KeyError):
+            console.print("Training dataset:", run.config["training_data"])
+
+        return run
+
+    def get_evaluation_performance(self, run: Run) -> dict[Level, dict[int, Decimal]]:
+        """Get the evaluation performance from WandB."""
+        performance_per_level = {}
+        # Get all the success metrics per partition
+        for level in self.levels:
             task_success = {
-                task_num: task_value
-                if Task(task_num - 1) not in TextualDescriptionTransform.tasks_to_avoid
-                else "{---}"
-                for task_num, task_value in task_success.items()
+                int(key[-2:]): Decimal(success * 100).quantize(Decimal("1.0"))  # noqa: WPS221
+                for key, success in sorted(run.summary.items())  # pyright: ignore[reportCallIssue]
+                if key.startswith(f"{self.success_prefix}{level}")
             }
+            performance_per_level[level] = task_success
 
-        average = statistics.mean(
-            task_value for task_value in task_success.values() if isinstance(task_value, Decimal)
-        )
+        return performance_per_level
 
-        console.print(f"{level} Success")
-        console.print(
-            " & ".join(map(str, task_success.values()))
-            + " & "
-            + str(average.quantize(Decimal("1.0")))
-        )
+    def print_for_paper(
+        self, performances: dict[Level, dict[int, Decimal]], *, is_textual: bool
+    ) -> None:
+        """Print the performance in a format that can be easily pasted in LaTeX."""
+        for level, task_success in performances.items():
+            if is_textual:
+                task_success = {  # noqa: PLW2901
+                    task_num: task_value
+                    if Task(task_num - 1) not in TextualDescriptionTransform.tasks_to_avoid
+                    else "{---}"
+                    for task_num, task_value in task_success.items()
+                }
+            average = statistics.mean(
+                task_value
+                for task_value in task_success.values()
+                if isinstance(task_value, Decimal)
+            )
+            print_line = self.delimiter.join(map(str, task_success.values()))
+            print_line += self.delimiter + str(average.quantize(Decimal("1.0")))
+            console.print(f"{level} Success")
+            console.print(print_line)
+
+    def print_for_excel(
+        self, performances: dict[Level, dict[int, Decimal]], *, is_textual: bool
+    ) -> None:
+        """Print the performance in a format that can be easily pasted in Excel."""
+        print_line = ""
+        for task_success in performances.values():
+            if is_textual:
+                task_success = {  # noqa: PLW2901
+                    task_num: task_value
+                    if Task(task_num - 1) not in TextualDescriptionTransform.tasks_to_avoid
+                    else ""
+                    for task_num, task_value in task_success.items()
+                }
+
+            if print_line:
+                print_line += self.delimiter
+            print_line += self.delimiter.join(map(str, task_success.values()))
+
+        console.print(print_line)
+
+
+def print_performance(run_id: str, *, target: Annotated[str, typer.Option()]) -> None:
+    """Get the evaluation performance from WandB for easy pasting."""
+    assert target in EvaluationPerformancePrinter.delimiter_per_target
+    printer = EvaluationPerformancePrinter(target=target)
+    printer(run_id)
 
 
 def print_prompt_lengths() -> None:
