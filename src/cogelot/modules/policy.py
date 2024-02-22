@@ -267,12 +267,11 @@ class Policy(torch.nn.Module):
             embed_dim=self.embed_dim,
             device=device,
         )
-        encoded_prompt = self.encode_prompt(embedded_prompt, embedded_prompt_mask)
 
         if self._add_residual_connection_to_prompt_visual_features:
             raise NotImplementedError("Not implemented this yet")
 
-        return encoded_prompt, embedded_prompt_mask
+        return embedded_prompt, embedded_prompt_mask
 
     def encode_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode an observation.

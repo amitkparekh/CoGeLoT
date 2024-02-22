@@ -214,16 +214,17 @@ class VIMALightningModule(pl.LightningModule):
 
     def embed_inputs(self, batch: PreprocessedBatch) -> ModelInstance:
         """Embed a batch of instances and convert to the ModelInstance."""
-        encoded_prompt, encoded_prompt_mask = self.policy.embed_multimodal_prompt(
+        embedded_prompt, embedded_prompt_mask = self.policy.embed_multimodal_prompt(
             (batch.raw_prompts_token_type, batch.word_batch, batch.image_batch)
         )
+        encoded_prompt = self.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
         encoded_observations, embedded_observations_mask = self.policy.encode_observation_token(
             batch.observations
         )
         encoded_actions, encoded_actions_mask = self.policy.encode_action_tokens(batch.actions)
         return ModelInstance(
             encoded_prompt=encoded_prompt,
-            encoded_prompt_mask=encoded_prompt_mask,
+            encoded_prompt_mask=embedded_prompt_mask,
             encoded_observations=encoded_observations,
             encoded_observations_mask=embedded_observations_mask,
             encoded_actions=encoded_actions,
