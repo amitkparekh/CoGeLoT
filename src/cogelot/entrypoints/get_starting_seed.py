@@ -41,3 +41,7 @@ def determine_evaluation_starting_seed(
     max_seed = max(max(max_seed_per_task[task].values()) for task in max_seed_per_task)  # noqa: WPS441
 
     logger.info(f"The maximum seed across all tasks is: {max_seed}")
+
+
+if __name__ == "__main__":
+    determine_evaluation_starting_seed()
