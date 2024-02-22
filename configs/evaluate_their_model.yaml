@@ -15,8 +15,7 @@ task_name: "evaluate"
 
 output_dir: ${hydra:runtime.output_dir}
 
-# This is the seed they used in their example script
-seed: 42
+seed: 879008
 
 model:
   _target_: cogelot.models.EvaluationLightningModule
