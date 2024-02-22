@@ -8,6 +8,7 @@ from numpy import typing as npt
 
 from cogelot.data.transforms import NoopTransform, VIMAInstanceTransform
 from cogelot.environment import ReplayBuffer, VIMAEnvironment
+from cogelot.environment.vima import GetObservationError
 from cogelot.metrics.online import EvaluationEpisodeTracker, OnlineEvaluationMetrics
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
@@ -60,7 +61,9 @@ class EvaluationLightningModule(pl.LightningModule):
     def test_step(
         self,
         batch: EvaluationEpisode,
-        batch_idx: int,  # noqa: ARG002
+        batch_idx: int,
+        *,
+        is_retry: bool = False,
     ) -> None:
         """Run a single episode online."""
         partition, task = batch
@@ -70,7 +73,16 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance = self.environment.create_vima_instance()
         # Transform the instance as desired
         vima_instance = self._vima_instance_transform(vima_instance)
-        self.run_vima_instance(vima_instance, partition)
+        try:
+            self.run_vima_instance(vima_instance, partition)
+        except GetObservationError as err:
+            logger.error(
+                "Something went wrong when getting the observation. Resetting and trying again."
+            )
+            if not is_retry:
+                return self.test_step(batch, batch_idx, is_retry=True)
+
+            raise GetObservationError("Already retried once, crashing out") from err
 
     def on_test_end(self) -> None:
         """Log the episode details."""

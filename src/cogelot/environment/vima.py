@@ -18,6 +18,10 @@ from vima_bench.env.wrappers.prompt_renderer import PromptRenderer
 from vima_bench.tasks import PARTITION_TO_SPECS
 
 
+class GetObservationError(Exception):
+    """Something went wrong when trying to get an observation."""
+
+
 class EnvironmentStepResult(NamedTuple):
     """Result of taking a step in the environment."""
 
@@ -130,7 +134,11 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
 
     def get_first_observation(self) -> Observation:
         """Get the first observation of the environment."""
-        observation = self.env.unwrapped.step(None)[0]
+        try:
+            observation = self.env.unwrapped.step(None)[0]
+        except TypeError as err:
+            raise GetObservationError from err
+
         assert isinstance(observation, dict)
         return Observation.model_validate({"index": 0, **observation})
 
