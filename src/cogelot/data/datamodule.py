@@ -18,7 +18,7 @@ from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
 from cogelot.data.datasets import only_select_indices_within_range, repeat_dataset_for_batch_size
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.structures.model import EvaluationEpisode, PreprocessedInstance
-from cogelot.structures.vima import Task
+from cogelot.structures.vima import Partition, Task
 
 SetupStage = Literal["fit", "validate", "test", "predict"]
 
@@ -206,6 +206,8 @@ class VIMABenchOnlineDataModule(LightningDataModule):
         *,
         num_repeats_per_episode: int = 100,
         dataloader_kwargs: dict[str, Any] | None = None,
+        filter_tasks: list[Task] | list[str] | list[int] | None = None,
+        filter_partitions: list[Partition] | list[str] | list[int] | None = None,
     ) -> None:
         if dataloader_kwargs is None:
             dataloader_kwargs = {}
@@ -214,12 +216,26 @@ class VIMABenchOnlineDataModule(LightningDataModule):
         self._num_repeats_per_episode = num_repeats_per_episode
         self._dataloader_kwargs = dataloader_kwargs
 
+        if filter_tasks is not None:
+            filter_tasks = [Task.from_builtin_type(task) for task in filter_tasks]
+        if filter_partitions is not None:
+            filter_partitions = [
+                Partition.from_builtin_type(partition) for partition in filter_partitions
+            ]
+
+        self._filter_tasks = filter_tasks
+        self._filter_partitions = filter_partitions
+
     def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
         """Setup each node to run the data."""
         if stage == "test":
             self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(
                 num_repeats_per_episode=self._num_repeats_per_episode
             )
+            if self._filter_tasks:
+                self.evaluation_dataset.filter_for_tasks(*self._filter_tasks)
+            if self._filter_partitions:
+                self.evaluation_dataset.filter_for_partitions(*self._filter_partitions)
             return
         raise ValueError("Don't use this datamodule if you are not testing online.")
 

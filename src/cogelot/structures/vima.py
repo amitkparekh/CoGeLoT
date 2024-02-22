@@ -62,6 +62,15 @@ class Partition(Enum):
         """Get the partition from the index."""
         return cls(index)
 
+    @classmethod
+    def from_builtin_type(cls, value: str | int | Self) -> Self:  # noqa: WPS110
+        """Get the task from the built-in type."""
+        if isinstance(value, str):
+            return cls[value]
+        if isinstance(value, int):
+            return cls(value)
+        return value
+
 
 class Task(Enum):
     """Tasks in the VIMA dataset."""
@@ -114,6 +123,15 @@ class Task(Enum):
         This is useful so that if a given value has more than one name, we can get the names.
         """
         return [name for name, enum in Task.__members__.items() if enum.value == value]
+
+    @classmethod
+    def from_builtin_type(cls, value: str | int | Self) -> Self:  # noqa: WPS110
+        """Get the task from the built-in type."""
+        if isinstance(value, str):
+            return cls[value]
+        if isinstance(value, int):
+            return cls(value)
+        return value
 
 
 class TaskGroup(Enum):

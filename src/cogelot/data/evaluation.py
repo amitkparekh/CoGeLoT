@@ -36,6 +36,16 @@ class VIMAEvaluationDataset(Dataset[EvaluationEpisode]):
         """Return the instance at the given index."""
         return self._instances[index]
 
+    def filter_for_tasks(self, *tasks: Task) -> None:
+        """Filter all the instances, keeping only the given task."""
+        self._instances = [instance for instance in self._instances if instance.task in tasks]
+
+    def filter_for_partitions(self, *partitions: Partition) -> None:
+        """Filter all the instances, keeping the desired partition."""
+        self._instances = [
+            instance for instance in self._instances if instance.partition in partitions
+        ]
+
     @classmethod
     def from_partition_to_specs(
         cls,
