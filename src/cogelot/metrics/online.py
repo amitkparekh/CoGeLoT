@@ -139,7 +139,7 @@ class EvaluationEpisodeTracker:
 
     video_columns: ClassVar[list[str]] = ["top_rgb", "front_rgb", "top_segm", "front_segm"]
 
-    def __init__(self, *, save_observations: bool = True, disable_upload: bool = False) -> None:
+    def __init__(self, *, save_observations: bool = False, disable_upload: bool = False) -> None:
         self._disable_upload = disable_upload
         self._save_observations = save_observations
 
