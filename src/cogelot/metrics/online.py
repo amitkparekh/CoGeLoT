@@ -266,12 +266,13 @@ class EvaluationEpisodeTracker:
             log_table_to_wandb(name="episodes", table=wandb_table)
 
 
-class OnlineEvaluationMetrics:
+class OnlineEvaluationMetrics(Metric):
     """Track and compute metrics for the online evaluation."""
 
     key_template: ClassVar[str] = "{metric}/L{partition}/Task{task}"
 
     def __init__(self) -> None:
+        super().__init__()
         self.success_rate = {
             partition: {task: MeanMetric() for task in Task} for partition in Partition
         }
@@ -304,7 +305,9 @@ class OnlineEvaluationMetrics:
         For any partition/task, if the number of steps taken is 0, we do not report it at all.
         """
         seen_per_task_per_partition = {
-            partition: {task: count.compute() for task, count in task_counts.items()}
+            partition: {
+                task: count.compute() for task, count in task_counts.items() if count.update_called
+            }
             for partition, task_counts in self.tasks_seen.items()
         }
 
