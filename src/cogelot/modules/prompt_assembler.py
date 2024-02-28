@@ -31,10 +31,12 @@ def assemble_text(
     *,
     raw_prompts_token_type: RawPromptTokenType,
     embedded_text: torch.Tensor,
+    mask: torch.Tensor | None,
     device: torch.device,
 ) -> Iterator[AssembledModality]:
     """Assemble the text prompt for the given batch."""
-    mask = torch.ones(embedded_text.shape[:-1], dtype=torch.bool, device=device)
+    if mask is None:
+        mask = torch.ones(embedded_text.shape[:-1], dtype=torch.bool, device=device)
 
     for batch_idx, raw_prompt_tokens in enumerate(raw_prompts_token_type):
         word_positions = torch.tensor(raw_prompt_tokens, device=device).eq(0).nonzero().flatten()
@@ -94,6 +96,7 @@ def assemble_visuals(
 def assemble_multimodal_prompt(
     *,
     embedded_text: torch.Tensor,
+    text_mask: torch.Tensor | None,
     embedded_visuals: torch.Tensor,
     original_visuals: DataDict,
     raw_prompts_token_type: RawPromptTokenType,
@@ -102,7 +105,10 @@ def assemble_multimodal_prompt(
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Assemble the multimodal prompt, interleaving the text and visuals."""
     text_iterator = assemble_text(
-        raw_prompts_token_type=raw_prompts_token_type, embedded_text=embedded_text, device=device
+        raw_prompts_token_type=raw_prompts_token_type,
+        embedded_text=embedded_text,
+        mask=text_mask,
+        device=device,
     )
     visuals_iterator = assemble_visuals(
         embedded_visuals=embedded_visuals,

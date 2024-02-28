@@ -167,9 +167,17 @@ class Policy(torch.nn.Module):
         return predicted_actions
 
     def embed_multimodal_prompt(
-        self, prompts: tuple[RawPromptTokenType, torch.Tensor, DataDict]
+        self,
+        prompts: tuple[RawPromptTokenType, torch.Tensor, DataDict],
+        *,
+        text_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Assembed, embed, and encode the prompt."""
+        """Assembed, embed, and encode the prompt.
+
+        For the majority of cases, and always when training, the text mask will be None. We are
+        only providing the option for it so that we can do some perturbations on the prompts during
+        eval.
+        """
         device = prompts[1].device
         raw_prompts_token_type, word_batch, image_batch = prompts
 
@@ -179,6 +187,7 @@ class Policy(torch.nn.Module):
 
         embedded_prompt, embedded_prompt_mask = assemble_multimodal_prompt(
             embedded_text=embedded_words,
+            text_mask=text_mask,
             embedded_visuals=embedded_images,
             original_visuals=image_batch,
             raw_prompts_token_type=raw_prompts_token_type,
