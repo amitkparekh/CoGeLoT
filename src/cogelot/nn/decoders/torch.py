@@ -61,7 +61,7 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
             memory_mask=memory_mask,
             tgt_key_padding_mask=tgt_key_padding_mask,
             memory_key_padding_mask=memory_key_padding_mask,
-            tgt_is_causal=True,
+            tgt_is_causal=self._use_casual_mask,
         )
         assert isinstance(transformer_output, torch.Tensor)
         return transformer_output
