@@ -358,7 +358,8 @@ class OnlineEvaluationMetrics(Metric):
             ): metric.compute() if isinstance(metric, Metric) else metric
             for partition, metrics_per_task in metrics_per_task_per_partition.items()
             for task, metric in metrics_per_task.items()
-            if seen_per_task_per_partition[partition][task] > 0
+            if task in seen_per_task_per_partition[partition]
+            and seen_per_task_per_partition[partition][task] > 0
         }
         return computed_metrics
 
