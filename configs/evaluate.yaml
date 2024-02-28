@@ -3,7 +3,10 @@
 defaults:
   - trainer: evaluation
   - /instance_preprocessor.yaml@model
+  - environment@model.environment: headless
   - evaluation_instance_transform@model.vima_instance_transform: noop
+  - evaluation_prompt_modality@model: disable_none
+  - model@model.model: from_hf_repo
   - datamodule: evaluation
   - hydra: default
   - hardware: default
@@ -13,27 +16,10 @@ defaults:
 task_name: "evaluate"
 output_dir: ${hydra:runtime.output_dir}
 
-seed: 879007
+seed: 879008
 
 model:
   _target_: cogelot.models.EvaluationLightningModule
 
   max_timesteps: 10
   should_stop_on_first_success: true
-
-  model:
-    _target_: cogelot.models.VIMALightningModule.from_hf_repo
-    hf_repo_id: amitkparekh/vima
-    wandb_run_id: ???
-    epoch: -1
-
-  environment:
-    _target_: cogelot.environment.VIMAEnvironment.from_config
-    seed: ${seed}
-    # We're just giving it any task here, it will get changed during the steps
-    task: 1
-    partition: 1
-    should_display_debug_window: false
-    should_render_prompt: false
-    should_hide_arm_rgb: true
-    record_gui: false
