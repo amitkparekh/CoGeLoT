@@ -50,7 +50,9 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
         memory_with_position = memory + embedded_memory_position
 
         if tgt_mask is None and self._use_casual_mask:
-            tgt_mask = _generate_square_subsequent_mask(tgt.size(1), device=tgt.device)
+            tgt_mask = _generate_square_subsequent_mask(
+                tgt.size(1), dtype=tgt_key_padding_mask.dtype, device=tgt.device
+            )
 
         transformer_output = self.decoder(
             tgt=tgt_with_position,
