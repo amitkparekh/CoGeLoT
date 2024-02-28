@@ -9,10 +9,10 @@ import numpy as np
 from .definitions import TextureEntry
 
 
-def _texture_fpath(fname):
+def _texture_fpath(fname: str) -> str:
     path = importlib.resources.files("vima_bench.tasks.assets.textures")
     assert isinstance(path, Path)
-    return path.joinpath(fname).resolve()
+    return str(path.joinpath(fname).resolve())
 
 
 def convert_to_darker_color(color: TextureEntry, offset=0.3) -> TextureEntry:
