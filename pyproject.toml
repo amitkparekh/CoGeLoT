@@ -63,6 +63,7 @@ test = [
     "pytest-xdist>=3.3.1",
     "hypothesis>=6.84.0",
     "pytest-sugar>=1.0.0",
+    "pytest-mock>=3.12.0",
 ]
 lint = [
     "ruff>=0.0.285",
@@ -374,7 +375,7 @@ known-first-party = ["vima", "cogelot", "vima_bench"]
 max-complexity = 18
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "S101", "INP001", "PLR2004"]
+"tests/*" = ["D", "S101", "INP001", "PLR2004", "FBT001", "SLF001"]
 "scripts/*" = ["INP001"]
 "src/**/__init__.py" = ["D", "F401", "I002"]
 
