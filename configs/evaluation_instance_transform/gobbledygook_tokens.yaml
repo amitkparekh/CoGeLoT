@@ -1,3 +1,4 @@
+# @package model.vima_instance_transform
 _target_: cogelot.data.transforms.GobbledyGookPromptTokenTransform
 timeout: 200
 text_tokenizer:

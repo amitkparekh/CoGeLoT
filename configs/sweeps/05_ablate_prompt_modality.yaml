@@ -1,0 +1,34 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - hardware=eidf_4gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/entrypoints/evaluate.py
+
+name: Ablate Prompt Modality
+
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  model.model.wandb_run_id:
+    values:
+      # Trained on original
+      - 8lkml12g
+      # Trained on reworded
+      # - 1x5z3z5v
+
+  evaluation_instance_transform:
+    values:
+      - noop
+
+  evaluation_prompt_modality:
+    values:
+      - disable_text
+      - disable_visual
+      - disable_both

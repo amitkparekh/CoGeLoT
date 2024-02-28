@@ -4,8 +4,8 @@ defaults:
   - trainer: evaluation
   - /instance_preprocessor.yaml@model
   - environment@model.environment: headless
-  - evaluation_instance_transform@model.vima_instance_transform: noop
-  - evaluation_prompt_modality@model: disable_none
+  - evaluation_instance_transform: noop
+  - evaluation_prompt_modality: disable_none
   - model@model.model: from_hf_repo
   - datamodule: evaluation
   - hydra: default
