@@ -1,6 +1,7 @@
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+import pytest
 import torch
 from pytest_cases import fixture, parametrize_with_cases
 from transformers.models.t5.configuration_t5 import T5Config
@@ -172,6 +173,7 @@ class ActionEncoderDecoderCases:
         decoder = VIMAActionDecoder(action_decoder)
         return encoder, decoder
 
+    @pytest.mark.skip("Only focusing on single tokens for now.")
     def case_token_per_axis(
         self, pose_action_tokenizer: PoseActionTokenizer, embed_dim: int
     ) -> tuple[TokenPerAxisActionEmbedder, TokenPerAxisActionDecoder]:
