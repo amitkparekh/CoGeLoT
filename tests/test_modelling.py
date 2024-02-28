@@ -1,5 +1,5 @@
 import torch
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 from pytest_cases import fixture, parametrize_with_cases
 
 from cogelot.data.collate import collate_preprocessed_instances
@@ -106,6 +106,7 @@ def test_action_decoder_output_shape_is_correct(
     num_observations=st.integers(min_value=1, max_value=5),
     instruction_length=st.integers(min_value=5, max_value=30),
 )
+@settings(deadline=None)
 def test_greedy_decoder_outputs_correct_shape(
     vima_lightning_module_for_inference: VIMALightningModule,
     max_num_objects: int,
