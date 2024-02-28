@@ -8,7 +8,7 @@ from loguru import logger
 class ResetFaultToleranceWrapper(Wrapper):
     """Ensure the environment is reset successfully."""
 
-    max_retries = 10
+    max_retries = 100
 
     def reset(self, **kwargs: Any) -> Any:
         """Reset the environment."""
