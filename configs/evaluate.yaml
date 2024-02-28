@@ -24,3 +24,6 @@ model:
 
   max_timesteps: 10
   should_stop_on_first_success: true
+
+trainer:
+  devices: 20
