@@ -34,10 +34,10 @@ def embedded_inputs(
     assert embedded_inputs.encoded_actions is not None
     assert embedded_inputs.encoded_actions_mask is not None
 
-    encoded_observations = embedded_inputs.encoded_observations
-    encoded_observations_mask = embedded_inputs.encoded_observations_mask
-    encoded_actions = embedded_inputs.encoded_actions
-    encoded_actions_mask = embedded_inputs.encoded_actions_mask
+    encoded_observations = embedded_inputs.encoded_observations.detach().clone()
+    encoded_observations_mask = embedded_inputs.encoded_observations_mask.detach().clone()
+    encoded_actions = embedded_inputs.encoded_actions.detach().clone()
+    encoded_actions_mask = embedded_inputs.encoded_actions_mask.detach().clone()
 
     # Make sure the number of timesteps are identical for observations and actions
     assert encoded_actions.size(1) == encoded_observations_mask.size(1)
