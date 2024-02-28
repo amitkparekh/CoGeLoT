@@ -33,12 +33,17 @@ def test_creating_model_instance_from_buffer_works(
 
     # 3. Predict the next pose action and add to state
     next_pose_action_token = evaluation_module.predict_next_pose_action_token()
-    evaluation_module.add_continuous_actions_to_buffer(next_pose_action_token)
+    next_continuous_action = (
+        evaluation_module.pose_action_tokenizer.convert_discrete_to_continuous(
+            next_pose_action_token
+        )
+    )
+    evaluation_module.add_continuous_actions_to_buffer(next_continuous_action)
     assert evaluation_module.buffer.num_actions == 1
 
     # 4. Add another observation to the state
     evaluation_module.add_observation_to_buffer(
-        observation=vima_instance.observations[1],
+        observation=vima_instance.observations[0],
         object_ids=vima_instance.object_ids,
         end_effector=vima_instance.end_effector_type,
     )
@@ -46,12 +51,17 @@ def test_creating_model_instance_from_buffer_works(
 
     # 5. Predict another pose action and add to state
     next_pose_action_token = evaluation_module.predict_next_pose_action_token()
-    evaluation_module.add_continuous_actions_to_buffer(next_pose_action_token)
+    next_continuous_action = (
+        evaluation_module.pose_action_tokenizer.convert_discrete_to_continuous(
+            next_pose_action_token
+        )
+    )
+    evaluation_module.add_continuous_actions_to_buffer(next_continuous_action)
     assert evaluation_module.buffer.num_actions == 2
 
     # 6. Add another observation to the state
     evaluation_module.add_observation_to_buffer(
-        observation=vima_instance.observations[1],
+        observation=vima_instance.observations[0],
         object_ids=vima_instance.object_ids,
         end_effector=vima_instance.end_effector_type,
     )
