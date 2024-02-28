@@ -4,11 +4,10 @@ from cogelot.data.datamodule import VIMABenchOnlineDataModule
 from cogelot.data.evaluation import VIMAEvaluationDataset
 from cogelot.models import EvaluationLightningModule
 from cogelot.structures.vima import VIMAInstance
-from vima_bench.tasks import PARTITION_TO_SPECS
 
 
 def test_can_create_evaluation_dataset() -> None:
-    dataset = VIMAEvaluationDataset.from_partition_to_specs(PARTITION_TO_SPECS)
+    dataset = VIMAEvaluationDataset.from_partition_to_specs()
     assert dataset
 
 

@@ -15,7 +15,7 @@ from cogelot.structures.vima import (
 from vima_bench import make
 from vima_bench.env.base import VIMAEnvBase
 from vima_bench.env.wrappers.prompt_renderer import PromptRenderer
-from vima_bench.tasks import PARTITION_TO_SPECS
+from vima_bench.tasks import get_partition_to_specs
 
 
 class GetObservationError(Exception):
@@ -65,7 +65,9 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         if isinstance(task, int):
             task = Task(task)
 
-        task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
+        partition_to_specs = get_partition_to_specs()
+
+        task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
         assert isinstance(task_kwargs, dict)
         vima_env = make(
             task_name=task.name,
@@ -119,7 +121,8 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
 
     def set_task(self, task: Task, partition: Partition) -> None:
         """Set the task of the environment."""
-        task_kwargs = PARTITION_TO_SPECS["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
+        partition_to_specs = get_partition_to_specs()
+        task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
         self.env.set_task(task.name, task_kwargs)
 
     def reset(self, **kwargs: Any) -> None:  # type: ignore[override]

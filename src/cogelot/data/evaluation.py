@@ -5,13 +5,14 @@ from torch.utils.data import Dataset
 
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import Partition, Task
-from vima_bench.tasks import PARTITION_TO_SPECS
+from vima_bench.tasks import get_partition_to_specs
 
 
 def get_every_partition_task_combination(
-    partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS,
+    partition_to_specs: dict[str, dict[str, Any]] | None = None,
 ) -> list[EvaluationEpisode]:
     """Get every partition-task combo from VIMA's `PARTITION_TO_SPECS`."""
+    partition_to_specs = partition_to_specs or get_partition_to_specs()
     raw_instances_per_task_per_partition = partition_to_specs["test"]
     episodes = [
         EvaluationEpisode(partition=Partition[partition], task=Task[task])
@@ -49,7 +50,7 @@ class VIMAEvaluationDataset(Dataset[EvaluationEpisode]):
     @classmethod
     def from_partition_to_specs(
         cls,
-        partition_to_specs: dict[str, dict[str, Any]] = PARTITION_TO_SPECS,
+        partition_to_specs: dict[str, dict[str, Any]] | None = None,
         num_repeats_per_episode: int = 100,
     ) -> Self:
         """Instantiate from VIMA's `PARTITION_TO_SPECS`."""

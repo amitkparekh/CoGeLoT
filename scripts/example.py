@@ -19,8 +19,8 @@ from vima import create_policy_from_ckpt
 from vima.utils import *
 
 
+PARTITION_TO_SPECS = get_partition_to_specs()
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
-
 
 _kwargs = {
     "single_word": True,

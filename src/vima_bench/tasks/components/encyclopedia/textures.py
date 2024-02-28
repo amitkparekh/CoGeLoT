@@ -1,19 +1,18 @@
-from __future__ import annotations
-
 import colorsys
-import os
+import importlib
 from enum import Enum
-from typing import Tuple, List, Literal
+from pathlib import Path
+from typing import List, Literal, Tuple
 
-import importlib_resources
 import numpy as np
 
 from .definitions import TextureEntry
 
 
 def _texture_fpath(fname):
-    with importlib_resources.files("vima_bench.tasks.assets.textures") as p:
-        return os.path.join(str(p), fname)
+    path = importlib.resources.files("vima_bench.tasks.assets.textures")
+    assert isinstance(path, Path)
+    return path.joinpath(fname).resolve()
 
 
 def convert_to_darker_color(color: TextureEntry, offset=0.3) -> TextureEntry:
