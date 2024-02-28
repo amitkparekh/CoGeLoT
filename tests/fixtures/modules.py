@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import torch
@@ -248,6 +249,7 @@ def vima_lightning_module(vima_policy: Policy) -> VIMALightningModule:
 def vima_lightning_module_for_inference(
     vima_lightning_module: VIMALightningModule,
 ) -> VIMALightningModule:
+    vima_lightning_module = deepcopy(vima_lightning_module)
     vima_lightning_module.policy._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(  # noqa: SLF001
         vima_lightning_module.policy._transformer_decoder,  # noqa: SLF001
         num_tokens_to_generate_per_timestep=vima_lightning_module.policy.num_action_tokens_per_timestep,
