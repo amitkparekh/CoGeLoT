@@ -127,7 +127,7 @@ def test_greedy_decoder_outputs_correct_shape(
     memory_key_padding_mask = torch.zeros((1, instruction_length), dtype=torch.bool)
 
     with torch.inference_mode():
-        generated_tokens = vima_lightning_module_for_inference.policy._transformer_decoder(  # noqa: SLF001
+        generated_tokens = vima_lightning_module_for_inference.policy._transformer_decoder(
             tgt,
             memory,
             tgt_key_padding_mask=tgt_key_padding_mask,

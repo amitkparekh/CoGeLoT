@@ -252,8 +252,8 @@ def vima_lightning_module_for_inference(
     vima_lightning_module: VIMALightningModule,
 ) -> VIMALightningModule:
     vima_lightning_module = deepcopy(vima_lightning_module)
-    vima_lightning_module.policy._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(  # noqa: SLF001
-        vima_lightning_module.policy._transformer_decoder,  # noqa: SLF001
+    vima_lightning_module.policy._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(
+        vima_lightning_module.policy._transformer_decoder,
         num_tokens_to_generate_per_timestep=vima_lightning_module.policy.num_action_tokens_per_timestep,
     )
     return vima_lightning_module

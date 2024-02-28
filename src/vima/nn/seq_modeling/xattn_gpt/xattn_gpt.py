@@ -78,13 +78,13 @@ class XAttnGPT(OpenAIGPTPreTrainedModel):
         obs_action_masks: torch.Tensor | None = None,
     ):
         if not self._input_checked:
-            self._check_input(
-                obs_action_tokens,
-                prompt_tokens,
-                prompt_mask,
-                batch_first,
-                obs_action_masks,
-            )
+            # self._check_input(
+            #     obs_action_tokens,
+            #     prompt_tokens,
+            #     prompt_mask,
+            #     batch_first,
+            #     obs_action_masks,
+            # )
             self._input_checked = True
         if batch_first:
             B_oa, L_oa, E_oa = obs_action_tokens.shape

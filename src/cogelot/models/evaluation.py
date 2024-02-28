@@ -40,6 +40,8 @@ class EvaluationLightningModule(pl.LightningModule):
         *,
         should_stop_on_first_success: bool = True,
         max_timesteps: int = MAX_TIMESTEPS,
+        disable_prompt_text: bool = False,
+        disable_prompt_visual: bool = False,
     ) -> None:
         if vima_instance_transform is None:
             vima_instance_transform = NoopTransform()
@@ -57,6 +59,9 @@ class EvaluationLightningModule(pl.LightningModule):
         self._vima_instance_transform = vima_instance_transform
         self._should_stop_on_first_success = should_stop_on_first_success
         self._max_timesteps = max_timesteps
+
+        self._disable_prompt_text = disable_prompt_text
+        self._disable_prompt_visual = disable_prompt_visual
 
     def test_step(
         self,
@@ -219,6 +224,14 @@ class EvaluationLightningModule(pl.LightningModule):
         word_batch = cast(torch.Tensor, add_batch_dim(word_batch))
         image_batch = cast(DataDict, add_batch_dim(image_batch))
 
+        # Create the text mask (inverting happens during assembly, so True means DO NOT MASK at
+        # this point in the flow)
+        text_mask = torch.ones_like(word_batch, dtype=torch.bool)
+
+        # Do some optional disabling of modalities if need be
+        word_batch, text_mask = self._maybe_disable_words(word_batch, text_mask)
+        image_batch = self._maybe_disable_visuals(image_batch)
+
         # The image_batch is none when we are using the textual instance transformation. Otherwise
         # it shouldn't be none.
         if image_batch:
@@ -226,11 +239,12 @@ class EvaluationLightningModule(pl.LightningModule):
                 embedded_prompt,
                 embedded_prompt_mask,
             ) = self.model.policy.embed_multimodal_prompt(
-                (raw_prompts_token_type, word_batch, image_batch)
+                (raw_prompts_token_type, word_batch, image_batch), text_mask=text_mask
             )
         else:
             embedded_prompt = self.model.policy.prompt_embedding(word_batch)
-            embedded_prompt_mask = torch.zeros_like(word_batch, dtype=torch.bool)
+            # At this point, the mask is inverted to follow "torch" meanings
+            embedded_prompt_mask = ~text_mask
 
         encoded_prompt = self.model.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
         self.buffer.encoded_prompt = encoded_prompt
@@ -292,3 +306,24 @@ class EvaluationLightningModule(pl.LightningModule):
             "pose1_rotation": split_predicted_actions[3],
         }
         return predicted_action_tokens
+
+    def _maybe_disable_words(
+        self, word_batch: torch.Tensor, text_mask: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """If desired, disable the text modality."""
+        if not self._disable_prompt_text:
+            return word_batch, text_mask
+
+        return word_batch, torch.zeros_like(text_mask, dtype=torch.bool)
+
+    def _maybe_disable_visuals(self, image_batch: DataDict | None) -> DataDict | None:
+        """If desired, disable the visual modality."""
+        if not self._disable_prompt_visual or image_batch is None:
+            return image_batch
+
+        assert "mask" in image_batch
+        masks = cast(dict[str, torch.Tensor], image_batch["mask"])
+        image_batch["mask"] = {
+            view: torch.zeros_like(tensor, dtype=torch.bool) for view, tensor in masks.items()
+        }
+        return image_batch

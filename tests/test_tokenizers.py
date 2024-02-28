@@ -24,7 +24,7 @@ def test_pose_action_tokenizer_denormalizes_actions(
     for original_continuous_action in original_continuous_actions:
         # Make sure de-normalized actions are the same as the original actions
         denormalised_continuous_action = (
-            pose_action_tokenizer._restore_rescaled_continuous_to_correct_range(  # noqa: SLF001
+            pose_action_tokenizer._restore_rescaled_continuous_to_correct_range(
                 pose_action_tokenizer.normalize_continuous_actions(original_continuous_action)
             )
         )

@@ -58,7 +58,7 @@ def raw_instance_dir(fixture_storage_dir: Path, mission_task: str) -> Path:
 
 
 @fixture(scope="session")
-def vima_instance_parser(keep_null_action: bool) -> VIMAInstanceParser:  # noqa: FBT001
+def vima_instance_parser(keep_null_action: bool) -> VIMAInstanceParser:
     return VIMAInstanceParser(keep_null_action=keep_null_action)
 
 
@@ -146,7 +146,7 @@ def vima_dataloader(
     preprocessed_instances_dataset: datasets.Dataset,
 ) -> DataLoader[list[PreprocessedInstance]]:
     return DataLoader(
-        preprocessed_instances_dataset,  # pyright: ignore[reportGeneralTypeIssues]
+        preprocessed_instances_dataset,  # pyright: ignore[reportArgumentType]
         batch_size=2,
         collate_fn=collate_preprocessed_instances_from_hf_dataset,
         num_workers=0,

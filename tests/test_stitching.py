@@ -27,7 +27,7 @@ def embedded_inputs(
     vima_lightning_module: VIMALightningModule,
     all_preprocessed_instances: list[PreprocessedInstance],
     max_num_timesteps: int | None,
-    make_num_actions_less_than_obs: bool,  # noqa: FBT001
+    make_num_actions_less_than_obs: bool,
 ) -> ModelInstance:
     batch = collate_preprocessed_instances(all_preprocessed_instances)
     embedded_inputs = vima_lightning_module.embed_inputs(batch)

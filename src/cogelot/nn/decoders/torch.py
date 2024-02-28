@@ -5,6 +5,11 @@ from cogelot.nn.decoders.interfaces import TransformerDecoderProtocol
 from cogelot.nn.decoders.x_transformer import create_padding_mask_from_tensor
 
 
+def _convert_to_float_mask(mask: torch.Tensor, dtype: torch.dtype) -> torch.Tensor:
+    """Convert a boolean mask to a float mask."""
+    return mask.to(dtype).masked_fill(mask.logical_not(), torch.finfo(dtype).min)
+
+
 class TorchVanillaDecoder(TransformerDecoderProtocol):
     """Transformer decoder with torch."""
 
@@ -36,6 +41,8 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
             tgt_key_padding_mask = create_padding_mask_from_tensor(tgt)
         if memory_key_padding_mask is None:
             memory_key_padding_mask = create_padding_mask_from_tensor(memory)
+        if tgt_mask is None and self._use_casual_mask:
+            tgt_mask = _generate_square_subsequent_mask(tgt.size(1), device=tgt.device)
 
         # Create the position ids from the mask (just how they do in the Policy)
         position_ids = torch.cumsum(tgt_key_padding_mask, dim=1)
@@ -49,10 +56,15 @@ class TorchVanillaDecoder(TransformerDecoderProtocol):
         embedded_memory_position = self.xattn_embedder(memory_position_ids)
         memory_with_position = memory + embedded_memory_position
 
-        if tgt_mask is None and self._use_casual_mask:
-            tgt_mask = _generate_square_subsequent_mask(
-                tgt.size(1), dtype=tgt_key_padding_mask.dtype, device=tgt.device
-            )
+        # Make things float
+        # Note for future me when I panic: If the mask is TRUE, then it means it _should_ be
+        # masked and set to -inf. If it's false, then it's should turn into 0
+        tgt_key_padding_mask = _convert_to_float_mask(
+            tgt_key_padding_mask, tgt_with_position.dtype
+        )
+        memory_key_padding_mask = _convert_to_float_mask(
+            memory_key_padding_mask, memory_with_position.dtype
+        )
 
         transformer_output = self.decoder(
             tgt=tgt_with_position,

@@ -1,8 +1,14 @@
 import pytorch_lightning as pl
+import torch
+from pytest_cases import parametrize
+from pytest_mock import MockerFixture
 
 from cogelot.data.datamodule import VIMABenchOnlineDataModule
 from cogelot.data.evaluation import VIMAEvaluationDataset
+from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import EvaluationLightningModule
+from cogelot.models.training import VIMALightningModule
+from cogelot.modules.instance_preprocessor import InstancePreprocessor
 from cogelot.structures.vima import VIMAInstance
 
 
@@ -129,3 +135,37 @@ def test_evaluation_runs_with_trainer(evaluation_module: EvaluationLightningModu
 
     trainer = pl.Trainer(fast_dev_run=True)
     trainer.test(evaluation_module, datamodule=datamodule)
+
+
+@parametrize("disable_text", [False, True], ids=["text_enabled", "text_disabled"])
+@parametrize("disable_visual", [False, True], ids=["visual_enabled", "visual_disabled"])
+def test_evaluation_runs_with_disabled_prompt_modalities(
+    instance_preprocessor: InstancePreprocessor,
+    vima_lightning_module_for_inference: VIMALightningModule,
+    vima_environment: VIMAEnvironment,
+    disable_text: bool,
+    disable_visual: bool,
+    mocker: MockerFixture,
+) -> None:
+    evaluation_module = EvaluationLightningModule(
+        environment=vima_environment,
+        model=vima_lightning_module_for_inference,
+        instance_preprocessor=instance_preprocessor,
+        max_timesteps=2,
+        disable_prompt_text=disable_text,
+        disable_prompt_visual=disable_visual,
+    )
+    datamodule = VIMABenchOnlineDataModule()
+    datamodule.setup("test")
+    trainer = pl.Trainer(fast_dev_run=True)
+
+    # Setup spys
+    transformer_decoder_spy = mocker.spy(
+        vima_lightning_module_for_inference.policy._transformer_decoder, "forward"
+    )
+
+    trainer.test(evaluation_module, datamodule=datamodule)
+
+    # Make sure the transformer decoder doesn't return any NaN's
+    assert isinstance(transformer_decoder_spy.spy_return, torch.Tensor)
+    assert not torch.isnan(transformer_decoder_spy.spy_return).any()
