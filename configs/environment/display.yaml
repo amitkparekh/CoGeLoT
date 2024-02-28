@@ -5,5 +5,5 @@ task: 1
 partition: 1
 should_display_debug_window: true
 should_render_prompt: true
-should_hide_arm_rgb: true
+should_hide_arm_rgb: false
 record_gui: false
