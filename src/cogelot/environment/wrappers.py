@@ -21,6 +21,7 @@ class ResetFaultToleranceWrapper(Wrapper):
                 if not current_seed:
                     current_seed = 0
                 self.env.global_seed = current_seed + 1  # type: ignore  # noqa: PGH003
+                self.env.unwrapped.task.seed = current_seed + 1  # type: ignore  # noqa: PGH003
         raise RuntimeError(f"Failed to reset environment after {self.max_retries} retries")
 
 
