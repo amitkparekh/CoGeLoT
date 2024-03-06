@@ -15,6 +15,7 @@ from pydantic import (
 
 from cogelot.structures.common import (
     Action,
+    ObjectDescription,
     Observation,
     PromptAsset,
     PromptAssets,
@@ -213,6 +214,11 @@ class ObjectMetadata(BaseModel, PydanticHFDatasetMixin):
             }
         )
 
+    @property
+    def as_description(self) -> ObjectDescription:
+        """Get the natural language name of the object."""
+        return ObjectDescription(name=self.obj_name, texture=self.texture_name)
+
 
 class PoseAction(Action, PydanticHFDatasetMixin):
     """Actions which are taken by the agent in the environment."""
@@ -265,6 +271,26 @@ class PoseAction(Action, PydanticHFDatasetMixin):
             pose1_rotation=torch.tensor(STARTING_ROTATION, dtype=torch.float32),
             index=index,
         )
+
+    @property
+    def start_pose(self) -> tuple[float, float, float, float, float, float, float]:
+        """Starting position as SE(3)."""
+        return (*self.pose0_position.tolist(), *self.pose0_rotation.tolist())
+
+    @property
+    def end_pose(self) -> tuple[float, float, float, float, float, float, float]:
+        """Ending position as SE(3)."""
+        return (*self.pose1_position.tolist(), *self.pose1_rotation.tolist())
+
+    def as_metadata(self) -> dict[str, list[float]]:
+        """Get the metadata for the action."""
+        return {"start": list(self.start_pose), "end": list(self.end_pose)}
+
+    def __repr__(self) -> str:
+        """Representation of the action."""
+        rounded_start_pose = tuple(round(x, 2) for x in self.start_pose)
+        rounded_end_pose = tuple(round(x, 2) for x in self.end_pose)
+        return f"PoseAction(idx={self.index}); {rounded_start_pose} -> {rounded_end_pose}"
 
 
 T = TypeVar("T")
@@ -357,11 +383,6 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         """Get the number of objects in the instance."""
         return len(self.object_metadata)
 
-    @property
-    def object_ids(self) -> set[int]:
-        """Get the object ids."""
-        return {obj.obj_id for obj in self.object_metadata}
-
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Get the dataset features for a VIMA instance."""
@@ -379,3 +400,23 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
                 "generation_seed": datasets.Value("int64"),
             }
         )
+
+    def to_metadata(self) -> dict[str, Any]:
+        """Convert to just metadata for statistics."""
+        return {
+            "index": self.index,
+            "task": self.task.name,
+            "num_objects": self.num_objects,
+            "num_actions": self.num_actions,
+            "num_observations": self.num_observations,
+            "total_steps": self.total_steps,
+            "generation_seed": self.generation_seed,
+            "end_effector_type": self.end_effector_type,
+            "prompt": self.prompt,
+            "prompt_assets": {
+                asset.name: [desc.model_dump() for desc in asset.descriptions]
+                for asset in self.prompt_assets.root
+            },
+            "scene_assets": [obj.as_description.model_dump() for obj in self.object_metadata],
+            "actions": [action.as_metadata() for action in self.pose_actions],
+        }

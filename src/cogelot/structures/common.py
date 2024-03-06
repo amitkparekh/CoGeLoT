@@ -151,6 +151,23 @@ PydanticTensor = Annotated[
 ]
 
 
+class ObjectDescription(BaseModel, PydanticHFDatasetMixin):
+    """Simple structure of an object description metadata."""
+
+    name: str
+    texture: str
+
+    @classmethod
+    def dataset_features(cls) -> datasets.Features:
+        """Export the features schema for the HF dataset."""
+        return datasets.Features(
+            {
+                "name": datasets.Value("string"),
+                "texture": datasets.Value("string"),
+            }
+        )
+
+
 class Frame(BaseModel, PydanticHFDatasetMixin):
     """Get the output of a given modality for the various views."""
 
@@ -237,8 +254,38 @@ class PromptAsset(Asset):
     """A single prompt asset within the environment."""
 
     name: str
-    obj_name: str = ""
-    obj_color: str = ""
+    descriptions: list[ObjectDescription]
+    # obj_name: str = ""
+    # obj_color: str = ""
+
+    @classmethod
+    def from_object_placeholder_type(cls, name: str, raw_asset_data: dict[str, Any]) -> Self:
+        """Instantiate from a raw prompt asset."""
+        return cls(
+            name=name,
+            descriptions=[
+                ObjectDescription(
+                    name=raw_asset_data["segm"]["obj_info"]["obj_name"],
+                    texture=raw_asset_data["segm"]["obj_info"]["obj_color"],
+                )
+            ],
+            **raw_asset_data,
+        )
+
+    @classmethod
+    def from_scene_placeholder_type(cls, name: str, raw_asset_data: dict[str, Any]) -> Self:
+        """Instantiate from a a raw scene placeholder type."""
+        return cls(
+            name=name,
+            descriptions=[
+                ObjectDescription(
+                    name=obj_info["obj_name"],
+                    texture=obj_info["obj_color"],
+                )
+                for obj_info in raw_asset_data["segm"]["obj_info"]
+            ],
+            **raw_asset_data,
+        )
 
     @classmethod
     def dataset_features(cls) -> datasets.Features:
@@ -246,8 +293,7 @@ class PromptAsset(Asset):
         return datasets.Features(
             {
                 "name": datasets.Value("string"),
-                "obj_name": datasets.Value("string"),
-                "obj_color": datasets.Value("string"),
+                "descriptions": datasets.Sequence(ObjectDescription.dataset_features()),
                 **Asset.dataset_features(),
             }
         )
@@ -255,7 +301,9 @@ class PromptAsset(Asset):
     @property
     def as_natural_language(self) -> str | None:
         """Convert the properties to natural language."""
-        return f"{self.obj_color} {self.obj_name}" if self.obj_name else None
+        if len(self.descriptions) > 1:
+            return None
+        return f"{self.descriptions[0].texture} {self.descriptions[0].name}"
 
 
 class PromptAssets(RootModel[list[PromptAsset]]):
@@ -266,23 +314,13 @@ class PromptAssets(RootModel[list[PromptAsset]]):
     @classmethod
     def from_raw_prompt_assets(cls, raw_prompt_assets: dict[str, Any]) -> Self:
         """Instantiate from the raw trajectory metadata, from the environment."""
-        return cls(
-            root=[
-                PromptAsset.model_validate(
-                    {
-                        "name": asset_name,
-                        "obj_name": asset_data["segm"]["obj_info"]["obj_name"]
-                        if asset_data["placeholder_type"] == "object"
-                        else "",
-                        "obj_color": asset_data["segm"]["obj_info"]["obj_color"]
-                        if asset_data["placeholder_type"] == "object"
-                        else "",
-                        **asset_data,
-                    }
-                )
-                for asset_name, asset_data in raw_prompt_assets.items()
-            ]
-        )
+        prompt_assets = [
+            PromptAsset.from_object_placeholder_type(asset_name, asset_data)
+            if asset_data["placeholder_type"] == "object"
+            else PromptAsset.from_scene_placeholder_type(asset_name, asset_data)
+            for asset_name, asset_data in raw_prompt_assets.items()
+        ]
+        return cls(root=prompt_assets)
 
     @cached_property
     def as_dict(self) -> dict[str, PromptAsset]:
