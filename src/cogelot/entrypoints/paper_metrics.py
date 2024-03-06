@@ -21,7 +21,7 @@ from cogelot.structures.vima import Task
 
 console = Console()
 
-PasteTarget = Literal["paper", "excel"]
+PasteTarget = Literal["paper", "excel", "draft"]
 Level = Literal["L1", "L2", "L3", "L4"]
 
 
@@ -30,6 +30,7 @@ class EvaluationPerformancePrinter:
 
     delimiter_per_target: ClassVar[dict[PasteTarget, str]] = {
         "paper": " & ",
+        "draft": " & ",
         "excel": ",",
     }
     success_prefix: ClassVar[str] = "success/"
@@ -50,6 +51,8 @@ class EvaluationPerformancePrinter:
             self.print_for_paper(performances, is_textual=is_textual)
         if self.target == "excel":
             self.print_for_excel(performances, is_textual=is_textual)
+        if self.target == "draft":
+            self.print_for_paper_draft(performances)
 
     def get_run(self, run_id: str) -> Run:
         """Get the run from WandB."""
@@ -96,6 +99,22 @@ class EvaluationPerformancePrinter:
             print_line = self.delimiter.join(map(str, task_success.values()))
             print_line += self.delimiter + str(average.quantize(Decimal("1.0")))
             console.print(f"{level} Success")
+            console.print(print_line)
+
+    def print_for_paper_draft(self, performances: dict[Level, dict[int, Decimal]]) -> None:
+        """Print the performance in a format that can be easily pasted in LaTeX."""
+        for level, task_success in performances.items():
+            task_success = {  # noqa: PLW2901
+                task.value + 1: task_success.get(task.value + 1, r"{{{---}}}") for task in Task
+            }
+            average = statistics.mean(
+                task_value
+                for task_value in task_success.values()
+                if isinstance(task_value, Decimal)
+            )
+            print_line = self.delimiter.join(map(str, task_success.values()))
+            print_line += self.delimiter + str(average.quantize(Decimal("1.0")))
+            console.print(f"{level} &")
             console.print(print_line)
 
     def print_for_excel(
