@@ -3,15 +3,14 @@ command:
   - ${env}
   - python
   - ${program}
-  - hardware=eidf_4gpu
   - ${args_no_hyphens}
 
 program: src/cogelot/entrypoints/evaluate.py
 
-name: Ablate Prompt Modality
+name: Ablate Remaining
 
 entity: pyop
-project: CoGeLoT
+project: cogelot-evaluation
 
 method: grid
 
@@ -21,14 +20,17 @@ parameters:
       # Trained on original
       - 8lkml12g
       # Trained on reworded
-      # - 1x5z3z5v
+      - 2df3mwfn
 
   evaluation_instance_transform:
     values:
-      - noop
+      - textual
+      - textual_gobbledygook_tokens
+      - textual_gobbledygook_word
+      - reworded
 
-  evaluation_prompt_modality:
-    values:
-      - disable_text
-      - disable_visual
-      - disable_both
+  # evaluation_prompt_modality:
+  #   values:
+  #     - disable_text
+  #     - disable_visual
+  #     - disable_both

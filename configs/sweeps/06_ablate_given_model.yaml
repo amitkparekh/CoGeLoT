@@ -1,0 +1,39 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - "model@model.model=from_their_policy"
+  - +trainer.logger.wandb.group="VIMA Checkpoint"
+  - +trainer.logger.wandb.name="Given"
+  - ${args_no_hyphens}
+
+program: src/cogelot/entrypoints/evaluate.py
+
+name: Ablate Provided Checkpoint
+
+entity: pyop
+project: cogelot-evaluation
+
+method: grid
+
+parameters:
+  training_data:
+    value: original
+
+  evaluation_instance_transform:
+    values:
+      - noop
+      # - gobbledygook_word
+      # - gobbledygook_tokens
+      - reworded
+      # - textual
+      # - textual_gobbledygook_tokens
+      # - textual_gobbledygook_word
+
+  evaluation_prompt_modality:
+    values:
+      # - disable_none
+      - disable_text
+      - disable_visual
+      - disable_both
