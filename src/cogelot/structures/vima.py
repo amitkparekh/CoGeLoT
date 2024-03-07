@@ -193,6 +193,8 @@ AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] =
     "pose1_rotation": RotationAxes,  # type: ignore[dict-item]
 }
 
+SEVector = tuple[float, float, float, float, float, float, float]
+
 
 class ObjectMetadata(BaseModel, PydanticHFDatasetMixin):
     """Metadata for a given object."""
@@ -273,18 +275,18 @@ class PoseAction(Action, PydanticHFDatasetMixin):
         )
 
     @property
-    def start_pose(self) -> tuple[float, float, float, float, float, float, float]:
+    def start_pose(self) -> SEVector:
         """Starting position as SE(3)."""
         return (*self.pose0_position.tolist(), *self.pose0_rotation.tolist())
 
     @property
-    def end_pose(self) -> tuple[float, float, float, float, float, float, float]:
+    def end_pose(self) -> SEVector:
         """Ending position as SE(3)."""
         return (*self.pose1_position.tolist(), *self.pose1_rotation.tolist())
 
-    def as_metadata(self) -> dict[str, list[float]]:
+    def as_metadata(self) -> dict[Literal["start", "end"], SEVector]:
         """Get the metadata for the action."""
-        return {"start": list(self.start_pose), "end": list(self.end_pose)}
+        return {"start": self.start_pose, "end": self.end_pose}
 
     def __repr__(self) -> str:
         """Representation of the action."""
@@ -314,6 +316,23 @@ def maybe_convert_dict_list_to_list_dict(
             for dict_values in zip(*maybe_dict_list.values(), strict=True)
         ]
     return maybe_dict_list
+
+
+class VIMAInstanceMetadata(BaseModel):
+    """Metadata for a VIMA instance."""
+
+    index: int
+    task: Task
+    num_objects: int
+    num_actions: int
+    num_observations: int
+    total_steps: int
+    generation_seed: int
+    end_effector_type: EndEffector
+    prompt: str
+    prompt_assets: dict[str, list[ObjectDescription]]
+    scene_assets: list[ObjectDescription]
+    actions: list[dict[Literal["start", "end"], SEVector]]
 
 
 class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
@@ -401,22 +420,19 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             }
         )
 
-    def to_metadata(self) -> dict[str, Any]:
+    def to_metadata(self) -> VIMAInstanceMetadata:
         """Convert to just metadata for statistics."""
-        return {
-            "index": self.index,
-            "task": self.task.name,
-            "num_objects": self.num_objects,
-            "num_actions": self.num_actions,
-            "num_observations": self.num_observations,
-            "total_steps": self.total_steps,
-            "generation_seed": self.generation_seed,
-            "end_effector_type": self.end_effector_type,
-            "prompt": self.prompt,
-            "prompt_assets": {
-                asset.name: [desc.model_dump() for desc in asset.descriptions]
-                for asset in self.prompt_assets.root
-            },
-            "scene_assets": [obj.as_description.model_dump() for obj in self.object_metadata],
-            "actions": [action.as_metadata() for action in self.pose_actions],
-        }
+        return VIMAInstanceMetadata(
+            index=self.index,
+            task=self.task,
+            num_objects=self.num_objects,
+            num_actions=self.num_actions,
+            num_observations=self.num_observations,
+            total_steps=self.total_steps,
+            generation_seed=self.generation_seed,
+            end_effector_type=self.end_effector_type,
+            prompt=self.prompt,
+            prompt_assets={asset.name: asset.descriptions for asset in self.prompt_assets.root},
+            scene_assets=[obj.as_description for obj in self.object_metadata],
+            actions=[action.as_metadata() for action in self.pose_actions],
+        )
