@@ -56,12 +56,15 @@ def dump_dataset_metadata(
         logger.info("Parse and save all the instance metadatta")
         progress_bar = tqdm(desc="Parsing and saving metadata", total=len(all_instance_paths))
 
-        with progress_bar, metadata_output_file.open("w") as metadata_file:
+        all_metadata = []
+        with progress_bar:
             for future in as_completed(futures):
                 metadata_as_json_string: str = future.result()
-                metadata_file.write(metadata_as_json_string)
-                metadata_file.write("\n")
+                all_metadata.append(metadata_as_json_string)
                 progress_bar.update(1)
+
+        logger.info("Writing to file")
+        metadata_output_file.write_text("\n".join(all_metadata))
 
 
 if __name__ == "__main__":
