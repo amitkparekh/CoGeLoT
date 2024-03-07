@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     config_dir: Path = Path("configs/")
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")
 
+    # Metadata
+    dataset_metadata_file: Path = storage_data_dir.joinpath("dataset_metadata.jsonl")
+
     @property
     def safe_hf_repo_id(self) -> str:
         """Return file-safe HF repo id.

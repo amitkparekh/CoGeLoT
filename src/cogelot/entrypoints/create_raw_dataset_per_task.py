@@ -18,7 +18,7 @@ from cogelot.structures.vima import Task, VIMAInstance
 settings = Settings()
 
 
-def _get_pickled_instance_paths(root_dir: Path) -> list[Path]:
+def get_pickled_instance_paths(root_dir: Path) -> list[Path]:
     """Get all the pickled instances from the root dir."""
     path_iterator = root_dir.rglob("*.pkl.gz")
     return list(track(path_iterator, description=f"Getting pickled paths from {root_dir}"))
@@ -68,7 +68,7 @@ def create_hf_dataset_for_each_task(
         if not data_root_for_task.exists():
             continue
 
-        instance_paths = _get_pickled_instance_paths(data_root_for_task)
+        instance_paths = get_pickled_instance_paths(data_root_for_task)
         logger.info(
             f"Task {idx+1}/{len(Task)}: Creating HF dataset for {task} from"
             f" {len(instance_paths)} instances..."
