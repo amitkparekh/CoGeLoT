@@ -405,7 +405,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         int, BeforeValidator(maybe_convert_batched_list_to_item), BeforeValidator(int)
     ]
 
-    end_effector_type: EndEffector
+    end_effector_type: Annotated[EndEffector, BeforeValidator(maybe_convert_batched_list_to_item)]
 
     # If the incoming data is a dict, make sure to convert it to a list of dicts, essentially
     # unwrapping the thing.
