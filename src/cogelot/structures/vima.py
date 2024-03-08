@@ -24,6 +24,8 @@ from cogelot.structures.common import (
     Timestep,
 )
 
+Difficulty = Literal["easy", "medium", "hard"]
+
 MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60
 OUTPUT_VIDEO_NAME = "gui_record.mp4"
@@ -329,6 +331,7 @@ class VIMAInstanceMetadata(BaseModel):
     total_steps: int
     generation_seed: int
     end_effector_type: EndEffector
+    difficulty: Difficulty
     prompt: str
     prompt_assets: dict[str, list[ObjectDescription]]
     scene_assets: list[ObjectDescription]
@@ -352,6 +355,9 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
         PlainSerializer(lambda task: task.value, return_type=int),
     ]
+
+    # If doesn't exist, default to easy since that appears to be the default stated
+    difficulty: Difficulty = "easy"
 
     # If the incoming data is a tensor, make sure to convert it to an integer
     index: Annotated[int, BeforeValidator(int)]
@@ -409,6 +415,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             {
                 "index": datasets.Value("int64"),
                 "task": Task.dataset_feature(),
+                "difficulty": datasets.Value("string"),
                 "object_metadata": datasets.Sequence(ObjectMetadata.dataset_features()),
                 "total_steps": datasets.Value("int64"),
                 "end_effector_type": datasets.Value("string"),
@@ -427,6 +434,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             task=self.task,
             num_objects=self.num_objects,
             num_actions=self.num_actions,
+            difficulty=self.difficulty,
             num_observations=self.num_observations,
             total_steps=self.total_steps,
             generation_seed=self.generation_seed,

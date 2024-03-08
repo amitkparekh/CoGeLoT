@@ -106,17 +106,17 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         )
         object_metadata = parse_object_metadata(self.env.meta_info)
         end_effector: EndEffector = self.env.meta_info["end_effector_type"]
-        task_name: Task = Task[self.env.task_name]
 
         return VIMAInstance(
             total_steps=0,
             index=0,
-            task=task_name,
-            generation_seed=0,
+            task=Task[self.env.task_name],
+            generation_seed=self.env.meta_info["seed"],
             object_metadata=object_metadata,
             end_effector_type=end_effector,
             prompt=prompt,
             prompt_assets=prompt_assets,
+            difficulty=self.env.meta_info["difficulty"],
         )
 
     def set_task(self, task: Task, partition: Partition) -> None:
