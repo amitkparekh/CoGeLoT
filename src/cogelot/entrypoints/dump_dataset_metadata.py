@@ -1,70 +1,79 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 from loguru import logger
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from cogelot.common.io import load_pickle
 from cogelot.common.settings import Settings
-from cogelot.entrypoints.create_raw_dataset_per_task import get_pickled_instance_paths
-from cogelot.structures.vima import Task, VIMAInstance
+from cogelot.entrypoints.preprocess_instances import load_parsed_datasets_for_each_task
+from cogelot.structures.vima import VIMAInstance
 
 settings = Settings()
 
 
-def _get_all_instance_paths(parsed_instances_dir: Path) -> list[Path]:
-    """Get all the instance paths from the parsed instances directory."""
-    all_instance_paths: list[Path] = []
-    for task in Task:
-        data_root_for_task: Path = parsed_instances_dir.joinpath(task.name)
-        # If there are no instances for that task, we can move on
-        if not data_root_for_task.exists():
-            continue
-        instance_paths = get_pickled_instance_paths(data_root_for_task)
-        all_instance_paths.extend(instance_paths)
-    return all_instance_paths
-
-
-def _convert_instance_path_to_metadata(instance_path: Path) -> str:
+def _convert_instance_to_metadata(raw_instance: dict[str, Any]) -> str:
     """Convert the instance path to metadata."""
-    instance = VIMAInstance.model_validate(load_pickle(instance_path))
-    return instance.to_metadata().model_dump_json()
+    return VIMAInstance.model_validate(raw_instance).to_metadata().model_dump_json()
 
 
-def dump_dataset_metadata(
-    parsed_instances_dir: Annotated[
-        Path, typer.Argument(help="Where to save all of the parsed instances")
-    ] = settings.parsed_instances_dir,
-    metadata_output_file: Annotated[
-        Path, typer.Argument(help="Where to save the metadata")
-    ] = settings.dataset_metadata_file,
+def dump_dataset_metadata(  # noqa: WPS210
+    parsed_hf_dataset_dir: Annotated[
+        Path, typer.Argument(help="Where to get the parsed HF datasets (for each task)")
+    ] = settings.parsed_hf_dataset_dir,
+    train_metadata_output_file: Annotated[
+        Path, typer.Argument(help="Where to save the training metadata")
+    ] = settings.train_instances_metadata,
+    valid_metadata_output_file: Annotated[
+        Path, typer.Argument(help="Where to save the validation metadata")
+    ] = settings.valid_instances_metadata,
     *,
-    num_workers: Annotated[int, typer.Option(help="Number of workers")] = 1,
+    num_workers: Annotated[int, typer.Option(help="Number of workers.")] = 1,
 ) -> None:
     """Dump all the dataset metadata."""
-    all_instance_paths = _get_all_instance_paths(parsed_instances_dir)
+    logger.info("Loading the parsed datasets for each task...")
+    parsed_datasets_per_task_iterator = load_parsed_datasets_for_each_task(parsed_hf_dataset_dir)
 
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        logger.info("Submit instance paths for processing")
-        futures = {
-            executor.submit(_convert_instance_path_to_metadata, path)
-            for path in all_instance_paths
-        }
+    train_metadata = []
+    valid_metadata = []
 
-        logger.info("Parse and save all the instance metadatta")
-        progress_bar = tqdm(desc="Parsing and saving metadata", total=len(all_instance_paths))
+    for task, dataset in parsed_datasets_per_task_iterator:
+        logger.info(f"Processing the {task} instances...")
 
-        all_metadata = []
-        with progress_bar:
-            for future in as_completed(futures):
-                metadata_as_json_string: str = future.result()
-                all_metadata.append(metadata_as_json_string)
-                progress_bar.update(1)
+        logger.debug("Loading datasets with transforms")
+        train_dataset = dataset["train"].with_transform(_convert_instance_to_metadata)
+        valid_dataset = dataset["valid"].with_transform(_convert_instance_to_metadata)
 
-        logger.info("Writing to file")
-        metadata_output_file.write_text("\n".join(all_metadata))
+        logger.debug("Creating dataloaders")
+        train_dataloader = DataLoader(
+            train_dataset,  # pyright: ignore[reportArgumentType]
+            batch_size=None,
+            num_workers=num_workers,
+            batch_sampler=None,
+        )
+        valid_dataloader = DataLoader(
+            valid_dataset,  # pyright: ignore[reportArgumentType]
+            batch_size=None,
+            num_workers=num_workers,
+            batch_sampler=None,
+        )
+
+        logger.debug("Processing train instances")
+        with tqdm(f"{task}: Train instances", total=len(train_dataset)) as train_progress_bar:
+            for train_instance in train_dataloader:
+                train_metadata.append(train_instance)
+                train_progress_bar.update(1)
+
+        logger.debug("Processing valid instances")
+        with tqdm(f"{task}: Valid instances", total=len(valid_dataset)) as valid_progress_bar:
+            for valid_instance in valid_dataloader:
+                valid_metadata.append(valid_instance)
+                valid_progress_bar.update(1)
+
+    logger.info("Writing to files")
+    train_metadata_output_file.write_text("\n".join(train_metadata))
+    valid_metadata_output_file.write_text("\n".join(valid_metadata))
 
 
 if __name__ == "__main__":

@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     instance_preprocessor_hydra_config: Path = config_dir.joinpath("instance_preprocessor.yaml")
 
     # Metadata
-    dataset_metadata_file: Path = storage_data_dir.joinpath("dataset_metadata.jsonl")
+    train_instances_metadata: Path = storage_data_dir.joinpath("train_instance_metadata.jsonl")
+    valid_instances_metadata: Path = storage_data_dir.joinpath("valid_instance_metadata.jsonl")
 
     @property
     def safe_hf_repo_id(self) -> str:
