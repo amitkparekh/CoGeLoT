@@ -167,6 +167,10 @@ class ObjectDescription(BaseModel, PydanticHFDatasetMixin):
             }
         )
 
+    def __eq__(self, value: Self) -> bool:  # noqa: WPS110
+        """Is this object description the same as another?"""
+        return self.name == value.name and self.texture == value.texture
+
 
 class Frame(BaseModel, PydanticHFDatasetMixin):
     """Get the output of a given modality for the various views."""
