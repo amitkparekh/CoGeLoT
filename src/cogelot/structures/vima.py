@@ -1,9 +1,12 @@
+from collections import Counter
 from collections.abc import Mapping
 from enum import Enum
 from typing import Annotated, Any, Literal, Self, TypeVar
 
 import datasets
+import polars as pl
 import torch
+from polars.type_aliases import SchemaDefinition
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -325,7 +328,6 @@ class VIMAInstanceMetadata(BaseModel):
 
     index: int
     task: Task
-    num_objects: int
     num_actions: int
     num_observations: int
     total_steps: int
@@ -336,6 +338,34 @@ class VIMAInstanceMetadata(BaseModel):
     prompt_assets: dict[str, list[ObjectDescription]]
     scene_assets: list[ObjectDescription]
     actions: list[dict[Literal["start", "end"], SEVector]]
+
+    # These are pre-computed
+    num_objects: int
+    shapes_in_scene: list[str]
+    textures_in_scene: list[str]
+    object_types_in_scene: list[str]
+
+    @classmethod
+    def polars_schema_override(cls) -> SchemaDefinition:
+        """Return override for polars schema."""
+        return {
+            "index": pl.Int64,
+            "task": pl.Int8,
+            "num_objects": pl.Int64,
+            "num_actions": pl.Int64,
+            "num_observations": pl.Int32,
+            "total_steps": pl.Int32,
+            "generation_seed": pl.Int64,
+            "end_effector_type": pl.String,
+            "difficulty": pl.String,
+            "prompt": pl.String,
+            "scene_assets": pl.List(pl.Struct({"name": pl.String, "texture": pl.String})),
+            "actions": pl.List(
+                pl.Struct(
+                    {"start": pl.Array(pl.Float64, width=7), "end": pl.Array(pl.Float64, width=7)}
+                )
+            ),
+        }
 
 
 class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
@@ -408,6 +438,21 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         """Get the number of objects in the instance."""
         return len(self.object_metadata)
 
+    @property
+    def num_shapes_in_scene(self) -> Counter[str]:
+        """How many of each shape is in the scene?"""
+        return Counter(self._shapes_in_scene)
+
+    @property
+    def num_textures_in_scene(self) -> Counter[str]:
+        """How many of each texture is in the scene?"""
+        return Counter(self._textures_in_scene)
+
+    @property
+    def num_object_types_in_scene(self) -> Counter[str]:
+        """How many of each object type is in the scene?"""
+        return Counter(self._object_types_in_scene)
+
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Get the dataset features for a VIMA instance."""
@@ -428,7 +473,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         )
 
     def to_metadata(self) -> VIMAInstanceMetadata:
-        """Convert to just metadata for statistics."""
+        """Pre-compute the metadata for easier statistics gathering."""
         return VIMAInstanceMetadata(
             index=self.index,
             task=self.task,
@@ -443,4 +488,22 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             prompt_assets={asset.name: asset.descriptions for asset in self.prompt_assets.root},
             scene_assets=[obj.as_description for obj in self.object_metadata],
             actions=[action.as_metadata() for action in self.pose_actions],
+            shapes_in_scene=self._shapes_in_scene,
+            textures_in_scene=self._textures_in_scene,
+            object_types_in_scene=self._object_types_in_scene,
         )
+
+    @property
+    def _shapes_in_scene(self) -> list[str]:
+        """Shapes in the scene."""
+        return [obj.as_description.name for obj in self.object_metadata]
+
+    @property
+    def _textures_in_scene(self) -> list[str]:
+        """Textures in the scene."""
+        return [obj.as_description.texture for obj in self.object_metadata]
+
+    @property
+    def _object_types_in_scene(self) -> list[str]:
+        """Object types in the scene."""
+        return [str(obj.as_description) for obj in self.object_metadata]
