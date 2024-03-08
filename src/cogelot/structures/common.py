@@ -171,6 +171,10 @@ class ObjectDescription(BaseModel, PydanticHFDatasetMixin):
         """Is this object description the same as another?"""
         return self.name == value.name and self.texture == value.texture
 
+    def __str__(self) -> str:
+        """Convert the object description to a string."""
+        return f"{self.texture} {self.name}"
+
 
 class Frame(BaseModel, PydanticHFDatasetMixin):
     """Get the output of a given modality for the various views."""
@@ -315,9 +319,9 @@ class PromptAsset(Asset):
     @property
     def as_natural_language(self) -> str | None:
         """Convert the properties to natural language."""
-        if len(self.descriptions) > 1:
+        if self.is_scene_placeholder:
             return None
-        return f"{self.descriptions[0].texture} {self.descriptions[0].name}"
+        return str(self.descriptions[0])
 
 
 class PromptAssets(RootModel[list[PromptAsset]]):
