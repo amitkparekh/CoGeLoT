@@ -258,6 +258,16 @@ class PromptAsset(Asset):
     # obj_name: str = ""
     # obj_color: str = ""
 
+    @property
+    def is_object_placholder(self) -> bool:
+        """Is the placeholder an object placeholder?"""
+        return len(self.descriptions) == 1
+
+    @property
+    def is_scene_placeholder(self) -> bool:
+        """Is the placeholder a scene placeholder?"""
+        return len(self.descriptions) > 1
+
     @classmethod
     def from_object_placeholder_type(cls, name: str, raw_asset_data: dict[str, Any]) -> Self:
         """Instantiate from a raw prompt asset."""
