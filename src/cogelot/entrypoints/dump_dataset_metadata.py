@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from cogelot.common.settings import Settings
 from cogelot.entrypoints.preprocess_instances import load_parsed_datasets_for_each_task
-from cogelot.structures.vima import VIMAInstance, maybe_convert_dict_list_to_list_dict
+from cogelot.structures.vima import VIMAInstance
 
 settings = Settings()
 
@@ -19,7 +19,6 @@ def _convert_instance_to_metadata(raw_instance: dict[str, Any]) -> str:
     Since we use this as a "with_transform" function, we need to expand every list within the
     thing.
     """
-    raw_instance = maybe_convert_dict_list_to_list_dict(raw_instance)[0]
     return VIMAInstance.model_validate(raw_instance).to_metadata().model_dump_json()
 
 

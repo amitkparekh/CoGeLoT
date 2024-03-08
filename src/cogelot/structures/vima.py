@@ -323,6 +323,13 @@ def maybe_convert_dict_list_to_list_dict(
     return maybe_dict_list
 
 
+def maybe_convert_batched_list_to_item(maybe_batched_list: T) -> T:
+    """Convert a list of length 1 back into just the item."""
+    if isinstance(maybe_batched_list, list) and len(maybe_batched_list) == 1:
+        return maybe_batched_list[0]
+    return maybe_batched_list
+
+
 class VIMAInstanceMetadata(BaseModel):
     """Metadata for a VIMA instance."""
 
@@ -381,17 +388,22 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     task: Annotated[
         Task,
+        BeforeValidator(maybe_convert_batched_list_to_item),
         BeforeValidator(lambda task: int(task.item()) if isinstance(task, torch.Tensor) else task),
         BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
         PlainSerializer(lambda task: task.value, return_type=int),
     ]
 
     # If doesn't exist, default to easy since that appears to be the default stated
-    difficulty: Difficulty = "easy"
+    difficulty: Annotated[Difficulty, BeforeValidator(maybe_convert_batched_list_to_item)] = "easy"
 
     # If the incoming data is a tensor, make sure to convert it to an integer
-    index: Annotated[int, BeforeValidator(int)]
-    total_steps: Annotated[int, BeforeValidator(int)]
+    index: Annotated[
+        int, BeforeValidator(maybe_convert_batched_list_to_item), BeforeValidator(int)
+    ]
+    total_steps: Annotated[
+        int, BeforeValidator(maybe_convert_batched_list_to_item), BeforeValidator(int)
+    ]
 
     end_effector_type: EndEffector
 
@@ -410,11 +422,11 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         BeforeValidator(maybe_convert_dict_list_to_list_dict),
     ] = Field(default_factory=list)
 
-    prompt: str
+    prompt: Annotated[str, BeforeValidator(maybe_convert_batched_list_to_item)]
     prompt_assets: Annotated[PromptAssets, BeforeValidator(maybe_convert_dict_list_to_list_dict)]
 
     # Seed used when generating the instance
-    generation_seed: int
+    generation_seed: Annotated[int, BeforeValidator(maybe_convert_batched_list_to_item)]
 
     @field_validator("pose_actions", "observations")
     @classmethod
