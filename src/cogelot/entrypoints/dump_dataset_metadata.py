@@ -77,4 +77,4 @@ def dump_dataset_metadata(  # noqa: WPS210
 
 
 if __name__ == "__main__":
-    dump_dataset_metadata()
+    typer.run(dump_dataset_metadata)
