@@ -2,7 +2,7 @@ import abc
 from collections.abc import ItemsView, KeysView, ValuesView
 from enum import Enum
 from functools import cached_property
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, TypeVar
 
 import datasets
 import numpy as np
@@ -15,6 +15,28 @@ from pydantic import (
     RootModel,
     field_validator,
 )
+
+T = TypeVar("T")
+
+
+def maybe_convert_dict_list_to_list_dict(
+    maybe_dict_list: dict[str, list[T]] | list[dict[str, T]],
+) -> list[dict[str, Any]]:
+    """Convert a list of dicts to a dict of lists.
+
+    Taken from: https://stackoverflow.com/a/33046935.
+
+    This function goes from a dict of lists, to a list of dicts.
+    For example,
+    Before: `{'a': [0, 1], 'b': [2, 3]}`
+    After: `[{'a': 0, 'b': 2}, {'a': 1, 'b': 3}]`
+    """
+    if isinstance(maybe_dict_list, dict):
+        maybe_dict_list = [
+            dict(zip(maybe_dict_list, dict_values, strict=True))
+            for dict_values in zip(*maybe_dict_list.values(), strict=True)
+        ]
+    return maybe_dict_list
 
 
 class PydanticHFDatasetMixin(abc.ABC):
@@ -262,7 +284,10 @@ class PromptAsset(Asset):
     """A single prompt asset within the environment."""
 
     name: str
-    descriptions: list[ObjectDescription]
+    descriptions: Annotated[
+        list[ObjectDescription],
+        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+    ]
     # obj_name: str = ""
     # obj_color: str = ""
 

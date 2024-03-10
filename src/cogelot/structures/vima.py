@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Mapping
 from enum import Enum
-from typing import Annotated, Any, Literal, Self, TypeVar
+from typing import Annotated, Literal, Self
 
 import datasets
 import polars as pl
@@ -25,6 +25,7 @@ from cogelot.structures.common import (
     PydanticHFDatasetMixin,
     PydanticTensor,
     Timestep,
+    maybe_convert_dict_list_to_list_dict,
 )
 
 Difficulty = Literal["easy", "medium", "hard"]
@@ -300,36 +301,6 @@ class PoseAction(Action, PydanticHFDatasetMixin):
         return f"PoseAction(idx={self.index}); {rounded_start_pose} -> {rounded_end_pose}"
 
 
-T = TypeVar("T")
-
-
-def maybe_convert_dict_list_to_list_dict(
-    maybe_dict_list: dict[str, list[T]] | list[dict[str, T]],
-) -> list[dict[str, Any]]:
-    """Convert a list of dicts to a dict of lists.
-
-    Taken from: https://stackoverflow.com/a/33046935.
-
-    This function goes from a dict of lists, to a list of dicts.
-    For example,
-    Before: `{'a': [0, 1], 'b': [2, 3]}`
-    After: `[{'a': 0, 'b': 2}, {'a': 1, 'b': 3}]`
-    """
-    if isinstance(maybe_dict_list, dict):
-        maybe_dict_list = [
-            dict(zip(maybe_dict_list, dict_values, strict=True))
-            for dict_values in zip(*maybe_dict_list.values(), strict=True)
-        ]
-    return maybe_dict_list
-
-
-def maybe_convert_batched_list_to_item(maybe_batched_list: T) -> T:
-    """Convert a list of length 1 back into just the item."""
-    if isinstance(maybe_batched_list, list) and len(maybe_batched_list) == 1:
-        return maybe_batched_list[0]
-    return maybe_batched_list
-
-
 class VIMAInstanceMetadata(BaseModel):
     """Metadata for a VIMA instance."""
 
@@ -388,24 +359,19 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     task: Annotated[
         Task,
-        BeforeValidator(maybe_convert_batched_list_to_item),
         BeforeValidator(lambda task: int(task.item()) if isinstance(task, torch.Tensor) else task),
         BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
         PlainSerializer(lambda task: task.value, return_type=int),
     ]
 
     # If doesn't exist, default to easy since that appears to be the default stated
-    difficulty: Annotated[Difficulty, BeforeValidator(maybe_convert_batched_list_to_item)] = "easy"
+    difficulty: Difficulty = "easy"
 
     # If the incoming data is a tensor, make sure to convert it to an integer
-    index: Annotated[
-        int, BeforeValidator(maybe_convert_batched_list_to_item), BeforeValidator(int)
-    ]
-    total_steps: Annotated[
-        int, BeforeValidator(maybe_convert_batched_list_to_item), BeforeValidator(int)
-    ]
+    index: Annotated[int, BeforeValidator(int)]
+    total_steps: Annotated[int, BeforeValidator(int)]
 
-    end_effector_type: Annotated[EndEffector, BeforeValidator(maybe_convert_batched_list_to_item)]
+    end_effector_type: EndEffector
 
     # If the incoming data is a dict, make sure to convert it to a list of dicts, essentially
     # unwrapping the thing.
@@ -422,11 +388,11 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         BeforeValidator(maybe_convert_dict_list_to_list_dict),
     ] = Field(default_factory=list)
 
-    prompt: Annotated[str, BeforeValidator(maybe_convert_batched_list_to_item)]
+    prompt: str
     prompt_assets: Annotated[PromptAssets, BeforeValidator(maybe_convert_dict_list_to_list_dict)]
 
     # Seed used when generating the instance
-    generation_seed: Annotated[int, BeforeValidator(maybe_convert_batched_list_to_item)]
+    generation_seed: int
 
     @field_validator("pose_actions", "observations")
     @classmethod
