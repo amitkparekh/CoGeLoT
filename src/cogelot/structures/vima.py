@@ -6,7 +6,7 @@ from typing import Annotated, Literal, Self
 import datasets
 import polars as pl
 import torch
-from polars.type_aliases import SchemaDefinition
+from polars.type_aliases import SchemaDict
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -20,6 +20,7 @@ from cogelot.structures.common import (
     Action,
     ObjectDescription,
     Observation,
+    Observations,
     PromptAsset,
     PromptAssets,
     PydanticHFDatasetMixin,
@@ -324,7 +325,7 @@ class VIMAInstanceMetadata(BaseModel):
     object_types_in_scene: list[str]
 
     @classmethod
-    def polars_schema_override(cls) -> SchemaDefinition:
+    def polars_schema_override(cls) -> SchemaDict:
         """Return override for polars schema."""
         return {
             "index": pl.Int64,
@@ -376,16 +377,13 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     # If the incoming data is a dict, make sure to convert it to a list of dicts, essentially
     # unwrapping the thing.
     object_metadata: Annotated[
-        list[ObjectMetadata],
-        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+        list[ObjectMetadata], BeforeValidator(maybe_convert_dict_list_to_list_dict)
     ]
     observations: Annotated[
-        list[Observation],
-        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+        Observations, BeforeValidator(maybe_convert_dict_list_to_list_dict)
     ] = Field(default_factory=list)
     pose_actions: Annotated[
-        list[PoseAction],
-        BeforeValidator(maybe_convert_dict_list_to_list_dict),
+        list[PoseAction], BeforeValidator(maybe_convert_dict_list_to_list_dict)
     ] = Field(default_factory=list)
 
     prompt: str
@@ -394,7 +392,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     # Seed used when generating the instance
     generation_seed: int
 
-    @field_validator("pose_actions", "observations")
+    @field_validator("pose_actions")
     @classmethod
     def sort_by_index(cls, indexed_steps: list[Timestep]) -> list[Timestep]:
         """Sort the steps by index."""

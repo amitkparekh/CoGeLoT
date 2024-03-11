@@ -1,5 +1,5 @@
 import abc
-from collections.abc import ItemsView, KeysView, ValuesView
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from enum import Enum
 from functools import cached_property
 from typing import Annotated, Any, Self, TypeVar
@@ -7,10 +7,13 @@ from typing import Annotated, Any, Self, TypeVar
 import datasets
 import numpy as np
 import torch
+from einops import rearrange
+from matplotlib import pyplot as plt
 from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
+    Field,
     PlainSerializer,
     RootModel,
     field_validator,
@@ -446,6 +449,85 @@ class Observation(Timestep, Asset, PydanticHFDatasetMixin):
                 **Asset.dataset_features(),
             }
         )
+
+
+class ObservationVideos(BaseModel):
+    """Observation videos for a single episode."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    front_rgb: torch.Tensor
+    front_segm: torch.Tensor
+    top_rgb: torch.Tensor
+    top_segm: torch.Tensor
+
+    def as_python(self) -> dict[str, list[Any]]:
+        """Convert videos from tensors to python lists."""
+        return {
+            "front_rgb": self.front_rgb.cpu().numpy().tolist(),
+            "front_segm": self.front_segm.cpu().numpy().tolist(),
+            "top_rgb": self.top_rgb.cpu().numpy().tolist(),
+            "top_segm": self.top_segm.cpu().numpy().tolist(),
+        }
+
+
+class Observations(RootModel[list[Observation]]):
+    """A sequence of observations in an environment."""
+
+    root: list[Observation] = Field(default_factory=list)
+
+    def __len__(self) -> int:
+        """Get the number of assets."""
+        return len(self.root)
+
+    def __iter__(self) -> Iterator[Observation]:
+        """Iterate over the observations."""
+        return iter(self.root)
+
+    def __getitem__(self, index: int) -> Observation:
+        """Get the observation at the given index."""
+        return self.root[index]
+
+    @field_validator("root")
+    @classmethod
+    def sort_by_index(cls, indexed_steps: list[Timestep]) -> list[Timestep]:
+        """Sort the steps by index."""
+        indexed_steps.sort(key=lambda step: step.index)
+        return indexed_steps
+
+    def convert_to_videos(self) -> ObservationVideos:
+        """Extract multiple videos from a list of observations."""
+        rgb_front_frames = []
+        segm_front_frames = []
+        rgb_top_frames = []
+        segm_top_frames = []
+
+        for observation in self.root:
+            obs = observation.to_image_per_type_per_view()
+            rgb_front_frames.append(obs[View.front][ImageType.rgb])
+            segm_front_frames.append(obs[View.front][ImageType.segmentation])
+            rgb_top_frames.append(obs[View.top][ImageType.rgb])
+            segm_top_frames.append(obs[View.top][ImageType.segmentation])
+
+        front_segmentation = torch.stack(segm_front_frames, dim=0).long()
+        top_segmentation = torch.stack(segm_top_frames, dim=0).long()
+        colored_front_segmentation = self.segmentation_color_map()[front_segmentation]
+        colored_top_segmentation = self.segmentation_color_map()[top_segmentation]
+
+        return ObservationVideos(
+            front_rgb=rearrange(rgb_front_frames, "t c h w -> t c h w"),
+            top_rgb=rearrange(rgb_top_frames, "t c h w -> t c h w"),
+            front_segm=rearrange(colored_front_segmentation, "t h w c -> t c h w"),
+            top_segm=rearrange(colored_top_segmentation, "t h w c -> t c h w"),
+        )
+
+    @classmethod
+    def segmentation_color_map(cls) -> torch.Tensor:
+        """Get the segmentation color map."""
+        color_map = plt.cm.tab20(range(20))  # pyright: ignore[reportAttributeAccessIssue]
+        as_tensor = torch.tensor(color_map)[:, :-1]
+        as_int_tensor = (as_tensor * 255).to(torch.uint8)
+        return as_int_tensor
 
 
 class Action(Timestep):
