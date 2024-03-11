@@ -168,16 +168,11 @@ class EvaluationLightningModule(pl.LightningModule):
         )
 
         logger.debug(f"[rank {self.local_rank}] Updating all the episode details.")
+        vima_instance = self.buffer.update_vima_instance(vima_instance)
         self._episode_tracker.update(
             partition=partition,
-            task=vima_instance.task,
             success_tracker_per_step=self.buffer.success_per_step,
-            end_effector=vima_instance.end_effector_type,
-            prompt=vima_instance.prompt,
-            observations=self.buffer.observations,
-            environment_task=self.environment.vima_environment.task,
-            env_seed=self.environment.global_seed[0],
-            task_seed=self.environment.global_seed[1],
+            vima_instance=vima_instance,
         )
 
         logger.debug(f"[rank {self.local_rank}] Logging all the episode details.")
@@ -281,6 +276,9 @@ class EvaluationLightningModule(pl.LightningModule):
         self, continuous_actions: dict[PoseActionType, torch.Tensor]
     ) -> None:
         """Add the continuous actions to the buffer."""
+        # Add the actions to the buffer before we do anything else to them
+        self.buffer.add_action(continuous_actions)
+
         # We also need to add back in the timestep and batch dimension for consistency and thats
         # what the model wants.
         continuous_actions = {

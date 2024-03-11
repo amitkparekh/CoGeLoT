@@ -2,8 +2,9 @@ import torch
 from loguru import logger
 
 from cogelot.data.collate import collate_variable_ndim_batch
-from cogelot.structures.common import Observation
+from cogelot.structures.common import Observation, Observations
 from cogelot.structures.model import ModelInstance
+from cogelot.structures.vima import PoseAction, PoseActionType, VIMAInstance
 
 
 class ReplayBuffer:
@@ -11,6 +12,7 @@ class ReplayBuffer:
 
     def __init__(self) -> None:
         self._observations: list[Observation] = []
+        self._actions: list[PoseAction] = []
 
         self._success_per_step: list[bool] = []
 
@@ -142,6 +144,14 @@ class ReplayBuffer:
         """Add an observation to the buffer."""
         self._observations.append(observation)
 
+    def add_action(self, continuous_actions: dict[PoseActionType, torch.Tensor]) -> None:
+        """Add the continuous actions to the buffer."""
+        continuous_actions = {
+            k: tensor.clone().detach() for k, tensor in continuous_actions.items()
+        }
+        parsed_actions = PoseAction.model_validate(continuous_actions)
+        self._actions.append(parsed_actions)
+
     def add_next_encoded_observation(
         self, encoded_observation: torch.Tensor, encoded_observation_mask: torch.Tensor
     ) -> None:
@@ -167,6 +177,13 @@ class ReplayBuffer:
             encoded_actions_mask=self.encoded_actions_mask,
         )
 
+    def update_vima_instance(self, vima_instance: VIMAInstance) -> VIMAInstance:
+        """Update a VIMA Instance with the output of the buffer."""
+        vima_instance.observations = Observations(self._observations)
+        vima_instance.pose_actions = self._actions
+        vima_instance.total_steps = len(self)
+        return vima_instance
+
     def reset(self) -> None:
         """Reset the buffer."""
         logger.info("Resetting the state")
@@ -180,3 +197,4 @@ class ReplayBuffer:
 
         self._success_per_step = []
         self._observations = []
+        self._actions = []
