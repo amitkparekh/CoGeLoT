@@ -412,6 +412,11 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         return len(self.observations)
 
     @property
+    def object_ids(self) -> set[int]:
+        """Get the object ids."""
+        return {obj.obj_id for obj in self.object_metadata}
+
+    @property
     def num_objects(self) -> int:
         """Get the number of objects in the instance."""
         return len(self.object_metadata)
