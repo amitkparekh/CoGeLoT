@@ -1,39 +1,25 @@
 import math
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 import numpy as np
 import polars as pl
 import torch
 import wandb
-from einops import rearrange
 from loguru import logger
-from matplotlib import pyplot as plt
-from pydantic import BaseModel, ConfigDict
+from polars.exceptions import ColumnNotFoundError
 from torch import distributed as dist
 from torchmetrics import MeanMetric, Metric, SumMetric
 
 from cogelot.common.system_deps import verify_ffmpeg_is_available
 from cogelot.common.wandb import log_table_to_wandb
-from cogelot.metrics.online_tasks import parse_base_task
-from cogelot.structures.common import ImageType, Observation, View
 from cogelot.structures.vima import (
-    EndEffector,
     Partition,
     Task,
+    VIMAInstance,
+    VIMAInstanceMetadata,
     get_task_group_from_task,
 )
-from vima_bench.tasks.task_suite.base import BaseTask
-
-# Create a tensor of colors for the segmentation masks
-COLOR_MAP: torch.Tensor = (torch.tensor(plt.cm.tab20(range(20)))[:, :-1] * 255).to(torch.uint8)  # pyright: ignore[reportGeneralTypeIssues,reportAttributeAccessIssue] # noqa: WPS221
-
-
-def _is_zero_rank() -> bool:
-    """Return true if currently zero-rank."""
-    if not dist.is_initialized():
-        return True
-    return dist.get_rank() == 0
 
 
 def compute_hesitance(success_tracker_per_step: list[bool]) -> float:
@@ -91,46 +77,6 @@ def compute_flailing(success_tracker_per_step: list[bool]) -> float:
     return flail_value
 
 
-class ObservationVideos(BaseModel):
-    """Observation videos for a single episode."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    front_rgb: torch.Tensor
-    front_segm: torch.Tensor
-    top_rgb: torch.Tensor
-    top_segm: torch.Tensor
-
-
-def extract_multiple_videos_from_observations(
-    observations: list[Observation],
-) -> ObservationVideos:
-    """Extract multiple videos from a list of observations."""
-    rgb_front_frames = []
-    segm_front_frames = []
-    rgb_top_frames = []
-    segm_top_frames = []
-
-    for observation in observations:
-        obs = observation.to_image_per_type_per_view()
-        rgb_front_frames.append(obs[View.front][ImageType.rgb])
-        segm_front_frames.append(obs[View.front][ImageType.segmentation])
-        rgb_top_frames.append(obs[View.top][ImageType.rgb])
-        segm_top_frames.append(obs[View.top][ImageType.segmentation])
-
-    front_segmentation = torch.stack(segm_front_frames, dim=0).long()
-    top_segmentation = torch.stack(segm_top_frames, dim=0).long()
-    colored_front_segmentation = COLOR_MAP[front_segmentation]
-    colored_top_segmentation = COLOR_MAP[top_segmentation]
-
-    return ObservationVideos(
-        front_rgb=rearrange(rgb_front_frames, "t c h w -> t c h w"),
-        top_rgb=rearrange(rgb_top_frames, "t c h w -> t c h w"),
-        front_segm=rearrange(colored_front_segmentation, "t h w c -> t c h w"),
-        top_segm=rearrange(colored_top_segmentation, "t h w c -> t c h w"),
-    )
-
-
 class EvaluationEpisodeTracker:
     """Track and compute metrics during online evaluation.
 
@@ -143,7 +89,10 @@ class EvaluationEpisodeTracker:
         self._disable_upload = disable_upload
         self._save_observations = save_observations
 
-        self._schema_overrides = {"success_per_step": pl.List(pl.Boolean)}
+        self._schema_overrides = {
+            "success_per_step": pl.List(pl.Boolean),
+            **VIMAInstanceMetadata.polars_schema_override(),
+        }
 
         if self._save_observations:
             verify_ffmpeg_is_available()
@@ -165,41 +114,24 @@ class EvaluationEpisodeTracker:
         self,
         *,
         partition: Partition,
-        task: Task,
         success_tracker_per_step: list[bool],
-        end_effector: EndEffector,
-        prompt: str,
-        observations: list[Observation],
-        environment_task: BaseTask,
-        env_seed: int,
-        task_seed: int,
-        # actions,
+        vima_instance: VIMAInstance,
     ) -> None:
         """Add the result of an episode to the metric."""
-        parsed_environment = parse_base_task(environment_task)
-        new_row = {
+        new_row: dict[str, Any] = {
             "partition": partition.name,
-            "task": task.name,
-            "task_group": get_task_group_from_task(task).name,
-            "end_effector": end_effector,
-            "prompt": prompt,
-            "env_seed": env_seed,
-            "task_seed": task_seed,
+            "task_group": get_task_group_from_task(vima_instance.task).name,
             "steps_taken": len(success_tracker_per_step),
             "is_successful_at_end": success_tracker_per_step[-1],
             "success_per_step": success_tracker_per_step,
             "flailing_rate": compute_flailing(success_tracker_per_step),
             "hesitance_rate": compute_hesitance(success_tracker_per_step),
-            **parsed_environment["task_meta"],
-            "placeholders": parsed_environment["placeholders"],
         }
+        new_row.update(vima_instance.to_metadata().model_dump())
 
         if self._save_observations:
-            observation_videos = extract_multiple_videos_from_observations(observations)
-            new_row["top_rgb"] = observation_videos.top_rgb.tolist()
-            new_row["front_rgb"] = observation_videos.front_rgb.tolist()
-            new_row["top_segm"] = observation_videos.top_segm.tolist()
-            new_row["front_segm"] = observation_videos.front_segm.tolist()
+            observation_videos = vima_instance.observations.convert_to_videos().as_python()
+            new_row.update(observation_videos)
 
         # Every value needs to be wrapped in a list because dataframes.
         new_row = {k: [v] for k, v in new_row.items()}
@@ -230,7 +162,7 @@ class EvaluationEpisodeTracker:
 
         try:
             videos_table = self.table.select(*self.video_columns)
-        except pl.exceptions.ColumnNotFoundError:
+        except ColumnNotFoundError:
             return wandb_table
 
         # Convert each row into a wandb Video
@@ -260,7 +192,9 @@ class EvaluationEpisodeTracker:
         self.sync()
         if self._disable_upload:
             return
-        if _is_zero_rank():
+
+        # Only the master process should be uploading the table
+        if not dist.is_initialized() or dist.get_rank() == 0:
             wandb_table = self.compute_table()
             logger.info("Uploading episodes table to WandB")
             log_table_to_wandb(name="episodes", table=wandb_table)
