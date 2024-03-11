@@ -6,9 +6,11 @@ from typing import Annotated, Any, Self, TypeVar
 
 import datasets
 import numpy as np
+import polars as pl
 import torch
 from einops import rearrange
 from matplotlib import pyplot as plt
+from polars.type_aliases import SchemaDict
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -468,6 +470,19 @@ class ObservationVideos(BaseModel):
             "front_segm": self.front_segm.cpu().numpy().tolist(),
             "top_rgb": self.top_rgb.cpu().numpy().tolist(),
             "top_segm": self.top_segm.cpu().numpy().tolist(),
+        }
+
+    @classmethod
+    def polars_schema_override(cls) -> SchemaDict:
+        """Get the schema override for the polars DataFrame."""
+        observation_dtype = pl.List(
+            pl.Array(pl.Array(pl.Array(pl.UInt8, 256), 128), 3),
+        )
+        return {
+            "front_rgb": observation_dtype,
+            "front_segm": observation_dtype,
+            "top_rgb": observation_dtype,
+            "top_segm": observation_dtype,
         }
 
 

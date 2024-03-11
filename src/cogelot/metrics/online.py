@@ -13,6 +13,7 @@ from torchmetrics import MeanMetric, Metric, SumMetric
 
 from cogelot.common.system_deps import verify_ffmpeg_is_available
 from cogelot.common.wandb import log_table_to_wandb
+from cogelot.structures.common import ObservationVideos
 from cogelot.structures.vima import (
     Partition,
     Task,
@@ -96,17 +97,7 @@ class EvaluationEpisodeTracker:
 
         if self._save_observations:
             verify_ffmpeg_is_available()
-            observation_dtype = pl.List(
-                pl.Array(pl.Array(pl.Array(pl.UInt8, 256), 128), 3),
-            )
-            self._schema_overrides.update(
-                {
-                    "top_rgb": observation_dtype,
-                    "front_rgb": observation_dtype,
-                    "top_segm": observation_dtype,
-                    "front_segm": observation_dtype,
-                }
-            )
+            self._schema_overrides.update(ObservationVideos.polars_schema_override())
 
         self.table: pl.DataFrame = pl.DataFrame(schema_overrides=self._schema_overrides)
 
