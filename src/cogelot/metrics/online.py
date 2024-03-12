@@ -90,7 +90,6 @@ class EvaluationEpisodeTracker:
         self._save_observations = save_observations
 
         self._schema_overrides = {
-            "success_per_step": pl.List(pl.Boolean),
             **VIMAInstanceMetadata.polars_schema_override(),
         }
 
