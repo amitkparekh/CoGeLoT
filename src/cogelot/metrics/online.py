@@ -19,7 +19,6 @@ from cogelot.structures.vima import (
     Task,
     VIMAInstance,
     VIMAInstanceMetadata,
-    get_task_group_from_task,
 )
 
 
@@ -101,22 +100,11 @@ class EvaluationEpisodeTracker:
 
         self.table: pl.DataFrame = pl.DataFrame(schema_overrides=self._schema_overrides)
 
-    def update(
-        self,
-        *,
-        partition: Partition,
-        success_tracker_per_step: list[bool],
-        vima_instance: VIMAInstance,
-    ) -> None:
+    def update(self, *, vima_instance: VIMAInstance) -> None:
         """Add the result of an episode to the metric."""
         new_row: dict[str, Any] = {
-            "partition": partition.name,
-            "task_group": get_task_group_from_task(vima_instance.task).name,
-            "steps_taken": len(success_tracker_per_step),
-            "is_successful_at_end": success_tracker_per_step[-1],
-            "success_per_step": success_tracker_per_step,
-            "flailing_rate": compute_flailing(success_tracker_per_step),
-            "hesitance_rate": compute_hesitance(success_tracker_per_step),
+            # "flailing_rate": compute_flailing(success_tracker_per_step),
+            # "hesitance_rate": compute_hesitance(success_tracker_per_step),
         }
         new_row.update(vima_instance.to_metadata().model_dump())
 

@@ -93,7 +93,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         """Try to get the prompt renderer."""
         return _find_prompt_renderer(self.env)
 
-    def create_vima_instance(self) -> VIMAInstance:
+    def create_vima_instance(self, partition: Partition) -> VIMAInstance:
         """Create a VIMA instance from the metadata from the environment.
 
         It does not contain any observations or pose actions.
@@ -110,6 +110,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         return VIMAInstance(
             total_steps=0,
             index=0,
+            partition=partition,
             task=Task[self.env.task_name],
             generation_seed=self.env.meta_info["seed"],
             object_metadata=object_metadata,

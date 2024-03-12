@@ -75,11 +75,11 @@ class EvaluationLightningModule(pl.LightningModule):
         self.reset_environment(task=task, partition=partition)
 
         # Create a VIMA instance from the environment, which parses all the metadata as we want it
-        vima_instance = self.environment.create_vima_instance()
+        vima_instance = self.environment.create_vima_instance(partition)
         # Transform the instance as desired
         vima_instance = self._vima_instance_transform(vima_instance)
         try:
-            self.run_vima_instance(vima_instance, partition)
+            self.run_vima_instance(vima_instance)
         except GetObservationError as err:
             logger.error(
                 "Something went wrong when getting the observation. Resetting and trying again."
@@ -101,7 +101,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self.environment.reset()
         self.environment.render()
 
-    def run_vima_instance(self, vima_instance: VIMAInstance, partition: Partition) -> None:
+    def run_vima_instance(self, vima_instance: VIMAInstance) -> None:
         """Run the current instance in the environment."""
         observation = self.environment.get_first_observation()
 
@@ -161,7 +161,7 @@ class EvaluationLightningModule(pl.LightningModule):
 
         # Update the metric
         self._metric.update(
-            partition,
+            vima_instance.partition,
             vima_instance.task,
             success_tracker_per_step=self.buffer.success_per_step,
             num_steps_taken=len(self.buffer),
@@ -169,11 +169,7 @@ class EvaluationLightningModule(pl.LightningModule):
 
         logger.debug(f"[rank {self.local_rank}] Updating all the episode details.")
         vima_instance = self.buffer.update_vima_instance(vima_instance)
-        self._episode_tracker.update(
-            partition=partition,
-            success_tracker_per_step=self.buffer.success_per_step,
-            vima_instance=vima_instance,
-        )
+        self._episode_tracker.update(vima_instance=vima_instance)
 
         logger.debug(f"[rank {self.local_rank}] Logging all the episode details.")
         self.log_dict(self._metric.compute(), logger=True, on_step=True, on_epoch=False)

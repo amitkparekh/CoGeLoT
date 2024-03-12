@@ -9,9 +9,10 @@ import numpy as np
 import torch
 from PIL import Image
 
-from cogelot.structures.common import Observation, PromptAssets
+from cogelot.structures.common import Observation, Observations, PromptAssets
 from cogelot.structures.vima import (
     ObjectMetadata,
+    Partition,
     PoseAction,
     PoseActionType,
     Task,
@@ -162,7 +163,11 @@ class VIMAInstanceParser:
                 f"({len(pose_actions)}) for instance {instance_dir}"
             )
 
+        success_per_step = self._parse_success_per_step(
+            num_actions=len(pose_actions), is_successful_at_end=trajectory_metadata["success"]
+        )
         return VIMAInstance(
+            partition=Partition.training,
             index=int(instance_dir.stem),
             task=Task[instance_dir.parent.stem],
             total_steps=trajectory_metadata["steps"],
@@ -173,8 +178,10 @@ class VIMAInstanceParser:
             end_effector_type=trajectory_metadata["end_effector_type"],
             object_metadata=parse_object_metadata(trajectory_metadata),
             pose_actions=pose_actions,
-            observations=observations,
+            observations=Observations(observations),
             generation_seed=trajectory_metadata["seed"],
+            is_successful_at_end=trajectory_metadata["success"],
+            success_per_step=success_per_step,
         )
 
     def _parse_pose_actions(self, instance_dir: Path) -> list[PoseAction]:
@@ -201,3 +208,21 @@ class VIMAInstanceParser:
             observations = observations[:num_pose_actions]
 
         return observations
+
+    def _parse_success_per_step(
+        self, *, num_actions: int, is_successful_at_end: bool
+    ) -> list[bool]:
+        """Create the success tracker.
+
+        Since these were created from expert demonstrations, we assume that the assumption held
+        during eval also holds --- that the task is successful if the last action is successful.
+        """
+        tracker = [False for _ in range(num_actions)]
+        if not is_successful_at_end:
+            return tracker
+
+        if is_successful_at_end:
+            tracker[-1] = True
+        if is_successful_at_end and self.keep_null_action:
+            tracker[-2] = True
+        return tracker

@@ -58,12 +58,18 @@ STARTING_ROTATION = (0, 0, 0, 1)
 
 
 class Partition(Enum):
-    """Different levels of difficulty for the tasks."""
+    """Different levels of generalisation for the tasks."""
 
+    training = 0
     placement_generalization = 1
     combinatorial_generalization = 2
     novel_object_generalization = 3
     novel_task_generalization = 4
+
+    @classmethod
+    def dataset_feature(cls) -> datasets.ClassLabel:
+        """Export the feature for the HF dataset."""
+        return datasets.ClassLabel(names=cls._member_names_)
 
     @classmethod
     def from_index(cls, index: int) -> Self:
@@ -306,7 +312,9 @@ class VIMAInstanceMetadata(BaseModel):
     """Metadata for a VIMA instance."""
 
     index: int
+    partition: Partition
     task: Task
+    task_group: TaskGroup
     num_actions: int
     num_observations: int
     total_steps: int
@@ -317,6 +325,8 @@ class VIMAInstanceMetadata(BaseModel):
     prompt_assets: dict[str, list[ObjectDescription]]
     scene_assets: list[ObjectDescription]
     actions: list[dict[Literal["start", "end"], SEVector]]
+    is_successful_at_end: bool
+    success_per_step: list[bool]
 
     # These are pre-computed
     num_objects: int
@@ -344,6 +354,8 @@ class VIMAInstanceMetadata(BaseModel):
                     {"start": pl.Array(pl.Float64, width=7), "end": pl.Array(pl.Float64, width=7)}
                 )
             ),
+            "is_successful_at_end": pl.Boolean,
+            "success_per_step": pl.List(pl.Boolean),
         }
 
 
@@ -357,6 +369,12 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     The purpose of all these additional validators is to make it easier to parse the data from a HF
     dataset.
     """
+
+    partition: Annotated[
+        Partition,
+        BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
+        PlainSerializer(lambda task: task.value, return_type=int),
+    ]
 
     task: Annotated[
         Task,
@@ -391,6 +409,12 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     # Seed used when generating the instance
     generation_seed: int
+
+    # Track success for the instance
+    is_successful_at_end: bool = False
+    success_per_step: Annotated[
+        list[bool], BeforeValidator(maybe_convert_dict_list_to_list_dict)
+    ] = Field(default_factory=list)
 
     @field_validator("pose_actions")
     @classmethod
@@ -434,12 +458,18 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         """How many of each object type is in the scene?"""
         return Counter(self._object_types_in_scene)
 
+    @property
+    def task_group(self) -> TaskGroup:
+        """Get the current task group."""
+        return get_task_group_from_task(self.task)
+
     @classmethod
     def dataset_features(cls) -> datasets.Features:
         """Get the dataset features for a VIMA instance."""
         return datasets.Features(
             {
                 "index": datasets.Value("int64"),
+                "partition": Partition.dataset_feature(),
                 "task": Task.dataset_feature(),
                 "difficulty": datasets.Value("string"),
                 "object_metadata": datasets.Sequence(ObjectMetadata.dataset_features()),
@@ -450,6 +480,8 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
                 "prompt": datasets.Value("string"),
                 "prompt_assets": datasets.Sequence(PromptAsset.dataset_features()),
                 "generation_seed": datasets.Value("int64"),
+                "is_successful_at_end": datasets.Value("bool"),
+                "success_per_step": datasets.Sequence(datasets.Value("bool")),
             }
         )
 
@@ -458,6 +490,8 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
         return VIMAInstanceMetadata(
             index=self.index,
             task=self.task,
+            partition=self.partition,
+            task_group=self.task_group,
             num_objects=self.num_objects,
             num_actions=self.num_actions,
             difficulty=self.difficulty,
@@ -472,6 +506,8 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             shapes_in_scene=self._shapes_in_scene,
             textures_in_scene=self._textures_in_scene,
             object_types_in_scene=self._object_types_in_scene,
+            is_successful_at_end=self.is_successful_at_end,
+            success_per_step=self.success_per_step,
         )
 
     @property

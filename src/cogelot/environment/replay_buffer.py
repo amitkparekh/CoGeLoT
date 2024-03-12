@@ -182,6 +182,8 @@ class ReplayBuffer:
         vima_instance.observations = Observations(self._observations)
         vima_instance.pose_actions = self._actions
         vima_instance.total_steps = len(self)
+        vima_instance.is_successful_at_end = self.is_successful
+        vima_instance.success_per_step = self.success_per_step
         return vima_instance
 
     def reset(self) -> None:
