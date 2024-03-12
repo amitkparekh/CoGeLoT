@@ -372,15 +372,15 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     partition: Annotated[
         Partition,
-        BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
-        PlainSerializer(lambda task: task.value, return_type=int),
+        BeforeValidator(lambda enum: Partition(enum) if isinstance(enum, int) else enum),
+        PlainSerializer(lambda enum: enum.value, return_type=int),
     ]
 
     task: Annotated[
         Task,
-        BeforeValidator(lambda task: int(task.item()) if isinstance(task, torch.Tensor) else task),
-        BeforeValidator(lambda task: Task(task) if isinstance(task, int) else task),
-        PlainSerializer(lambda task: task.value, return_type=int),
+        BeforeValidator(lambda enum: int(enum.item()) if isinstance(enum, torch.Tensor) else enum),
+        BeforeValidator(lambda enum: Task(enum) if isinstance(enum, int) else enum),
+        PlainSerializer(lambda enum: enum.value, return_type=int),
     ]
 
     # If doesn't exist, default to easy since that appears to be the default stated
