@@ -10,6 +10,8 @@ policy:
   _target_: cogelot.modules.policy.Policy
   embed_dim: 768
 
+  should_shuffle_obj_per_observations: False
+
   transformer_decoder: ???
   action_encoder: ???
   action_decoder: ???

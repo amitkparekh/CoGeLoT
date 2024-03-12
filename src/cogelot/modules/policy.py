@@ -17,6 +17,7 @@ from cogelot.modules.tokenizers.pose_action import (
 )
 from cogelot.nn.decoders import TransformerDecoderGreedyGenerateWrapper, TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
+from cogelot.nn.shuffle_obj import shuffle_objects_for_each_observation
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
@@ -57,6 +58,7 @@ class Policy(torch.nn.Module):
         transformer_decoder: TransformerDecoderProtocol,
         pose_action_tokenizer: PoseActionTokenizer,
         add_residual_connection_to_prompt_visual_features: bool = False,
+        should_shuffle_obj_per_observations: bool = False,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -88,6 +90,7 @@ class Policy(torch.nn.Module):
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features
         )
+        self.should_shuffle_obj_per_observations = should_shuffle_obj_per_observations
 
     @property
     def prompt_embedding(self) -> T5TextEmbedder:
@@ -118,7 +121,7 @@ class Policy(torch.nn.Module):
             ),
             action_decoder=VIMAActionDecoder(their_policy.action_decoder),
             prompt_embedding=cast(T5TextEmbedder, their_policy.prompt_embedding),
-            prompt_encoder=their_policy.t5_prompt_encoder.t5,  # pyright: ignore[reportGeneralTypeIssues]
+            prompt_encoder=their_policy.t5_prompt_encoder.t5,  # pyright: ignore[reportArgumentType]
             prompt_obj_post_layer=their_policy.prompt_obj_post_layer,
             transformer_decoder=VIMADecoder(their_policy.xattn_gpt),
             pose_action_tokenizer=pose_action_tokenizer,
@@ -211,6 +214,9 @@ class Policy(torch.nn.Module):
         assert isinstance(ee, torch.Tensor)
 
         leading_dims = ee.shape[:2]
+
+        if self.should_shuffle_obj_per_observations:
+            obs_objects = shuffle_objects_for_each_observation(obs_objects)
 
         # Get the features for each image/obj/obs
         obs_objects = obs_objects.map_structure(
