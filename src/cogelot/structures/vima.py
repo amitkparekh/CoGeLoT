@@ -329,7 +329,7 @@ class VIMAInstanceMetadata(BaseModel):
         """Return override for polars schema."""
         return {
             "index": pl.Int64,
-            "task": pl.Int8,
+            # "task": pl.Int16,
             "num_objects": pl.Int64,
             "num_actions": pl.Int64,
             "num_observations": pl.Int32,
