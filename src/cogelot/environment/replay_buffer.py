@@ -149,7 +149,9 @@ class ReplayBuffer:
         continuous_actions = {
             k: tensor.clone().detach() for k, tensor in continuous_actions.items()
         }
-        parsed_actions = PoseAction.model_validate(continuous_actions)
+        parsed_actions = PoseAction.model_validate(
+            {"index": len(self._actions), **continuous_actions}
+        )
         self._actions.append(parsed_actions)
 
     def add_next_encoded_observation(
