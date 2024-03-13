@@ -24,6 +24,7 @@ model:
 
   max_timesteps: 10
   should_stop_on_first_success: true
+  should_shuffle_obj_per_observations: false
 
 trainer:
   devices: 20
