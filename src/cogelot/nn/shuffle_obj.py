@@ -8,11 +8,11 @@ from vima.utils import DataDict, any_to_datadict
 
 def _apply_reordering_to_feature(
     feature_tensor: torch.Tensor, mask: torch.Tensor, new_object_order: torch.Tensor
-) -> torch.Tensor:
-    shuffled_feature = feature_tensor.masked_scatter(
-        mask.unsqueeze(-1), feature_tensor[mask][new_object_order]
+) -> None:
+    """Apply the reordering to the feature tensor, IN-PLACE!!!"""
+    feature_tensor.masked_scatter_(
+        mask.unsqueeze(-1), feature_tensor.detach().clone()[mask][new_object_order]
     )
-    return shuffled_feature
 
 
 @torch.no_grad
@@ -33,29 +33,19 @@ def compute_new_object_order(mask: torch.Tensor) -> torch.Tensor:
 
 
 def shuffle_objects_for_each_observation(objects: ImageFeatures | DataDict) -> DataDict:
-    """Shuffle the object tokens for each observation."""
+    """Shuffle the object tokens for each observation.
+
+    A note of warning: this performs in-place operations on the objects because we don't NEED to
+    keep that level of tracking over the whole thing.
+    """
     objects = cast(ImageFeatures, objects)
 
     # Since the mask is the same for both the front and top views, it doesn't matter
     mask = objects["mask"]["front"]
     new_object_order = compute_new_object_order(mask)
 
-    img_front = objects["cropped_img"]["front"]
-    img_top = objects["cropped_img"]["top"]
-    bbox_front = objects["bbox"]["front"]
-    bbox_top = objects["bbox"]["top"]
-
-    transformed_observation = objects
-    transformed_observation["cropped_img"]["front"] = _apply_reordering_to_feature(
-        img_front, mask, new_object_order
-    )
-    transformed_observation["cropped_img"]["top"] = _apply_reordering_to_feature(
-        img_top, mask, new_object_order
-    )
-    transformed_observation["bbox"]["front"] = _apply_reordering_to_feature(
-        bbox_front, mask, new_object_order
-    )
-    transformed_observation["bbox"]["top"] = _apply_reordering_to_feature(
-        bbox_top, mask, new_object_order
-    )
-    return any_to_datadict(transformed_observation)
+    _apply_reordering_to_feature(objects["cropped_img"]["front"], mask, new_object_order)
+    _apply_reordering_to_feature(objects["cropped_img"]["top"], mask, new_object_order)
+    _apply_reordering_to_feature(objects["bbox"]["front"], mask, new_object_order)
+    _apply_reordering_to_feature(objects["bbox"]["top"], mask, new_object_order)
+    return any_to_datadict(objects)
