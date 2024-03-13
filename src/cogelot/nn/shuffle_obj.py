@@ -1,6 +1,7 @@
 from typing import cast
 
 import torch
+from einops import rearrange
 
 from cogelot.data.collate import ImageFeatures
 from vima.utils import DataDict, any_to_datadict
@@ -11,10 +12,11 @@ def _apply_reordering_to_feature(
 ) -> None:
     """Apply the reordering to the feature tensor, IN-PLACE!!!"""
     assert mask.ndim <= feature_tensor.ndim
-    # Mask needs to be broadcastable to the feature tensor after masking
-    for _ in range(feature_tensor.ndim - mask.ndim):
-        mask = mask.unsqueeze(-1)
-    feature_tensor.masked_scatter_(mask, feature_tensor.detach().clone()[mask][new_object_order])
+    feature_tensor.masked_scatter_(
+        # Mask needs to be broadcastable to the feature tensor
+        rearrange(mask, f"... -> ... {'() ' * (feature_tensor.ndim - mask.ndim)}".strip()),
+        feature_tensor.detach().clone()[mask][new_object_order],
+    )
 
 
 @torch.no_grad
