@@ -58,7 +58,6 @@ class Policy(torch.nn.Module):
         transformer_decoder: TransformerDecoderProtocol,
         pose_action_tokenizer: PoseActionTokenizer,
         add_residual_connection_to_prompt_visual_features: bool = False,
-        should_shuffle_obj_per_observations: bool = False,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -90,7 +89,6 @@ class Policy(torch.nn.Module):
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features
         )
-        self.should_shuffle_obj_per_observations = should_shuffle_obj_per_observations
 
     @property
     def prompt_embedding(self) -> T5TextEmbedder:
@@ -203,7 +201,9 @@ class Policy(torch.nn.Module):
 
         return embedded_prompt, embedded_prompt_mask
 
-    def encode_observation_token(self, observation: DataDict) -> tuple[torch.Tensor, torch.Tensor]:
+    def encode_observation_token(
+        self, observation: DataDict, *, shuffle_obj_per_observation: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode an observation.
 
         When creating the mask, we follow PyTorch's meaning: `True` == "IS masked".
@@ -215,7 +215,7 @@ class Policy(torch.nn.Module):
 
         leading_dims = ee.shape[:2]
 
-        if self.should_shuffle_obj_per_observations:
+        if shuffle_obj_per_observation:
             obs_objects = shuffle_objects_for_each_observation(obs_objects)
 
         # Get the features for each image/obj/obs

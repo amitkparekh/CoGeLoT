@@ -42,6 +42,7 @@ class EvaluationLightningModule(pl.LightningModule):
         max_timesteps: int = MAX_TIMESTEPS,
         disable_prompt_text: bool = False,
         disable_prompt_visual: bool = False,
+        should_shuffle_obj_per_observations: bool = False,
     ) -> None:
         if vima_instance_transform is None:
             vima_instance_transform = NoopTransform()
@@ -62,6 +63,7 @@ class EvaluationLightningModule(pl.LightningModule):
 
         self._disable_prompt_text = disable_prompt_text
         self._disable_prompt_visual = disable_prompt_visual
+        self._should_shuffle_obj_per_observations = should_shuffle_obj_per_observations
 
     def test_step(
         self,
@@ -263,7 +265,10 @@ class EvaluationLightningModule(pl.LightningModule):
         (
             encoded_observations,
             encoded_observation_masks,
-        ) = self.model.policy.encode_observation_token(prepared_observations)
+        ) = self.model.policy.encode_observation_token(
+            prepared_observations,
+            shuffle_obj_per_observation=self._should_shuffle_obj_per_observations,
+        )
 
         self.buffer.add_next_encoded_observation(encoded_observations, encoded_observation_masks)
         self.buffer.add_observation(observation)
