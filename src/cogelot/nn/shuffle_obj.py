@@ -10,9 +10,11 @@ def _apply_reordering_to_feature(
     feature_tensor: torch.Tensor, mask: torch.Tensor, new_object_order: torch.Tensor
 ) -> None:
     """Apply the reordering to the feature tensor, IN-PLACE!!!"""
-    feature_tensor.masked_scatter_(
-        mask.unsqueeze(-1), feature_tensor.detach().clone()[mask][new_object_order]
-    )
+    assert mask.ndim <= feature_tensor.ndim
+    # Mask needs to be broadcastable to the feature tensor after masking
+    for _ in range(feature_tensor.ndim - mask.ndim):
+        mask = mask.unsqueeze(-1)
+    feature_tensor.masked_scatter_(mask, feature_tensor.detach().clone()[mask][new_object_order])
 
 
 @torch.no_grad
