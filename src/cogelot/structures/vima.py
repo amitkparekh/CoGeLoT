@@ -312,9 +312,21 @@ class VIMAInstanceMetadata(BaseModel):
     """Metadata for a VIMA instance."""
 
     index: int
-    partition: Partition
-    task: Task
-    task_group: TaskGroup
+    partition: Annotated[
+        Partition,
+        BeforeValidator(lambda enum: Task(enum) if isinstance(enum, int) else enum),
+        PlainSerializer(lambda enum: enum.value, return_type=int),
+    ]
+    task: Annotated[
+        Task,
+        BeforeValidator(lambda enum: Task(enum) if isinstance(enum, int) else enum),
+        PlainSerializer(lambda enum: enum.value, return_type=int),
+    ]
+    task_group: Annotated[
+        TaskGroup,
+        BeforeValidator(lambda enum: Task(enum) if isinstance(enum, int) else enum),
+        PlainSerializer(lambda enum: enum.value, return_type=int),
+    ]
     num_actions: int
     num_observations: int
     total_steps: int
