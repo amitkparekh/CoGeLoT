@@ -93,6 +93,13 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         """Try to get the prompt renderer."""
         return _find_prompt_renderer(self.env)
 
+    @property
+    def current_seed(self) -> int:
+        """Get the current seed."""
+        seed, _ = self.global_seed
+        assert isinstance(seed, int)
+        return seed
+
     def create_vima_instance(self, partition: Partition) -> VIMAInstance:
         """Create a VIMA instance from the metadata from the environment.
 
@@ -112,7 +119,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
             index=0,
             partition=partition,
             task=Task[self.env.task_name],
-            generation_seed=self.env.meta_info["seed"],
+            generation_seed=self.current_seed,
             object_metadata=object_metadata,
             end_effector_type=end_effector,
             prompt=prompt,
