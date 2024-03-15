@@ -195,33 +195,32 @@ def determine_eval_run_name(config: DictConfig) -> str:
     eval_difficulty = OmegaConf.select(config, "model.difficulty", default="easy")
     instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
 
-    is_gobbledygook = False
-    is_gobbledygook_word = False
-    is_gobbledygook_tokens = False
+    is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower()
+    is_gobbledygook_word = "word" in instance_transform["_target_"].lower()
+    is_gobbledygook_tokens = "token" in instance_transform["_target_"].lower()
+    is_textual = "textual" in instance_transform["_target_"].lower()
+    is_paraphrase = "reword" in instance_transform["_target_"].lower()
+
     with suppress(ConfigKeyError):
-        is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower() or any(
+        is_gobbledygook = is_gobbledygook or any(
             "gobbledygook" in transform["_target_"].lower()
             for transform in instance_transform["transforms"]
         )
     with suppress(ConfigKeyError):
-        is_gobbledygook_word = (
-            "word" in instance_transform["_target_"].lower()
-            or any(
-                "word" in transform["_target_"].lower()
-                for transform in instance_transform["transforms"]
-            )
-        ) and is_gobbledygook
-
+        is_gobbledygook_word = is_gobbledygook_word or any(
+            "word" in transform["_target_"].lower()
+            for transform in instance_transform["transforms"]
+        )
     with suppress(ConfigKeyError):
-        is_gobbledygook_tokens = (
-            "token" in instance_transform["_target_"].lower()
-            or any(
-                "token" in transform["_target_"].lower()
-                for transform in instance_transform["transforms"]
-            )
-        ) and is_gobbledygook
-    is_textual = "textual" in instance_transform["_target_"].lower()
-    is_paraphrase = "reword" in instance_transform["_target_"].lower()
+        is_gobbledygook_tokens = is_gobbledygook_tokens or any(
+            "token" in transform["_target_"].lower()
+            for transform in instance_transform["transforms"]
+        )
+    with suppress(ConfigKeyError):
+        is_textual = is_textual or any(
+            "textual" in transform["_target_"].lower()
+            for transform in instance_transform["transforms"]
+        )
 
     run_name = trained_instruction[wandb_model_run_id]
 
@@ -230,10 +229,12 @@ def determine_eval_run_name(config: DictConfig) -> str:
         extras.append("Paraphrase")
     if is_textual:
         extras.append("Textual")
-    if is_gobbledygook_word:
-        extras.append("GDGWord")
-    if is_gobbledygook_tokens:
-        extras.append("GDGToken")
+
+    if is_gobbledygook:
+        if is_gobbledygook_word:
+            extras.append("GDGWord")
+        if is_gobbledygook_tokens:
+            extras.append("GDGToken")
 
     if is_disable_prompt_text and is_disable_prompt_visual:
         extras.append("No Prompt")
