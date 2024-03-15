@@ -42,14 +42,10 @@ def _find_prompt_renderer(env: Env[Any, Any]) -> PromptRenderer | None:
     return None
 
 
-def get_task_kwargs(
-    partition: Partition, task: Task, difficulty: Difficulty = "easy"
-) -> dict[str, Any]:
+def get_task_kwargs(partition: Partition, task: Task) -> dict[str, Any] | None:
     """Get the task kwargs."""
     partition_to_specs = get_partition_to_specs()
     task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
-    assert isinstance(task_kwargs, dict)
-    task_kwargs["difficulty"] = difficulty
     return task_kwargs
 
 
@@ -138,8 +134,9 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
 
     def set_task(self, task: Task, partition: Partition, difficulty: Difficulty) -> None:
         """Set the task of the environment."""
-        task_kwargs = get_task_kwargs(partition, task, difficulty)
+        task_kwargs = get_task_kwargs(partition, task)
         self.env.set_task(task.name, task_kwargs)
+        self.env.task.set_difficulty(difficulty)
 
     def reset(self, **kwargs: Any) -> None:  # type: ignore[override]
         """Reset the environment."""

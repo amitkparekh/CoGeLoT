@@ -6,15 +6,15 @@ import string
 import tempfile
 from collections import namedtuple
 from copy import deepcopy
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple
 
 import cv2
 import gym
 import numpy as np
 import pybullet as p
 
-from ..components import PickPlace, Oracle, get_agent_cam_config, Suction
-from ..components.encyclopedia.definitions import SizeRange, ObjEntry, TextureEntry
+from ..components import Oracle, PickPlace, Suction, get_agent_cam_config
+from ..components.encyclopedia.definitions import ObjEntry, SizeRange, TextureEntry
 from ..components.placeholders import Placeholder
 from ..utils import misc_utils as utils
 from ..utils.pybullet_utils import (
@@ -52,7 +52,7 @@ class BaseTask:
     """
 
     task_name: str
-    REJECT_SAMPLING_MAX_TIMES = 10
+    REJECT_SAMPLING_MAX_TIMES = 30
 
     def __init__(
         self,
