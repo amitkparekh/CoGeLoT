@@ -1,10 +1,14 @@
 import hydra
 import torch
 from loguru import logger
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from cogelot.common.config import flatten_config
-from cogelot.common.hydra import instantiate_modules_from_hydra, preprocess_config_for_hydra
+from cogelot.common.hydra import (
+    determine_eval_run_name,
+    instantiate_modules_from_hydra,
+    preprocess_config_for_hydra,
+)
 from cogelot.entrypoints.train import CONFIG_DIR
 from cogelot.models.evaluation import EvaluationLightningModule
 
@@ -16,7 +20,10 @@ def evaluate_model(config: DictConfig) -> None:
     # https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
     torch.set_float32_matmul_precision("high")
 
+    OmegaConf.update(config, "trainer.logger.wandb.name", determine_eval_run_name(config))
+
     config = preprocess_config_for_hydra(config)
+
     datamodule, model, trainer = instantiate_modules_from_hydra(config)
 
     logger.info("Saving hyperparameters...")

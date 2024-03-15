@@ -174,3 +174,58 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     trainer: pl.Trainer = instantiated_modules["trainer"]
 
     return InstantiatedModules(datamodule=datamodule, model=model, trainer=trainer)
+
+
+def determine_eval_run_name(config: DictConfig) -> str:
+    """Determine the run name for the current evaluation run."""
+    trained_instruction = {
+        "8lkml12g": "Original",
+        "2df3mwfn": "Paraphrases",
+        None: "Given",
+    }
+    eval_instance_transform_switcher = {
+        "reworded": "Paraphrase",
+        "textual": "Textual",
+        "textual_gobbledygook_tokens": "Textual + GDGToken",
+        "textual_gobbledygook_word": "Textual + GDGWord",
+        "gobbledygook_tokens": "GDGToken",
+        "gobbledygook_word": "GDGWord",
+        "noop": "",
+    }
+
+    disable_modality_switcher = {
+        "disable_visual": "No VisRef",
+        "disable_text": "No Text",
+        "disable_both": "No Prompt",
+        "noop": "",
+    }
+
+    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
+    eval_instance_transform = OmegaConf.select(
+        config, "evaluation_instance_transform", default="noop"
+    )
+    disabled_prompt_modality = OmegaConf.select(
+        config, "evaluation_prompt_modality", default="noop"
+    )
+    is_shuffle_obj = OmegaConf.select(
+        config, "model.should_shuffle_obj_per_observations", default=False
+    )
+    eval_difficulty = OmegaConf.select(config, "model.difficulty", default="easy")
+
+    run_name = trained_instruction[wandb_model_run_id]
+    extras = [
+        eval_instance_transform_switcher[eval_instance_transform],
+        disable_modality_switcher[disabled_prompt_modality],
+    ]
+    if is_shuffle_obj:
+        extras.append("ShuffleObj")
+
+    if eval_difficulty != "easy":
+        extras.append(f"[{eval_difficulty.capitalize()}]")
+
+    extras = [extra for extra in extras if extra]
+
+    if extras:
+        run_name = f"{run_name} - {' + '.join(extras)}"
+
+    return run_name
