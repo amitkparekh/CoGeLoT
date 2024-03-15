@@ -45,19 +45,19 @@ class AssetPlaceholderToken(BaseModel):
 
 
 PLACEHOLDER_TOKENS = (
-    AssetPlaceholderToken(asset_name="base_obj", max_idx=2),
-    AssetPlaceholderToken(asset_name="dragged_obj", max_idx=5),
+    AssetPlaceholderToken(asset_name="base_obj", max_idx=10),
+    AssetPlaceholderToken(asset_name="dragged_obj", max_idx=10),
     AssetPlaceholderToken(asset_name="swept_obj"),
     AssetPlaceholderToken(asset_name="bounds"),
     AssetPlaceholderToken(asset_name="constraint"),
     AssetPlaceholderToken(asset_name="scene"),
-    AssetPlaceholderToken(asset_name="demo_blicker_obj", max_idx=3),
-    AssetPlaceholderToken(asset_name="demo_less_blicker_obj", max_idx=3),
-    AssetPlaceholderToken(asset_name="start_scene", max_idx=3),
-    AssetPlaceholderToken(asset_name="end_scene", max_idx=3),
-    AssetPlaceholderToken(asset_name="before_twist", max_idx=3),
-    AssetPlaceholderToken(asset_name="after_twist", max_idx=3),
-    AssetPlaceholderToken(asset_name="frame", max_idx=6),
+    AssetPlaceholderToken(asset_name="demo_blicker_obj", max_idx=10),
+    AssetPlaceholderToken(asset_name="demo_less_blicker_obj", max_idx=10),
+    AssetPlaceholderToken(asset_name="start_scene", max_idx=10),
+    AssetPlaceholderToken(asset_name="end_scene", max_idx=10),
+    AssetPlaceholderToken(asset_name="before_twist", max_idx=10),
+    AssetPlaceholderToken(asset_name="after_twist", max_idx=10),
+    AssetPlaceholderToken(asset_name="frame", max_idx=10),
     AssetPlaceholderToken(asset_name="ring"),
     AssetPlaceholderToken(asset_name="hanoi_stand"),
 )
