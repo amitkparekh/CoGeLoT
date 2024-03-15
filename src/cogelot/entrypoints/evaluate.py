@@ -20,7 +20,9 @@ def evaluate_model(config: DictConfig) -> None:
     # https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
     torch.set_float32_matmul_precision("high")
 
-    OmegaConf.update(config, "trainer.logger.wandb.name", determine_eval_run_name(config))
+    OmegaConf.update(
+        config, "trainer.logger.wandb.name", determine_eval_run_name(config), force_add=True
+    )
 
     config = preprocess_config_for_hydra(config)
 
