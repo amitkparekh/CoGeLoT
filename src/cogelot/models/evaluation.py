@@ -16,6 +16,7 @@ from cogelot.modules.tokenizers.pose_action import is_action_pointless
 from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.model import EvaluationEpisode
 from cogelot.structures.vima import (
+    Difficulty,
     EndEffector,
     Partition,
     PoseActionType,
@@ -38,6 +39,7 @@ class EvaluationLightningModule(pl.LightningModule):
         instance_preprocessor: InstancePreprocessor,
         vima_instance_transform: VIMAInstanceTransform | None = None,
         *,
+        difficulty: Difficulty = "easy",
         should_stop_on_first_success: bool = True,
         max_timesteps: int = MAX_TIMESTEPS,
         disable_prompt_text: bool = False,
@@ -64,6 +66,7 @@ class EvaluationLightningModule(pl.LightningModule):
         self._disable_prompt_text = disable_prompt_text
         self._disable_prompt_visual = disable_prompt_visual
         self._should_shuffle_obj_per_observations = should_shuffle_obj_per_observations
+        self._difficulty: Difficulty = difficulty
 
     def test_step(
         self,
@@ -98,7 +101,7 @@ class EvaluationLightningModule(pl.LightningModule):
     def reset_environment(self, task: Task, partition: Partition) -> None:
         """Reset the environment."""
         self.buffer.reset()
-        self.environment.set_task(task, partition)
+        self.environment.set_task(task, partition, self._difficulty)
 
         self.environment.reset()
         self.environment.render()

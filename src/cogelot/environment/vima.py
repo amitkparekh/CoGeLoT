@@ -7,6 +7,7 @@ from cogelot.environment.wrappers import ResetFaultToleranceWrapper, TimeLimitWr
 from cogelot.structures.common import Observation, PromptAssets
 from cogelot.structures.vima import (
     MODALITIES,
+    Difficulty,
     EndEffector,
     Partition,
     Task,
@@ -41,6 +42,17 @@ def _find_prompt_renderer(env: Env[Any, Any]) -> PromptRenderer | None:
     return None
 
 
+def get_task_kwargs(
+    partition: Partition, task: Task, difficulty: Difficulty = "easy"
+) -> dict[str, Any]:
+    """Get the task kwargs."""
+    partition_to_specs = get_partition_to_specs()
+    task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
+    assert isinstance(task_kwargs, dict)
+    task_kwargs["difficulty"] = difficulty
+    return task_kwargs
+
+
 class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
     """Environment wrapper for VIMA."""
 
@@ -65,10 +77,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         if isinstance(task, int):
             task = Task(task)
 
-        partition_to_specs = get_partition_to_specs()
-
-        task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
-        assert isinstance(task_kwargs, dict)
+        task_kwargs = get_task_kwargs(partition, task)
         vima_env = make(
             task_name=task.name,
             task_kwargs=task_kwargs,
@@ -127,10 +136,9 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
             difficulty=self.env.meta_info["difficulty"],
         )
 
-    def set_task(self, task: Task, partition: Partition) -> None:
+    def set_task(self, task: Task, partition: Partition, difficulty: Difficulty) -> None:
         """Set the task of the environment."""
-        partition_to_specs = get_partition_to_specs()
-        task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
+        task_kwargs = get_task_kwargs(partition, task, difficulty)
         self.env.set_task(task.name, task_kwargs)
 
     def reset(self, **kwargs: Any) -> None:  # type: ignore[override]

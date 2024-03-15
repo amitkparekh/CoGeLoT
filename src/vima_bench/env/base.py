@@ -164,7 +164,7 @@ class VIMAEnvBase(gym.Env):
                 debug=self._debug, **(task_kwargs or {})
             )
         task.assets_root = self.assets_root
-        task.set_difficulty("easy")
+        task.set_difficulty(task_kwargs.get("difficulty", "easy"))
         self._task = task
         # get agent camera config
         self.agent_cams = self.task.agent_cam_config
