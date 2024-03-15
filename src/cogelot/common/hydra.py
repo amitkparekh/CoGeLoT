@@ -9,7 +9,7 @@ import torch
 from hydra.core.hydra_config import HydraConfig
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf, open_dict, read_write
-from omegaconf.errors import ConfigAttributeError
+from omegaconf.errors import ConfigAttributeError, ConfigKeyError
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -195,26 +195,33 @@ def determine_eval_run_name(config: DictConfig) -> str:
     eval_difficulty = OmegaConf.select(config, "model.difficulty", default="easy")
     instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
 
-    is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower() or any(
-        "gobbledygook" in transform["_target_"].lower()
-        for transform in instance_transform["transforms"]
-    )
-    is_gobbledygook_word = (
-        "word" in instance_transform["_target_"].lower()
-        or any(
-            "word" in transform["_target_"].lower()
+    is_gobbledygook = False
+    is_gobbledygook_word = False
+    is_gobbledygook_tokens = False
+    with suppress(ConfigKeyError):
+        is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower() or any(
+            "gobbledygook" in transform["_target_"].lower()
             for transform in instance_transform["transforms"]
         )
-    ) and is_gobbledygook
-    is_gobbledygook_tokens = (
-        "token" in instance_transform["_target_"].lower()
-        or any(
-            "token" in transform["_target_"].lower()
-            for transform in instance_transform["transforms"]
-        )
-    ) and is_gobbledygook
+    with suppress(ConfigKeyError):
+        is_gobbledygook_word = (
+            "word" in instance_transform["_target_"].lower()
+            or any(
+                "word" in transform["_target_"].lower()
+                for transform in instance_transform["transforms"]
+            )
+        ) and is_gobbledygook
+
+    with suppress(ConfigKeyError):
+        is_gobbledygook_tokens = (
+            "token" in instance_transform["_target_"].lower()
+            or any(
+                "token" in transform["_target_"].lower()
+                for transform in instance_transform["transforms"]
+            )
+        ) and is_gobbledygook
     is_textual = "textual" in instance_transform["_target_"].lower()
-    is_paraphrase = "reworded" in instance_transform["_target_"].lower()
+    is_paraphrase = "reword" in instance_transform["_target_"].lower()
 
     run_name = trained_instruction[wandb_model_run_id]
 
