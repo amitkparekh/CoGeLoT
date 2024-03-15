@@ -244,12 +244,12 @@ def determine_eval_run_name(config: DictConfig) -> str:
     if is_shuffle_obj:
         extras.append("ShuffleObj")
 
-    if eval_difficulty != "easy":
-        extras.append(f"[{eval_difficulty.capitalize()}]")
-
     extras = [extra for extra in extras if extra]
 
     if extras:
         run_name = f"{run_name} - {' + '.join(extras)}"
+
+    if eval_difficulty != "easy":
+        run_name = f"{run_name} [{eval_difficulty.capitalize()}]"
 
     return run_name
