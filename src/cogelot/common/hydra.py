@@ -183,40 +183,57 @@ def determine_eval_run_name(config: DictConfig) -> str:
         "2df3mwfn": "Paraphrases",
         None: "Given",
     }
-    eval_instance_transform_switcher = {
-        "reworded": "Paraphrase",
-        "textual": "Textual",
-        "textual_gobbledygook_tokens": "Textual + GDGToken",
-        "textual_gobbledygook_word": "Textual + GDGWord",
-        "gobbledygook_tokens": "GDGToken",
-        "gobbledygook_word": "GDGWord",
-        "noop": "",
-    }
-
-    disable_modality_switcher = {
-        "disable_visual": "No VisRef",
-        "disable_text": "No Text",
-        "disable_both": "No Prompt",
-        "noop": "",
-    }
 
     wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
-    eval_instance_transform = OmegaConf.select(
-        config, "evaluation_instance_transform", default="noop"
-    )
-    disabled_prompt_modality = OmegaConf.select(
-        config, "evaluation_prompt_modality", default="noop"
+    is_disable_prompt_text = OmegaConf.select(config, "model.disable_prompt_text", default=False)
+    is_disable_prompt_visual = OmegaConf.select(
+        config, "model.disable_prompt_visual", default=False
     )
     is_shuffle_obj = OmegaConf.select(
         config, "model.should_shuffle_obj_per_observations", default=False
     )
     eval_difficulty = OmegaConf.select(config, "model.difficulty", default="easy")
+    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
+
+    is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower() or any(
+        "gobbledygook" in transform["_target_"].lower()
+        for transform in instance_transform["transforms"]
+    )
+    is_gobbledygook_word = (
+        "word" in instance_transform["_target_"].lower()
+        or any(
+            "word" in transform["_target_"].lower()
+            for transform in instance_transform["transforms"]
+        )
+    ) and is_gobbledygook
+    is_gobbledygook_tokens = (
+        "token" in instance_transform["_target_"].lower()
+        or any(
+            "token" in transform["_target_"].lower()
+            for transform in instance_transform["transforms"]
+        )
+    ) and is_gobbledygook
+    is_textual = "textual" in instance_transform["_target_"].lower()
+    is_paraphrase = "reworded" in instance_transform["_target_"].lower()
 
     run_name = trained_instruction[wandb_model_run_id]
-    extras = [
-        eval_instance_transform_switcher[eval_instance_transform],
-        disable_modality_switcher[disabled_prompt_modality],
-    ]
+
+    extras = []
+    if is_paraphrase:
+        extras.append("Paraphrase")
+    if is_textual:
+        extras.append("Textual")
+    if is_gobbledygook_word:
+        extras.append("GDGWord")
+    if is_gobbledygook_tokens:
+        extras.append("GDGToken")
+
+    if is_disable_prompt_text and is_disable_prompt_visual:
+        extras.append("No Prompt")
+    elif is_disable_prompt_text:
+        extras.append("No Text")
+    elif is_disable_prompt_visual:
+        extras.append("No VisRef")
     if is_shuffle_obj:
         extras.append("ShuffleObj")
 
