@@ -11,11 +11,11 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from cogelot.common.hydra import load_hydra_config
-from cogelot.data.evaluation import get_every_test_partition_task_combination
+from cogelot.data.evaluation import get_every_partition_task_combination
 from cogelot.models.evaluation import EvaluationLightningModule
 from cogelot.structures.vima import Partition, Task
 
-all_evaluation_episodes = get_every_test_partition_task_combination()
+all_evaluation_episodes = get_every_partition_task_combination()
 map_task_to_partitions = {
     task: [episode.partition for episode in all_evaluation_episodes if episode.task == task]
     for task in Task
@@ -167,14 +167,14 @@ def interactive_evaluate(
     evaluation.reset_environment(task=task, partition=partition)
 
     # Create the VIMA instance from the environment
-    vima_instance = evaluation.environment.create_vima_instance()
+    vima_instance = evaluation.environment.create_vima_instance(partition)
     new_prompt = Prompt.ask(
         "Enter a new prompt if you want to change it", default=vima_instance.prompt
     )
     evaluation.environment.update_prompt(new_prompt)
     # Run the instance in the environment
     with torch.inference_mode():
-        evaluation.run_vima_instance(vima_instance, partition)
+        evaluation.run_vima_instance(vima_instance)
 
     console.print(evaluation._metric.compute())  # noqa: SLF001
     typer.confirm("Press enter to exit")
