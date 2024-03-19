@@ -5,6 +5,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -316,7 +317,7 @@ class SceneUnderstanding(BaseTask):
                 )
                 pose = self.get_random_pose(env, size)
                 if pose[0] is None or pose[1] is None:
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn base object")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn base object")
                     break
                 obj_id, _ = add_any_object(
                     env=env,
@@ -370,12 +371,12 @@ class SceneUnderstanding(BaseTask):
                 dragged_sampled_sizes.append(size)
                 pose = self.get_random_pose(env, size)
                 if pose[0] is None or pose[1] is None:
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                     break
                 elif len(hollow_base_poses) > 0 and if_in_hollow_object(
                     [pose], size, hollow_base_poses, hollow_base_sizes
                 ):
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                     break
                 obj_id, _ = add_any_object(
                     env=env, obj_entry=dragged_obj_entry, pose=pose, size=size
@@ -533,9 +534,8 @@ class SceneUnderstanding(BaseTask):
                 size = self.rng.uniform(low=entry.size_range.low, high=entry.size_range.high)
                 pose = self.get_random_pose(env, size)
                 if pose[0] is None or pose[1] is None:
-                    print(
-                        f"Warning: {i + 1} repeated sampling when try to spawn workspace"
-                        " distractor"
+                    logger.warning(
+                        f"{i + 1} repeated sampling when try to spawn workspace" " distractor"
                     )
                     break
                 if entry in sampled_base_obj_entries:
@@ -544,9 +544,8 @@ class SceneUnderstanding(BaseTask):
                         ObjPedia.FRAME.value,
                         ObjPedia.SQUARE.value,
                     ] and if_in_hollow_object(dragged_poses, dragged_sampled_sizes, pose, size):
-                        print(
-                            f"Warning: {i + 1} repeated sampling when try to spawn workspace"
-                            " distractor"
+                        logger.warning(
+                            f"{i + 1} repeated sampling when try to spawn workspace" " distractor"
                         )
                         break
                     distractor_category = "fixed"
@@ -562,9 +561,8 @@ class SceneUnderstanding(BaseTask):
                     if len(hollow_base_poses) > 0 and if_in_hollow_object(
                         pose, size, hollow_base_poses, hollow_base_sizes
                     ):
-                        print(
-                            f"Warning: {i + 1} repeated sampling when try to spawn workspace"
-                            " distractor"
+                        logger.warning(
+                            f"{i + 1} repeated sampling when try to spawn workspace" " distractor"
                         )
                         break
                     distractor_category = "rigid"
@@ -580,9 +578,8 @@ class SceneUnderstanding(BaseTask):
                     category=distractor_category,
                 )
                 if not obj_id:
-                    print(
-                        f"Warning: {i + 1} repeated sampling when try to spawn workspace"
-                        " distractor"
+                    logger.warning(
+                        f"{i + 1} repeated sampling when try to spawn workspace" " distractor"
                     )
                     break
                 # change color according to texture

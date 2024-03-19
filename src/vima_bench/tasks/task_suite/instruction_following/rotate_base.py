@@ -6,6 +6,7 @@ from typing import NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -169,7 +170,7 @@ class RotateTheObjBase(BaseTask, ABC):
                 )
 
                 if obj_id is None:
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                     break
                 else:
                     dragged.append((obj_id, (sampled_dragged_obj.symmetry, None)))
@@ -269,7 +270,7 @@ class RotateTheObjBase(BaseTask, ABC):
             )
 
             if obj_id is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn distractor object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn distractor object")
             else:
                 num_added_distractors += 1
                 self.distractors.append((obj_id, (0, None)))

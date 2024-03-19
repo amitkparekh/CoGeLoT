@@ -5,6 +5,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -247,7 +248,7 @@ class SimpleManipulation(BaseTask):
                 not_reach_max_times = True
                 break
             else:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn base object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn base object")
         if not not_reach_max_times:
             raise ValueError("Error in sampling base object")
 
@@ -265,13 +266,13 @@ class SimpleManipulation(BaseTask):
             dragged_pose = self.get_random_pose(env, dragged_size)
             # noinspection PyUnboundLocalVariable
             if dragged_size[0] is None or dragged_pose[1] is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                 continue
             elif sampled_base_obj in [
                 ObjPedia.FRAME.value,
                 ObjPedia.SQUARE.value,
             ] and if_in_hollow_object([dragged_pose], dragged_size, base_poses, base_size):
-                print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                 continue
             obj_id, urdf_full_path, _ = self.add_object_to_env(
                 env=env,
@@ -298,7 +299,7 @@ class SimpleManipulation(BaseTask):
                 )
                 n_added_dragged_obj += 1
             else:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                 continue
             if n_added_dragged_obj == self.task_meta["num_dragged_obj"]:
                 not_reach_max_times = True
@@ -365,7 +366,7 @@ class SimpleManipulation(BaseTask):
 
             distractor_pose = self.get_random_pose(env, distractor_size)
             if distractor_pose[0] is None or distractor_pose[1] is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                 continue
             if distractor_obj in self.possible_base_obj:
                 # prevent sampling in hollow square and frame cases
@@ -376,7 +377,7 @@ class SimpleManipulation(BaseTask):
                 ] and if_in_hollow_object(
                     dragged_poses, dragged_size, [distractor_pose], distractor_size
                 ):
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                     continue
                 obj_id, urdf_full_path, _ = self.add_object_to_env(
                     env=env,
@@ -395,7 +396,7 @@ class SimpleManipulation(BaseTask):
                 ] and if_in_hollow_object(
                     [distractor_pose], distractor_size, base_poses, base_size
                 ):
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                     continue
                 obj_id, urdf_full_path, distractor_pose = self.add_object_to_env(
                     env=env,
@@ -406,7 +407,7 @@ class SimpleManipulation(BaseTask):
                     retain_temp=True,
                 )
             if obj_id is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                 continue
             self.distractors.append((obj_id, (0, None)))
             if len(self.distractors) == self.task_meta["num_distractors_obj"]:

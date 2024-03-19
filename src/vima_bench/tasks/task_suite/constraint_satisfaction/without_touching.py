@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 
 import numpy as np
+from loguru import logger
 from pybullet import getBasePositionAndOrientation
 
 from ...components.encyclopedia.definitions import TextureEntry
@@ -212,7 +213,7 @@ class WithoutTouching(SweepObjectsToZoneBase):
                 if not self._valid_workspace.contains(
                     np.array(pose[0][:2], dtype=self._valid_workspace.dtype)
                 ):
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn swept objects")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn swept objects")
                     break
                 poses.append(pose)
             if len(poses) != sampled_num_swept_objs:
@@ -293,7 +294,7 @@ class WithoutTouching(SweepObjectsToZoneBase):
                 if not self._valid_workspace.contains(
                     np.array(pose[0][:2], dtype=self._valid_workspace.dtype)
                 ):
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                     break
                 poses.append(pose)
             if len(poses) != sampled_num_swept_objs:
@@ -452,7 +453,7 @@ class WithoutTouching(SweepObjectsToZoneBase):
             if pick_mask is None or np.sum(pick_mask) == 0:
                 self.goals = []
                 self.lang_goals = []
-                print("Object for pick is not visible. Skipping demonstration.")
+                logger.warning("Object for pick is not visible. Skipping demonstration.")
                 return
 
             # Get pushing start pose.

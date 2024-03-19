@@ -7,6 +7,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -355,9 +356,8 @@ class FollowOrder(BaseTask):
                     env=env, obj_entry=entry, color=texture, size=size
                 )
                 if obj_id is None:
-                    print(
-                        f"Warning: {i + 1} repeated sampling when try to spawn workspace"
-                        " distractor"
+                    logger.warning(
+                        f"{i + 1} repeated sampling when try to spawn workspace distractor"
                     )
                 else:
                     num_added += 1

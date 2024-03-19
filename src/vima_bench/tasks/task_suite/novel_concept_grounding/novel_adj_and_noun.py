@@ -3,8 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Literal
 
-from .novel_adj import NovelAdj
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
+from .novel_adj import NovelAdj
 
 
 class NovelAdjAndNoun(NovelAdj):

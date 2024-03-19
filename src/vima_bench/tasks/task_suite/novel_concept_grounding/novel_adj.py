@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -421,7 +422,7 @@ class NovelAdj(BaseTask):
                     )
                 )
             ):
-                print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                 continue
             dragged_obj_id, dragged_obj_urdf, _ = self.add_object_to_env(
                 env=env,
@@ -490,7 +491,7 @@ class NovelAdj(BaseTask):
                     base_size,
                 )
             ):
-                print(f"Warning: {i + 1} repeated sampling confusion objects pair")
+                logger.warning(f"{i + 1} repeated sampling confusion objects pair")
                 continue
             confusion_obj_id, _, _ = self.add_object_to_env(
                 env=env,
@@ -502,7 +503,7 @@ class NovelAdj(BaseTask):
                 retain_temp=True,
             )
             if confusion_obj_id is None:
-                print(f"Warning: {i + 1} repeated sampling the first confusion object")
+                logger.warning(f"{i + 1} repeated sampling the first confusion object")
                 continue
             else:
                 self.distractors.append((confusion_obj_id, (0, None)))
@@ -558,7 +559,7 @@ class NovelAdj(BaseTask):
                         base_size,
                     )
                 ):
-                    print(f"Warning: {i + 1} repeated sampling confusion objects pair")
+                    logger.warning(f"{i + 1} repeated sampling confusion objects pair")
                     continue
                 distracto_obj_id, _, _ = self.add_object_to_env(
                     env=env,
@@ -570,7 +571,7 @@ class NovelAdj(BaseTask):
                     retain_temp=True,
                 )
                 if distracto_obj_id is None:
-                    print(f"Warning: {i + 1} repeated sampling the extra distractor")
+                    logger.warning(f"{i + 1} repeated sampling the extra distractor")
                     continue
                 else:
                     self.distractors.append((distracto_obj_id, (0, None)))
@@ -603,7 +604,7 @@ class NovelAdj(BaseTask):
             )
             distractor_pose = self.get_random_pose(env, distractor_size)
             if distractor_pose[0] is None or distractor_pose[1] is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                 continue
             obj_id, urdf_full_path, _ = self.add_object_to_env(
                 env=env,
@@ -615,7 +616,7 @@ class NovelAdj(BaseTask):
                 retain_temp=True,
             )
             if obj_id is None:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn distractors")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn distractors")
                 continue
             geometric_distractors.append((obj_id, (0, None)))
             if len(geometric_distractors) == self.task_meta["num_geometric_distractors"]:

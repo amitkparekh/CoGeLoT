@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -251,9 +252,8 @@ class SameColor(BaseTask):
                 or obj_pose[1] is None
                 or if_in_hollow_object(obj_pose, obj_sampled_size, base_pose, base_sampled_size)
             ):
-                print(
-                    f"Warning: {i-num_added_objects+1} repeated sampling "
-                    "when try to spawn object pose"
+                logger.warning(
+                    f"{i-num_added_objects+1} repeated sampling " "when try to spawn object pose"
                 )
                 continue
             # add dragged obj
@@ -285,7 +285,7 @@ class SameColor(BaseTask):
                     sampled_dragged_obj_textures.append(dragged_obj_texture_entry)
                     num_added_objects += 1
                 else:
-                    print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                    logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                     continue
             else:
                 # distractor colors are different from dragged objs
@@ -308,8 +308,8 @@ class SameColor(BaseTask):
                     num_added_objects += 1
                     self.distractors.append((distractor_obj_id, (0, None)))
                 else:
-                    print(
-                        f"Warning: {i-num_added_objects+1} repeated sampling "
+                    logger.warning(
+                        f"{i-num_added_objects+1} repeated sampling "
                         "when try to spawn distractor object"
                     )
                     continue

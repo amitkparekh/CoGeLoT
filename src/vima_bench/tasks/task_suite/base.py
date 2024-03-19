@@ -12,6 +12,7 @@ import cv2
 import gym
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ..components import Oracle, PickPlace, Suction, get_agent_cam_config
 from ..components.encyclopedia.definitions import ObjEntry, SizeRange, TextureEntry
@@ -266,7 +267,7 @@ class BaseTask:
             # Trigger task reset if no object is visible.
             if pick_mask is None or np.sum(pick_mask) == 0:
                 self.goals = []
-                print("Object for pick is not visible. Skipping demonstration.")
+                logger.warning("Object for pick is not visible. Skipping demonstration.")
                 return
 
             # Get picking pose.

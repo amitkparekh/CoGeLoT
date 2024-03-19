@@ -3,8 +3,8 @@ from __future__ import annotations
 from functools import partial
 from typing import Literal
 
-from ..instruction_following.simple_manipulation import SimpleManipulation
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
+from ..instruction_following.simple_manipulation import SimpleManipulation
 
 
 class NovelNoun(SimpleManipulation):

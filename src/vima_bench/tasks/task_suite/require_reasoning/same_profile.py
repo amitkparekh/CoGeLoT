@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from .same_color import (
-    SameColor,
-)
 from ...components.encyclopedia import ProfilePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
+from .same_color import SameColor
 
 
 class SameProfile(SameColor):

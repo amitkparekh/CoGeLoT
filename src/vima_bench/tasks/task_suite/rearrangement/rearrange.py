@@ -5,8 +5,8 @@ from typing import Literal
 import numpy as np
 import pybullet as p
 
-from .rearrange_base import RearrangeIntoSceneBase
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
+from .rearrange_base import RearrangeIntoSceneBase
 
 
 class Rearrange(RearrangeIntoSceneBase):

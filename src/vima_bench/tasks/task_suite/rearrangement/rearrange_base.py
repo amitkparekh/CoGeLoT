@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -197,7 +198,7 @@ class RearrangeIntoSceneBase(BaseTask):
                 size=size,
             )
             if not obj_id:
-                print(f"Warning: {i + 1} repeated sampling when try to spawn dragged object")
+                logger.warning(f"{i + 1} repeated sampling when try to spawn dragged object")
                 continue
             num_dragged_obj_added += 1
             dragged_poses.append(pose)
@@ -231,7 +232,7 @@ class RearrangeIntoSceneBase(BaseTask):
                     not_reach_max_times = True
                     break
                 else:
-                    print(f"Warning: {i + 1} repeated sampling random target of objects")
+                    logger.warning(f"{i + 1} repeated sampling random target of objects")
             if not not_reach_max_times:
                 raise ValueError("Error in generating random target poses")
         dragged_poses.reverse()
@@ -293,7 +294,7 @@ class RearrangeIntoSceneBase(BaseTask):
                             ),
                         ]
                     ):
-                        print(f"Warning: {k + 1} repeated sampling distractor target")
+                        logger.warning(f"{k + 1} repeated sampling distractor target")
                         continue
 
                     # add distractor
@@ -327,7 +328,7 @@ class RearrangeIntoSceneBase(BaseTask):
                         )
                         break
                     else:
-                        print(f"Warning: {k + 1} repeated sampling distractor with conflict")
+                        logger.warning(f"{k + 1} repeated sampling distractor with conflict")
                         continue
             else:
                 # clean distractor with no conflicts
@@ -340,7 +341,7 @@ class RearrangeIntoSceneBase(BaseTask):
                     if self.is_distractor_needed_to_move_away(
                         pose, target_poses, size, dragged_sampled_sizes
                     ):
-                        print(f"Warning: {k + 1} repeated sampling clean distractor")
+                        logger.warning(f"{k + 1} repeated sampling clean distractor")
                         continue
                     obj_id, _, _ = self.add_object_to_env(
                         env=env,
@@ -350,7 +351,7 @@ class RearrangeIntoSceneBase(BaseTask):
                         pose=pose,
                     )
                     if obj_id is None:
-                        print(f"Warning: {k + 1} repeated sampling clean distractor")
+                        logger.warning(f"{k + 1} repeated sampling clean distractor")
                         continue
                     else:
                         self.distractors.append((obj_id, (0, None)))
