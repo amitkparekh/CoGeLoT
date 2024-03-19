@@ -8,15 +8,17 @@ from loguru import logger
 class ResetFaultToleranceWrapper(Wrapper):
     """Ensure the environment is reset successfully."""
 
-    max_retries = 100
+    max_retries = 300
 
     def reset(self, **kwargs: Any) -> Any:
         """Reset the environment."""
-        for _ in range(self.max_retries):
+        for retry_idx in range(self.max_retries):
             try:
                 return self.env.reset(**kwargs)
             except Exception:  # noqa: BLE001
-                logger.error("Failed to reset environment, trying a different seed")
+                logger.error(
+                    f"Failed to reset environment, trying a different seed ({retry_idx}/{self.max_retries})"
+                )
                 current_seed = self.global_seed[0]
                 if not isinstance(current_seed, int):
                     current_seed = 0

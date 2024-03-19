@@ -53,7 +53,7 @@ class BaseTask:
     """
 
     task_name: str
-    REJECT_SAMPLING_MAX_TIMES = 30
+    REJECT_SAMPLING_MAX_TIMES = 10
 
     def __init__(
         self,
