@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj, PlaceholderText
@@ -13,6 +12,7 @@ from ...utils.pybullet_utils import (
     get_urdf_path,
     if_in_hollow_object,
 )
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -512,7 +512,7 @@ class NovelAdj(BaseTask):
             raise ValueError("Error in sampling the first confusion object")
 
         # add extra distractor if difficulty is medium or hard
-        if self.task_meta["difficulty"] in ["medium", "hard"]:
+        if self.task_meta["difficulty"] in ["medium", "hard", "distracting"]:
             # in medium level, the distractor has no common attribute as the target object
             # e.g., if the target object has darker color, then the distractor has lighter color
             # if the target object is taller, then the distractor is shorter
@@ -654,6 +654,8 @@ class NovelAdj(BaseTask):
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
         self.task_meta["difficulty"] = difficulty
+        if difficulty == "distracting":
+            self.task_meta["num_geometric_distractors"] += 2
 
     def is_match(self, pose0, pose1, symmetry):
         return super().is_match(pose0, pose1, symmetry, position_only=True)

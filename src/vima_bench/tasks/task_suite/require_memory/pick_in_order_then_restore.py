@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj
 from ...utils.misc_utils import eulerXYZ_to_quatXYZW
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -565,6 +565,10 @@ class PickInOrderThenRestore(BaseTask):
                 "types": self.placeholder_expression["base_obj_1"]["types"],
                 "prepend_color": self.placeholder_expression["base_obj_1"]["prepend_color"],
             }
+
+        if difficulty == "distracting":
+            self.task_meta["num_distractor_dragged_obj"] += 2
+
         self._update_task_meta()
         self.oracle_max_steps = self.task_meta["num_target_base_obj"] + 2
 

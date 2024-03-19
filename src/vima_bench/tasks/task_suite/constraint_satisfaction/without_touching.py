@@ -5,21 +5,21 @@ from typing import Literal
 import numpy as np
 from pybullet import getBasePositionAndOrientation
 
-from .base import SweepObjectsToZoneBase, det_to_integer
-from ..base import OracleAgent
 from ...components.encyclopedia.definitions import TextureEntry
 from ...components.placeholders import PlaceholderObj, PlaceholderText
 from ...utils.misc_utils import (
     eulerXYZ_to_quatXYZW,
-    quatXYZW_to_eulerXYZ,
     invert,
     multiply,
+    quatXYZW_to_eulerXYZ,
 )
 from ...utils.pybullet_utils import (
     add_any_object,
     add_object_id_reverse_mapping_info,
     p_change_texture,
 )
+from ..base import OracleAgent
+from .base import SweepObjectsToZoneBase, det_to_integer
 
 
 class WithoutTouching(SweepObjectsToZoneBase):
@@ -488,3 +488,8 @@ class WithoutTouching(SweepObjectsToZoneBase):
             }
 
         return OracleAgent(act)
+
+    def set_difficulty(self, difficulty: str):
+        super().set_difficulty(difficulty)
+        if difficulty == "distracting":
+            self.task_meta["max_swept_obj"] = 5

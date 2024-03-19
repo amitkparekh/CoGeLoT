@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import itertools
 from functools import partial
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj
 from ...utils.misc_utils import eulerXYZ_to_quatXYZW
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import math
 from functools import partial
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
-from ...components.placeholders import PlaceholderScene, PlaceholderObj
+from ...components.placeholders import PlaceholderObj, PlaceholderScene
 from ...components.placeholders.placeholder_scene import SceneRenderEnv
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):

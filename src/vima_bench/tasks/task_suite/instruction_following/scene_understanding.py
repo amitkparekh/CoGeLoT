@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import itertools
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderScene, PlaceholderTexture
 from ...components.placeholders.placeholder_scene import SceneRenderEnv
 from ...utils.pybullet_utils import (
-    add_object_id_reverse_mapping_info,
     add_any_object,
+    add_object_id_reverse_mapping_info,
     if_in_hollow_object,
     p_change_texture,
 )
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -664,6 +664,10 @@ class SceneUnderstanding(BaseTask):
                 self.possible_base_obj_texture,
                 self.possible_dragged_obj_texture,
             )
+        elif difficulty == "distracting":
+            # crank up the num distractors to 3 (since the init says thats the max supported)
+            self.task_meta["num_distractor_in_scene"] = 3
+            self.task_meta["num_distractor_in_workspace"] = 3
 
     def update_goals(self, skip_oracle=True):
         """Need to check all goals every time step."""

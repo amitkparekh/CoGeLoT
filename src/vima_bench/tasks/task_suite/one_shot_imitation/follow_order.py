@@ -3,12 +3,11 @@ from __future__ import annotations
 import copy
 import queue
 from functools import partial
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderScene
@@ -19,6 +18,7 @@ from ...utils.pybullet_utils import (
     add_object_id_reverse_mapping_info,
     p_change_texture,
 )
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -490,6 +490,10 @@ class FollowOrder(BaseTask):
         else:
             self.task_meta["num_dragged_obj"] = 4
             self.task_meta["num_frames"] = 5
+
+        if difficulty == "distracting":
+            self.task_meta["num_distractor_in_workspace"] = 3
+
         self.oracle_max_steps = self.task_meta["num_frames"] + 1
 
     def update_goals(self, skip_oracle=True):

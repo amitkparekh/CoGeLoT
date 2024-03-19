@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Mapping
 from enum import Enum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self, TypeAlias
 
 import datasets
 import polars as pl
@@ -29,7 +29,8 @@ from cogelot.structures.common import (
     maybe_convert_dict_list_to_list_dict,
 )
 
-Difficulty = Literal["easy", "medium", "hard"]
+# Added new difficulty levels, which make things much much harder
+Difficulty = Literal["easy", "medium", "hard", "distracting"]
 
 MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60
@@ -196,14 +197,15 @@ def get_task_group_from_task(task: Task) -> TaskGroup:
 EndEffector = Literal["suction", "spatula"]
 PoseActionType = Literal["pose0_position", "pose0_rotation", "pose1_position", "pose1_rotation"]
 
-PositionAxes = Literal["x", "y", "z"]
-RotationAxes = Literal["x", "y", "z", "w"]
+PositionAxes: TypeAlias = Literal["x", "y", "z"]
+RotationAxes: TypeAlias = Literal["x", "y", "z", "w"]
 
-AxesPerPoseActionType: dict[PoseActionType, type[PositionAxes | RotationAxes]] = {
-    "pose0_position": PositionAxes,  # type: ignore[dict-item]
-    "pose0_rotation": RotationAxes,  # type: ignore[dict-item]
-    "pose1_position": PositionAxes,  # type: ignore[dict-item]
-    "pose1_rotation": RotationAxes,  # type: ignore[dict-item]
+# Typing this is a pain, i don't know how else to.
+AxesPerPoseActionType: dict[PoseActionType, Any] = {
+    "pose0_position": PositionAxes,
+    "pose0_rotation": RotationAxes,
+    "pose1_position": PositionAxes,
+    "pose1_rotation": RotationAxes,
 }
 
 SEVector = tuple[float, float, float, float, float, float, float]

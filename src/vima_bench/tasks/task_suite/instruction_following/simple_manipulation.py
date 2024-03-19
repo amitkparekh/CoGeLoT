@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import itertools
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj
 from ...utils.pybullet_utils import if_in_hollow_object
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -472,6 +472,9 @@ class SimpleManipulation(BaseTask):
                 self.possible_base_obj_texture,
                 self.possible_dragged_obj_texture,
             )
+        elif difficulty == "distracting":
+            # crank up the num distractors by factor of 6
+            self.task_meta["num_distractors_obj"] *= 6
 
     def is_match(self, pose0, pose1, symmetry):
         return super().is_match(pose0, pose1, symmetry, position_only=True)

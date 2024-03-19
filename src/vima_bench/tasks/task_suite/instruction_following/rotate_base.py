@@ -7,11 +7,11 @@ from typing import NamedTuple
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj
-from ...utils.misc_utils import quatXYZW_to_eulerXYZ, eulerXYZ_to_quatXYZW
+from ...utils.misc_utils import eulerXYZ_to_quatXYZW, quatXYZW_to_eulerXYZ
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -28,8 +28,8 @@ class RotateTheObjBase(BaseTask, ABC):
         self,
         # ====== task specific ======
         prompt_template: str,
-        task_meta: dict[str:int],
-        placeholder_expression: dict[str:dict],
+        task_meta: dict[str, int],
+        placeholder_expression: dict[str, dict],
         oracle_max_steps: int = 2,  # one mistake is allowed
         oracle_step_to_env_step_ratio: int = 4,
         possible_angles_of_rotation: list[float | int] | float | int | None = None,

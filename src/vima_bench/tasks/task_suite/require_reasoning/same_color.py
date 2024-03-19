@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderObj
 from ...utils.pybullet_utils import if_in_hollow_object
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -334,6 +334,10 @@ class SameColor(BaseTask):
         else:
             self.task_meta["num_dragged_obj"] = 3
             self.task_meta["num_distractors_obj"] = 3
+
+        if difficulty == "distracting":
+            self.task_meta["num_distractors_obj"] += 5
+
         self.oracle_max_steps = self.task_meta["num_dragged_obj"] + 2
 
     def check_success(self, *args, **kwargs) -> ResultTuple:

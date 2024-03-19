@@ -4,8 +4,8 @@ import math
 from functools import partial
 from typing import Literal
 
-from .rotate_base import RotateTheObjBase
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
+from .rotate_base import RotateTheObjBase
 
 
 class Rotate(RotateTheObjBase):
@@ -153,3 +153,6 @@ class Rotate(RotateTheObjBase):
         elif difficulty == "hard":
             # seven objects in total - hard level
             self.task_meta["num_distractors"] = 5
+        elif difficulty == "distracting":
+            # 10 objects in total - v hard level
+            self.task_meta["num_distractors"] = 8

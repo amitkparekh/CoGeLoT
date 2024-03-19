@@ -6,11 +6,11 @@ import numpy as np
 import pybullet as p
 from pybullet import getBasePositionAndOrientation
 
-from ..base import BaseTask
-from ...components import Spatula, Push
+from ...components import Push, Spatula
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import TextureEntry
 from ...utils import misc_utils as utils
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -19,7 +19,7 @@ class ResultTuple(NamedTuple):
     distance: float | None
 
 
-det_to_integer = {"any": 1, "one": 1, "two": 2, "three": 3}
+det_to_integer = {"any": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
 
 
 class SweepObjectsToZoneBase(BaseTask):
@@ -55,6 +55,7 @@ class SweepObjectsToZoneBase(BaseTask):
             "easy": {1: 0.5, 2: 0.25, 3: 0.25},
             "medium": {1: 0.25, 2: 0.5, 3: 0.25},
             "hard": {1: 0.25, 2: 0.25, 3: 0.5},
+            "distracting": {1: 0, 2: 0, 3: 0.4, 4: 0.3, 5: 0.3},
         }
         task_meta["sample_prob"] = (self._sample_prob_all["easy"],)
 
@@ -253,6 +254,11 @@ class SweepObjectsToZoneBase(BaseTask):
         else:
             self.task_meta["sample_prob"] = self._sample_prob_all["hard"]
             self.task_meta["constraint_length"] = 1.85
+
+        if difficulty == "distracting":
+            self.possible_swept_obj_born_pos.append(
+                (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
+            )
         self.constraint_checking["enabled"] = True
 
     def check_success(self, *args, **kwargs) -> ResultTuple:

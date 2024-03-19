@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
 
-from ..base import BaseTask
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders.placeholder_scene import (
-    SceneRenderEnv,
     PlaceholderScene,
+    SceneRenderEnv,
 )
 from ...utils.pybullet_utils import (
     add_any_object,
     add_object_id_reverse_mapping_info,
     p_change_texture,
 )
+from ..base import BaseTask
 
 
 class ResultTuple(NamedTuple):
@@ -508,3 +508,7 @@ class RearrangeIntoSceneBase(BaseTask):
             self.task_meta["distractor_conflict_rate"] = 0.5
         else:
             self.task_meta["distractor_conflict_rate"] = 0.7
+
+        if difficulty == "distracting":
+            self.task_meta["distractor_conflict_rate"] = 0.9
+            self.task_meta["num_distractor_in_workspace"] += 4
