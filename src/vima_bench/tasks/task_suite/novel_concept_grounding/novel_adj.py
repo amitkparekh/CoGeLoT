@@ -655,7 +655,8 @@ class NovelAdj(BaseTask):
         super().set_difficulty(difficulty)
         self.task_meta["difficulty"] = difficulty
         if difficulty == "distracting":
-            self.task_meta["num_geometric_distractors"] += 2
+            self.task_meta["num_geometric_distractors"] += 1
+            self.task_meta["num_geometric_distractors"] *= 3
 
     def is_match(self, pose0, pose1, symmetry):
         return super().is_match(pose0, pose1, symmetry, position_only=True)
