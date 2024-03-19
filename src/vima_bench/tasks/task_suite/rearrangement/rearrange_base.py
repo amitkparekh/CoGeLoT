@@ -164,11 +164,7 @@ class RearrangeIntoSceneBase(BaseTask):
     def reset(self, env):
         super().reset(env)
 
-        num_dragged_obj = self.rng.choice([1, 2, 3], p=[0.4, 0.4, 0.2])
-        num_distractors = 1 if num_dragged_obj == 1 else 0
-        self.task_meta["num_dragged_obj"] = num_dragged_obj
-        self.task_meta["num_distractor_in_workspace"] = num_distractors
-        self.task_meta["distractor_conflict_rate"] = 0.5
+        num_dragged_obj = self.rng.uniform(low=1, high=self.task_meta["num_dragged_obj"])
 
         sampled_dragged_obj_textures = [
             e.value
