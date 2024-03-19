@@ -656,8 +656,8 @@ class NovelAdj(BaseTask):
         super().set_difficulty(difficulty)
         self.task_meta["difficulty"] = difficulty
         if difficulty in {"distracting", "extreme"}:
-            self.task_meta["num_geometric_distractors"] += 1
-            self.task_meta["num_geometric_distractors"] *= 3
+            # No more than 4 distractors can fit in the environment
+            self.task_meta["num_geometric_distractors"] += 4
 
     def is_match(self, pose0, pose1, symmetry):
         return super().is_match(pose0, pose1, symmetry, position_only=True)
