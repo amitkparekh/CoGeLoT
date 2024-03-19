@@ -30,7 +30,7 @@ from cogelot.structures.common import (
 )
 
 # Added new difficulty levels, which make things much much harder
-Difficulty = Literal["easy", "medium", "hard", "distracting"]
+Difficulty = Literal["easy", "medium", "hard", "distracting", "extreme"]
 
 MODALITIES: tuple[Literal["segm", "rgb"], ...] = ("segm", "rgb")
 VIDEO_FPS = 60

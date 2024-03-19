@@ -147,12 +147,15 @@ class Rotate(RotateTheObjBase):
         if difficulty == "easy":
             # three objects in total - easy level
             self.task_meta["num_distractors"] = 1
-        elif difficulty == "medium":
+
+        if difficulty == "medium":
             # five objects  in total - medium level
             self.task_meta["num_distractors"] = 3
-        elif difficulty == "hard":
+
+        if difficulty == "hard":
             # seven objects in total - hard level
             self.task_meta["num_distractors"] = 5
-        elif difficulty == "distracting":
+
+        if difficulty == "distracting":
             # 10 objects in total - v hard level
             self.task_meta["num_distractors"] = 8

@@ -569,6 +569,10 @@ class PickInOrderThenRestore(BaseTask):
         if difficulty == "distracting":
             self.task_meta["num_distractor_dragged_obj"] += 2
 
+        if difficulty == "extreme":
+            self.task_meta["num_distractor_dragged_obj"] += 2
+            self.possible_base_obj = self.possible_dragged_obj
+
         self._update_task_meta()
         self.oracle_max_steps = self.task_meta["num_target_base_obj"] + 2
 

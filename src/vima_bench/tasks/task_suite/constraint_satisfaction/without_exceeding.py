@@ -479,3 +479,5 @@ class WithoutExceeding(SweepObjectsToZoneBase):
         super().set_difficulty(difficulty)
         if difficulty == "distracting":
             self.task_meta["max_swept_obj"] = 5
+        if difficulty == "extreme":
+            self.task_meta["max_swept_obj"] = 7

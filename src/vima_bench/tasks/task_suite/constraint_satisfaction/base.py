@@ -56,6 +56,7 @@ class SweepObjectsToZoneBase(BaseTask):
             "medium": {1: 0.25, 2: 0.5, 3: 0.25},
             "hard": {1: 0.25, 2: 0.25, 3: 0.5},
             "distracting": {1: 0, 2: 0, 3: 0.4, 4: 0.3, 5: 0.3},
+            "extreme": {1: 0, 2: 0, 3: 0, 4: 0.3, 5: 0.3, 6: 0.2, 7: 0.2},
         }
         task_meta["sample_prob"] = (self._sample_prob_all["easy"],)
 
@@ -256,9 +257,16 @@ class SweepObjectsToZoneBase(BaseTask):
             self.task_meta["constraint_length"] = 1.85
 
         if difficulty == "distracting":
+            self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
             self.possible_swept_obj_born_pos.append(
                 (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
             )
+        if difficulty == "extreme":
+            self.task_meta["sample_prob"] = self._sample_prob_all["extreme"]
+            self.possible_swept_obj_born_pos.append(
+                (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
+            )
+
         self.constraint_checking["enabled"] = True
 
     def check_success(self, *args, **kwargs) -> ResultTuple:

@@ -654,7 +654,7 @@ class NovelAdj(BaseTask):
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
         self.task_meta["difficulty"] = difficulty
-        if difficulty == "distracting":
+        if difficulty in {"distracting", "extreme"}:
             self.task_meta["num_geometric_distractors"] += 1
             self.task_meta["num_geometric_distractors"] *= 3
 

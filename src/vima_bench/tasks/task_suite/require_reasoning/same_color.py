@@ -338,6 +338,10 @@ class SameColor(BaseTask):
         if difficulty == "distracting":
             self.task_meta["num_distractors_obj"] += 5
 
+        if difficulty == "extreme":
+            self.task_meta["num_distractors_obj"] += 5
+            self.possible_base_obj = self.possible_dragged_obj
+
         self.oracle_max_steps = self.task_meta["num_dragged_obj"] + 2
 
     def check_success(self, *args, **kwargs) -> ResultTuple:

@@ -469,6 +469,9 @@ class ManipulateOldNeighbor(BaseTask):
             self.task_meta["num_array_rows"] = 3
             self.task_meta["num_array_columns"] = 4
 
+        if difficulty == "extreme":
+            self.possible_base_obj = self.possible_dragged_obj
+
     def check_success(self, *args, **kwargs) -> ResultTuple:
         # check if the agent manipulates the neighbor object first
         # if that happened, it should be a failure

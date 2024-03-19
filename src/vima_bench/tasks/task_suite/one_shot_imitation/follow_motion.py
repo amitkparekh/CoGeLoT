@@ -443,6 +443,10 @@ class FollowMotion(BaseTask):
             self.task_meta["num_frames"] = 4
         else:
             self.task_meta["num_frames"] = 5
+
+        if difficulty == "extreme":
+            self.task_meta["num_frames"] = 6
+
         self.oracle_max_steps = self.task_meta["num_frames"] + 1
 
     def update_goals(self, skip_oracle=True):

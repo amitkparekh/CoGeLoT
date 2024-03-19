@@ -508,3 +508,7 @@ class RearrangeIntoSceneBase(BaseTask):
         if difficulty == "distracting":
             self.task_meta["distractor_conflict_rate"] = 0.9
             self.task_meta["num_distractor_in_workspace"] += 4
+
+        if difficulty == "extreme":
+            self.task_meta["distractor_conflict_rate"] = 1
+            self.task_meta["num_distractor_in_workspace"] += 4

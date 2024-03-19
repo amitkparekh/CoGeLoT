@@ -6,11 +6,11 @@ from typing import Literal
 
 import numpy as np
 
-from ..instruction_following.rotate_base import RotateTheObjBase
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
 from ...components.placeholders import PlaceholderScene, PlaceholderText
 from ...components.placeholders.placeholder_scene import SceneRenderEnv
 from ...utils.misc_utils import eulerXYZ_to_quatXYZW
+from ..instruction_following.rotate_base import RotateTheObjBase
 
 
 class Twist(RotateTheObjBase):
@@ -260,4 +260,8 @@ class Twist(RotateTheObjBase):
         else:
             # five objects in total - hard level
             self.task_meta["num_total_objs"] = 5
+
+        if difficulty == "extreme":
+            self.task_meta["num_total_objs"] = 7
+
         self.oracle_max_steps = self.task_meta["num_total_objs"] + 2

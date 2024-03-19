@@ -650,24 +650,33 @@ class SceneUnderstanding(BaseTask):
         super().set_difficulty(difficulty)
         if difficulty == "easy":
             pass
-        elif difficulty == "medium":
+
+        if difficulty == "medium":
             # exact one variation
             # randomly sample that should the variation happen in dragged obj or base obj
             if self.rng.random() > 0.5:
                 self.possible_dragged_obj_texture = self.possible_base_obj_texture
             else:
                 self.possible_base_obj_texture = self.possible_dragged_obj_texture
-        elif difficulty == "hard":
+
+        if difficulty == "hard":
             # more than one variation
             # in this case, both dragged and base obj will have novel combos
             self.possible_dragged_obj_texture, self.possible_base_obj_texture = (
                 self.possible_base_obj_texture,
                 self.possible_dragged_obj_texture,
             )
-        elif difficulty == "distracting":
+
+        if difficulty == "distracting":
             # crank up the num distractors to 3 (since the init says thats the max supported)
             self.task_meta["num_distractor_in_scene"] = 3
             self.task_meta["num_distractor_in_workspace"] = 3
+
+        if difficulty == "extreme":
+            # crank up the num distractors to 3 (since the init says thats the max supported)
+            self.task_meta["num_distractor_in_scene"] = 3
+            self.task_meta["num_distractor_in_workspace"] = 3
+            self.possible_base_obj = self.possible_dragged_obj
 
     def update_goals(self, skip_oracle=True):
         """Need to check all goals every time step."""
