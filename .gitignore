@@ -302,3 +302,4 @@ wandb/
 
 storage/*
 !storage/fixtures/
+.Rproj.user
