@@ -43,12 +43,14 @@ class VIMALightningModule(pl.LightningModule):
         policy: Policy,
         optimizer_partial_fn: OptimizerPartialFn = _default_optimizer,
         lr_scheduler_partial_fn: LRSchedulerPartialFn = _default_lr_scheduler,
+        should_shuffle_obj_per_observations: bool = False,
     ) -> None:
         super().__init__()
         self.policy = policy
 
         self._optimizer_partial_fn = optimizer_partial_fn
         self._lr_scheduler_partial_fn = lr_scheduler_partial_fn
+        self._should_shuffle_obj_per_observations = should_shuffle_obj_per_observations
 
         self.training_metrics = OfflineMetrics(
             split_name_prefix="train",
@@ -219,7 +221,8 @@ class VIMALightningModule(pl.LightningModule):
         )
         encoded_prompt = self.policy.encode_prompt(embedded_prompt, embedded_prompt_mask)
         encoded_observations, embedded_observations_mask = self.policy.encode_observation_token(
-            batch.observations
+            batch.observations,
+            shuffle_obj_per_observation=self._should_shuffle_obj_per_observations,
         )
         encoded_actions, encoded_actions_mask = self.policy.encode_action_tokens(batch.actions)
         return ModelInstance(

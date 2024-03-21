@@ -6,11 +6,11 @@ defaults:
 
 _target_: cogelot.models.VIMALightningModule
 
+should_shuffle_obj_per_observations: false
+
 policy:
   _target_: cogelot.modules.policy.Policy
   embed_dim: 768
-
-  should_shuffle_obj_per_observations: False
 
   transformer_decoder: ???
   action_encoder: ???

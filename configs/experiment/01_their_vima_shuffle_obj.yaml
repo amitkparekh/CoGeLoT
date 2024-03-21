@@ -12,3 +12,6 @@ source: VIMA
 prompt_input: encoder
 observation_input: decoder
 num_action_tokens: 1
+
+model:
+  should_shuffle_obj_per_observations: true
