@@ -9,7 +9,7 @@ import torch
 from hydra.core.hydra_config import HydraConfig
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf, open_dict, read_write
-from omegaconf.errors import ConfigAttributeError, ConfigKeyError
+from omegaconf.errors import ConfigAttributeError
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -174,84 +174,3 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     trainer: pl.Trainer = instantiated_modules["trainer"]
 
     return InstantiatedModules(datamodule=datamodule, model=model, trainer=trainer)
-
-
-def determine_eval_run_name(config: DictConfig) -> str:
-    """Determine the run name for the current evaluation run."""
-    trained_instruction = {
-        "8lkml12g": "Orig",
-        "2df3mwfn": "Para",
-        "ftwoyjb1": "OrigShuf",
-        None: "Given",
-    }
-
-    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
-    is_disable_prompt_text = OmegaConf.select(config, "model.disable_prompt_text", default=False)
-    is_disable_prompt_visual = OmegaConf.select(
-        config, "model.disable_prompt_visual", default=False
-    )
-    is_shuffle_obj = OmegaConf.select(
-        config, "model.should_shuffle_obj_per_observations", default=False
-    )
-    eval_difficulty = OmegaConf.select(config, "model.difficulty", default="easy")
-    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
-
-    is_gobbledygook = "gobbledygook" in instance_transform["_target_"].lower()
-    is_gobbledygook_word = "word" in instance_transform["_target_"].lower()
-    is_gobbledygook_tokens = "token" in instance_transform["_target_"].lower()
-    is_textual = "textual" in instance_transform["_target_"].lower()
-    is_paraphrase = "reword" in instance_transform["_target_"].lower()
-
-    with suppress(ConfigKeyError):
-        is_gobbledygook = is_gobbledygook or any(
-            "gobbledygook" in transform["_target_"].lower()
-            for transform in instance_transform["transforms"]
-        )
-    with suppress(ConfigKeyError):
-        is_gobbledygook_word = is_gobbledygook_word or any(
-            "word" in transform["_target_"].lower()
-            for transform in instance_transform["transforms"]
-        )
-    with suppress(ConfigKeyError):
-        is_gobbledygook_tokens = is_gobbledygook_tokens or any(
-            "token" in transform["_target_"].lower()
-            for transform in instance_transform["transforms"]
-        )
-    with suppress(ConfigKeyError):
-        is_textual = is_textual or any(
-            "textual" in transform["_target_"].lower()
-            for transform in instance_transform["transforms"]
-        )
-
-    run_name = trained_instruction[wandb_model_run_id]
-
-    extras = []
-    if is_paraphrase:
-        extras.append("Paraphrase")
-    if is_textual:
-        extras.append("Textual")
-
-    if is_gobbledygook:
-        if is_gobbledygook_word:
-            extras.append("GDGWord")
-        if is_gobbledygook_tokens:
-            extras.append("GDGToken")
-
-    if is_disable_prompt_text and is_disable_prompt_visual:
-        extras.append("No Prompt")
-    elif is_disable_prompt_text:
-        extras.append("No Text")
-    elif is_disable_prompt_visual:
-        extras.append("No VisRef")
-    if is_shuffle_obj:
-        extras.append("ShuffleObj")
-
-    extras = [extra for extra in extras if extra]
-
-    if extras:
-        run_name = f"{run_name} - {' + '.join(extras)}"
-
-    if eval_difficulty != "easy":
-        run_name = f"{run_name} [{eval_difficulty.capitalize()}]"
-
-    return run_name
