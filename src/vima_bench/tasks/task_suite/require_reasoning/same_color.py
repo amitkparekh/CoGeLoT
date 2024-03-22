@@ -328,18 +328,17 @@ class SameColor(BaseTask):
         super().set_difficulty(difficulty)
         if difficulty == "easy":
             pass
-        elif difficulty == "medium":
-            self.task_meta["num_dragged_obj"] = 2
-            self.task_meta["num_distractors_obj"] = 2
-        else:
-            self.task_meta["num_dragged_obj"] = 3
-            self.task_meta["num_distractors_obj"] = 3
+        # elif difficulty == "medium":
+        #     self.task_meta["num_dragged_obj"] = 2
+        #     self.task_meta["num_distractors_obj"] = 2
+        # else:
+        #     self.task_meta["num_dragged_obj"] = 3
+        #     self.task_meta["num_distractors_obj"] = 3
 
-        if difficulty == "distracting":
-            self.task_meta["num_distractors_obj"] += 5
+        if difficulty in {"distracting", "extremely_distracting"}:
+            self.task_meta["num_distractors_obj"] = 5
 
-        if difficulty == "extreme":
-            self.task_meta["num_distractors_obj"] += 5
+        if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
 
         self.oracle_max_steps = self.task_meta["num_dragged_obj"] + 2

@@ -130,3 +130,9 @@ class NovelNoun(SimpleManipulation):
     def reset(self, env):
         super().reset(env)
         self._reset_prompt()
+
+    def set_difficulty(self, difficulty: str):
+        super().set_difficulty(difficulty)
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.novel_names = ["xachup", "feplicat", "gazip", "duchat"]

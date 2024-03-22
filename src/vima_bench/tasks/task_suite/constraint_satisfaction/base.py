@@ -19,7 +19,16 @@ class ResultTuple(NamedTuple):
     distance: float | None
 
 
-det_to_integer = {"any": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+det_to_integer = {
+    "any": 1,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+}
 
 
 class SweepObjectsToZoneBase(BaseTask):
@@ -55,8 +64,8 @@ class SweepObjectsToZoneBase(BaseTask):
             "easy": {1: 0.5, 2: 0.25, 3: 0.25},
             "medium": {1: 0.25, 2: 0.5, 3: 0.25},
             "hard": {1: 0.25, 2: 0.25, 3: 0.5},
-            "distracting": {1: 0, 2: 0, 3: 0.4, 4: 0.3, 5: 0.3},
-            "extreme": {1: 0, 2: 0, 3: 0, 4: 0.3, 5: 0.3, 6: 0.2, 7: 0.2},
+            "distracting": {1: 0, 2: 0, 3: 0, 4: 0.1, 5: 0.3, 6: 0.3, 7: 0.3},
+            # "extreme": {1: 0, 2: 0, 3: 0, 4: 0.3, 5: 0.3, 6: 0.2, 7: 0.2},
         }
         task_meta["sample_prob"] = (self._sample_prob_all["easy"],)
 
@@ -75,7 +84,7 @@ class SweepObjectsToZoneBase(BaseTask):
             },
         }
 
-        self.possible_dragged_obj = ObjPedia.SMALL_BLOCK
+        self.possible_dragged_obj = [ObjPedia.SMALL_BLOCK]
 
         self.possible_base_obj = ObjPedia.THREE_SIDED_RECTANGLE
 
@@ -249,23 +258,45 @@ class SweepObjectsToZoneBase(BaseTask):
         if difficulty == "easy":
             self.task_meta["sample_prob"] = self._sample_prob_all["easy"]
             self.task_meta["constraint_length"] = 0.75
-        elif difficulty == "medium":
-            self.task_meta["sample_prob"] = self._sample_prob_all["medium"]
-            self.task_meta["constraint_length"] = 1.35
-        else:
-            self.task_meta["sample_prob"] = self._sample_prob_all["hard"]
-            self.task_meta["constraint_length"] = 1.85
+        # elif difficulty == "medium":
+        #     self.task_meta["sample_prob"] = self._sample_prob_all["medium"]
+        #     self.task_meta["constraint_length"] = 1.35
+        # else:
+        #     self.task_meta["sample_prob"] = self._sample_prob_all["hard"]
+        #     self.task_meta["constraint_length"] = 1.85
 
-        if difficulty == "distracting":
+        if difficulty in {"distracting", "extremely_distracting"}:
             self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
             self.possible_swept_obj_born_pos.append(
                 (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
             )
-        if difficulty == "extreme":
-            self.task_meta["sample_prob"] = self._sample_prob_all["extreme"]
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
             self.possible_swept_obj_born_pos.append(
                 (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
             )
+            self.possible_dragged_obj = [
+                ObjPedia.BLOCK,
+                ObjPedia.L_BLOCK,
+                ObjPedia.CAPITAL_LETTER_A,
+                ObjPedia.CAPITAL_LETTER_E,
+                ObjPedia.CAPITAL_LETTER_G,
+                ObjPedia.CAPITAL_LETTER_M,
+                ObjPedia.CAPITAL_LETTER_R,
+                ObjPedia.CAPITAL_LETTER_T,
+                ObjPedia.CAPITAL_LETTER_V,
+                ObjPedia.CROSS,
+                ObjPedia.DIAMOND,
+                ObjPedia.TRIANGLE,
+                ObjPedia.FLOWER,
+                ObjPedia.HEART,
+                ObjPedia.HEXAGON,
+                ObjPedia.PENTAGON,
+                ObjPedia.RING,
+                ObjPedia.ROUND,
+                ObjPedia.STAR,
+            ]
 
         self.constraint_checking["enabled"] = True
 

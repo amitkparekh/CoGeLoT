@@ -664,15 +664,12 @@ class SceneUnderstanding(BaseTask):
                 self.possible_dragged_obj_texture,
             )
 
-        if difficulty == "distracting":
+        if difficulty in {"distracting", "extremely_distracting"}:
             # crank up the num distractors to 3 (since the init says thats the max supported)
             self.task_meta["num_distractor_in_scene"] = 3
             self.task_meta["num_distractor_in_workspace"] = 3
 
-        if difficulty == "extreme":
-            # crank up the num distractors to 3 (since the init says thats the max supported)
-            self.task_meta["num_distractor_in_scene"] = 3
-            self.task_meta["num_distractor_in_workspace"] = 3
+        if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
 
     def update_goals(self, skip_oracle=True):

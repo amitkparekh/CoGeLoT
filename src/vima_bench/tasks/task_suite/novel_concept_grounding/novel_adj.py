@@ -655,9 +655,14 @@ class NovelAdj(BaseTask):
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
         self.task_meta["difficulty"] = difficulty
-        if difficulty in {"distracting", "extreme"}:
+
+        if difficulty in {"distracting", "extremely_distracting"}:
             # No more than 4 distractors can fit in the environment
-            self.task_meta["num_geometric_distractors"] += 4
+            self.task_meta["num_geometric_distractors"] = 3
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.novel_adjectives = ["xachupiar", "feplicatarie", "gazipierdo", "duchatler"]
+            self.possible_base_obj = self.possible_dragged_obj
 
     def is_match(self, pose0, pose1, symmetry):
         return super().is_match(pose0, pose1, symmetry, position_only=True)

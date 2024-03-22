@@ -156,6 +156,13 @@ class Rotate(RotateTheObjBase):
             # seven objects in total - hard level
             self.task_meta["num_distractors"] = 5
 
-        if difficulty == "distracting":
+        if difficulty in {"distracting", "extremely_distracting"}:
             # 10 objects in total - v hard level
             self.task_meta["num_distractors"] = 8
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            # Choices: [20, 40, 60, 80, 100, 120, 140, 160], which are all above the minimum of
+            # 15 degree intervals (self.pos_eps)
+            self.possible_angles_of_rotation = [
+                round(math.degrees(1 / 9 * math.pi * i)) for i in range(1, 9)
+            ]

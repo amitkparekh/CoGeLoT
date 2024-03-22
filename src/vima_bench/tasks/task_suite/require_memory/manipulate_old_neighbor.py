@@ -458,19 +458,22 @@ class ManipulateOldNeighbor(BaseTask):
         if difficulty == "easy":
             # 3x2 array, 1 null distractor, 3 "real" distractor
             pass
-        elif difficulty == "medium":
-            # 3x3 array, 3 null distractor, 4 "real" distractor
-            self.task_meta["num_null_distractors"] = 3
-            self.task_meta["num_array_rows"] = 3
-            self.task_meta["num_array_columns"] = 3
-        else:
-            # 3x4 array, 4 null distractor, 6 "real" distractor
-            self.task_meta["num_null_distractors"] = 4
-            self.task_meta["num_array_rows"] = 3
-            self.task_meta["num_array_columns"] = 4
+        # elif difficulty == "medium":
+        #     # 3x3 array, 3 null distractor, 4 "real" distractor
+        #     self.task_meta["num_null_distractors"] = 3
+        #     self.task_meta["num_array_rows"] = 3
+        #     self.task_meta["num_array_columns"] = 3
+        # else:
+        #     # 3x4 array, 4 null distractor, 6 "real" distractor
+        #     self.task_meta["num_null_distractors"] = 4
+        #     self.task_meta["num_array_rows"] = 3
+        #     self.task_meta["num_array_columns"] = 4
+        if difficulty in {"distracting", "extremely_distracting"}:
+            self.task_meta["num_distractor_in_workspace"] = 3
 
-        if difficulty == "extreme":
+        if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
+            self.task_meta["num_null_distractors"] = 0
 
     def check_success(self, *args, **kwargs) -> ResultTuple:
         # check if the agent manipulates the neighbor object first

@@ -473,11 +473,12 @@ class SimpleManipulation(BaseTask):
                 self.possible_base_obj_texture,
                 self.possible_dragged_obj_texture,
             )
-        elif difficulty == "distracting":
-            # crank up the num distractors by factor of 6
-            self.task_meta["num_distractors_obj"] *= 6
 
-        if difficulty == "extreme":
+        if difficulty in {"distracting", "extremely_distracting"}:
+            # crank up the num distractors to 6
+            self.task_meta["num_distractors_obj"] = 6
+
+        if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
 
     def is_match(self, pose0, pose1, symmetry):

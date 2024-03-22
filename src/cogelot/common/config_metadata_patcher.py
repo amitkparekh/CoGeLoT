@@ -189,6 +189,7 @@ def build_eval_run_name(config: DictConfig) -> str:
     if extras:
         run_name = f"{run_name} - {' + '.join(extras)}"
     if difficulty != "easy":
-        run_name = f"{run_name} [{difficulty.capitalize()}]"
+        difficulty = "XD" if difficulty == "extremely_distracting" else difficulty.capitalize()
+        run_name = f"{run_name} [{difficulty}]"
 
     return run_name

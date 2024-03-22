@@ -254,14 +254,21 @@ class Twist(RotateTheObjBase):
         if difficulty == "easy":
             # three objects in total - easy level
             self.task_meta["num_total_objs"] = 3
-        elif difficulty == "medium":
-            # four objects in total - medium level
-            self.task_meta["num_total_objs"] = 4
-        else:
-            # five objects in total - hard level
-            self.task_meta["num_total_objs"] = 5
+        # elif difficulty == "medium":
+        #     # four objects in total - medium level
+        #     self.task_meta["num_total_objs"] = 4
+        # else:
+        #     # five objects in total - hard level
+        #     self.task_meta["num_total_objs"] = 5
 
-        if difficulty == "extreme":
+        if difficulty in {"distracting", "extremely_distracting"}:
             self.task_meta["num_total_objs"] = 7
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            # Choices: [20, 40, 60, 80, 100, 120, 140, 160], which are all above the minimum of
+            # 15 degree intervals (self.pos_eps)
+            self.possible_angles_of_rotation = [
+                round(math.degrees(1 / 9 * math.pi * i)) for i in range(1, 9)
+            ]
 
         self.oracle_max_steps = self.task_meta["num_total_objs"] + 2

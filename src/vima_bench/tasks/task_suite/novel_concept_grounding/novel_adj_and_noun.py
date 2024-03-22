@@ -108,3 +108,9 @@ class NovelAdjAndNoun(NovelAdj):
         self.prompt_template = " ".join(obj_desc + [prompt_template])
 
         return flip_adjective
+
+    def set_difficulty(self, difficulty: str):
+        super().set_difficulty(difficulty)
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.novel_names = ["xachup", "feplicat", "gazip", "duchat"]

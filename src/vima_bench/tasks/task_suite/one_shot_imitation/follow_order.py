@@ -484,19 +484,18 @@ class FollowOrder(BaseTask):
         if difficulty == "easy":
             # 3 obj, 3 frames, 1 distractor
             pass
-        elif difficulty == "medium":
-            self.task_meta["num_dragged_obj"] = 4
-            self.task_meta["num_frames"] = 4
-        else:
-            self.task_meta["num_dragged_obj"] = 4
-            self.task_meta["num_frames"] = 5
+        # elif difficulty == "medium":
+        #     self.task_meta["num_dragged_obj"] = 4
+        #     self.task_meta["num_frames"] = 4
+        # else:
+        #     self.task_meta["num_dragged_obj"] = 4
+        # self.task_meta["num_frames"] = 5
 
-        if difficulty == "distracting":
+        if difficulty in {"distracting", "extremely_distracting"}:
             self.task_meta["num_distractor_in_workspace"] = 3
 
-        if difficulty == "extreme":
-            self.task_meta["num_distractor_in_workspace"] = 3
-            self.task_meta["num_frames"] = 6
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.task_meta["num_dragged_obj"] = 5
 
         self.oracle_max_steps = self.task_meta["num_frames"] + 1
 

@@ -552,26 +552,20 @@ class PickInOrderThenRestore(BaseTask):
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
         if difficulty == "easy":
-            # 2x2 array
+            # 2x3 array (since its in the task kwargs)
             pass
-        elif difficulty == "medium":
-            # 2x3
-            self.task_meta["num_array_columns"] = 3
-        else:
-            # 2x3, add one more intermediate target base
-            self.task_meta["num_array_columns"] = 3
-            self.task_meta["num_target_base_obj"] = 3
-            self.placeholder_expression["base_obj_3"] = {
-                "types": self.placeholder_expression["base_obj_1"]["types"],
-                "prepend_color": self.placeholder_expression["base_obj_1"]["prepend_color"],
-            }
+        # elif difficulty == "medium":
+        #     # 2x3
+        #     self.task_meta["num_array_columns"] = 3
+        # else:
+        #     # 2x3, add one more intermediate target base
 
-        if difficulty == "distracting":
-            self.task_meta["num_distractor_dragged_obj"] += 2
+        if difficulty in {"distracting", "extremely_distracting"}:
+            self.task_meta["num_distractor_dragged_obj"] = 4
 
-        if difficulty == "extreme":
-            self.task_meta["num_distractor_dragged_obj"] += 2
+        if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
+            self._same_bases = False
 
         self._update_task_meta()
         self.oracle_max_steps = self.task_meta["num_target_base_obj"] + 2

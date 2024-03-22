@@ -74,7 +74,14 @@ class BaseTask:
         self.placeholder_expression = placeholder_expression
         self.oracle_max_steps = oracle_max_steps
         self.oracle_step_to_env_step_ratio = oracle_step_to_env_step_ratio
-        self.difficulties = difficulties or ["easy", "medium", "hard", "distracting", "extreme"]
+        self.difficulties = difficulties or [
+            "easy",
+            # "medium",
+            # "hard",
+            "distracting",
+            "extreme",
+            "extremely_distracting",
+        ]
 
         self.difficulty_level = None
         self.ee = Suction

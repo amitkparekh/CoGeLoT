@@ -6,6 +6,7 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ...components.encyclopedia import ObjPedia, TexturePedia
 from ...components.encyclopedia.definitions import ObjEntry, TextureEntry
@@ -60,6 +61,8 @@ class FollowMotion(BaseTask):
             # 1 for now
             "num_dragged_obj": num_dragged_obj,
             "num_frames": num_frames,
+            "num_distractor_in_workspace": 1,
+            "num_distractor_in_scene": 1,
         }
         placeholder_expression = {
             f"frame_{i}": {
@@ -313,8 +316,10 @@ class FollowMotion(BaseTask):
             return True
 
         # only one distractor in the center (hardly ever reject sampling)
+        num_distractor_in_workspace = self.task_meta["num_distractor_in_workspace"]
+        num_added = 0
         not_reach_max_times = False
-        for i in range(self.REJECT_SAMPLING_MAX_TIMES):
+        for i in range(self.REJECT_SAMPLING_MAX_TIMES + num_distractor_in_workspace):
             sampled_distractor_obj = self.rng.choice(self.possible_dragged_obj).value
             sampled_distractor_obj_texture = self.rng.choice(
                 self.possible_dragged_obj_texture
@@ -340,14 +345,23 @@ class FollowMotion(BaseTask):
                     pose=distractor_pose,
                     category="rigid",
                 )
-                if obj_id is not None:
+                if obj_id is None:
+                    logger.warning(
+                        f"{i + 1} repeated sampling when try to spawn workspace distractor"
+                    )
+                else:
+                    num_added += 1
+                if num_added == num_distractor_in_workspace:
                     not_reach_max_times = True
                     break
         if not not_reach_max_times:
-            raise ValueError("Error in adding object to env.")
+            raise ValueError("Error in adding distractor objects to env.")
 
         # sample distractor in prompt scene (hardly ever reject sampling)
-        for i in range(self.REJECT_SAMPLING_MAX_TIMES):
+        num_distractor_in_scene = self.task_meta["num_distractor_in_scene"]
+        scene_distractors = []
+
+        for _ in range(self.REJECT_SAMPLING_MAX_TIMES + num_distractor_in_scene):
             sampled_distractor_obj_in_scene = self.rng.choice(self.possible_dragged_obj).value
             sampled_distractor_obj_texture_in_scene = self.rng.choice(
                 self.possible_dragged_obj_texture
@@ -356,6 +370,10 @@ class FollowMotion(BaseTask):
             if _valid_distractor(
                 sampled_distractor_obj_in_scene, sampled_distractor_obj_texture_in_scene
             ):
+                scene_distractors.append(
+                    (sampled_distractor_obj_in_scene, sampled_distractor_obj_texture_in_scene)
+                )
+            if len(scene_distractors) == num_distractor_in_scene:
                 break
 
         # create scene placeholder in the prompt
@@ -376,25 +394,32 @@ class FollowMotion(BaseTask):
                 pose=dragged_obj_pose_at_frame_i,
                 category="rigid",
             )
-            # add only one distractor in scene
-            sampled_distractor_obj_size_in_scene = self.rng.uniform(
-                low=sampled_distractor_obj.size_range.low,
-                high=sampled_distractor_obj.size_range.high,
-            )
-            distractor_pos = (
-                self.motion_center_pos[0],
-                self.motion_center_pos[1],
-                sampled_distractor_obj_size[2],
-            )
-            distractor_pose = distractor_pos, zero_rot
-            self.add_object_to_env(
-                scene_render_env,
+
+            for (
                 sampled_distractor_obj_in_scene,
                 sampled_distractor_obj_texture_in_scene,
-                sampled_distractor_obj_size_in_scene,
-                pose=distractor_pose,
-                category="rigid",
-            )
+            ) in scene_distractors:
+                # add only one distractor in scene
+                sampled_distractor_obj_size_in_scene = self.rng.uniform(
+                    low=sampled_distractor_obj_in_scene.size_range.low,
+                    high=sampled_distractor_obj_in_scene.size_range.high,
+                )
+                distractor_pos = (
+                    self.motion_center_pos[0],
+                    self.motion_center_pos[1],
+                    sampled_distractor_obj_size[2],
+                )
+                distractor_pose = distractor_pos, zero_rot
+                obj_id, urdf, pose = self.add_object_to_env(
+                    scene_render_env,
+                    sampled_distractor_obj_in_scene,
+                    sampled_distractor_obj_texture_in_scene,
+                    sampled_distractor_obj_size_in_scene,
+                    pose=distractor_pose,
+                    category="rigid",
+                )
+                if obj_id is None:
+                    raise ValueError("Error in adding distractor objects to scene.")
 
         for i in range(self.task_meta["num_frames"]):
             self.placeholders[f"frame_{i}"] = PlaceholderScene(
@@ -439,13 +464,19 @@ class FollowMotion(BaseTask):
         super().set_difficulty(difficulty)
         if difficulty == "easy":
             self.task_meta["num_frames"] = 3
-        elif difficulty == "medium":
-            self.task_meta["num_frames"] = 4
-        else:
-            self.task_meta["num_frames"] = 5
+        # elif difficulty == "medium":
+        #     self.task_meta["num_frames"] = 4
+        # else:
+        #     self.task_meta["num_frames"] = 5
 
-        if difficulty == "extreme":
-            self.task_meta["num_frames"] = 6
+        if difficulty in {"distracting", "extremely_distracting"}:
+            # crank up the num distractors to 3 (since the init says thats the max supported)
+            self.task_meta["num_distractor_in_scene"] = 3
+            self.task_meta["num_distractor_in_workspace"] = 3
+
+        if difficulty in {"extreme", "extremely_distracting"}:
+            self.num_possible_motion_points = 10
+            self.possible_motion_points = self.all_motion_point_coordinates()
 
         self.oracle_max_steps = self.task_meta["num_frames"] + 1
 
