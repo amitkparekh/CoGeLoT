@@ -48,8 +48,7 @@ def upload_model_checkpoint(
     *,
     checkpoint_name: str | None = ...,
     run_as_future: Literal[False] = ...,
-) -> None:
-    ...
+) -> None: ...
 
 
 @overload
@@ -60,8 +59,7 @@ def upload_model_checkpoint(
     *,
     checkpoint_name: str | None = ...,
     run_as_future: Literal[True] = ...,
-) -> Future[CommitInfo]:
-    ...
+) -> Future[CommitInfo]: ...
 
 
 def upload_model_checkpoint(
@@ -123,7 +121,12 @@ def get_model_checkpoint_file_in_remote_repo_for_epoch(
     # Get all the files in the right folder
     api = HfApi()
     remote_files = api.list_repo_tree(repo_id=repo_id, path_in_repo=run_id, repo_type="model")
-    all_file_names = [remote_file.path for remote_file in remote_files]
+
+    # get all the file names that explicitly have the epoch number in them since those are the ones
+    # that we care about
+    all_file_names = [
+        remote_file.path for remote_file in remote_files if "epoch=" in remote_file.path
+    ]
 
     # If epoch is negative, we want the last checkpoint
     if epoch < 0:
