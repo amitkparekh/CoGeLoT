@@ -179,8 +179,9 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
 def determine_eval_run_name(config: DictConfig) -> str:
     """Determine the run name for the current evaluation run."""
     trained_instruction = {
-        "8lkml12g": "Original",
-        "2df3mwfn": "Paraphrases",
+        "8lkml12g": "Orig",
+        "2df3mwfn": "Para",
+        "ftwoyjb1": "OrigShuf",
         None: "Given",
     }
 
