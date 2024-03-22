@@ -6,6 +6,7 @@ import numpy as np
 from loguru import logger
 from pybullet import getBasePositionAndOrientation
 
+from ...components.encyclopedia import ObjPedia
 from ...components.encyclopedia.definitions import TextureEntry
 from ...components.placeholders import PlaceholderObj, PlaceholderText
 from ...utils.misc_utils import (
@@ -195,8 +196,8 @@ class WithoutTouching(SweepObjectsToZoneBase):
         obj_pts = {}
         obj_ids = []
         swept_obj_size = self.rng.uniform(
-            low=sampled_swept_obj.size_range.low,
-            high=sampled_swept_obj.size_range.high,
+            low=ObjPedia.SMALL_BLOCK.value.size_range.low,
+            high=ObjPedia.SMALL_BLOCK.value.size_range.high,
         )
 
         # some samplings may be out of valid workspace
