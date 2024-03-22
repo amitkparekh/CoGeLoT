@@ -267,8 +267,6 @@ class Twist(RotateTheObjBase):
         if difficulty in {"extreme", "extremely_distracting"}:
             # Choices: [20, 40, 60, 80, 100, 120, 140, 160], which are all above the minimum of
             # 15 degree intervals (self.pos_eps)
-            self.possible_angles_of_rotation = [
-                round(math.degrees(1 / 9 * math.pi * i)) for i in range(1, 9)
-            ]
+            self.possible_angles_of_rotation = [1 / 9 * math.pi * i for i in range(1, 9)]
 
         self.oracle_max_steps = self.task_meta["num_total_objs"] + 2

@@ -64,7 +64,7 @@ class SweepObjectsToZoneBase(BaseTask):
             "easy": {1: 0.5, 2: 0.25, 3: 0.25},
             "medium": {1: 0.25, 2: 0.5, 3: 0.25},
             "hard": {1: 0.25, 2: 0.25, 3: 0.5},
-            "distracting": {1: 0, 2: 0, 3: 0, 4: 0.1, 5: 0.3, 6: 0.3, 7: 0.3},
+            "distracting": {1: 0, 2: 0, 3: 0.2, 4: 0.4, 5: 0.4},
             # "extreme": {1: 0, 2: 0, 3: 0, 4: 0.3, 5: 0.3, 6: 0.2, 7: 0.2},
         }
         task_meta["sample_prob"] = (self._sample_prob_all["easy"],)
@@ -255,9 +255,8 @@ class SweepObjectsToZoneBase(BaseTask):
 
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
-        if difficulty == "easy":
-            self.task_meta["sample_prob"] = self._sample_prob_all["easy"]
-            self.task_meta["constraint_length"] = 0.75
+        self.task_meta["sample_prob"] = self._sample_prob_all["easy"]
+        self.task_meta["constraint_length"] = 0.75
         # elif difficulty == "medium":
         #     self.task_meta["sample_prob"] = self._sample_prob_all["medium"]
         #     self.task_meta["constraint_length"] = 1.35
@@ -267,16 +266,16 @@ class SweepObjectsToZoneBase(BaseTask):
         if difficulty in {"distracting", "extremely_distracting"}:
             self.task_meta["constraint_length"] = 1.85
             self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
-            self.possible_swept_obj_born_pos.append(
-                (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
-            )
+            # self.possible_swept_obj_born_pos.append(
+            #     (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
+            # )
 
         if difficulty in {"extreme", "extremely_distracting"}:
             self.task_meta["constraint_length"] = 1.85
             self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
-            self.possible_swept_obj_born_pos.append(
-                (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
-            )
+            # self.possible_swept_obj_born_pos.append(
+            #     (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
+            # )
             self.possible_dragged_obj = [
                 ObjPedia.CROSS,
                 ObjPedia.DIAMOND,

@@ -6,7 +6,6 @@ import numpy as np
 from loguru import logger
 from pybullet import getBasePositionAndOrientation
 
-from ...components.encyclopedia import ObjPedia
 from ...components.encyclopedia.definitions import TextureEntry
 from ...components.placeholders import PlaceholderObj, PlaceholderText
 from ...utils.misc_utils import (
@@ -196,9 +195,10 @@ class WithoutTouching(SweepObjectsToZoneBase):
         obj_pts = {}
         obj_ids = []
         swept_obj_size = self.rng.uniform(
-            low=ObjPedia.SMALL_BLOCK.value.size_range.low,
-            high=ObjPedia.SMALL_BLOCK.value.size_range.high,
+            low=sampled_swept_obj.size_range.low,
+            high=sampled_swept_obj.size_range.high,
         )
+
         # some samplings may be out of valid workspace
         not_reach_max_times = False
         for i in range(self.REJECT_SAMPLING_MAX_TIMES):
@@ -219,12 +219,14 @@ class WithoutTouching(SweepObjectsToZoneBase):
             if len(poses) != sampled_num_swept_objs:
                 continue
             for pose in poses:
+                should_scale_down = sampled_swept_obj.name != "small block"
                 obj_id, urdf_full_path = add_any_object(
                     env=env,
                     obj_entry=sampled_swept_obj,
                     pose=pose,
                     size=swept_obj_size,
                     retain_temp=True,
+                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else None,
                 )
                 p_change_texture(obj_id, sampled_swept_obj_texture, self.client_id)
                 obj_pts[obj_id] = self.get_box_object_points(obj_id)
@@ -300,12 +302,14 @@ class WithoutTouching(SweepObjectsToZoneBase):
             if len(poses) != sampled_num_swept_objs:
                 continue
             for pose in poses:
+                should_scale_down = sampled_swept_obj.name != "small block"
                 obj_id, urdf_full_path = add_any_object(
                     env=env,
                     obj_entry=sampled_swept_obj,
                     pose=pose,
                     size=swept_obj_size,
                     retain_temp=True,
+                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else None,
                 )
                 p_change_texture(obj_id, sampled_distractor_obj_texture, self.client_id)
                 add_object_id_reverse_mapping_info(
@@ -493,4 +497,4 @@ class WithoutTouching(SweepObjectsToZoneBase):
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
         if difficulty in {"distracting", "extreme", "extremely_distracting"}:
-            self.task_meta["max_swept_obj"] = 7
+            self.task_meta["max_swept_obj"] = 5

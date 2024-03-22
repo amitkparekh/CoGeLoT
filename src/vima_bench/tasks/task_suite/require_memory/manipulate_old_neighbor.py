@@ -368,6 +368,10 @@ class ManipulateOldNeighbor(BaseTask):
                         sampled_obj_size,
                         pose=obj_pose,
                         category="rigid",
+                        scalar=float(0.8)
+                        if self.task_meta["num_array_columns"] > 3
+                        or self.task_meta["num_array_rows"] > 3
+                        else float(1),
                     )
 
                     if (
@@ -466,14 +470,14 @@ class ManipulateOldNeighbor(BaseTask):
         # else:
         #     # 3x4 array, 4 null distractor, 6 "real" distractor
         #     self.task_meta["num_null_distractors"] = 4
-        #     self.task_meta["num_array_rows"] = 3
-        #     self.task_meta["num_array_columns"] = 4
         if difficulty in {"distracting", "extremely_distracting"}:
             self.task_meta["num_distractor_in_workspace"] = 3
 
         if difficulty in {"extreme", "extremely_distracting"}:
             self.possible_base_obj = self.possible_dragged_obj
             self.task_meta["num_null_distractors"] = 0
+            self.task_meta["num_array_columns"] = 4
+            self.task_meta["num_array_rows"] = 4
 
     def check_success(self, *args, **kwargs) -> ResultTuple:
         # check if the agent manipulates the neighbor object first

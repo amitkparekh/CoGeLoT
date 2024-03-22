@@ -462,8 +462,8 @@ class FollowMotion(BaseTask):
 
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
-        if difficulty == "easy":
-            self.task_meta["num_frames"] = 3
+        self.task_meta["num_frames"] = 3
+
         # elif difficulty == "medium":
         #     self.task_meta["num_frames"] = 4
         # else:

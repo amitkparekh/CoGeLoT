@@ -213,6 +213,7 @@ class SameColor(BaseTask):
                 size=base_sampled_size,
                 retain_temp=True,
                 category="fixed",
+                scalar=float(2.5) if sampled_base.name != "bowl" else float(1),
             )
             if all([base_id, base_urdf_full_path, base_pose]):
                 self.placeholders["base_obj"] = PlaceholderObj(
@@ -326,8 +327,6 @@ class SameColor(BaseTask):
     def set_difficulty(self, difficulty: str):
         # task difficulty depends on the number of objects
         super().set_difficulty(difficulty)
-        if difficulty == "easy":
-            pass
         # elif difficulty == "medium":
         #     self.task_meta["num_dragged_obj"] = 2
         #     self.task_meta["num_distractors_obj"] = 2

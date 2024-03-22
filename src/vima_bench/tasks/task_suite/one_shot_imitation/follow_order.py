@@ -481,9 +481,9 @@ class FollowOrder(BaseTask):
 
     def set_difficulty(self, difficulty: str):
         super().set_difficulty(difficulty)
-        if difficulty == "easy":
-            # 3 obj, 3 frames, 1 distractor
-            pass
+        # if difficulty == "easy":
+        # 3 obj, 3 frames, 1 distractor
+        # pass
         # elif difficulty == "medium":
         #     self.task_meta["num_dragged_obj"] = 4
         #     self.task_meta["num_frames"] = 4

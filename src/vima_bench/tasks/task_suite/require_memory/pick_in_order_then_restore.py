@@ -547,6 +547,11 @@ class PickInOrderThenRestore(BaseTask):
                 pose=empty_base_pose,
                 size=base_sampled_size,
                 category="fixed",
+                scalar=float(
+                    self.rng.uniform(0.5, 0.8)
+                    if self.difficulty_level in {"extreme", "extremely_distracting"}
+                    else 1
+                ),
             )
 
     def set_difficulty(self, difficulty: str):
@@ -556,7 +561,6 @@ class PickInOrderThenRestore(BaseTask):
             pass
         # elif difficulty == "medium":
         #     # 2x3
-        #     self.task_meta["num_array_columns"] = 3
         # else:
         #     # 2x3, add one more intermediate target base
 
@@ -564,8 +568,9 @@ class PickInOrderThenRestore(BaseTask):
             self.task_meta["num_distractor_dragged_obj"] = 4
 
         if difficulty in {"extreme", "extremely_distracting"}:
-            self.possible_base_obj = self.possible_dragged_obj
+            # self.possible_base_obj = self.possible_dragged_obj
             self._same_bases = False
+            # self._same_obj = True
 
         self._update_task_meta()
         self.oracle_max_steps = self.task_meta["num_target_base_obj"] + 2
