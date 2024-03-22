@@ -15,7 +15,8 @@ class ResetFaultToleranceWrapper(Wrapper):
         for retry_idx in range(self.max_retries):
             try:
                 return self.env.reset(**kwargs)
-            except Exception:  # noqa: BLE001
+            except Exception as err:  # noqa: BLE001
+                logger.exception(err)
                 logger.error(
                     f"Failed to reset environment, trying a different seed ({retry_idx}/{self.max_retries})"
                 )
