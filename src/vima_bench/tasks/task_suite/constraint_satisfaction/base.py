@@ -263,29 +263,21 @@ class SweepObjectsToZoneBase(BaseTask):
         #     self.task_meta["constraint_length"] = 1.35
         # else:
         #     self.task_meta["sample_prob"] = self._sample_prob_all["hard"]
-        #     self.task_meta["constraint_length"] = 1.85
 
         if difficulty in {"distracting", "extremely_distracting"}:
+            self.task_meta["constraint_length"] = 1.85
             self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
             self.possible_swept_obj_born_pos.append(
                 (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
             )
 
         if difficulty in {"extreme", "extremely_distracting"}:
+            self.task_meta["constraint_length"] = 1.85
             self.task_meta["sample_prob"] = self._sample_prob_all["distracting"]
             self.possible_swept_obj_born_pos.append(
                 (self.bounds[0, 0] + 0.3, self.bounds[1, 0] + 0.4),
             )
             self.possible_dragged_obj = [
-                ObjPedia.BLOCK,
-                ObjPedia.L_BLOCK,
-                ObjPedia.CAPITAL_LETTER_A,
-                ObjPedia.CAPITAL_LETTER_E,
-                ObjPedia.CAPITAL_LETTER_G,
-                ObjPedia.CAPITAL_LETTER_M,
-                ObjPedia.CAPITAL_LETTER_R,
-                ObjPedia.CAPITAL_LETTER_T,
-                ObjPedia.CAPITAL_LETTER_V,
                 ObjPedia.CROSS,
                 ObjPedia.DIAMOND,
                 ObjPedia.TRIANGLE,
@@ -294,7 +286,6 @@ class SweepObjectsToZoneBase(BaseTask):
                 ObjPedia.HEXAGON,
                 ObjPedia.PENTAGON,
                 ObjPedia.RING,
-                ObjPedia.ROUND,
                 ObjPedia.STAR,
             ]
 
