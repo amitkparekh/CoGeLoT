@@ -213,7 +213,9 @@ class SameColor(BaseTask):
                 size=base_sampled_size,
                 retain_temp=True,
                 category="fixed",
-                scalar=float(2.5) if sampled_base.name != "bowl" else float(1),
+                scalar=float(2.5)
+                if sampled_base.name not in {"bowl", "pan", "pallet"}
+                else float(1),
             )
             if all([base_id, base_urdf_full_path, base_pose]):
                 self.placeholders["base_obj"] = PlaceholderObj(
