@@ -227,7 +227,7 @@ class WithoutTouching(SweepObjectsToZoneBase):
                     pose=pose,
                     size=swept_obj_size,
                     retain_temp=True,
-                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else None,
+                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else float(1),
                 )
                 p_change_texture(obj_id, sampled_swept_obj_texture, self.client_id)
                 obj_pts[obj_id] = self.get_box_object_points(obj_id)
@@ -310,7 +310,7 @@ class WithoutTouching(SweepObjectsToZoneBase):
                     pose=pose,
                     size=swept_obj_size,
                     retain_temp=True,
-                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else None,
+                    scaling=self.rng.uniform(0.4, 0.7, size=3) if should_scale_down else float(1),
                 )
                 p_change_texture(obj_id, sampled_distractor_obj_texture, self.client_id)
                 add_object_id_reverse_mapping_info(
