@@ -15,7 +15,7 @@ from cogelot.modules.tokenizers.pose_action import (
     PoseActionTokenizer,
     create_mask_from_target_actions,
 )
-from cogelot.nn.decoders import TransformerDecoderGreedyGenerateWrapper, TransformerDecoderProtocol
+from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
 from cogelot.nn.shuffle_obj import shuffle_objects_for_each_observation
 from cogelot.structures.model import RawPromptTokenType
@@ -295,14 +295,3 @@ class Policy(torch.nn.Module):
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the continuous actions into a discrete form to work with cross-entropy."""
         return self.pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
-
-    def prepare_policy_for_greedy_generation(self) -> None:
-        """Prepare the policy for greedy generation."""
-        if self.training:
-            raise AssertionError(
-                "The policy is in training mode, so we should not prepare it for greedy generation since that is just inefficient."
-            )
-        self._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(
-            self._transformer_decoder,
-            num_tokens_to_generate_per_timestep=self.num_action_tokens_per_timestep,
-        )
