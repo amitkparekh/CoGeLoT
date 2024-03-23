@@ -8,6 +8,7 @@ from typing import Literal
 import gym
 import numpy as np
 import pybullet as p
+from loguru import logger
 
 from ..tasks import ALL_TASKS as _ALL_TASKS
 from ..tasks.components.end_effectors import Spatula, Suction
@@ -20,6 +21,10 @@ PLACE_DELTA_THRESHOLD = 0.005
 UR5_URDF_PATH = "ur5/ur5.urdf"
 UR5_WORKSPACE_URDF_PATH = "ur5/workspace.urdf"
 PLANE_URDF_PATH = "plane/plane.urdf"
+
+
+class MovementFailedError(Exception):
+    """Raised when the movement fails completely so we know the environment has failed hard."""
 
 
 class VIMAEnvBase(gym.Env):
@@ -409,11 +414,10 @@ class VIMAEnvBase(gym.Env):
         while not self.is_static:
             self.step_simulation()
             if counter > self._max_sim_steps_to_static:
-                print(
-                    "WARNING: step until static exceeds max"
-                    f" {self._max_sim_steps_to_static} steps!"
+                logger.error(
+                    f"step until static exceeds max {self._max_sim_steps_to_static} steps!"
                 )
-                break
+                raise MovementFailedError()
             counter += 1
 
         # we don't care about reward in VIMA
@@ -691,7 +695,7 @@ class VIMAEnvBase(gym.Env):
             self.step_counter += 1
             self.step_simulation()
 
-        print(f"Warning: movej exceeded {timeout} second timeout. Skipping.")
+        logger.error(f"movej exceeded {timeout} second timeout. Skipping.")
         return True
 
     def movep(self, pose, speed=0.01):

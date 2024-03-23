@@ -25,6 +25,7 @@ from cogelot.structures.vima import (
     VIMAInstance,
 )
 from vima.utils import DataDict, add_batch_dim
+from vima_bench.env.base import MovementFailedError
 
 NUM_AXES = 14
 MAX_TIMESTEPS = 20
@@ -161,9 +162,13 @@ class EvaluationLightningModule(pl.LightningModule):
                 break
 
             # Take a step in the environment
-            observation, is_task_successful = self.take_action_in_environment(
-                actions=actions_for_env
-            )
+            try:
+                observation, is_task_successful = self.take_action_in_environment(
+                    actions=actions_for_env
+                )
+            except MovementFailedError:
+                logger.error("Movement failed; terminating early")
+                break
 
             # Add the observation to the state
             self.add_observation_to_buffer(
