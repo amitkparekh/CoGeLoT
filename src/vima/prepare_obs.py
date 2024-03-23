@@ -91,6 +91,8 @@ def prepare_obs(
             cropped_imgs = np.asarray(cropped_imgs)
             mask = np.ones(len(bboxes), dtype=bool)
             if n_pad > 0:
+                if bboxes.ndim == 1:
+                    bboxes = np.expand_dims(bboxes, axis=0)
                 bboxes = np.concatenate([bboxes, np.zeros((n_pad, 4), dtype=bboxes.dtype)], axis=0)
                 cropped_imgs = np.concatenate(
                     [
