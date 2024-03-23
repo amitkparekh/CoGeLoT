@@ -164,12 +164,12 @@ def build_eval_run_name(config: DictConfig) -> str:
     difficulty = _get_difficulty(config)
 
     eval_instance_transform_to_name = {
-        "textual": "Text",
+        "textual": "ObjText",
         "gobbledygook_word": "GDGWord",
         "gobbledygook_tokens": "GDGToken",
         "reworded": "Para",
-        "textual_gobbledygook_word": "Text + GDGWord",
-        "textual_gobbledygook_tokens": "Text + GDGToken",
+        "textual_gobbledygook_word": "ObjText + GDGWord",
+        "textual_gobbledygook_tokens": "ObjText + GDGToken",
         "noop": "",
     }
     eval_prompt_modality_to_name = {
@@ -177,6 +177,14 @@ def build_eval_run_name(config: DictConfig) -> str:
         "disable_text": "No Text",
         "disable_visual": "No VisRef",
         "disable_none": "",
+    }
+    difficulty_to_name = {
+        "easy": "",
+        "medium": "Med",
+        "hard": "Hard",
+        "distracting": "Dstr",
+        "extreme": "Xtr",
+        "extremely_distracting": "XD",
     }
     extras = [
         eval_instance_transform_to_name[evaluation_instance_transform_column],
@@ -189,7 +197,6 @@ def build_eval_run_name(config: DictConfig) -> str:
     if extras:
         run_name = f"{run_name} - {' + '.join(extras)}"
     if difficulty != "easy":
-        difficulty = "XD" if difficulty == "extremely_distracting" else difficulty.capitalize()
-        run_name = f"{run_name} [{difficulty}]"
+        run_name = f"{run_name} [{difficulty_to_name[difficulty]}]"
 
     return run_name
