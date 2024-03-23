@@ -26,14 +26,16 @@ parameters:
   evaluation_instance_transform:
     values:
       - noop
-      # - textual
-      # - textual_gobbledygook_tokens
-      # - textual_gobbledygook_word
+      - gobbledygook_tokens
+      - gobbledygook_word
+      - textual
+      - textual_gobbledygook_tokens
+      - textual_gobbledygook_word
       - reworded
 
   evaluation_prompt_modality:
     values:
       - disable_none
-      # - disable_text
-      # - disable_visual
-      - disable_both
+      - disable_text
+      - disable_visual
+      # - disable_both

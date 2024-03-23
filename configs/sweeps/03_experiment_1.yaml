@@ -8,7 +8,7 @@ command:
 
 program: src/cogelot/entrypoints/train.py
 
-name: 14tok
+name: 14tok again
 entity: pyop
 project: CoGeLoT
 
@@ -20,8 +20,8 @@ parameters:
       # - 07_roformer_decoder_abs_1tok
       # - 01_their_vima
       - 01_their_vima_14tok
-      - 05_torch_vanilla_decoder_abs_14tok
-      - 06_t5_decoder_abs_14tok
+      # - 05_torch_vanilla_decoder_abs_14tok
+      # - 06_t5_decoder_abs_14tok
       # - 02_vima_xattn_decoder_abs_1tok
       # - 02_vima_xattn_decoder_abs_14tok
       # - 03_vanilla_xattn_decoder_abs_1tok
@@ -44,5 +44,9 @@ parameters:
   datamodule.dataset_variant:
     values:
       - original
-      # - keep_null_action
       - reworded
+
+  model.should_shuffle_obj_per_observations:
+    values:
+      - false
+      - true

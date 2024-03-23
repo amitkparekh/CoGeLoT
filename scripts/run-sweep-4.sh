@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-wandb agent pyop/CoGeLoT/y8o7hg14
+wandb agent pyop/CoGeLoT/j7pvx7d1
