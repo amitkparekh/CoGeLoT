@@ -1,7 +1,5 @@
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
-import pytest
 import torch
 from pytest_cases import fixture, parametrize_with_cases
 from transformers.models.t5.configuration_t5 import T5Config
@@ -27,7 +25,6 @@ from cogelot.modules.tokenizers import (
     TextTokenizer,
 )
 from cogelot.nn.decoders.interfaces import (
-    TransformerDecoderGreedyGenerateWrapper,
     TransformerDecoderProtocol,
 )
 from cogelot.nn.decoders.torch import TorchVanillaDecoder
@@ -173,7 +170,7 @@ class ActionEncoderDecoderCases:
         decoder = VIMAActionDecoder(action_decoder)
         return encoder, decoder
 
-    @pytest.mark.skip("Only focusing on single tokens for now.")
+    # @pytest.mark.skip("Only focusing on single tokens for now.")
     def case_token_per_axis(
         self, pose_action_tokenizer: PoseActionTokenizer, embed_dim: int
     ) -> tuple[TokenPerAxisActionEmbedder, TokenPerAxisActionDecoder]:
@@ -248,18 +245,6 @@ def vima_lightning_module(vima_policy: Policy) -> VIMALightningModule:
 
 
 @fixture(scope="session")
-def vima_lightning_module_for_inference(
-    vima_lightning_module: VIMALightningModule,
-) -> VIMALightningModule:
-    vima_lightning_module = deepcopy(vima_lightning_module)
-    vima_lightning_module.policy._transformer_decoder = TransformerDecoderGreedyGenerateWrapper(
-        vima_lightning_module.policy._transformer_decoder,
-        num_tokens_to_generate_per_timestep=vima_lightning_module.policy.num_action_tokens_per_timestep,
-    )
-    return vima_lightning_module
-
-
-@fixture(scope="session")
 def vima_environment() -> VIMAEnvironment:
     return VIMAEnvironment.from_config(task=1, partition=1, seed=10)
 
@@ -267,12 +252,12 @@ def vima_environment() -> VIMAEnvironment:
 @fixture
 def evaluation_module(
     instance_preprocessor: InstancePreprocessor,
-    vima_lightning_module_for_inference: VIMALightningModule,
+    vima_lightning_module: VIMALightningModule,
     vima_environment: VIMAEnvironment,
 ) -> EvaluationLightningModule:
     return EvaluationLightningModule(
         environment=vima_environment,
-        model=vima_lightning_module_for_inference,
+        model=vima_lightning_module,
         instance_preprocessor=instance_preprocessor,
         max_timesteps=2,
     )

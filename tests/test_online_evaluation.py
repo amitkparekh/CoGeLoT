@@ -141,7 +141,7 @@ def test_evaluation_runs_with_trainer(evaluation_module: EvaluationLightningModu
 @parametrize("disable_visual", [False, True], ids=["visual_enabled", "visual_disabled"])
 def test_evaluation_runs_with_disabled_prompt_modalities(
     instance_preprocessor: InstancePreprocessor,
-    vima_lightning_module_for_inference: VIMALightningModule,
+    vima_lightning_module: VIMALightningModule,
     vima_environment: VIMAEnvironment,
     disable_text: bool,
     disable_visual: bool,
@@ -149,7 +149,7 @@ def test_evaluation_runs_with_disabled_prompt_modalities(
 ) -> None:
     evaluation_module = EvaluationLightningModule(
         environment=vima_environment,
-        model=vima_lightning_module_for_inference,
+        model=vima_lightning_module,
         instance_preprocessor=instance_preprocessor,
         max_timesteps=2,
         disable_prompt_text=disable_text,
@@ -161,7 +161,7 @@ def test_evaluation_runs_with_disabled_prompt_modalities(
 
     # Setup spys
     transformer_decoder_spy = mocker.spy(
-        vima_lightning_module_for_inference.policy._transformer_decoder, "forward"
+        vima_lightning_module.policy._transformer_decoder, "forward"
     )
 
     trainer.test(evaluation_module, datamodule=datamodule)

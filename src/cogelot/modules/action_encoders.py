@@ -143,7 +143,7 @@ class TokenPerAxisActionEmbedder(ActionEncoder):
             ),
             requires_grad=True,
         )
-        torch.nn.init.normal_(self.pose_action_axes_embedder)
+        torch.nn.init.orthogonal_(self.pose_action_axes_embedder)
 
     @property
     def num_action_tokens_per_timestep(self) -> int:
@@ -162,11 +162,12 @@ class TokenPerAxisActionEmbedder(ActionEncoder):
             ],
             dim=-1,
         )
-        embedded_actions = self._embed_discrete_actions(discrete_actions_tensor)
+        embedded_actions = self.embed_discrete_actions(discrete_actions_tensor)
 
         return embedded_actions
 
-    def _embed_discrete_actions(self, discrete_actions_tensor: torch.Tensor) -> torch.Tensor:
+    def embed_discrete_actions(self, discrete_actions_tensor: torch.Tensor) -> torch.Tensor:
+        """Embed the discrete actions tokens."""
         batch_size, num_timesteps, num_axes = discrete_actions_tensor.shape
 
         action_indices = discrete_actions_tensor

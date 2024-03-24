@@ -32,6 +32,8 @@ def evaluate_model(config: DictConfig) -> None:
     # Patch the transformer decoder to enable greedy token generation
     assert isinstance(model, EvaluationLightningModule)
     model.eval()
+    if model.model.policy.num_action_tokens_per_timestep > 1:
+        model.model.policy.use_greedy_decoding = True
 
     logger.info("Starting evaluation...")
     trainer.test(model, datamodule=datamodule)

@@ -1,4 +1,4 @@
-from typing import ClassVar, Self, cast
+from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 import torch
 from transformers.models.t5.modeling_t5 import T5EncoderModel
@@ -23,6 +23,9 @@ from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
 from vima.policy.vima_policy import VIMAPolicy
 from vima.utils import DataDict
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def get_max_length_of_prompt(raw_prompts_token_type: RawPromptTokenType, max_num_objs: int) -> int:
@@ -58,6 +61,7 @@ class Policy(torch.nn.Module):
         transformer_decoder: TransformerDecoderProtocol,
         pose_action_tokenizer: PoseActionTokenizer,
         add_residual_connection_to_prompt_visual_features: bool = False,
+        use_greedy_decoding: bool = False,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -89,6 +93,7 @@ class Policy(torch.nn.Module):
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features
         )
+        self.use_greedy_decoding = use_greedy_decoding
 
     @property
     def prompt_embedding(self) -> T5TextEmbedder:
@@ -137,6 +142,16 @@ class Policy(torch.nn.Module):
         """The number of action tokens per timestep."""
         return self._action_encoder.num_action_tokens_per_timestep
 
+    @property
+    def use_greedy_decoding(self) -> bool:
+        """Whether the policy uses greedy decoding."""
+        return self._use_greedy_decoding
+
+    @use_greedy_decoding.setter
+    def use_greedy_decoding(self, value: bool) -> None:  # noqa: WPS110
+        """Set whether the policy uses greedy decoding."""
+        self._use_greedy_decoding = value
+
     def predict_action_logits(
         self,
         encoded_prompt: torch.Tensor,
@@ -147,25 +162,25 @@ class Policy(torch.nn.Module):
         encoded_actions_mask: torch.Tensor | None,
     ) -> torch.Tensor:
         """Predict the action token."""
-        tokens, masks = stitch_observations_with_actions(
-            encoded_observations,
-            encoded_observations_mask,
-            encoded_actions,
-            encoded_actions_mask,
-            add_encoding_to_tokens_fn=add_encoding_to_tokens_using_scatter,
-            num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
+        return (
+            self._greedy_predict_action_logits(
+                encoded_prompt=encoded_prompt,
+                encoded_prompt_mask=encoded_prompt_mask,
+                encoded_observations=encoded_observations,
+                encoded_observations_mask=encoded_observations_mask,
+                encoded_actions=encoded_actions,
+                encoded_actions_mask=encoded_actions_mask,
+            )
+            if self._use_greedy_decoding
+            else self._predict_action_logits(
+                encoded_prompt=encoded_prompt,
+                encoded_prompt_mask=encoded_prompt_mask,
+                encoded_observations=encoded_observations,
+                encoded_observations_mask=encoded_observations_mask,
+                encoded_actions=encoded_actions,
+                encoded_actions_mask=encoded_actions_mask,
+            )
         )
-
-        transformer_output = self._transformer_decoder(
-            tgt=tokens,
-            tgt_key_padding_mask=masks,
-            memory=encoded_prompt,
-            memory_key_padding_mask=encoded_prompt_mask,
-        )
-        predicted_actions = self.decode_action_logits(
-            transformer_output, max_num_objects=encoded_observations.size(-2)
-        )
-        return predicted_actions
 
     def embed_multimodal_prompt(
         self,
@@ -295,3 +310,90 @@ class Policy(torch.nn.Module):
     ) -> dict[PoseActionType, torch.Tensor]:
         """Convert the continuous actions into a discrete form to work with cross-entropy."""
         return self.pose_action_tokenizer.convert_continuous_to_discrete(continuous_actions)
+
+    def _predict_action_logits(
+        self,
+        encoded_prompt: torch.Tensor,
+        encoded_prompt_mask: torch.Tensor,
+        encoded_observations: torch.Tensor,
+        encoded_observations_mask: torch.Tensor,
+        encoded_actions: torch.Tensor | None,
+        encoded_actions_mask: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Predict the action token."""
+        tokens, masks = stitch_observations_with_actions(
+            encoded_observations,
+            encoded_observations_mask,
+            encoded_actions,
+            encoded_actions_mask,
+            add_encoding_to_tokens_fn=add_encoding_to_tokens_using_scatter,
+            num_action_tokens_per_timestep=self.num_action_tokens_per_timestep,
+        )
+
+        transformer_output = self._transformer_decoder(
+            tgt=tokens,
+            tgt_key_padding_mask=masks,
+            memory=encoded_prompt,
+            memory_key_padding_mask=encoded_prompt_mask,
+        )
+        predicted_actions = self.decode_action_logits(
+            transformer_output, max_num_objects=encoded_observations.size(-2)
+        )
+        return predicted_actions
+
+    def _greedy_predict_action_logits(
+        self,
+        encoded_prompt: torch.Tensor,
+        encoded_prompt_mask: torch.Tensor,
+        encoded_observations: torch.Tensor,
+        encoded_observations_mask: torch.Tensor,
+        encoded_actions: torch.Tensor | None,
+        encoded_actions_mask: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Predict logits for the actions using greedy decoding."""
+        embed_discrete_action_token: Callable[[torch.Tensor], torch.Tensor] | None = getattr(
+            self._action_encoder, "embed_discrete_actions", None
+        )
+        assert embed_discrete_action_token is not None
+
+        action_tokens = torch.tensor(
+            [[[0 for _ in range(self.num_action_tokens_per_timestep)]]],
+            device=encoded_prompt.device,
+            dtype=torch.long,
+        )
+        action_tokens_mask = torch.ones(
+            self.num_action_tokens_per_timestep, device=encoded_prompt.device, dtype=torch.bool
+        )
+
+        assert self.num_action_tokens_per_timestep > 0
+        for token_idx in range(self.num_action_tokens_per_timestep):
+            encoded_axis_tokens = embed_discrete_action_token(action_tokens)
+            merged_encoded_actions = (
+                torch.cat([encoded_actions, encoded_axis_tokens], dim=1)
+                if encoded_actions is not None
+                else encoded_axis_tokens
+            )
+            merged_encoded_actions_mask = (
+                torch.cat(
+                    [encoded_actions_mask, action_tokens_mask.unsqueeze(0).unsqueeze(0)],
+                    dim=1,
+                )
+                if encoded_actions_mask is not None
+                else action_tokens_mask.unsqueeze(0).unsqueeze(0)
+            )
+            axis_logits = self._predict_action_logits(
+                encoded_prompt=encoded_prompt,
+                encoded_prompt_mask=encoded_prompt_mask,
+                encoded_observations=encoded_observations,
+                encoded_observations_mask=encoded_observations_mask,
+                encoded_actions=merged_encoded_actions,
+                encoded_actions_mask=merged_encoded_actions_mask,
+            )
+            action_tokens = (
+                axis_logits.softmax(dim=-1).argmax(dim=-1)[:, 0, -1].unsqueeze(0).unsqueeze(0)
+            )
+            # Update the mask so the next token gets used
+            action_tokens_mask[token_idx] = False
+
+        assert isinstance(axis_logits, torch.Tensor)  # pyright: ignore[reportPossiblyUnboundVariable]
+        return axis_logits
