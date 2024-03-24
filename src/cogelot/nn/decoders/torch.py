@@ -141,4 +141,8 @@ class TorchDecoderOnly(TransformerDecoderProtocol):
             mask=causal_mask,
         )
         assert isinstance(transformer_output, torch.Tensor)
+
+        # Slice off the memory so we just return the obs and actions
+        transformer_output = transformer_output[:, -tgt.size(1) :]
+
         return transformer_output
