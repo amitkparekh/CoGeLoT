@@ -19,12 +19,19 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "8lkml12g": "original",
         "2df3mwfn": "paraphrases",
         "ftwoyjb1": "original",
+        "wa2rtion": "original",
     }
     return trained_instruction[wandb_model_run_id]
 
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
     return wandb_model_run_id == "ftwoyjb1"
+
+
+def _is_14_action_tokens(config: DictConfig) -> bool:
+    return "TokenPerAxis" in OmegaConf.select(
+        config, "model.model.policy.action_decoder._target_", default=""
+    )
 
 
 def _get_difficulty(config: DictConfig) -> str:
@@ -142,6 +149,13 @@ def update_eval_config(config: DictConfig) -> DictConfig:
         force_add=True,
         merge=False,
     )
+    OmegaConf.update(
+        config,
+        "num_action_tokens",
+        14 if _is_14_action_tokens(config) else 1,
+        force_add=True,
+        merge=False,
+    )
     return config
 
 
@@ -156,6 +170,7 @@ def build_eval_run_name(config: DictConfig) -> str:
         else "Given"
     )
     run_name += "Shuf" if _is_trained_on_shuffled_obj(wandb_model_run_id) else ""
+    run_name += "14" if _is_14_action_tokens(config) else ""
 
     evaluation_instance_transform_column = _get_evaluation_instance_transform_column(
         instance_transform
