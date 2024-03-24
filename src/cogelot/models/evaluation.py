@@ -168,6 +168,7 @@ class EvaluationLightningModule(pl.LightningModule):
                 )
             except MovementFailedError:
                 logger.error("Movement failed; terminating early")
+                self.buffer.update_success_tracker(is_successful=False)
                 break
 
             # Add the observation to the state
