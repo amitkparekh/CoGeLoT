@@ -6,7 +6,7 @@ import os
 import random
 import string
 import tempfile
-from typing import Dict, Optional, Any, Union, List
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pybullet as p
@@ -45,6 +45,8 @@ def get_urdf_path(
         )
         urdf = obj_entry.assets
         urdf_full_path = os.path.join(env.assets_root, urdf)
+    if not os.path.exists(urdf_full_path):
+        raise FileNotFoundError(f"URDF file not found: {urdf_full_path}")
     return urdf_full_path
 
 
