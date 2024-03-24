@@ -695,7 +695,7 @@ class VIMAEnvBase(gym.Env):
             self.step_counter += 1
             self.step_simulation()
 
-        logger.error(f"movej exceeded {timeout} second timeout. Skipping.")
+        logger.opt(exception=True).error(f"movej exceeded {timeout} second timeout. Skipping.")
         return True
 
     def movep(self, pose, speed=0.01):
