@@ -15,5 +15,5 @@ encoder:
     dropout: 0.1
     batch_first: True
     activation: gelu
-    bias: False
+    bias: True
     norm_first: True
