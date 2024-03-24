@@ -1,19 +1,14 @@
-_target_: cogelot.nn.decoders.torch.TorchVanillaDecoder
+_target_: cogelot.nn.decoders.torch.TorchDecoderOnly
 pos_embedder:
   _target_: torch.nn.Embedding
   num_embeddings: 512
   embedding_dim: ${model.policy.embed_dim}
 
-xattn_embedder:
-  _target_: torch.nn.Embedding
-  num_embeddings: 256
-  embedding_dim: ${model.policy.embed_dim}
-
-decoder:
-  _target_: torch.nn.TransformerDecoder
+encoder:
+  _target_: torch.nn.TransformerEncoder
   num_layers: 11
-  decoder_layer:
-    _target_: torch.nn.TransformerDecoderLayer
+  encoder_layer:
+    _target_: torch.nn.TransformerEncoderLayer
     d_model: ${model.policy.embed_dim}
     nhead: 24
     dim_feedforward: 3072

@@ -1,9 +1,0 @@
-# This is their implementation of their VIMA transformer decoder
-_target_: cogelot.nn.decoders.VIMADecoder
-vima_xattn_gpt:
-  _target_: cogelot.nn.decoders.t5.XAttnGPTJ
-  # Hyperparams taken from Table9 in the paper
-  embd_dim: ${...embed_dim}
-  n_layer: 11
-  n_head: 24
-  dropout: 0.1

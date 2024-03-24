@@ -27,7 +27,7 @@ from cogelot.modules.tokenizers import (
 from cogelot.nn.decoders.interfaces import (
     TransformerDecoderProtocol,
 )
-from cogelot.nn.decoders.torch import TorchVanillaDecoder
+from cogelot.nn.decoders.torch import TorchDecoderOnly, TorchVanillaDecoder
 from cogelot.nn.decoders.vima import VIMADecoder
 from vima import nn as vnn
 from vima.policy import VIMAPolicy
@@ -207,6 +207,16 @@ class TransformerDecoderCases:
             pos_embedder=pos_embedder,
             xattn_embedder=xattn_embedder,
         )
+
+    def case_torch_decoder_only(self, embed_dim: int) -> TorchDecoderOnly:
+        encoder = torch.nn.TransformerEncoder(
+            encoder_layer=torch.nn.TransformerEncoderLayer(
+                d_model=embed_dim, nhead=2, dim_feedforward=embed_dim, dropout=0, batch_first=True
+            ),
+            num_layers=2,
+        )
+        pos_embedder = torch.nn.Embedding(512, embed_dim)
+        return TorchDecoderOnly(encoder=encoder, pos_embedder=pos_embedder)
 
 
 @fixture(scope="session")

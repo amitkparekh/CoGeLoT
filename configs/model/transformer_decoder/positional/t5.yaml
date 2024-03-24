@@ -1,4 +1,0 @@
-use_abs_pos_emb: false
-
-attn_layers:
-  rel_pos_bias: True

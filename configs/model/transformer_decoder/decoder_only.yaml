@@ -1,5 +1,0 @@
-defaults:
-  - prompt_encoder_history_decoder.yaml
-  - _self_
-
-_target_: cogelot.nn.decoders.DecoderOnly

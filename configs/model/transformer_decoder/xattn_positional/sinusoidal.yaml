@@ -1,3 +1,0 @@
-xattn_embedder:
-  _target_: x_transformers.x_transformers.AbsolutePositionalEmbedding
-  dim: ${model.policy.embed_dim}
