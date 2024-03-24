@@ -135,6 +135,13 @@ class TorchDecoderOnly(TransformerDecoderProtocol):
         input_position_embedding = self.pos_embedder(position_ids)
         input_with_position = decoder_input + input_position_embedding
 
+        # Make things float
+        # Note for future me when I panic: If the mask is TRUE, then it means it _should_ be
+        # masked and set to -inf. If it's false, then it's should turn into 0
+        decoder_key_padding_mask = _convert_to_float_mask(
+            decoder_key_padding_mask, causal_mask.dtype
+        )
+
         transformer_output = self.encoder(
             src=input_with_position,
             src_key_padding_mask=decoder_key_padding_mask,
