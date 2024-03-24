@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, ClassVar, Literal, cast, overload
 
 import numpy as np
@@ -93,8 +94,7 @@ class InstancePreprocessor:
         prompt: str,
         prompt_assets: dict[str, dict[str, Any]],
         object_ids_from_prompt_assets: set[int],
-    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
-        ...
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]: ...
 
     @overload
     def prepare_prompt(
@@ -103,8 +103,7 @@ class InstancePreprocessor:
         prompt: str,
         prompt_assets: PromptAssets,
         object_ids_from_prompt_assets: None,
-    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]:
-        ...
+    ) -> tuple[RawPromptTokenType, torch.Tensor, DataDict]: ...
 
     def prepare_prompt(
         self,
@@ -149,9 +148,10 @@ class InstancePreprocessor:
             observations=observations, tokenized_end_effector=tokenized_end_effector
         )
         prepared_observations = prepare_obs(
-            obs=their_observations,
-            object_ids=list(object_ids),
+            obs=deepcopy(their_observations), object_ids=list(object_ids)
         )
+        # Include the RGB images within the observations
+        prepared_observations["rgb"] = their_observations["rgb"]
         return prepared_observations
 
     def tokenize_end_effector(self, end_effector: str, num_observations: int) -> np.ndarray:

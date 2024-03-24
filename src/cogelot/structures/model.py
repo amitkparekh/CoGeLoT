@@ -4,7 +4,7 @@ import datasets
 import torch
 from pydantic import BaseModel, BeforeValidator, ConfigDict, PlainSerializer
 
-from cogelot.structures.common import PydanticHFDatasetMixin, PydanticTensor
+from cogelot.structures.common import FRAME_SHAPE, PydanticHFDatasetMixin, PydanticTensor
 from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
 
@@ -137,6 +137,14 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
                             "front": _observation_feature_wrapper(_Mask),
                             "top": _observation_feature_wrapper(_Mask),
                         },
+                    },
+                    "rgb": {
+                        "front": datasets.Sequence(
+                            datasets.Array3D(shape=FRAME_SHAPE, dtype="float32")
+                        ),
+                        "top": datasets.Sequence(
+                            datasets.Array3D(shape=FRAME_SHAPE, dtype="float32")
+                        ),
                     },
                 },
                 "actions": {
