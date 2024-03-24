@@ -1,7 +1,6 @@
 """Motion primitives."""
 
 import numpy as np
-from loguru import logger
 
 from ..utils import misc_utils as utils
 
@@ -193,7 +192,6 @@ class PickPlace:
         postpick_to_pick = ((0, 0, self.height), (0, 0, 0, 1))
         prepick_pose = utils.multiply(pick_pose, prepick_to_pick)
         postpick_pose = utils.multiply(pick_pose, postpick_to_pick)
-        logger.debug("Prepick pose")
         timeout = movep(prepick_pose)
 
         # Move towards pick pose until contact is detected.
@@ -201,14 +199,12 @@ class PickPlace:
         targ_pose = prepick_pose
         while not ee.detect_contact():  # and target_pose[2] > 0:
             targ_pose = utils.multiply(targ_pose, delta)
-            logger.debug("Target pose")
             timeout |= movep(targ_pose)
             if timeout:
                 return True, False
 
         # Activate end effector, move up, and check picking success.
         ee.activate()
-        logger.debug("Postpick pose")
         timeout |= movep(postpick_pose, self.speed)
         pick_success = ee.check_grasp()
 
@@ -221,18 +217,15 @@ class PickPlace:
             targ_pose = preplace_pose
             while not ee.detect_contact():
                 targ_pose = utils.multiply(targ_pose, delta)
-                logger.debug("Target postpick")
                 timeout |= movep(targ_pose, self.speed)
                 if timeout:
                     return True, False
             ee.release()
-            logger.debug("Postplace pose")
             timeout |= movep(postplace_pose)
 
         # Move to prepick pose if pick is not successful.
         else:
             ee.release()
-            logger.debug("Prepick pose")
             timeout |= movep(prepick_pose)
 
         return timeout, pick_success
@@ -282,11 +275,19 @@ class Push:
 
         # Execute push.
         timeout = movep((over0, rot))
+        if timeout:
+            return True
         timeout |= movep((pos0, rot))
+        if timeout:
+            return True
         n_push = np.int32(np.floor(np.linalg.norm(pos1 - pos0) / self._step_size))
         for _ in range(n_push):
             target = pos0 + vec * n_push * self._step_size
             timeout |= movep((target, rot), speed=self._speed)
+            if timeout:
+                return True
         timeout |= movep((pos1, rot), speed=self._speed)
+        if timeout:
+            return True
         timeout |= movep((over1, rot))
         return timeout
