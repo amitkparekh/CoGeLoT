@@ -139,6 +139,7 @@ class TorchDecoderOnly(TransformerDecoderProtocol):
             src=input_with_position,
             src_key_padding_mask=decoder_key_padding_mask,
             mask=causal_mask,
+            is_causal=self._use_causal_mask,
         )
         assert isinstance(transformer_output, torch.Tensor)
 
