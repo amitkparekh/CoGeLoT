@@ -386,6 +386,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     partition: Annotated[
         Partition,
+        BeforeValidator(lambda enum: int(enum.item()) if isinstance(enum, torch.Tensor) else enum),
         BeforeValidator(lambda enum: Partition(enum) if isinstance(enum, int) else enum),
         PlainSerializer(lambda enum: enum.value, return_type=int),
     ]
