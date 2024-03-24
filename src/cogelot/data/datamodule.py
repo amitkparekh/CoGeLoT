@@ -165,7 +165,7 @@ class VIMADataModuleFromHF(VIMADataModule):
 
     def _maybe_get_config_for_task_index(self, task_index: int | None) -> str:
         """Get the config name for the task index, if the task index is provided."""
-        settings = Settings()
+        settings = Settings(dataset_variant=self._dataset_variant)
         if not task_index:
             return settings.get_config_name(stage=self._desired_config_stage)
 
