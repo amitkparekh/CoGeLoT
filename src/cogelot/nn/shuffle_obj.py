@@ -36,6 +36,7 @@ def compute_new_object_order(mask: torch.Tensor) -> torch.Tensor:
     return new_object_order - 1
 
 
+@torch.no_grad()
 def shuffle_objects_for_each_observation(objects: ImageFeatures | DataDict) -> DataDict:
     """Shuffle the object tokens for each observation.
 
