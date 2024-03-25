@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - override /model/transformer_decoder@model.policy.transformer_decoder: their_gpt.yaml
+  - override /model/action_decoder@model.policy.action_decoder: token_per_axis
+  - override /model/action_encoder@model.policy.action_encoder: token_per_axis
+  - _self_
+
+num_action_tokens: 14
