@@ -18,18 +18,20 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "Given": "original",
         "8lkml12g": "original",
         "2df3mwfn": "paraphrases",
+        "0nsnkaer": "paraphrases",
         "ftwoyjb1": "original",
         "wa2rtion": "original",
+        "b2slg2rh": "paraphrases",
     }
     return trained_instruction[wandb_model_run_id]
 
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id == "ftwoyjb1"
+    return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer"}
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id == "wa2rtion"
+    return wandb_model_run_id in {"wa2rtion", "b2slg2rh"}
 
 
 def _get_difficulty(config: DictConfig) -> str:
