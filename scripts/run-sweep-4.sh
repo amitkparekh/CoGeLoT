@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-wandb agent --count 1 pyop/CoGeLoT/pwsshmvv
+wandb agent pyop/CoGeLoT/pwsshmvv
