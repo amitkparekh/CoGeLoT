@@ -20,12 +20,7 @@ settings = Settings()
 
 def _create_vima_instance_parser() -> VIMAInstanceParser:
     """Create the VIMA instance parser, with the correct settings."""
-    if settings.dataset_variant == "original":
-        return VIMAInstanceParser(keep_null_action=False)
-    if settings.dataset_variant == "keep_null_action":
-        return VIMAInstanceParser(keep_null_action=True)
-
-    raise ValueError(f"Unknown dataset variant: {settings.dataset_variant}")
+    return VIMAInstanceParser(keep_null_action="keep_null_action" in settings.dataset_variant)
 
 
 def create_instance_filename_from_raw_instance_dir(instance_dir: Path) -> str:
