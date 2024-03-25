@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - override /model/transformer_decoder@model.policy.transformer_decoder: their_gpt.yaml
+  - _self_
+
+num_action_tokens: 1

@@ -27,8 +27,7 @@ from cogelot.modules.tokenizers import (
 from cogelot.nn.decoders.interfaces import (
     TransformerDecoderProtocol,
 )
-from cogelot.nn.decoders.torch import TorchDecoderOnly, TorchVanillaDecoder
-from cogelot.nn.decoders.vima import VIMADecoder
+from cogelot.nn.decoders.vima import VIMADecoder, VIMAGPTDecoderOnly
 from vima import nn as vnn
 from vima.policy import VIMAPolicy
 
@@ -86,36 +85,8 @@ def prompt_encoder(pretrained_model: str) -> T5PromptEncoder:
 
 
 @fixture(scope="session")
-def object_encoder(embed_dim: int) -> vnn.ObjEncoder:
-    return vnn.ObjEncoder(
-        transformer_emb_dim=embed_dim,
-        views=["front", "top"],
-        vit_output_dim=embed_dim,
-        vit_resolution=32,
-        vit_patch_size=16,
-        vit_width=embed_dim,
-        vit_layers=4,
-        vit_heads=2,
-        bbox_mlp_hidden_dim=embed_dim,
-        bbox_mlp_hidden_depth=2,
-    )
-
-
-@fixture(scope="session")
 def end_effector_encoder() -> torch.nn.Embedding:
     return torch.nn.Embedding(num_embeddings=2, embedding_dim=2)
-
-
-@fixture(scope="session")
-def obs_fusion_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Linear:
-    return torch.nn.Linear(object_encoder.output_dim + 2, embed_dim)
-
-
-@fixture(scope="session")
-def prompt_obj_post_layer(object_encoder: vnn.ObjEncoder, embed_dim: int) -> torch.nn.Sequential:
-    return vnn.build_mlp(
-        object_encoder.output_dim, hidden_dim=embed_dim, output_dim=embed_dim, hidden_depth=2
-    )
 
 
 class ActionEncoderDecoderCases:
@@ -192,36 +163,53 @@ class TransformerDecoderCases:
         vima = VIMAPolicy(embed_dim=embed_dim, xf_n_layers=2, sattn_n_heads=2, xattn_n_heads=2)
         return VIMADecoder(vima.xattn_gpt)
 
-    def case_torch_decoder(self, embed_dim: int) -> TorchVanillaDecoder:
-        decoder_layer = torch.nn.TransformerDecoderLayer(
-            d_model=embed_dim,
-            nhead=2,
-            dim_feedforward=embed_dim,
-            dropout=0,
-            batch_first=True,
-        )
-        pos_embedder = torch.nn.Embedding(512, embed_dim)
-        xattn_embedder = torch.nn.Embedding(512, embed_dim)
-        return TorchVanillaDecoder(
-            decoder=torch.nn.TransformerDecoder(decoder_layer, num_layers=2),
-            pos_embedder=pos_embedder,
-            xattn_embedder=xattn_embedder,
+    def case_vima_decoder_only(self, embed_dim: int) -> VIMAGPTDecoderOnly:
+        return VIMAGPTDecoderOnly(
+            vima_hf_gpt=vnn.HFGPT(n_embd=embed_dim, n_positions=512, n_layer=2, n_head=2)
         )
 
-    def case_torch_decoder_only(self, embed_dim: int) -> TorchDecoderOnly:
-        encoder = torch.nn.TransformerEncoder(
-            encoder_layer=torch.nn.TransformerEncoderLayer(
-                d_model=embed_dim, nhead=2, dim_feedforward=embed_dim, dropout=0, batch_first=True
-            ),
-            num_layers=2,
+
+class ObjEncoderCases:
+    def case_obj_centric(self, embed_dim: int) -> vnn.ObjEncoder:
+        return vnn.ObjEncoder(
+            transformer_emb_dim=embed_dim,
+            views=["front", "top"],
+            vit_output_dim=embed_dim,
+            vit_resolution=32,
+            vit_patch_size=16,
+            vit_width=embed_dim,
+            vit_layers=4,
+            vit_heads=2,
+            bbox_mlp_hidden_dim=embed_dim,
+            bbox_mlp_hidden_depth=2,
         )
-        pos_embedder = torch.nn.Embedding(512, embed_dim)
-        return TorchDecoderOnly(encoder=encoder, pos_embedder=pos_embedder)
+
+    def case_patches(self, embed_dim: int) -> vnn.GatoMultiViewRGBEncoder:
+        return vnn.GatoMultiViewRGBEncoder(
+            emb_dim=embed_dim,
+            views=["front", "top"],
+            img_size=(64, 128),
+            vit_patch_size=16,
+            vit_width=embed_dim,
+            vit_layers=4,
+            vit_heads=2,
+        )
+
+
+@fixture(scope="session")
+def obs_fusion_layer(embed_dim: int) -> torch.nn.Linear:
+    return torch.nn.Linear(embed_dim + 2, embed_dim)
+
+
+@fixture(scope="session")
+def prompt_obj_post_layer(embed_dim: int) -> torch.nn.Sequential:
+    return vnn.build_mlp(embed_dim, hidden_dim=embed_dim, output_dim=embed_dim, hidden_depth=2)
 
 
 @fixture(scope="session")
 @parametrize_with_cases("action_encoder_decoder", cases=ActionEncoderDecoderCases, scope="session")
 @parametrize_with_cases("transformer_decoder", cases=TransformerDecoderCases, scope="session")
+@parametrize_with_cases("object_encoder", cases=ObjEncoderCases, scope="session")
 def vima_policy(
     embed_dim: int,
     action_encoder_decoder: tuple[ActionEncoder, ActionDecoder],
@@ -229,7 +217,7 @@ def vima_policy(
     pose_action_tokenizer: PoseActionTokenizer,
     prompt_encoder: T5PromptEncoder,
     prompt_embedder: T5TextEmbedder,
-    object_encoder: vnn.ObjEncoder,
+    object_encoder: vnn.ObjEncoder | vnn.GatoMultiViewRGBEncoder,
     end_effector_encoder: torch.nn.Embedding,
     obs_fusion_layer: torch.nn.Linear,
     prompt_obj_post_layer: torch.nn.Sequential,

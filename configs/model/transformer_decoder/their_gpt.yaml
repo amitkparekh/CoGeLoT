@@ -1,0 +1,10 @@
+# This is their implementation of their VIMA transformer decoder
+_target_: cogelot.nn.decoders.VIMAGPTDecoderOnly
+vima_hf_gpt:
+  _target_: vima.nn.HFGPT
+  # Hyperparams taken from Table9 in the paper and the model itself
+  n_embd: ${...embed_dim}
+  n_layer: 11
+  n_head: 24
+  dropout: 0.1
+  use_geglu: True
