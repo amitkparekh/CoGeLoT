@@ -1,5 +1,5 @@
 # This is their implementation of their VIMA transformer decoder
-_target_: cogelot.nn.decoders.VIMAGPTDecoderOnly
+_target_: cogelot.nn.decoders.vima.VIMAGPTDecoderOnly
 vima_hf_gpt:
   _target_: vima.nn.HFGPT
   # Hyperparams taken from Table9 in the paper and the model itself
