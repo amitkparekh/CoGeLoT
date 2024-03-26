@@ -24,7 +24,7 @@ def _resize_image(image: np.ndarray, size: tuple[int, int] = (128, 64)) -> np.nd
         )
     return rearrange(
         cv2.resize(
-            rearrange(image, "c h w -> h w c"),
+            rearrange(image.astype(np.float32), "c h w -> h w c"),
             size,
             interpolation=cv2.INTER_AREA,
         ),
