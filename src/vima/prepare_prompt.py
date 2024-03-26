@@ -97,7 +97,7 @@ def prepare_prompt(
                 # Downsize the image to 128 x 64
                 obj_repr["rgb"][view] = rearrange(
                     cv2.resize(
-                        rearrange(rgb_this_view, "c h w -> h w c"),
+                        rearrange(rgb_this_view.astype(np.float32), "c h w -> h w c"),
                         (128, 64),
                         interpolation=cv2.INTER_AREA,
                     ),
