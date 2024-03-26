@@ -6,6 +6,7 @@ defaults:
 
   - datamodule: from_local_files
   - model: default
+  - visual_encoder: obj_centric
 
   - learning_rate_scheduler@model.lr_scheduler_partial_fn: full
 
@@ -17,6 +18,8 @@ defaults:
 
 task_name: "train"
 output_dir: ${hydra:runtime.output_dir}
+
+resume_from_checkpoint: null
 
 seed: 1000
 

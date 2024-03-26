@@ -3,7 +3,7 @@ from pathlib import Path
 import hydra
 import torch
 from loguru import logger
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from cogelot.common.config import flatten_config
 from cogelot.common.hydra import instantiate_modules_from_hydra, preprocess_config_for_hydra
@@ -25,8 +25,11 @@ def train_model(config: DictConfig) -> None:
     logger.info("Saving hyperparameters...")
     model.save_hyperparameters(flatten_config(config))
 
+    resume_from_checkpoint_path: str | None = OmegaConf.select(
+        config, "resume_from_checkpoint", default=None
+    )
     logger.info("Starting training...")
-    trainer.fit(model, datamodule=datamodule)
+    trainer.fit(model, datamodule=datamodule, ckpt_path=resume_from_checkpoint_path)
     logger.info("Training finished.")
 
 
