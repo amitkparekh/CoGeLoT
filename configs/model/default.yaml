@@ -15,22 +15,10 @@ policy:
   transformer_decoder: ???
   action_encoder: ???
   action_decoder: ???
+  obj_encoder: ???
 
   pose_action_tokenizer:
     _target_: cogelot.modules.tokenizers.PoseActionTokenizer
-
-  obj_encoder:
-    _target_: vima.nn.ObjEncoder
-    transformer_emb_dim: ${..embed_dim}
-    views: ["front", "top"]
-    vit_output_dim: ${.transformer_emb_dim}
-    vit_resolution: 32
-    vit_patch_size: 16
-    vit_width: ${.transformer_emb_dim}
-    vit_layers: 4
-    vit_heads: 24
-    bbox_mlp_hidden_dim: ${.transformer_emb_dim}
-    bbox_mlp_hidden_depth: 2
 
   end_effector_encoder:
     _target_: vima.nn.Embedding

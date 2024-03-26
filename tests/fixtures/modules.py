@@ -28,6 +28,7 @@ from cogelot.nn.decoders.interfaces import (
     TransformerDecoderProtocol,
 )
 from cogelot.nn.decoders.vima import VIMADecoder, VIMAGPTDecoderOnly
+from cogelot.nn.visual_encoders import ObjectCentricVisualEncoder, PatchesVisualEncoder
 from vima import nn as vnn
 from vima.policy import VIMAPolicy
 
@@ -170,28 +171,28 @@ class TransformerDecoderCases:
 
 
 class ObjEncoderCases:
-    def case_obj_centric(self, embed_dim: int) -> vnn.ObjEncoder:
-        return vnn.ObjEncoder(
+    def case_obj_centric(self, embed_dim: int) -> ObjectCentricVisualEncoder:
+        return ObjectCentricVisualEncoder(
             transformer_emb_dim=embed_dim,
             views=["front", "top"],
             vit_output_dim=embed_dim,
             vit_resolution=32,
             vit_patch_size=16,
             vit_width=embed_dim,
-            vit_layers=4,
+            vit_layers=2,
             vit_heads=2,
             bbox_mlp_hidden_dim=embed_dim,
             bbox_mlp_hidden_depth=2,
         )
 
-    def case_patches(self, embed_dim: int) -> vnn.GatoMultiViewRGBEncoder:
-        return vnn.GatoMultiViewRGBEncoder(
+    def case_patches(self, embed_dim: int) -> PatchesVisualEncoder:
+        return PatchesVisualEncoder(
             emb_dim=embed_dim,
             views=["front", "top"],
             img_size=(64, 128),
-            vit_patch_size=16,
+            vit_patch_size=32,
             vit_width=embed_dim,
-            vit_layers=4,
+            vit_layers=2,
             vit_heads=2,
         )
 

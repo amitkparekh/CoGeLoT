@@ -4,9 +4,11 @@ import datasets
 import torch
 from pydantic import BaseModel, BeforeValidator, ConfigDict, PlainSerializer
 
-from cogelot.structures.common import FRAME_SHAPE, PydanticHFDatasetMixin, PydanticTensor
+from cogelot.structures.common import PydanticHFDatasetMixin, PydanticTensor
 from cogelot.structures.vima import Partition, Task
 from vima.utils import DataDict, any_to_datadict
+
+FRAME_SHAPE = (3, 64, 128)
 
 RawPromptTokenType = list[list[Literal[0, 1]]]
 
@@ -120,6 +122,14 @@ class PreprocessedInstance(BaseModel, PydanticHFDatasetMixin):
                     "mask": {
                         "front": _image_batch_feature_wrapper(_Mask),
                         "top": _image_batch_feature_wrapper(_Mask),
+                    },
+                    "rgb": {
+                        "front": datasets.Sequence(
+                            datasets.Array3D(shape=FRAME_SHAPE, dtype="float32")
+                        ),
+                        "top": datasets.Sequence(
+                            datasets.Array3D(shape=FRAME_SHAPE, dtype="float32")
+                        ),
                     },
                 },
                 "observations": {

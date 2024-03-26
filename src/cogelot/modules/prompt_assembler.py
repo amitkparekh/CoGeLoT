@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import NamedTuple
+from typing import Literal, NamedTuple, cast
 
 import torch
 
@@ -7,6 +7,7 @@ from cogelot.structures.model import RawPromptTokenType
 from vima.utils import DataDict
 
 EmbeddingWithPosition = tuple[torch.Tensor, torch.Tensor]
+VisualsMask = dict[int, dict[Literal["front", "top"], torch.Tensor]]
 
 
 class AssembledModality(NamedTuple):
@@ -57,7 +58,7 @@ def assemble_text(
 def assemble_visuals(
     *,
     embedded_visuals: torch.Tensor,
-    original_visuals: DataDict,
+    visuals_mask: dict[int, dict[Literal["front", "top"], torch.Tensor]] | None,
     raw_prompts_token_type: RawPromptTokenType,
     embed_dim: int,
     device: torch.device,
@@ -68,11 +69,19 @@ def assemble_visuals(
         num_images = len(image_positions)
 
         embedded_images = embedded_visuals[batch_idx, :num_images]
+        # If there is no visuals_mask, it means that we are using patches so just create a mask
+        # that assumes all tokens are valid.
         mask_per_image = (
-            torch.cat(
-                [element[1] for element in sorted(original_visuals[batch_idx]["mask"].items())],  # pyright: ignore[reportIndexIssue,reportCallIssue,reportArgumentType]
-                dim=-1,
-            )[:num_images]
+            (
+                torch.cat(
+                    [element[1] for element in sorted(visuals_mask[batch_idx].items())],
+                    dim=-1,
+                )[:num_images]
+                .flatten()
+                .chunk(num_images)
+            )
+            if visuals_mask is not None
+            else torch.ones(num_images, embedded_images.size(1), dtype=torch.bool, device=device)
             .flatten()
             .chunk(num_images)
         )
@@ -102,6 +111,7 @@ def assemble_multimodal_prompt(
     raw_prompts_token_type: RawPromptTokenType,
     embed_dim: int,
     device: torch.device,
+    is_using_patches: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Assemble the multimodal prompt, interleaving the text and visuals."""
     text_iterator = assemble_text(
@@ -112,7 +122,7 @@ def assemble_multimodal_prompt(
     )
     visuals_iterator = assemble_visuals(
         embedded_visuals=embedded_visuals,
-        original_visuals=original_visuals,
+        visuals_mask=None if is_using_patches else cast(VisualsMask, original_visuals["mask"]),
         raw_prompts_token_type=raw_prompts_token_type,
         embed_dim=embed_dim,
         device=device,

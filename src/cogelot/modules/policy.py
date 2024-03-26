@@ -17,7 +17,7 @@ from cogelot.modules.tokenizers.pose_action import (
 )
 from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
-from cogelot.nn.shuffle_obj import shuffle_objects_for_each_observation
+from cogelot.nn.visual_encoders import VisualEncoder
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
@@ -50,7 +50,7 @@ class Policy(torch.nn.Module):
         self,
         *,
         embed_dim: int,
-        obj_encoder: vnn.ObjEncoder,
+        obj_encoder: VisualEncoder,
         end_effector_encoder: vnn.Embedding | torch.nn.Embedding,
         obs_fusion_layer: torch.nn.Linear,
         action_encoder: ActionEncoder,
@@ -198,7 +198,7 @@ class Policy(torch.nn.Module):
         raw_prompts_token_type, word_batch, image_batch = prompts
 
         embedded_words = self._prompt_embedding(word_batch)
-        embedded_images = self._obj_encoder(**image_batch)
+        embedded_images = self._obj_encoder.forward_prompt_visual(image_batch)
         embedded_images = self._prompt_obj_post_layer(embedded_images)
 
         embedded_prompt, embedded_prompt_mask = assemble_multimodal_prompt(
@@ -209,6 +209,7 @@ class Policy(torch.nn.Module):
             raw_prompts_token_type=raw_prompts_token_type,
             embed_dim=self.embed_dim,
             device=device,
+            is_using_patches=self._obj_encoder.is_patches,
         )
 
         if self._add_residual_connection_to_prompt_visual_features:
@@ -223,45 +224,18 @@ class Policy(torch.nn.Module):
 
         When creating the mask, we follow PyTorch's meaning: `True` == "IS masked".
         """
-        obs_objects, ee = observation["objects"], observation["ee"]
-
-        assert isinstance(obs_objects, DataDict)
-        assert isinstance(ee, torch.Tensor)
-
-        leading_dims = ee.shape[:2]
-
-        if shuffle_obj_per_observation:
-            obs_objects = shuffle_objects_for_each_observation(obs_objects)
-
-        # Get the features for each image/obj/obs
-        obs_objects = obs_objects.map_structure(
-            func=lambda x: x.reshape(-1, *x.shape[3:]),
+        img_feats, obj_mask_tensor = self._obj_encoder.forward_observation(
+            observation, shuffle_obj_per_observation=shuffle_obj_per_observation
         )
-        # I know the type from manual inspection
-        obs_objects = cast(dict[str, dict[str, torch.Tensor]], obs_objects)
-        img_feats = self._obj_encoder(**obs_objects)
-        img_feats = img_feats.reshape(*leading_dims, *img_feats.shape[1:])
 
         # Get EE features
+        ee = observation["ee"]
+        assert isinstance(ee, torch.Tensor)
         ee_feats: torch.Tensor = self._end_effector_encoder(ee)
         ee_feats = ee_feats.repeat(1, 1, img_feats.shape[-2], 1)  # noqa: WPS221
 
         # Create obs features
         obs_feats: torch.Tensor = self._obs_fusion_layer(torch.cat([img_feats, ee_feats], dim=-1))
-
-        # Create mask for obs
-        obj_mask = {
-            obj_key: obs_objects["mask"][obj_key].reshape(*leading_dims, -1)
-            for obj_key in obs_objects["mask"]
-        }
-        obj_mask_tensor = torch.cat(
-            [obj_mask[view] for view in sorted(self._views)],
-            dim=-1,
-        )
-
-        # Convert to the PyTorch-style mask, where True means it IS MASKED. The VIMA source opts
-        # for the other approach, and we are going to be consistent dammit.
-        obj_mask_tensor = ~obj_mask_tensor
 
         return obs_feats, obj_mask_tensor
 

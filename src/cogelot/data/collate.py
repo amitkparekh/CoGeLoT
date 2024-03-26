@@ -1,4 +1,5 @@
 import itertools
+from collections.abc import Sequence
 from typing import Any, Literal, TypedDict, get_args
 
 import torch
@@ -8,16 +9,18 @@ from cogelot.structures.model import PreprocessedBatch, PreprocessedInstance
 from cogelot.structures.vima import PoseActionType, Task
 from vima.utils import any_to_datadict
 
-ImageFeatureName = Literal["bbox", "cropped_img", "mask"]
+ObjectFeatureName = Literal["bbox", "cropped_img", "mask"]
 ViewLiteral = Literal["front", "top"]
-ImageFeatures = dict[ImageFeatureName, dict[ViewLiteral, torch.Tensor]]
+ObjectFeatures = dict[ObjectFeatureName, dict[ViewLiteral, torch.Tensor]]
+VisualFeatures = dict[Literal[ObjectFeatureName, Literal["rgb"]], dict[ViewLiteral, torch.Tensor]]
 
 
 class Observation(TypedDict):
     """Structure for the observation."""
 
     ee: torch.Tensor
-    objects: ImageFeatures
+    objects: ObjectFeatures
+    rgb: dict[ViewLiteral, torch.Tensor]
 
 
 def collate_variable_ndim_batch(
@@ -67,16 +70,33 @@ def collate_variable_ndim_batch(
     return stacked_tensors
 
 
-def collate_image_features(image_batches: list[ImageFeatures]) -> ImageFeatures:
-    """Collate features from multiple images into a single image feature."""
-    output: ImageFeatures = {}
+def collate_object_features(
+    image_batches: Sequence[ObjectFeatures | VisualFeatures],
+) -> ObjectFeatures:
+    """Collate features from multiple objects into a single object feature."""
+    output: ObjectFeatures = {}
 
-    for image_feature_name in get_args(ImageFeatureName):
-        output[image_feature_name] = {}
+    for object_feature_name in get_args(ObjectFeatureName):
+        output[object_feature_name] = {}
         for view_name in get_args(ViewLiteral):
-            output[image_feature_name][view_name] = collate_variable_ndim_batch(
-                [image_batch[image_feature_name][view_name] for image_batch in image_batches]
+            output[object_feature_name][view_name] = collate_variable_ndim_batch(
+                [image_batch[object_feature_name][view_name] for image_batch in image_batches]
             )
+    return output
+
+
+def collate_rgb_images(
+    rgb_images: list[dict[ViewLiteral, torch.Tensor]],
+) -> dict[ViewLiteral, torch.Tensor]:
+    """Collate the RGB images across instances, and return the mask too.."""
+    output: dict[ViewLiteral, torch.Tensor] = {}
+
+    for view_name in get_args(ViewLiteral):
+        # Shape (batch, max num images, c, h, w)
+        output[view_name] = collate_variable_ndim_batch(
+            [rgb_image[view_name] for rgb_image in rgb_images],
+        )
+
     return output
 
 
@@ -98,8 +118,16 @@ def collate_observation_batch(observations: list[Observation]) -> Observation:
     end_effectors = collate_variable_ndim_batch(
         [observation["ee"] for observation in observations]
     )
-    objects = collate_image_features([observation["objects"] for observation in observations])
-    return Observation(ee=end_effectors, objects=objects)
+    objects = collate_object_features([observation["objects"] for observation in observations])
+    rgb = collate_rgb_images([observation["rgb"] for observation in observations])
+    return Observation(ee=end_effectors, objects=objects, rgb=rgb)
+
+
+def collate_image_batch(image_batches: list[VisualFeatures]) -> VisualFeatures:
+    """Collate an image batch."""
+    object_features = collate_object_features(image_batches)
+    rgb = collate_rgb_images([image_batch["rgb"] for image_batch in image_batches])
+    return {**object_features, "rgb": rgb}
 
 
 def collate_preprocessed_instances(instances: list[PreprocessedInstance]) -> PreprocessedBatch:
@@ -109,7 +137,7 @@ def collate_preprocessed_instances(instances: list[PreprocessedInstance]) -> Pre
         itertools.chain.from_iterable(instance.raw_prompts_token_type for instance in instances)
     )
     word_batch = pad_sequence([instance.word_batch for instance in instances], batch_first=True)
-    image_batch = collate_image_features(
+    image_batch = collate_image_batch(
         [instance.image_batch.to_container() for instance in instances]
     )
     actions = collate_action_batch([instance.actions.to_container() for instance in instances])

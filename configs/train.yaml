@@ -6,6 +6,7 @@ defaults:
 
   - datamodule: from_local_files
   - model: default
+  - visual_encoder: obj_centric
 
   - learning_rate_scheduler@model.lr_scheduler_partial_fn: full
 

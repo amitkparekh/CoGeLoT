@@ -1,8 +1,10 @@
 from copy import deepcopy
 from typing import Any, ClassVar, Literal, cast, overload
 
+import cv2
 import numpy as np
 import torch
+from einops import rearrange
 from torch.utils.data import default_collate
 
 from cogelot.modules.tokenizers import EndEffectorTokenizer, TextTokenizer
@@ -12,6 +14,22 @@ from cogelot.structures.vima import PoseAction, VIMAInstance
 from vima.prepare_obs import ObsDict, prepare_obs
 from vima.prepare_prompt import prepare_prompt
 from vima.utils import DataDict, any_to_datadict
+
+
+def _resize_image(image: np.ndarray, size: tuple[int, int] = (128, 64)) -> np.ndarray:
+    if image.ndim > 3:  # noqa: PLR2004
+        return np.stack(
+            [_resize_image(image_this_view, size=size) for image_this_view in image],
+            axis=0,
+        )
+    return rearrange(
+        cv2.resize(
+            rearrange(image, "c h w -> h w c"),
+            size,
+            interpolation=cv2.INTER_AREA,
+        ),
+        "h w c -> c h w",
+    )
 
 
 def convert_observations_to_their_format(
@@ -151,7 +169,10 @@ class InstancePreprocessor:
             obs=deepcopy(their_observations), object_ids=list(object_ids)
         )
         # Include the RGB images within the observations
-        prepared_observations["rgb"] = their_observations["rgb"]
+        prepared_observations["rgb"] = {
+            "front": _resize_image(their_observations["rgb"]["front"]),
+            "top": _resize_image(their_observations["rgb"]["top"]),
+        }
         return prepared_observations
 
     def tokenize_end_effector(self, end_effector: str, num_observations: int) -> np.ndarray:

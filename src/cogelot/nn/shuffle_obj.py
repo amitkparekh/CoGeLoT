@@ -3,7 +3,7 @@ from typing import cast
 import torch
 from einops import rearrange
 
-from cogelot.data.collate import ImageFeatures
+from cogelot.data.collate import ObjectFeatures
 from vima.utils import DataDict, any_to_datadict
 
 
@@ -37,13 +37,13 @@ def compute_new_object_order(mask: torch.Tensor) -> torch.Tensor:
 
 
 @torch.no_grad()
-def shuffle_objects_for_each_observation(objects: ImageFeatures | DataDict) -> DataDict:
+def shuffle_objects_for_each_observation(objects: ObjectFeatures | DataDict) -> DataDict:
     """Shuffle the object tokens for each observation.
 
     A note of warning: this performs in-place operations on the objects because we don't NEED to
     keep that level of tracking over the whole thing.
     """
-    objects = cast(ImageFeatures, objects)
+    objects = cast(ObjectFeatures, objects)
 
     # Since the mask is the same for both the front and top views, it doesn't matter
     mask = objects["mask"]["front"]

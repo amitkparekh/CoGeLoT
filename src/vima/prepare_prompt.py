@@ -23,7 +23,7 @@ def prepare_prompt(
     placeholders: list[str],
     all_object_ids: set[int],
 ) -> tuple[list[list[int]], torch.Tensor, DataDict]:
-    """Prepare the promot from the assets and the prompt string.
+    """Prepare the prompt from the assets and the prompt string.
 
     This is taken from `vima/scripts/example.py:prepare_prompt`.
     """
@@ -50,6 +50,7 @@ def prepare_prompt(
             obj_repr = {
                 "cropped_img": {view: [] for view in views},
                 "bbox": {view: [] for view in views},
+                "rgb": {view: [] for view in views},
             }
             for view in views:
                 rgb_this_view = asset["rgb"][view].numpy()
@@ -93,6 +94,15 @@ def prepare_prompt(
                 cropped_imgs = np.asarray(cropped_imgs)
                 obj_repr["bbox"][view] = bboxes
                 obj_repr["cropped_img"][view] = cropped_imgs
+                # Downsize the image to 128 x 64
+                obj_repr["rgb"][view] = rearrange(
+                    cv2.resize(
+                        rearrange(rgb_this_view, "c h w -> h w c"),
+                        (128, 64),
+                        interpolation=cv2.INTER_AREA,
+                    ),
+                    "h w c -> c h w",
+                )
             filled_prompt.append(obj_repr)
     raw_prompt = [filled_prompt]
     max_n_objs_prompt = {view: 0 for view in views}
@@ -132,6 +142,7 @@ def prepare_prompt(
                         for view in views
                     },
                     "mask": {view: np.zeros((n_objs_to_pad[view]), dtype=bool) for view in views},
+                    "rgb": {view: np.zeros((0, 64, 128), dtype=np.float32) for view in views},
                 }
                 token = any_concat([token, objs_pad], dim=0)
                 image_batch.append(token)

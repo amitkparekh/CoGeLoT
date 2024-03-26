@@ -1,0 +1,13 @@
+# @package model.policy.obj_encoder
+
+_target_: cogelot.nn.visual_encoders.ObjectCentricVisualEncoder
+transformer_emb_dim: ${..embed_dim}
+views: ["front", "top"]
+vit_output_dim: ${.transformer_emb_dim}
+vit_resolution: 32
+vit_patch_size: 16
+vit_width: ${.transformer_emb_dim}
+vit_layers: 4
+vit_heads: 24
+bbox_mlp_hidden_dim: ${.transformer_emb_dim}
+bbox_mlp_hidden_depth: 2
