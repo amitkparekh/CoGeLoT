@@ -155,6 +155,15 @@ class InstantiatedModules(NamedTuple):
     trainer: pl.Trainer
 
 
+def instantiate_datamodule_from_hydra(config: DictConfig) -> pl.LightningDataModule:
+    """Instantiate the datamodule from the Hydra config."""
+    seed = config.get("seed")
+    if seed:
+        pl.seed_everything(seed)
+    logger.info("Instantiating datamodule...")
+    return hydra.utils.instantiate(config["datamodule"])
+
+
 def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     """Instantiate the modules needed for training."""
     seed = config.get("seed")
