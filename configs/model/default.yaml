@@ -3,6 +3,7 @@ defaults:
   - action_encoder@policy.action_encoder: vima
   - action_decoder@policy.action_decoder: vima
   - transformer_decoder@policy.transformer_decoder: their_vima
+  - visual_encoder@policy.obj_encoder: obj_centric
 
 _target_: cogelot.models.VIMALightningModule
 

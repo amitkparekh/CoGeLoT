@@ -78,13 +78,12 @@ def hydra_config(
             ]
         )
 
-    # Otherwise, custom overrides for xtransformers models
-    else:
+    # Otherwise, custom overrides for theur gpt
+    elif experiment.startswith("08_their_gpt"):
         overrides.extend(
             [
-                "model.policy.transformer_decoder.attn_layers.depth=2",
-                "model.policy.transformer_decoder.attn_layers.heads=2",
-                "model.policy.transformer_decoder.attn_layers.ff_mult=2",
+                "model.policy.transformer_decoder.vima_hf_gpt.n_layer=2",
+                "model.policy.transformer_decoder.vima_hf_gpt.n_head=2",
             ]
         )
 
