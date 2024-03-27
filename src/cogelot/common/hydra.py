@@ -39,6 +39,17 @@ def instantiate_module_hparams_from_checkpoint(checkpoint_path: Path) -> dict[st
     raw_config_as_dotlist = convert_to_dotlist(raw_config)
     hydra_config = OmegaConf.from_dotlist(raw_config_as_dotlist)
 
+    # Patch the object encoder since that got changes later
+    current_object_encoder_target: str = OmegaConf.select(
+        hydra_config, "model.policy.obj_encoder._target_", throw_on_missing=True
+    )
+    if current_object_encoder_target == "vnn.ObjEncoder":
+        OmegaConf.update(
+            hydra_config,
+            "model.policy.obj_encoder._target_",
+            "cogelot.nn.visual_encoders.ObjectCentricVisualEncoder",
+        )
+
     # Just select the model key from the config, and remove the `_target_` key since we don't want
     # to instantiate the model itself, just kwargs.
     model_config = OmegaConf.select(hydra_config, "model")
