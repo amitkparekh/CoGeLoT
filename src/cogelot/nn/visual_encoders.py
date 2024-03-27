@@ -105,7 +105,7 @@ class PatchesVisualEncoder(GatoMultiViewRGBEncoder, VisualEncoder):
         # Since it's patches, all the obs are used so the mask is all False
         # Also, this is pytorch-style masking
         observation_mask = torch.zeros(
-            img_feats.shape[:2], dtype=torch.bool, device=img_feats.device
+            img_feats.shape[:-1], dtype=torch.bool, device=img_feats.device
         )
 
         return img_feats, observation_mask
