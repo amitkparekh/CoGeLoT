@@ -112,7 +112,7 @@ class GatoMultiViewRGBEncoder(nn.Module):
         self.output_dim = emb_dim
 
         self.cropped_img_encoder = GatoViTEncoder(
-            img_size=img_size,
+            img_size=tuple(img_size),
             patch_size=vit_patch_size,
             width=vit_width,
             layers=vit_layers,

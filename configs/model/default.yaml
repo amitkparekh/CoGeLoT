@@ -32,7 +32,7 @@ policy:
       _target_: builtins.sum
       _convert_: all
       _args_:
-        - - ${.....obj_encoder.transformer_emb_dim}
+        - - ${.....embed_dim}
           - ${.....end_effector_encoder.embedding_dim}
     out_features: ${..embed_dim}
 
