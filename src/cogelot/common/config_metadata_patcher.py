@@ -23,12 +23,14 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "wa2rtion": "original",
         "b2slg2rh": "paraphrases",
         "drmm3ugl": "original",
+        "bhuja4vo": "original",
+        "wn9jc5l8": "original",
     }
     return trained_instruction[wandb_model_run_id]
 
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer"}
+    return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer", "wn9jc5l8"}
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
