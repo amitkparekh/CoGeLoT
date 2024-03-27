@@ -1,7 +1,7 @@
 # @package model.policy.obj_encoder
 
 _target_: cogelot.nn.visual_encoders.PatchesVisualEncoder
-emb_dim: ${..embed_dim}
+emd_dim: ${..embed_dim}
 views: ["front", "top"]
 img_size: (64, 128)
 vit_patch_size: 32
