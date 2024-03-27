@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - override /model/transformer_decoder@model.policy.transformer_decoder: their_gpt.yaml
+  - override /model/visual_encoder@model.policy.obj_encoder: patches
+  - _self_
+
+num_action_tokens: 1
