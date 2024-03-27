@@ -22,6 +22,7 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "ftwoyjb1": "original",
         "wa2rtion": "original",
         "b2slg2rh": "paraphrases",
+        "drmm3ugl": "original",
     }
     return trained_instruction[wandb_model_run_id]
 
@@ -32,6 +33,10 @@ def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
     return wandb_model_run_id in {"wa2rtion", "b2slg2rh"}
+
+
+def _is_trained_with_null_action(wandb_model_run_id: str) -> bool:
+    return wandb_model_run_id in {"drmm3ugl"}
 
 
 def _get_difficulty(config: DictConfig) -> str:
@@ -156,6 +161,13 @@ def update_eval_config(config: DictConfig) -> DictConfig:
         force_add=True,
         merge=False,
     )
+    OmegaConf.update(
+        config,
+        "trained_with_null_action",
+        _is_trained_with_null_action(wandb_model_run_id),
+        force_add=True,
+        merge=False,
+    )
     return config
 
 
@@ -171,6 +183,7 @@ def build_eval_run_name(config: DictConfig) -> str:
     )
     run_name += "Shuf" if _is_trained_on_shuffled_obj(wandb_model_run_id) else ""
     run_name += "14" if _is_14_action_tokens(wandb_model_run_id) else ""
+    run_name += "Null" if _is_trained_with_null_action(wandb_model_run_id) else ""
 
     evaluation_instance_transform_column = _get_evaluation_instance_transform_column(
         instance_transform
