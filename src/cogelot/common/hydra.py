@@ -43,7 +43,8 @@ def instantiate_module_hparams_from_checkpoint(checkpoint_path: Path) -> dict[st
     current_object_encoder_target: str = OmegaConf.select(
         hydra_config, "model.policy.obj_encoder._target_", throw_on_missing=True
     )
-    if current_object_encoder_target == "vnn.ObjEncoder":
+    if current_object_encoder_target == "vima.nn.ObjEncoder":
+        logger.debug("Patching the target for the object encoder")
         OmegaConf.update(
             hydra_config,
             "model.policy.obj_encoder._target_",
