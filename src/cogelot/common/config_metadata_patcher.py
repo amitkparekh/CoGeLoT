@@ -25,8 +25,26 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "drmm3ugl": "original",
         "bhuja4vo": "original",
         "wn9jc5l8": "original",
+        "efxugme9": "original",
+        "ln4nrqhg": "original",
+        "53afo878": "original",
+        "xivdgqm0": "original",
     }
     return trained_instruction[wandb_model_run_id]
+
+
+def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
+    dec_only = {"bhuja4vo", "wn9jc5l8", "53afo878", "efxugme9"}
+    if wandb_model_run_id in dec_only:
+        return "dec_only"
+    return "xattn"
+
+
+def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
+    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0"}
+    if wandb_model_run_id in patches:
+        return "patches"
+    return "obj_centric"
 
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
@@ -34,7 +52,7 @@ def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id in {"wa2rtion", "b2slg2rh"}
+    return wandb_model_run_id in {"wa2rtion", "b2slg2rh", "53afo878", "xivdgqm0"}
 
 
 def _is_trained_with_null_action(wandb_model_run_id: str) -> bool:
@@ -170,6 +188,20 @@ def update_eval_config(config: DictConfig) -> DictConfig:
         force_add=True,
         merge=False,
     )
+    OmegaConf.update(
+        config,
+        "prompt_conditioning_style",
+        _get_prompt_conditioning_style(wandb_model_run_id),
+        force_add=True,
+        merge=False,
+    )
+    OmegaConf.update(
+        config,
+        "visual_encoder_style",
+        _get_visual_encoder_style(wandb_model_run_id),
+        force_add=True,
+        merge=False,
+    )
     return config
 
 
@@ -178,14 +210,28 @@ def build_eval_run_name(config: DictConfig) -> str:
     wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
     instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
 
-    run_name = (
+    prompt_conditioning_style = _get_prompt_conditioning_style(wandb_model_run_id)
+    visual_encoder_style = _get_visual_encoder_style(wandb_model_run_id)
+
+    prompt_condition_to_name = {
+        "dec_only": "D",
+        "xattn": "X",
+    }
+    visual_encoder_to_name = {
+        "obj_centric": "Obj",
+        "patches": "Ptch",
+    }
+
+    run_name = f"{prompt_condition_to_name[prompt_conditioning_style]}+{visual_encoder_to_name[visual_encoder_style]}"
+    run_name += "Shuf" if _is_trained_on_shuffled_obj(wandb_model_run_id) else ""
+    run_name += "+14" if _is_14_action_tokens(wandb_model_run_id) else ""
+    run_name += " / "
+    run_name += (
         _get_training_instruction(wandb_model_run_id)[:4].capitalize()
         if wandb_model_run_id
         else "Given"
     )
-    run_name += "Shuf" if _is_trained_on_shuffled_obj(wandb_model_run_id) else ""
-    run_name += "14" if _is_14_action_tokens(wandb_model_run_id) else ""
-    run_name += "Null" if _is_trained_with_null_action(wandb_model_run_id) else ""
+    run_name += "w/Null" if _is_trained_with_null_action(wandb_model_run_id) else ""
 
     evaluation_instance_transform_column = _get_evaluation_instance_transform_column(
         instance_transform
