@@ -131,7 +131,7 @@ class VIMAGPTDecoderOnly(TransformerDecoderProtocol):
             ],
             dim=1,
         )
-        position_ids = torch.cumsum(mask, dim=1).long() - 1
+        position_ids = torch.clamp(torch.cumsum(mask, dim=1).long() - 1, min=0)
         transformer_output = self._vima_hf_gpt(
             x=tokens, custom_mask=mask, position_ids=position_ids, batch_first=True
         )
