@@ -7,7 +7,6 @@ import torch
 import typer
 from loguru import logger
 from rich.console import Console
-from rich.prompt import Prompt
 from rich.table import Table
 
 from cogelot.common.hydra import load_hydra_config
@@ -25,7 +24,11 @@ console = Console()
 
 def create_evaluation_module(config_path: Path) -> EvaluationLightningModule:
     """Create the evaluation lightning module."""
-    config = load_hydra_config(config_path.parent, config_path.name)
+    config = load_hydra_config(
+        config_path.parent,
+        config_path.name,
+        overrides=["model.model.wandb_run_id=8lkml12g", "environment@model.environment=display"],
+    )
     evaluation = hydra.utils.instantiate(config["model"])
     assert isinstance(evaluation, EvaluationLightningModule)
     return evaluation
@@ -161,23 +164,39 @@ def interactive_evaluate(
     logger.info(f"Running {task} on {partition}")
 
     # Create the evaluation lightning module
-    evaluation = create_evaluation_module(Path("configs/evaluate_their_model.yaml"))
+    evaluation = create_evaluation_module(Path("configs/evaluate.yaml"))
 
     # Reset the environment with the task and partition
     evaluation.reset_environment(task=task, partition=partition)
 
     # Create the VIMA instance from the environment
     vima_instance = evaluation.environment.create_vima_instance(partition)
-    new_prompt = Prompt.ask(
-        "Enter a new prompt if you want to change it", default=vima_instance.prompt
-    )
-    evaluation.environment.update_prompt(new_prompt)
+    # new_prompt = Prompt.ask(
+    #     "Enter a new prompt if you want to change it", default=vima_instance.prompt
+    # )
+    # evaluation.environment.update_prompt(new_prompt)
     # Run the instance in the environment
+    typer.confirm("Press enter to start")
+
     with torch.inference_mode():
         evaluation.run_vima_instance(vima_instance)
 
     console.print(evaluation._metric.compute())  # noqa: SLF001
     typer.confirm("Press enter to exit")
+
+
+def _view_every_task() -> None:
+    # Create the evaluation lightning module
+    evaluation = create_evaluation_module(Path("configs/evaluate.yaml"))
+
+    for task, partition_list in map_task_to_partitions.items():
+        partition = partition_list[0]
+        logger.info(f"Running {task} on {partition}")
+        # Reset the environment with the task and partition
+        evaluation.reset_environment(task=task, partition=partition)
+        vima_instance = evaluation.environment.create_vima_instance(partition)
+        with torch.inference_mode():
+            evaluation.run_vima_instance(vima_instance)
 
 
 if __name__ == "__main__":

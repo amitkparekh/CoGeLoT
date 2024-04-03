@@ -8,7 +8,7 @@ command:
 
 program: src/cogelot/entrypoints/train.py
 
-name: sweeping
+name: decoder only
 entity: pyop
 project: CoGeLoT
 
@@ -17,11 +17,8 @@ method: grid
 parameters:
   experiment:
     values:
-      - 01_their_vima
-      - 01_their_vima_14tok
-      - 07_torch_decoder_only_abs_1tok
-      - 07_torch_decoder_only_abs_14tok
-      # - 05_torch_vanilla_decoder_abs_14tok
+      - 08_their_gpt
+      - 08_their_gpt_14tok
 
   datamodule.dataset_variant:
     values:

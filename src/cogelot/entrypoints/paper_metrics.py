@@ -41,18 +41,19 @@ class EvaluationPerformancePrinter:
         self.target = target
         self.delimiter = self.delimiter_per_target[target]
 
-    def __call__(self, run_id: str) -> None:
+    def __call__(self, run_ids: list[str]) -> None:
         """Print the performance in a format that can be easily pasted."""
-        run = self.get_run(run_id)
-        is_textual = "textual" in run.name.lower()
-        performances = self.get_evaluation_performance(run)
+        for run_id in run_ids:
+            run = self.get_run(run_id)
+            is_textual = "textual" in run.name.lower()
+            performances = self.get_evaluation_performance(run)
 
-        if self.target == "paper":
-            self.print_for_paper(performances, is_textual=is_textual)
-        if self.target == "excel":
-            self.print_for_excel(performances, is_textual=is_textual)
-        if self.target == "draft":
-            self.print_for_paper_draft(performances)
+            if self.target == "paper":
+                self.print_for_paper(performances, is_textual=is_textual)
+            if self.target == "excel":
+                self.print_for_excel(performances, is_textual=is_textual)
+            if self.target == "draft":
+                self.print_for_paper_draft(performances)
 
     def get_run(self, run_id: str) -> Run:
         """Get the run from WandB."""
@@ -83,7 +84,8 @@ class EvaluationPerformancePrinter:
         self, performances: dict[Level, dict[int, Decimal]], *, is_textual: bool
     ) -> None:
         """Print the performance in a format that can be easily pasted in LaTeX."""
-        for level, task_success in performances.items():
+        averages = []
+        for task_success in performances.values():
             if is_textual:
                 task_success = {  # noqa: PLW2901
                     task_num: task_value
@@ -96,16 +98,17 @@ class EvaluationPerformancePrinter:
                 for task_value in task_success.values()
                 if isinstance(task_value, Decimal)
             )
-            print_line = self.delimiter.join(map(str, task_success.values()))
-            print_line += self.delimiter + str(average.quantize(Decimal("1.0")))
-            console.print(f"{level} Success")
-            console.print(print_line)
+            averages.append(average.quantize(Decimal("1.0")))
+
+        # console.print(" & ".join(self.levels))
+        console.print(" & ".join(map(str, averages)), r"\\")
 
     def print_for_paper_draft(self, performances: dict[Level, dict[int, Decimal]]) -> None:
         """Print the performance in a format that can be easily pasted in LaTeX."""
         for level, task_success in performances.items():
             task_success = {  # noqa: PLW2901
-                task.value + 1: task_success.get(task.value + 1, r"{{{---}}}") for task in Task
+                task.value + 1: task_success.get(task.value + 1, self.textual_override)
+                for task in Task
             }
             average = statistics.mean(
                 task_value
@@ -114,8 +117,7 @@ class EvaluationPerformancePrinter:
             )
             print_line = self.delimiter.join(map(str, task_success.values()))
             print_line += self.delimiter + str(average.quantize(Decimal("1.0")))
-            console.print(f"{level} &")
-            console.print(print_line)
+            console.print(f"{level} & {print_line}", r"\\")
 
     def print_for_excel(
         self, performances: dict[Level, dict[int, Decimal]], *, is_textual: bool
@@ -138,11 +140,11 @@ class EvaluationPerformancePrinter:
         console.print(print_line)
 
 
-def print_performance(run_id: str, *, target: Annotated[str, typer.Option()]) -> None:
+def print_performance(run_ids: list[str], *, target: Annotated[str, typer.Option()]) -> None:
     """Get the evaluation performance from WandB for easy pasting."""
     assert target in EvaluationPerformancePrinter.delimiter_per_target
     printer = EvaluationPerformancePrinter(target=target)
-    printer(run_id)
+    printer(run_ids)
 
 
 def print_prompt_lengths() -> None:
