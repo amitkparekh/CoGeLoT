@@ -1,0 +1,34 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - hardware=eidf_4gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/entrypoints/train.py
+
+name: sweeping
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    values:
+      # - 01_their_vima
+      - 01_their_vima_patches
+      # - 01_their_vima_shuffle_obj
+      - 08_their_gpt
+      - 08_their_gpt_shuffle_obj
+      - 08_their_gpt_patches
+      # - 01_their_vima_14tok
+      # - 07_torch_decoder_only_abs_1tok
+      # - 07_torch_decoder_only_abs_14tok
+      # - 05_torch_vanilla_decoder_abs_14tok
+
+  datamodule.dataset_variant:
+    values:
+      # - original
+      - reworded
