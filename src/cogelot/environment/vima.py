@@ -38,14 +38,14 @@ def _find_prompt_renderer(env: Env[Any, Any]) -> PromptRenderer | None:
     if isinstance(env, PromptRenderer):
         return env
     if getattr(env, "env", None) is not None:
-        return _find_prompt_renderer(env.env)  # type: ignore[attr-defined] # pyright: ignore[reportGeneralTypeIssues]
+        return _find_prompt_renderer(env.env)  # type: ignore[attr-defined]
     return None
 
 
 def get_task_kwargs(partition: Partition, task: Task) -> dict[str, Any] | None:
     """Get the task kwargs."""
     partition_to_specs = get_partition_to_specs()
-    task_kwargs = partition_to_specs["test"][partition.name][task.name]  # type: ignore[reportOptionalSubscript]
+    task_kwargs = partition_to_specs["test"][partition.name][task.name]
     return task_kwargs
 
 
@@ -138,13 +138,13 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
         self.env.set_task(task.name, task_kwargs)
         self.env.task.set_difficulty(difficulty)
 
-    def reset(self, **kwargs: Any) -> None:  # type: ignore[override]
+    def reset(self, **kwargs: Any) -> None:
         """Reset the environment."""
         self.env.reset(**kwargs)
 
     def update_prompt(self, prompt: str) -> None:
         """Update the prompt of the environment."""
-        self.vima_environment.prompt = prompt  # type: ignore[assignment]
+        self.vima_environment.prompt = prompt
         if self.prompt_renderer is not None:
             self.env.render()
 

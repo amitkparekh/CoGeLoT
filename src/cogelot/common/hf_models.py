@@ -1,14 +1,15 @@
 import os
+from argparse import Namespace
 from concurrent.futures import Future, wait
 from pathlib import Path
 from typing import Any, Literal, overload
 
 from huggingface_hub import CommitInfo, HfApi, create_repo, hf_hub_download
 from huggingface_hub.utils import HfHubHTTPError
+from lightning_fabric.utilities.rank_zero import rank_zero_only
 from loguru import logger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers import Logger
-from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from cogelot.common.wandb import get_id_from_current_run
 
@@ -37,7 +38,7 @@ def enable_hf_transfer() -> None:
 
 def create_model_repository(repo_id: str, *, is_private: bool = True) -> None:
     """Create a repository on the Hub for a model."""
-    create_repo(repo_id, private=is_private, exist_ok=True)
+    _ = create_repo(repo_id, private=is_private, exist_ok=True)
 
 
 @overload
@@ -89,7 +90,7 @@ def upload_model_checkpoint(
         repo_id=repo_id,
         repo_type="model",
         commit_message=f"Upload {run_id}/{checkpoint_name}",
-        run_as_future=run_as_future,  # pyright: ignore[reportGeneralTypeIssues]
+        run_as_future=run_as_future,  # pyright: ignore[reportCallIssue,reportArgumentType]
     )
     if run_as_future:
         return commit_info
@@ -101,7 +102,7 @@ def upload_model_checkpoint_dir(checkpoint_dir: Path, run_id: str, repo_id: str)
     create_model_repository(repo_id)
 
     api = HfApi()
-    api.upload_folder(
+    _ = api.upload_folder(
         repo_id=repo_id,
         path_in_repo=run_id,
         folder_path=checkpoint_dir,
@@ -174,7 +175,7 @@ class HuggingFaceModelLogger(Logger):
         self._experiment_id: str | None = experiment_id_override
 
         self._upload_in_background_each_checkpoint = upload_in_background_each_checkpoint
-        self._upload_futures: list[Future] = []
+        self._upload_futures: list[Future[CommitInfo]] = []
 
         if use_hf_transfer:
             enable_hf_transfer()
@@ -201,7 +202,12 @@ class HuggingFaceModelLogger(Logger):
         """
         return
 
-    def log_hyperparams(self, params: dict[str, Any], *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
+    def log_hyperparams(
+        self,
+        params: dict[str, Any] | Namespace,  # noqa: ARG002
+        *args: Any,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
+    ) -> None:
         """Record hyperparameters."""
         return
 
@@ -227,7 +233,7 @@ class HuggingFaceModelLogger(Logger):
         """Upload the model to HF after the training has successfully finished."""
         if self._upload_futures:
             logger.info("Waiting for background uploads to finish...")
-            wait(self._upload_futures)
+            _ = wait(self._upload_futures)
             logger.info("Background uploads finished.")
 
         if status != "success":
@@ -264,7 +270,7 @@ class HuggingFaceModelLogger(Logger):
             logger.error("There is no wandb run in progress, and we need one to group the models.")
             return
 
-        upload_future = upload_model_checkpoint(  # pyright: ignore[reportGeneralTypeIssues]
+        upload_future = upload_model_checkpoint(
             Path(checkpoint_callback._last_checkpoint_saved),  # noqa: SLF001
             run_id=self._experiment_id,
             repo_id=self._repo_id,

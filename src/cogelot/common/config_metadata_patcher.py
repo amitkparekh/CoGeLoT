@@ -100,7 +100,7 @@ def _is_shuffle_obj(config: DictConfig) -> bool:
 
 
 def _get_evaluation_instance_transform_column(instance_transform: DictConfig) -> str:
-    parameters: list[str] = []  # noqa: WPS110
+    parameters: list[str] = []
 
     if _is_textual(instance_transform):
         parameters.append("textual")

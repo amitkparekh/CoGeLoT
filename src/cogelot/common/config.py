@@ -23,7 +23,4 @@ def convert_to_dotlist(config: dict[str, Any]) -> list[str]:
     Yes, while this is pretty much just doing a simple dict comprehension, we need to manually
     convert any value that is `None` into a string of 'null', otherwise it will fail.
     """
-    return [
-        f"{key}={value if value is not None else 'null'}"
-        for key, value in config.items()  # noqa: WPS110
-    ]
+    return [f"{key}={value if value is not None else 'null'}" for key, value in config.items()]

@@ -6,7 +6,7 @@ from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5EncoderModel
 
 
-class T5PromptEncoder(T5EncoderModel):  # type: ignore[misc]
+class T5PromptEncoder(T5EncoderModel):
     """Prompt encoder based on T5."""
 
     authorized_missing_keys: ClassVar[list[str]] = ["encoder.embed_tokens.weight"]
@@ -36,7 +36,7 @@ class T5TextEmbedder(torch.nn.Module):
         embed_weight = model.get_input_embeddings().weight.data
         self._embed_layer = torch.nn.Embedding.from_pretrained(embed_weight)
         self.output_dim = embed_weight.shape[1]
-        del model  # noqa: WPS420
+        del model
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Embed the input with T5."""

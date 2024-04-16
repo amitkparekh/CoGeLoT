@@ -38,7 +38,7 @@ def determine_evaluation_starting_seed(
     console.print(max_seed_per_task)
 
     # Find the maximum seed across all tasks
-    max_seed = max(max(max_seed_per_task[task].values()) for task in max_seed_per_task)  # noqa: WPS441
+    max_seed = max(max(max_seed_per_task[task].values()) for task in max_seed_per_task)
 
     logger.info(f"The maximum seed across all tasks is: {max_seed}")
 

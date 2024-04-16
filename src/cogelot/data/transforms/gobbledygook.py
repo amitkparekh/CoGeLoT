@@ -155,10 +155,9 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
                 iteration_count += 1
             else:
                 break
-
-        # If we have a timeout, we are going to try and find a random token sequence from the
-        # memory and hope we have one
-        if iteration_count > self._timeout:
+        else:
+            # If we have a timeout, we are going to try and find a random token sequence from the
+            # memory and hope we have one
             try:
                 random_token_sequence = self._get_random_alternative_from_memory(tokenized_word)
             except (KeyError, IndexError) as err:
@@ -209,9 +208,6 @@ class GobbledyGookPromptTokenTransform(VIMAInstanceTransform):
             - set(self.text_tokenizer.tokenizer.all_special_ids)
             - set(self.text_tokenizer.tokenizer.additional_special_tokens_ids)
             - set(self.text_tokenizer.placeholder_token_ids)
-            # Changing this token can cause a lot of problems in the new token creation, so we are
-            # not going to be replacing it.
-            # - set(self.encode(".", add_special_tokens=False))
         )
         return all_non_special
 

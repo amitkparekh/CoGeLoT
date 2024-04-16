@@ -171,7 +171,7 @@ def instantiate_modules_from_hydra(config: DictConfig) -> InstantiatedModules:
     """Instantiate the modules needed for training."""
     seed = config.get("seed")
     if seed:
-        pl.seed_everything(seed)
+        _ = pl.seed_everything(seed)
 
     # Try to set the sharing sharing strategy to file system, but don't fail if it's not supported.
     # This is an alternative to running `ulimit -S -n unlimited` in the shell.

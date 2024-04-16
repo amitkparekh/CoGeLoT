@@ -24,7 +24,7 @@ def orjson_dumps(v: Any, *, default: Any) -> str:
 
 def _save(
     save_func: Callable[[Any], bytes],
-    data: Any,  # noqa: WPS110
+    data: Any,
     path: Path,
     *,
     compress: bool = False,
@@ -37,7 +37,7 @@ def _save(
         if not path.suffix.endswith("gz"):
             path = path.with_suffix(f"{path.suffix}.gz")
 
-    path.write_bytes(data_bytes)
+    _ = path.write_bytes(data_bytes)
     return path
 
 
@@ -52,7 +52,7 @@ def _load(
     return load_func(data_bytes)
 
 
-def save_json(data: Any, path: Path, *, compress: bool = False) -> Path:  # noqa: WPS110
+def save_json(data: Any, path: Path, *, compress: bool = False) -> Path:
     """Save the json to the path."""
     dump_fn = partial(orjson.dumps, option=ORJSON_OPTIONS)
     return _save(dump_fn, data, path, compress=compress)
@@ -63,7 +63,7 @@ def load_json(path: Path) -> Any:
     return _load(orjson.loads, path)
 
 
-def save_pickle(data: Any, path: Path, *, compress: bool = False) -> Path:  # noqa: WPS110
+def save_pickle(data: Any, path: Path, *, compress: bool = False) -> Path:
     """Save the pickle to the path."""
     return _save(pickle.dumps, data, path, compress=compress)
 

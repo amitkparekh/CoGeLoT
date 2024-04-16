@@ -107,7 +107,7 @@ def _consecutive_subsets(iterable: list[str]) -> list[str]:
     # Add the full list onto the end
     subsets.append(tuple(iterable))
     # Remove the empty starting list with none in
-    subsets.pop(0)
+    _ = subsets.pop(0)
     return ["".join(subset) for subset in subsets]
 
 

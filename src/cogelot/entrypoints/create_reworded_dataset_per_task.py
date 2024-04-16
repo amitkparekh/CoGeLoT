@@ -49,7 +49,7 @@ def create_reworded_dataset_per_task(
     )
 
     instance_transformer = RewordPromptTransform()
-    for task, dataset in dataset_per_task_iterator:  # noqa: WPS426
+    for task, dataset in dataset_per_task_iterator:
         if task_index_filter is not None and task_index_filter != task.value:
             continue
 

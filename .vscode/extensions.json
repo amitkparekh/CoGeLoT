@@ -1,14 +1,12 @@
 {
 	"recommendations": [
 		"charliermarsh.ruff",
-		"ms-python.vscode-pylance",
 		"ms-python.python",
-		"ms-python.flake8",
+		"detachhead.basedpyright",
 		"njpwerner.autodocstring",
-		"ms-python.black-formatter",
 		"editorconfig.editorconfig",
-		"mikestead.dotenv",
 		"tamasfe.even-better-toml",
-		"peterschmalfeldt.explorer-exclude"
+		"peterschmalfeldt.explorer-exclude",
+		"ms-python.debugpy"
 	]
 }

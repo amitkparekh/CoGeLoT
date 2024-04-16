@@ -9,7 +9,7 @@ from rich.panel import Panel
 
 from cogelot.data.collate import collate_preprocessed_instances_from_hf_dataset
 from cogelot.data.datamodule import VIMADataModuleFromLocalFiles
-from cogelot.models import VIMALightningModule
+from cogelot.models.training import VIMALightningModule
 
 console = Console()
 

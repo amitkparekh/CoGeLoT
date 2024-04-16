@@ -54,7 +54,7 @@ class VIMADataModule(abc.ABC, LightningDataModule):
         self.valid_dataset: datasets.Dataset
         self.evaluation_dataset: VIMAEvaluationDataset
 
-    def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
+    def setup(self, stage: SetupStage) -> None:
         """Setup each node to run the data."""
         if stage == "fit":
             dataset = self._load_dataset()
@@ -226,7 +226,9 @@ class VIMABenchOnlineDataModule(LightningDataModule):
         self._filter_tasks = filter_tasks
         self._filter_partitions = filter_partitions
 
-    def setup(self, stage: SetupStage) -> None:  # type: ignore[override]
+        self.evaluation_dataset: VIMAEvaluationDataset
+
+    def setup(self, stage: SetupStage) -> None:
         """Setup each node to run the data."""
         if stage == "test":
             self.evaluation_dataset = VIMAEvaluationDataset.from_partition_to_specs(

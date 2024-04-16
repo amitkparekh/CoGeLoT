@@ -92,7 +92,7 @@ class TaskChoices(click.Choice):
 
     def convert(
         self,
-        value: str | int | Task | None,  # noqa: WPS110
+        value: str | int | Task | None,
         param: click.Parameter | None,  # noqa: ARG002
         ctx: click.Context | None,  # noqa: ARG002
     ) -> Task | None:
@@ -114,7 +114,7 @@ class PartitionChoices(click.Choice):
 
     def convert(
         self,
-        value: str | int | Partition | None,  # noqa: WPS110
+        value: str | int | Partition | None,
         param: click.Parameter | None,  # noqa: ARG002
         ctx: click.Context | None,
     ) -> Partition | None:

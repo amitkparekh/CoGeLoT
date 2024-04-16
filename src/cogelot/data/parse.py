@@ -134,6 +134,7 @@ class VIMAInstanceParser:
     """
 
     def __init__(self, *, keep_null_action: bool) -> None:
+        super().__init__()
         self.keep_null_action = keep_null_action
 
     def __call__(self, instance_dir: Path) -> VIMAInstance:

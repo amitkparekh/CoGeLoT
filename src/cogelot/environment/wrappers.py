@@ -30,5 +30,5 @@ class ResetFaultToleranceWrapper(Wrapper):
 class TimeLimitWrapper(_TimeLimit):
     """Limit the number of steps allowed in the environment."""
 
-    def __init__(self, env: Env, bonus_steps: int = 0) -> None:  # type: ignore  # noqa: PGH003
-        super().__init__(env, env.task.oracle_max_steps + bonus_steps)  # type: ignore  # noqa: PGH003
+    def __init__(self, env: Env, bonus_steps: int = 0) -> None:
+        super().__init__(env, env.task.oracle_max_steps + bonus_steps)

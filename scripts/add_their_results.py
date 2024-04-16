@@ -1,11 +1,11 @@
 import wandb
 
-from cogelot.modules.metrics import EvaluationMetrics
+from cogelot.metrics.online import OnlineEvaluationMetrics
 from cogelot.structures.vima import Partition, Task
 
 STEPS_PER_TASK = 100
 
-metric_key_template = EvaluationMetrics.key_template
+metric_key_template = OnlineEvaluationMetrics.key_template
 
 success_rate: dict[Partition, dict[Task, float]] = {
     Partition.placement_generalization: {

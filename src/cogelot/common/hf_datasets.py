@@ -10,7 +10,7 @@ from datasets.distributed import split_dataset_by_node
 from datasets.features.features import require_decoding
 from datasets.table import embed_table_storage
 from huggingface_hub import HfApi, snapshot_download
-from huggingface_hub.utils._errors import (  # noqa: WPS436  # noqa: WPS436
+from huggingface_hub.utils._errors import (
     BadRequestError,
     HfHubHTTPError,
 )
@@ -53,7 +53,7 @@ def download_parquet_files_from_hub(
     downloaded. If no `pattern` is provided, then we just download all the parquet
     files.
     """
-    snapshot_download(
+    _ = snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
         local_dir=None,
@@ -168,7 +168,7 @@ def _embed_external_files_in_shards(
                 batch_size=1000,
                 keep_in_memory=True,
             )
-            .with_format(**shard.format)  # pyright: ignore[reportGeneralTypeIssues]
+            .with_format(**shard.format)  # pyright: ignore[reportArgumentType]
         )
         yield shard_with_embedded_files
 
@@ -314,7 +314,7 @@ def _create_parquet_files_for_dataset_split(
             continue
 
         shard_path.parent.mkdir(parents=True, exist_ok=True)
-        shard.to_parquet(shard_path)
+        _ = shard.to_parquet(shard_path)
         logger.info(f"Created parquet file: `{shard_path}`")
 
 
@@ -348,7 +348,7 @@ def _upload_parquet_files_to_hub(
     assert dataset_shards_output_dir.is_dir()
 
     api = HfApi()
-    api.create_repo(
+    _ = api.create_repo(
         hf_repo_id,
         repo_type="dataset",
         private=is_private_repo,
@@ -356,7 +356,7 @@ def _upload_parquet_files_to_hub(
     )
 
     logger.info("Starting the upload...")
-    api.upload_folder(
+    _ = api.upload_folder(
         folder_path=dataset_shards_output_dir,
         repo_id=hf_repo_id,
         repo_type="dataset",
@@ -378,7 +378,7 @@ def _upload_dataset_to_hub_using_hf(
 ) -> None:
     """Upload a dataset to the hub using `push_to_hub`."""
     try:
-        dataset.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
+        _ = dataset.push_to_hub(hf_repo_id, config_name=config_name, num_shards=num_shards)
     except BadRequestError as request_error:
         if request_error.server_message is not None and "YAML" in request_error.server_message:
             logger.error("Invalid YAML occurred while pushing dataset to the hub.")

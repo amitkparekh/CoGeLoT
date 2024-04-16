@@ -20,4 +20,4 @@ class TransformerDecoderProtocol(abc.ABC, torch.nn.Module):
         memory_key_padding_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Forward pass of the decoder."""
-        ...  # noqa: WPS428
+        ...

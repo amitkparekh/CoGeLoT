@@ -67,13 +67,13 @@ test = [
 ]
 lint = [
     "ruff>=0.0.285",
-    "mypy>=1.5.1",
     "pre-commit>=3.3.3",
-    "wemake-python-styleguide>=0.18.0",
-    "flake8-pyproject>=1.2.3",
     "commitizen>=3.6.0",
     "toml-sort>=0.23.1",
     "docformatter>=1.7.5",
+    "pandas-stubs>=2.2.1.240316",
+    "types-tqdm>=4.66.0.20240106",
+    "basedpyright==1.10.0",
 ]
 notebooks = [
     "ipykernel>=6.27.0",
@@ -91,152 +91,7 @@ pre_install = "pdm install --plugins"
 format = "pre-commit run --all-files"
 pre_train = "pytest --deselect tests/test_online_evaluation.py -E cuda"
 
-[tool.flake8]
-select = ["WPS"]
-extend-ignore = [
-    # Handled by RUFF
-    "WPS101",
-    "WPS102",
-    "WPS113",
-    "WPS125",
-    "WPS211",
-    "WPS212",
-    "WPS213",
-    "WPS300",
-    "WPS302",
-    "WPS308",
-    "WPS309",
-    "WPS313",
-    "WPS317",
-    "WPS318",
-    "WPS324",
-    "WPS326",
-    "WPS422",
-    "WPS425",
-    "WPS453",
-    "WPS454",
-    "WPS500",
-    "WPS502",
-    "WPS503",
-    "WPS511",
-    "WPS513",
-    "WPS515",
-    "WPS526",
-    "WPS531",
-    # Disable the underscored numbers pattern (I don't like it)
-    "WPS114",
-    # Do not warn on too many imports.
-    "WPS201",
-    # Do not warn on too many module members
-    "WPS202",
-    # Do not warn on too many methods
-    "WPS214",
-    # Allow lots of importing from the same module --- it can happen and thats okay!
-    "WPS235",
-    # Do not warn on complex f-string
-    "WPS237",
-    # Allow f-strings
-    "WPS305",
-    # Do not force base classes to inherit object
-    "WPS306",
-    # Defer to RUFF's SIM117 for this one
-    "WPS316",
-    # Allow multi-line type annotations
-    "WPS320",
-    # Allow return statement that simply returns a prior statement
-    "WPS331",
-    # Allow new lines to start with a dot (caused by Black)
-    "WPS348",
-    # Allow logic in __init__ modules
-    "WPS412",
-    # Defer to other tools to find pointless lines
-    "WPS428",
-    # Defer to Ruff's PLR2004
-    "WPS432",
-    # Defer to Ruff's SLF001
-    "WPS437",
-    # Allow `float("nan")` because it's a thing that happens in ML stuff
-    "WPS456",
-    # Naming things is difficult, let the developer choose to use properties or methods
-    "WPS615",
-]
-max-line-length = 99
-max-line-complexity = 18
-max-local-variables = 10
-max-function-expressions = 10
-max-module-expressions = 20
-max-annotation-complexity = 4
-max-name-length = 50
-min-name-length = 1
-max-methods = 9
-max-string-usages = 10
-show-violation-links = true
-format = "wemake"
-# Black enforces double quotes.
-inline-quotes = "double"
-docstring-convention = "google"
-# Darglint
-docstring_style = "google"
-strictness = "long"
-nested-classes-whitelist = ["Meta", "Params", "Config"]
-allowed-domain-names = ["objects", "obj", "param"]
-per-file-ignores = [
-    "src/*/_version.py:WPS410",
-    "src/**/__init__.py:WPS436",
-    "src/*/__main__.py:WPS404",
-    "src/*/commands/*:WPS404",
-    "tests/*:WPS118,WPS202,WPS204,WPS210,WPS214,WPS218,WPS226,WPS231,WPS232,WPS235,WPS301,WPS404,WPS407,WPS432,WPS437,WPS442",
-]
-extend-exclude = [
-    ".venv/",
-    "*_cache/",
-    ".cache/",
-    "storage/",
-    "src/vima",
-    'scripts/example.py',
-]
-
-[tool.mypy]
-python_version = "3.11"
-exclude = [
-    '^src\/vima',
-    '^src\/vima_bench',
-    '^src\/vimasim',
-    '^scripts\/example.py',
-    '^tests',
-]
-# Import discovery
-namespace_packages = true
-ignore_missing_imports = true
-# Dynamic typing
-disallow_any_generics = true
-# Because sometimes it's just too complicated :/
-disallow_any_explicit = false
-disallow_any_decorated = false
-disallow_subclassing_any = true
-# Untyped definitions and calls
-check_untyped_defs = true
-disallow_incomplete_defs = true
-# We can't control all of these :(
-disallow_untyped_calls = false
-disallow_untyped_decorators = false
-disallow_untyped_defs = true
-# None and Optional handling
-no_implicit_optional = true
-# Warnings
-warn_no_return = true
-warn_redundant_casts = true
-warn_unreachable = true
-warn_unused_configs = true
-warn_unused_ignores = true
-# Config error messages
-pretty = false
-show_error_context = true
-show_error_codes = true
-show_column_numbers = true
-plugins = "pydantic.mypy,numpy.typing.mypy_plugin"
-
-[tool.pyright]
+[tool.basedpyright]
 exclude = [
     "storage",
     "configs",
@@ -251,24 +106,28 @@ ignore = [
     "src/vimasim/**",
     "scripts/example.py",
 ]
-typeCheckingMode = "strict"
-reportImportCycles = "error"
-reportUnknownMemberType = "none"
-reportMissingTypeStubs = "none"
+typeCheckingMode = "all"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
 reportFunctionMemberAccess = "warning"
-# Report private usage is covered by ruff
+reportUnknownVariableType = false
+reportUntypedFunctionDecorator = false
+reportUnknownLambdaType = false
+reportUnknownArgumentType = false
+reportAny = false
+reportImplicitOverride = false
+reportMissingSuperCall = false
+reportUnusedCallResult = false
+reportIncompatibleMethodOverride = false
+reportInvalidCast = false
+# Covered by ruff
 reportPrivateUsage = false
+reportUnusedImport = false
+reportPrivateImportUsage = false
 reportImplicitStringConcatenation = false
-reportIncompatibleMethodOverride = "none"
-reportShadowedImports = "error"
-reportUnnecessaryTypeIgnoreComment = "error"
-reportUnknownVariableType = "none"
-reportUntypedFunctionDecorator = "none"
-reportUnknownLambdaType = "none"
-reportUnknownArgumentType = "none"
+reportDeprecated = false
 
 [tool.pytest.ini_options]
-# addopts = "--jaxtyping-packages=cogelot,beartype.beartype"
 testpaths = ["tests"]
 filterwarnings = [
     "ignore::UserWarning",
@@ -286,18 +145,6 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 ignore-init-module-imports = true
-external = [
-    "WPS",
-    "WPS110",
-    "WPS118",
-    "WPS210",
-    "WPS213",
-    "WPS221",
-    "WPS362",
-    "WPS428",
-    "WPS436",
-    "WPS601",
-]
 # Enable every possible rule
 select = ["ALL"]
 ignore = [

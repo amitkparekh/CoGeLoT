@@ -18,7 +18,7 @@ from cogelot.structures.vima import VIMAInstance
 settings = Settings()
 
 
-def fix_raw_dataset_per_task(  # noqa: WPS210
+def fix_raw_dataset_per_task(
     parsed_instances_dir: Annotated[
         Path, typer.Argument(help="Where to save all of the parsed instances")
     ] = settings.parsed_instances_dir,

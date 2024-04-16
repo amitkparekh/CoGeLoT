@@ -136,9 +136,9 @@ class VIMAGatoPolicy(nn.Module):
                 q :: self._obj_xf_num_queries
             ]
         if action_token is not None:
-            tokens[
-                L_prompt + 1 + self._obj_xf_num_queries :: self._obj_xf_num_queries + 1
-            ] = action_token
+            tokens[L_prompt + 1 + self._obj_xf_num_queries :: self._obj_xf_num_queries + 1] = (
+                action_token
+            )
         mask = torch.cat(
             [
                 prompt_token_mask,

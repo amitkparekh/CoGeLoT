@@ -89,7 +89,7 @@ class InstancePreprocessor:
 
         # Prepare the observations
         observations = self.prepare_observations(
-            observations=instance.observations,
+            observations=instance.observations.root,
             object_ids=instance.object_ids,
             end_effector=instance.end_effector_type,
         )

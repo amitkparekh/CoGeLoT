@@ -194,8 +194,10 @@ class ObjectDescription(BaseModel, PydanticHFDatasetMixin):
             }
         )
 
-    def __eq__(self, value: Self) -> bool:  # noqa: WPS110
+    def __eq__(self, value: object) -> bool:
         """Is this object description the same as another?"""
+        if not isinstance(value, ObjectDescription):
+            return False
         return self.name == value.name and self.texture == value.texture
 
     def __str__(self) -> str:
@@ -379,7 +381,7 @@ class PromptAssets(RootModel[list[PromptAsset]]):
         """Convert the assets to a python dictionary."""
         return {asset.name: asset.model_dump() for asset in self.root}
 
-    def __getitem__(self, item: str) -> PromptAsset:  # noqa: WPS110
+    def __getitem__(self, item: str) -> PromptAsset:
         """Let the Assets class be subscriptable like a dictionary."""
         return self.as_dict[item]
 
@@ -396,11 +398,11 @@ class PromptAssets(RootModel[list[PromptAsset]]):
         """Get the keys of the assets."""
         return self.as_dict.keys()
 
-    def values(self) -> ValuesView[PromptAsset]:  # noqa: WPS110
+    def values(self) -> ValuesView[PromptAsset]:
         """Get the values of the assets."""
         return self.as_dict.values()
 
-    def items(self) -> ItemsView[str, PromptAsset]:  # noqa: WPS110
+    def items(self) -> ItemsView[str, PromptAsset]:
         """Get the items of the assets."""
         return self.as_dict.items()
 

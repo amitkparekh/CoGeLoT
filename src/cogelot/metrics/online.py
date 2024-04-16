@@ -211,7 +211,7 @@ class OnlineEvaluationMetrics(Metric):
         self.steps_taken[partition][task](num_steps_taken)
         self.tasks_seen[partition][task](1)
 
-    def compute(self) -> dict[str, torch.Tensor | float]:  # noqa: WPS210
+    def compute(self) -> dict[str, torch.Tensor | float]:
         """Compute the metrics, returning a flattened dict of all metrics.
 
         For any partition/task, if the number of steps taken is 0, we do not report it at all.

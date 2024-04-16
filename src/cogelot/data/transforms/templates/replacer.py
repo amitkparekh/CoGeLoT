@@ -129,9 +129,8 @@ class TemplateReplacer(BaseModel):
         if fill_in_missing_keys:
             key_replacements = self.fill_in_missing_keys(key_replacements)
 
-        is_valid = False
         counter = 0
-        while not is_valid:
+        while counter < self._max_attempts:
             template = self.choose_random_template()
             new_prompt = TemplateFormatter().format(template, **key_replacements)
 
@@ -139,10 +138,12 @@ class TemplateReplacer(BaseModel):
             # If we don't allow reuse of the original prompt, we need to check
             if original_prompt.lower() == new_prompt.lower() and not self.original_reuse_allowed:
                 is_valid = False
+            if is_valid:
+                break
 
             counter += 1
-            if counter > self._max_attempts:
-                raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
+        else:
+            raise RuntimeError(f"Could not generate a valid prompt after {counter} attempts.")
 
         new_prompt = prompt_fix_hacks(new_prompt)
         return new_prompt

@@ -30,7 +30,7 @@ class _MetadataDataset(Dataset[str]):
         return VIMAInstance.model_validate(raw_instance).to_metadata().model_dump_json()
 
 
-def dump_dataset_metadata(  # noqa: WPS210
+def dump_dataset_metadata(
     parsed_hf_dataset_dir: Annotated[
         Path, typer.Argument(help="Where to get the parsed HF datasets (for each task)")
     ] = settings.parsed_hf_dataset_dir,

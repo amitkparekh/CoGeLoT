@@ -72,7 +72,7 @@ class EvaluationPerformancePrinter:
         # Get all the success metrics per partition
         for level in self.levels:
             task_success = {
-                int(key[-2:]): Decimal(success * 100).quantize(Decimal("1.0"))  # noqa: WPS221
+                int(key[-2:]): Decimal(success * 100).quantize(Decimal("1.0"))
                 for key, success in sorted(run.summary.items())  # pyright: ignore[reportCallIssue]
                 if key.startswith(f"{self.success_prefix}{level}")
             }

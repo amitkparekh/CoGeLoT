@@ -34,7 +34,7 @@ def _create_mask(
         (batch_size, max(num_observations_per_batch), 1, max(num_unmasked_obj_per_batch)),
         dtype=torch.bool,
     )
-    for (batch_idx, num_obj), num_obs in zip(  # noqa: WPS352
+    for (batch_idx, num_obj), num_obs in zip(
         enumerate(num_unmasked_obj_per_batch), num_observations_per_batch, strict=True
     ):
         mask[batch_idx, :num_obs, :, :num_obj] = True
@@ -72,7 +72,7 @@ def test_object_shuffling_is_correct(
         torch.tensor(num_observations_per_batch) * torch.tensor(num_unmasked_obj_per_batch)
     ).tolist()
 
-    for num_obs_in_seq, num_obj_per_obs, old_seq_order, new_seq_order in zip(  # noqa: WPS352
+    for num_obs_in_seq, num_obj_per_obs, old_seq_order, new_seq_order in zip(
         num_observations_per_batch,
         num_unmasked_obj_per_batch,
         old_object_order.split(objects_per_seq),

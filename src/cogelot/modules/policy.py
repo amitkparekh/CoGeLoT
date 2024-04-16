@@ -93,7 +93,7 @@ class Policy(torch.nn.Module):
         self._add_residual_connection_to_prompt_visual_features = (
             add_residual_connection_to_prompt_visual_features
         )
-        self.use_greedy_decoding = use_greedy_decoding
+        self._use_greedy_decoding = use_greedy_decoding
 
     @property
     def prompt_embedding(self) -> T5TextEmbedder:
@@ -148,7 +148,7 @@ class Policy(torch.nn.Module):
         return self._use_greedy_decoding
 
     @use_greedy_decoding.setter
-    def use_greedy_decoding(self, value: bool) -> None:  # noqa: WPS110
+    def use_greedy_decoding(self, value: bool) -> None:
         """Set whether the policy uses greedy decoding."""
         self._use_greedy_decoding = value
 
@@ -232,7 +232,7 @@ class Policy(torch.nn.Module):
         ee = observation["ee"]
         assert isinstance(ee, torch.Tensor)
         ee_feats: torch.Tensor = self._end_effector_encoder(ee)
-        ee_feats = ee_feats.repeat(1, 1, img_feats.shape[-2], 1)  # noqa: WPS221
+        ee_feats = ee_feats.repeat(1, 1, img_feats.shape[-2], 1)
 
         # Create obs features
         obs_feats: torch.Tensor = self._obs_fusion_layer(torch.cat([img_feats, ee_feats], dim=-1))

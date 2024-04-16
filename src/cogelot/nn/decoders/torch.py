@@ -1,6 +1,6 @@
 import torch
 from loguru import logger
-from torch.nn.modules.transformer import _generate_square_subsequent_mask  # noqa: WPS450
+from torch.nn.modules.transformer import _generate_square_subsequent_mask
 
 from cogelot.nn.decoders.interfaces import TransformerDecoderProtocol
 

@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from tokenizers import AddedToken
-from transformers import AutoTokenizer  # pyright: ignore[reportGeneralTypeIssues]
+from transformers import AutoTokenizer
 
 LEFT_SYMBOL = "{"
 RIGHT_SYMBOL = "}"
@@ -27,9 +27,7 @@ class AssetPlaceholderToken(BaseModel):
         """Return the list of placeholder tokens for this template."""
         token_list = [self.asset_name]
         if self.max_idx:
-            tokens = [  # noqa: WPS221
-                f"{self.asset_name}_{idx}" for idx in range(self.max_idx + 1)
-            ]
+            tokens = [f"{self.asset_name}_{idx}" for idx in range(self.max_idx + 1)]
             token_list.extend(tokens)
 
         return [f"{self.left_symbol}{token}{self.right_symbol}" for token in token_list]
@@ -78,9 +76,7 @@ class TextTokenizer:
 
         # Add all the placeholder tokens to the tokenizer
         for token in placeholder_tokens:
-            tokenizer.add_tokens(
-                token.all_added_tokens  # pyright: ignore[reportGeneralTypeIssues]
-            )
+            tokenizer.add_tokens(token.all_added_tokens)
 
         self.tokenizer = tokenizer
         self.placeholder_tokens = placeholder_tokens

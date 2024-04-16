@@ -10,7 +10,7 @@ def create_progress_bar() -> progress.Progress:
         "[progress.description]{task.description}",
         progress.BarColumn(),
         progress.MofNCompleteColumn(),
-        cast(progress.ProgressColumn, RateColumn(unit="it")),
+        cast(progress.ProgressColumn, cast(object, RateColumn(unit="it"))),
         progress.TimeElapsedColumn(),
         progress.TimeRemainingColumn(),
     )

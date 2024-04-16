@@ -365,9 +365,9 @@ def prepare_target_actions(
     # Shape: (batch size, num observations, num action tokens per timestep)
     target_actions_tensor = torch.cat(list(continuous_targart_actions.values()), dim=-1)
     discrete_target_actions_tensor = torch.cat(list(discrete_target_actions.values()), dim=-1)
-    discrete_target_actions_tensor[
-        target_actions_tensor == ignore_target_index
-    ] = ignore_target_index
+    discrete_target_actions_tensor[target_actions_tensor == ignore_target_index] = (
+        ignore_target_index
+    )
 
     # Shape: (num action tokens per pose, batch size, num observations)
     discrete_target_actions_tensor = rearrange(discrete_target_actions_tensor, "B T A -> A B T")

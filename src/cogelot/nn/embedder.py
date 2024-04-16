@@ -9,7 +9,7 @@ class EmbedderProtocol(abc.ABC, torch.nn.Module):
     @abc.abstractmethod
     def forward(self, x: torch.Tensor, pos: torch.Tensor | None = None) -> torch.Tensor:
         """Forward pass of the embedder, returning embedded instances."""
-        ...  # noqa: WPS428
+        ...
 
 
 class PassthroughEmbedder(EmbedderProtocol):
