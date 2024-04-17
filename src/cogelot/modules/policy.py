@@ -17,7 +17,7 @@ from cogelot.modules.tokenizers.pose_action import (
 )
 from cogelot.nn.decoders import TransformerDecoderProtocol
 from cogelot.nn.decoders.vima import VIMADecoder
-from cogelot.nn.visual_encoders import VisualEncoder
+from cogelot.nn.visual_encoders import ObjectCentricVisualEncoder, VisualEncoder
 from cogelot.structures.model import RawPromptTokenType
 from cogelot.structures.vima import PoseActionType
 from vima import nn as vnn
@@ -115,7 +115,7 @@ class Policy(torch.nn.Module):
         pose_action_tokenizer = PoseActionTokenizer(remove_z_position_dim=True)
         policy = cls(
             embed_dim=their_policy.embed_dim,
-            obj_encoder=their_policy.obj_encoder,
+            obj_encoder=ObjectCentricVisualEncoder.from_their_encoder(their_policy.obj_encoder),
             end_effector_encoder=their_policy.end_effector_encoder,
             obs_fusion_layer=their_policy.obs_fusion_layer,
             action_encoder=VIMAContinuousActionEmbedder.from_their_action_encoder(

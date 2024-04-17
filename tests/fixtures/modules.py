@@ -28,7 +28,11 @@ from cogelot.nn.decoders.interfaces import (
     TransformerDecoderProtocol,
 )
 from cogelot.nn.decoders.vima import VIMADecoder, VIMAGPTDecoderOnly
-from cogelot.nn.visual_encoders import ObjectCentricVisualEncoder, PatchesVisualEncoder
+from cogelot.nn.visual_encoders import (
+    ObjectCentricVisualEncoder,
+    PatchesVisualEncoder,
+    VisualEncoder,
+)
 from vima import nn as vnn
 from vima.policy import VIMAPolicy
 
@@ -218,7 +222,7 @@ def vima_policy(
     pose_action_tokenizer: PoseActionTokenizer,
     prompt_encoder: T5PromptEncoder,
     prompt_embedder: T5TextEmbedder,
-    object_encoder: vnn.ObjEncoder | vnn.GatoMultiViewRGBEncoder,
+    object_encoder: VisualEncoder,
     end_effector_encoder: torch.nn.Embedding,
     obs_fusion_layer: torch.nn.Linear,
     prompt_obj_post_layer: torch.nn.Sequential,

@@ -1,4 +1,4 @@
-from typing import ClassVar, Protocol, cast
+from typing import ClassVar, Protocol, Self, TypeVar, cast
 
 import torch
 
@@ -6,11 +6,29 @@ from cogelot.nn.shuffle_obj import shuffle_objects_for_each_observation
 from vima.nn.obj_encoder import GatoMultiViewRGBEncoder, ObjEncoder
 from vima.utils import DataDict
 
+TheirEncoder = TypeVar("TheirEncoder", ObjEncoder, GatoMultiViewRGBEncoder)
+
 
 class VisualEncoder(Protocol):
     """Protocol for the visual encoder."""
 
     is_patches: ClassVar[bool]
+
+    # Used to ensure that we are converting the right encoder correctly.
+    _parent_encoder: ClassVar[type[ObjEncoder] | type[GatoMultiViewRGBEncoder]]
+
+    @classmethod
+    def from_their_encoder(cls, encoder: TheirEncoder) -> Self:
+        """Convert their encoder into the one we use.
+
+        This is Python magic to avoid needing to re-implment the entire class. I like this magic.
+        But the type hinting is a bit of a pain for it. There's a test to make sure this works.
+
+        https://stackoverflow.com/a/8545134
+        """
+        assert issubclass(encoder.__class__, cls._parent_encoder)
+        encoder.__class__ = type(cls.__name__, (cls, encoder.__class__), {})
+        return cast(Self, encoder)
 
     def forward_observation(
         self, observation: DataDict, *, shuffle_obj_per_observation: bool = False
@@ -27,6 +45,7 @@ class ObjectCentricVisualEncoder(ObjEncoder, VisualEncoder):
     """Wrapper on the VIMA object-centric visual encoder."""
 
     is_patches: ClassVar[bool] = False
+    _parent_encoder = ObjEncoder
 
     def forward_observation(
         self, observation: DataDict, *, shuffle_obj_per_observation: bool = False
@@ -80,6 +99,7 @@ class PatchesVisualEncoder(GatoMultiViewRGBEncoder, VisualEncoder):
     """Wrapper on the patch-based visual encoder."""
 
     is_patches: ClassVar[bool] = True
+    _parent_encoder = GatoMultiViewRGBEncoder
 
     def forward_observation(
         self, observation: DataDict, *, shuffle_obj_per_observation: bool = False
