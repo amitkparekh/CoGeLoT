@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint", "notebooks", "monitoring"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:df522cf3700ede657fe63fb14951719eaf8b87a4df88c9630380bf42f3295179"
+content_hash = "sha256:8e4e9ed56059024e620cdad2ece517eecb472fc320c896e077fc03368a50c983"
 
 [[package]]
 name = "aiohttp"
@@ -190,15 +190,15 @@ files = [
 
 [[package]]
 name = "basedpyright"
-version = "1.10.0"
+version = "1.10.2"
 requires_python = ">=3.8"
 summary = "static type checking for Python (but based)"
 dependencies = [
     "nodejs-bin>=18.4.0a4",
 ]
 files = [
-    {file = "basedpyright-1.10.0-py3-none-any.whl", hash = "sha256:78be6293dbdb1148be392285b801bbb38d4f19956e62446b4c40fc6befa0c7d4"},
-    {file = "basedpyright-1.10.0.tar.gz", hash = "sha256:a5705630a7a61fe4268969d12cdfaecbdf9f1487725d7fcec03937eb06adbb95"},
+    {file = "basedpyright-1.10.2-py3-none-any.whl", hash = "sha256:f30d5dbd8f80fd5a5bc43af798e93e312f90821b3c15c2dfd9cdf019017fa649"},
+    {file = "basedpyright-1.10.2.tar.gz", hash = "sha256:5541da9d5a44cda964070315382d17e3783bde6fd4318a308484ffa3973b3494"},
 ]
 
 [[package]]

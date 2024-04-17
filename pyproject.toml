@@ -73,7 +73,7 @@ lint = [
     "docformatter>=1.7.5",
     "pandas-stubs>=2.2.1.240316",
     "types-tqdm>=4.66.0.20240106",
-    "basedpyright==1.10.0",
+    "basedpyright>=1.10.2",
 ]
 notebooks = [
     "ipykernel>=6.27.0",
@@ -120,6 +120,7 @@ reportMissingSuperCall = false
 reportUnusedCallResult = false
 reportIncompatibleMethodOverride = false
 reportInvalidCast = false
+reportPrivateLocalImportUsage = false
 # Covered by ruff
 reportPrivateUsage = false
 reportUnusedImport = false
