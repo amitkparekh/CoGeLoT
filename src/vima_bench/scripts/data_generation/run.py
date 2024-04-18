@@ -7,13 +7,14 @@ from math import ceil
 
 import hydra
 import numpy as np
-from PIL import Image
 from einops import rearrange
+from loguru import logger
+from PIL import Image
 from tqdm import tqdm
 
 import vima_bench
 import vima_bench.utils as U
-from vima_bench import PARTITION_TO_SPECS
+from vima_bench.tasks import get_partition_to_specs
 
 MAX_TRIES_PER_SEED = 999
 
@@ -21,12 +22,13 @@ MAX_TRIES_PER_SEED = 999
 def _generate_data_for_one_task(
     task_name: str,
     task_kwargs: dict | None,
-    modalities,
+    modalities: list[str],
     num_episodes: int,
     success_only: bool,
     save_path: str,
     num_save_digits: int,
     seed: int | None = None,
+    difficulty: str = "easy",
 ):
     save_path = U.f_join(save_path, task_name)
     os.makedirs(save_path, exist_ok=True)
@@ -40,6 +42,7 @@ def _generate_data_for_one_task(
         task_name=task_name, task_kwargs=task_kwargs, modalities=modalities, seed=seed
     )
     task = env.task
+    task.set_difficulty(difficulty)
     oracle_fn = task.oracle(env)
 
     metadata = {
@@ -57,7 +60,8 @@ def _generate_data_for_one_task(
             obs_cache = []
             action_cache = []
 
-            obs = env.reset()
+            env.reset()
+            obs, *_ = env.step()
             obs_cache.append(obs)
             elapsed_steps = 0
             meta, prompt, prompt_assets = env.meta_info, env.prompt, env.prompt_assets
@@ -66,7 +70,7 @@ def _generate_data_for_one_task(
             for _ in range(task.oracle_max_steps):
                 oracle_action = oracle_fn.act(obs)
                 if oracle_action is None:
-                    print("WARNING: no oracle action, skip!")
+                    logger.warning("WARNING: no oracle action, skip!")
                     oracle_failed = True
                     break
                 # clip action
@@ -74,7 +78,7 @@ def _generate_data_for_one_task(
                     k: np.clip(v, env.action_space[k].low, env.action_space[k].high)
                     for k, v in oracle_action.items()
                 }
-                obs, _, done, info = env.step(action=oracle_action, skip_oracle=False)
+                obs, _, done, _, info = env.step(action=oracle_action, skip_oracle=False)
                 obs_cache.append(obs)
                 action_cache.append(oracle_action)
                 elapsed_steps += 1
@@ -85,12 +89,14 @@ def _generate_data_for_one_task(
                 num_tried_this_seed = 0
                 continue
         except ValueError as e:
-            print(e)
+            logger.exception(e)
             seed += 1
             num_tried_this_seed = 0
             continue
+
         assert len(obs_cache) == len(action_cache) + 1 == elapsed_steps + 1
         if success_only and not info["success"]:
+            logger.warning("Not successful, trying next seed")
             if num_tried_this_seed >= MAX_TRIES_PER_SEED:
                 seed += 1
                 num_tried_this_seed = 0
@@ -100,7 +106,7 @@ def _generate_data_for_one_task(
         os.makedirs(traj_save_path, exist_ok=True)
         obs = U.stack_sequence_fields(obs_cache)
         action = U.stack_sequence_fields(action_cache)
-        assert U.get_batch_size(obs) == U.get_batch_size(action) + 1, "INTERNAL"
+        assert U.get_batch_size(obs) == U.get_batch_size(action) + 1
         rgb = obs.pop("rgb")
         views = sorted(rgb.keys())
         for view in views:
@@ -151,19 +157,30 @@ def generate_data_for_one_task(kwargs):
     _generate_data_for_one_task(**kwargs)
 
 
-@hydra.main(config_path=".", config_name="conf", version_base="1.1")
-def main(cfg):
+def generate_training_data(
+    task_selection: str | None,
+    modalities: list[str],
+    num_episodes_per_task: int,
+    success_only: bool,
+    save_path: str,
+    seed: int,
+    max_workers: int = 1,
+    num_save_digits: int = 6,
+    difficulty: str = "easy",
+) -> None:
+    """Generate the training data."""
+    PARTITION_TO_SPECS = get_partition_to_specs()
+
     tasks = sorted(list(PARTITION_TO_SPECS["train"].keys()))
-    task_selection = cfg.task_selection
+    task_selection = task_selection
     if task_selection is not None:
         if isinstance(task_selection, str):
             task_selection = [task_selection]
         tasks = [task for task in tasks if task in task_selection]
 
-    print(f"[INFO] tasks: {tasks}")
+    logger.info(f"tasks: {tasks}")
 
-    if cfg.parallel:
-        max_workers = min(multiprocessing.cpu_count(), len(tasks))
+    if max_workers > 1:
         num_batches = ceil(len(tasks) / max_workers)
 
         for i in tqdm(range(num_batches), desc="Parallel"):
@@ -176,12 +193,13 @@ def main(cfg):
                         dict(
                             task_name=t,
                             task_kwargs=PARTITION_TO_SPECS["train"][t],
-                            modalities=cfg.modalities,
-                            num_episodes=cfg.num_episodes_per_task,
-                            success_only=cfg.success_only,
-                            save_path=cfg.save_path,
-                            num_save_digits=cfg.num_save_digits,
-                            seed=cfg.seed,
+                            modalities=modalities,
+                            num_episodes=num_episodes_per_task,
+                            success_only=success_only,
+                            save_path=save_path,
+                            num_save_digits=num_save_digits,
+                            seed=seed,
+                            difficulty=difficulty,
                         )
                         for t in tasks_this_batch
                     ],
@@ -191,13 +209,19 @@ def main(cfg):
             _generate_data_for_one_task(
                 task_name=t,
                 task_kwargs=PARTITION_TO_SPECS["train"][t],
-                modalities=cfg.modalities,
-                num_episodes=cfg.num_episodes_per_task,
-                success_only=cfg.success_only,
-                save_path=cfg.save_path,
-                num_save_digits=cfg.num_save_digits,
-                seed=cfg.seed,
+                modalities=modalities,
+                num_episodes=num_episodes_per_task,
+                success_only=success_only,
+                save_path=save_path,
+                num_save_digits=num_save_digits,
+                seed=seed,
+                difficulty=difficulty,
             )
+
+
+@hydra.main(config_path=".", config_name="conf", version_base="1.1")
+def main(cfg) -> None:
+    generate_training_data(**cfg)
 
 
 if __name__ == "__main__":

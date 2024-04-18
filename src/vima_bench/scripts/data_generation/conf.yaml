@@ -2,10 +2,11 @@ task_selection: null
 modalities: ["rgb", "segm"]
 num_episodes_per_task: 50000
 success_only: true
-save_path: ???
-parallel: true
+save_path: storage/data/xd
 seed: 0
 num_save_digits: 6
+max_workers: 1
+difficulty: extremely_distracting
 
 hydra:
   job:
