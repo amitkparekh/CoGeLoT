@@ -56,7 +56,7 @@ def parse_and_save_instance(
 def parse_original_dataset(
     raw_data_root: Annotated[
         Path, typer.Argument(help="Root directory for the raw data")
-    ] = settings.raw_data_dir,
+    ] = settings.raw_orignal_data_dir,
     parsed_instances_dir: Annotated[
         Path, typer.Argument(help="Where to save all of the parsed instances")
     ] = settings.parsed_instances_dir,

@@ -31,7 +31,8 @@ class Settings(BaseSettings):
     # Directories
     storage_dir: Path = Path("storage/")
     storage_data_dir: Path = storage_dir.joinpath("data/")
-    raw_data_dir: Path = storage_data_dir.joinpath("raw/vima_v6/")
+    raw_data_dir: Path = storage_data_dir.joinpath("raw/")
+    raw_orignal_data_dir: Path = raw_data_dir.joinpath("vima_v6/")
 
     _instances_subdir: str = "instances/"
     _hf_subdir: str = "hf/"
