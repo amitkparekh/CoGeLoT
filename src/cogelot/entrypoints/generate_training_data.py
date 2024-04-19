@@ -16,7 +16,7 @@ from tqdm import tqdm
 from cogelot.common.settings import Settings
 from cogelot.environment.vima import VIMAEnvironment
 from cogelot.structures.vima import Partition, Task
-from vima_bench.env.base import VIMAEnvBase
+from vima_bench.env.base import MovementFailedError, VIMAEnvBase
 from vima_bench.tasks import get_partition_to_specs
 from vima_bench.utils import get_batch_size, stack_sequence_fields
 
@@ -64,14 +64,17 @@ def try_generate_episode(env: VIMAEnvBase, *, seed: int, only_keep_success: bool
     action_cache = []
 
     env.seed(seed)
-    obs, *_ = env.step()
+    env.reset()
+    obs, *_ = env.step(action=None)
     obs_cache.append(obs)
     meta, prompt, prompt_assets = env.meta_info, env.prompt, env.prompt_assets
 
     done = False
     elapsed_steps = 0
     for elapsed_steps in range(task.oracle_max_steps):
-        logger.info(f"{task.task_name} ({elapsed_steps}/{task.oracle_max_steps})")
+        logger.info(
+            f"{task.task_name}: seed={seed} | step={elapsed_steps}/{task.oracle_max_steps}"
+        )
 
         # Generate action
         oracle_action = oracle_fn.act(obs)
@@ -94,7 +97,7 @@ def try_generate_episode(env: VIMAEnvBase, *, seed: int, only_keep_success: bool
         action_cache.append(oracle_action)
 
         # Do checks
-        assert len(obs_cache) == len(action_cache) + 1 == elapsed_steps + 1
+        assert len(obs_cache) == len(action_cache) + 1 == elapsed_steps + 2
 
         # Break if done, otherwise we go again
         if done:
@@ -180,8 +183,8 @@ def generate_data_for_one_worker(
 ) -> None:
     """Generate the episodes for a single worker."""
     env = VIMAEnvironment.from_config(
-        task=Task.simple_manipulation, partition=Partition.training, seed=0
-    ).env
+        task=Task.simple_manipulation, partition=Partition.placement_generalization, seed=0
+    ).vima_environment
 
     progress_bar = tqdm(episode_definitions, desc="Generating", leave=True)
 
@@ -199,7 +202,7 @@ def generate_data_for_one_worker(
                 generated_episode = try_generate_episode(
                     env, seed=seed, only_keep_success=only_keep_success
                 )
-            except (OracleFailedError, UnsuccessfulEpisodeError, ValueError):
+            except (OracleFailedError, UnsuccessfulEpisodeError, MovementFailedError, ValueError):
                 logger.exception(f"Failed to generate episode for task: {definition.task_name}")
                 seed += 1
             else:
