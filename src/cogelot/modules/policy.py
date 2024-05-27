@@ -62,6 +62,8 @@ class Policy(torch.nn.Module):
         pose_action_tokenizer: PoseActionTokenizer,
         add_residual_connection_to_prompt_visual_features: bool = False,
         use_greedy_decoding: bool = False,
+        disable_prompt_text: bool = False,
+        disable_prompt_visual: bool = False,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -94,6 +96,8 @@ class Policy(torch.nn.Module):
             add_residual_connection_to_prompt_visual_features
         )
         self._use_greedy_decoding = use_greedy_decoding
+        self._disable_prompt_text = disable_prompt_text
+        self._disable_prompt_visual = disable_prompt_visual
 
     @property
     def prompt_embedding(self) -> T5TextEmbedder:
@@ -196,6 +200,10 @@ class Policy(torch.nn.Module):
         """
         device = prompts[1].device
         raw_prompts_token_type, word_batch, image_batch = prompts
+
+        # Do some optional disabling of modalities if need be
+        word_batch, text_mask = self._maybe_disable_words(word_batch, text_mask)
+        image_batch = self._maybe_disable_visuals(image_batch)
 
         embedded_words = self._prompt_embedding(word_batch)
         embedded_images = self._obj_encoder.forward_prompt_visual(image_batch)
@@ -371,3 +379,26 @@ class Policy(torch.nn.Module):
 
         assert isinstance(axis_logits, torch.Tensor)  # pyright: ignore[reportPossiblyUnboundVariable]
         return axis_logits
+
+    def _maybe_disable_words(
+        self, word_batch: torch.Tensor, text_mask: torch.Tensor | None
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """If desired, disable the text modality."""
+        if not self._disable_prompt_text:
+            return word_batch, text_mask
+
+        # It gets inverted during the assembly so text masks being false means do not attend to it
+        # at this point in the flow.
+        return word_batch, torch.zeros_like(word_batch, dtype=torch.bool)
+
+    def _maybe_disable_visuals(self, image_batch: DataDict) -> DataDict:
+        """If desired, disable the visual modality."""
+        if not self._disable_prompt_visual:
+            return image_batch
+
+        assert "mask" in image_batch
+        masks = cast(dict[str, torch.Tensor], image_batch["mask"])
+        image_batch["mask"] = {
+            view: torch.zeros_like(tensor, dtype=torch.bool) for view, tensor in masks.items()
+        }
+        return image_batch

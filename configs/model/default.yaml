@@ -4,6 +4,7 @@ defaults:
   - action_decoder@policy.action_decoder: vima
   - transformer_decoder@policy.transformer_decoder: their_vima
   - visual_encoder@policy.obj_encoder: obj_centric
+  - prompt_modality@policy: disable_none
 
 _target_: cogelot.models.VIMALightningModule
 
@@ -17,6 +18,9 @@ policy:
   action_encoder: ???
   action_decoder: ???
   obj_encoder: ???
+
+  disable_prompt_text: false
+  disable_prompt_visual: false
 
   pose_action_tokenizer:
     _target_: cogelot.modules.tokenizers.PoseActionTokenizer
