@@ -7,8 +7,9 @@ from cogelot.data.transforms import (
     RewordPromptTransform,
     TextualDescriptionTransform,
 )
+from cogelot.data.transforms.instruction import InstructionReplacerTransform
 from cogelot.modules.tokenizers.text import TextTokenizer
-from cogelot.structures.vima import VIMAInstance
+from cogelot.structures.vima import Partition, VIMAInstance
 
 
 def test_noop_transform_works(vima_instance: VIMAInstance) -> None:
@@ -70,3 +71,14 @@ def test_textual_description_transform_noops_correctly(
     transform = TextualDescriptionTransform()
     new_instance = transform(vima_instance)
     assert new_instance == vima_instance
+
+
+def test_instruction_replacer_works(vima_instance: VIMAInstance) -> None:
+    vima_instance.partition = Partition.placement_generalization
+    transform = InstructionReplacerTransform()
+    new_instance = transform(vima_instance)
+
+    # Make sure the prompts are different
+    assert new_instance.prompt != vima_instance.prompt
+
+    # We need to make sure that the prompt assets all fit correctly otherwise the thing will crash
