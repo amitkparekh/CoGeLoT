@@ -14,7 +14,7 @@ __all__ = ["ALL_TASKS", "ALL_PARTITIONS", "get_partition_to_specs"]
 
 
 @lru_cache(maxsize=1)
-def _get_all_tasks() -> dict[str, list[BaseTask]]:
+def _get_all_tasks() -> dict[str, list[type[BaseTask]]]:
     return {
         "instruction_following": [
             SimpleManipulation,
@@ -49,7 +49,7 @@ def _get_all_tasks() -> dict[str, list[BaseTask]]:
 
 
 @lru_cache(maxsize=1)
-def _get_all_tasks_flattened() -> dict[str, BaseTask]:
+def _get_all_tasks_flattened() -> dict[str, type[BaseTask]]:
     return {
         f"{group}/{task.task_name}": task
         for group, tasks in _get_all_tasks().items()
