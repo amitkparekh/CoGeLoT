@@ -87,6 +87,10 @@ def _is_paraphrase(instance_transform: DictConfig) -> bool:
     return _check_if_word_in_instance_transform_target("reword", instance_transform)
 
 
+def _is_instruction_transform(instance_transform: DictConfig) -> bool:
+    return _check_if_word_in_instance_transform_target("instruction", instance_transform)
+
+
 def _is_disable_prompt_text(config: DictConfig) -> bool:
     return OmegaConf.select(config, "model.disable_prompt_text", default=False)
 
@@ -110,6 +114,8 @@ def _get_evaluation_instance_transform_column(instance_transform: DictConfig) ->
         parameters.append("gobbledygook_tokens")
     if _is_paraphrase(instance_transform):
         parameters.append("reworded")
+    if _is_instruction_transform(instance_transform):
+        parameters.append("diff_instruction")
 
     if not parameters:
         return "noop"
@@ -247,6 +253,7 @@ def build_eval_run_name(config: DictConfig) -> str:
         "textual_gobbledygook_word": "ObjText + GDGWord",
         "textual_gobbledygook_tokens": "ObjText + GDGToken",
         "noop": "",
+        "diff_instruction": "DiffInstr",
     }
     eval_prompt_modality_to_name = {
         "disable_both": "No Prompt",
