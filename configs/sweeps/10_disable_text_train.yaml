@@ -1,0 +1,28 @@
+# Running command
+command:
+  - ${env}
+  - python
+  - ${program}
+  - hardware=eidf_4gpu
+  - ${args_no_hyphens}
+
+program: src/cogelot/entrypoints/train.py
+
+name: disable_text
+entity: pyop
+project: CoGeLoT
+
+method: grid
+
+parameters:
+  experiment:
+    values:
+      - 01_their_vima_no_text
+      - 01_their_vima_patches_no_text
+      - 08_their_gpt_no_text
+      - 08_their_gpt_patches_no_text
+
+  datamodule.dataset_variant:
+    values:
+      - original
+      # - reworded
