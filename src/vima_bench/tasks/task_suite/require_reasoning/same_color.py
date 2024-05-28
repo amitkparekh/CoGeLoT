@@ -51,6 +51,7 @@ class SameColor(BaseTask):
             "num_dragged_obj": num_dragged_obj,
             "num_base_obj": num_base_obj,
             "num_distractors_obj": num_distractors_obj,
+            "minimum_steps": num_dragged_obj,
         }
         placeholder_expression = {
             "base_obj": {

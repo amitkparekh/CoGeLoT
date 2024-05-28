@@ -134,6 +134,8 @@ class RotateTheObjBase(BaseTask, ABC):
         super().reset(env)
         self._reset_prompt(same_dragged_obj)
 
+        self.task_meta["minimum_steps"] = self.task_meta["num_dragged_obj"]
+
         # add dragged obj
         not_reach_max_times = False
         num_added_dragged_obj = 0

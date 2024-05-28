@@ -61,7 +61,7 @@ class WithoutExceeding(SweepObjectsToZoneBase):
         task_meta = {
             "max_swept_obj": max_swept_obj,
             "constraint_range": constraint_range,
-            "num_dragged_obj": None,
+            "minimum_steps": None,
         }
 
         assert oracle_max_steps <= 20
@@ -97,7 +97,7 @@ class WithoutExceeding(SweepObjectsToZoneBase):
         sampled_num_swept_objs = sorted(self.task_meta["sample_prob"])[
             self.rng.choice(len(probs), p=probs)
         ]
-        self.task_meta["num_dragged_obj"] = sampled_num_swept_objs
+        self.task_meta["minimum_steps"] = sampled_num_swept_objs
 
         sampled_swept_obj = self.rng.choice(self.possible_dragged_obj).value
         sampled_swept_obj_texture = self.rng.choice(self.possible_dragged_obj_texture).value

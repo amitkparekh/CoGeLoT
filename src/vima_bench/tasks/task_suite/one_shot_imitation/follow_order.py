@@ -62,6 +62,7 @@ class FollowOrder(BaseTask):
             "num_dragged_obj": num_dragged_obj,
             "num_distractor_in_workspace": num_distractor_in_workspace,
             "num_frames": num_frames,
+            "minimum_steps": num_frames,
         }
         placeholder_expression = {
             f"frame_{i}": {

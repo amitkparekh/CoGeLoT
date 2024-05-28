@@ -56,6 +56,7 @@ class RearrangeIntoSceneBase(BaseTask):
             "num_distractor_in_workspace": num_distractors_obj,
             # probability that the distractor is sampled to one of the target pose
             "distractor_conflict_rate": distractor_conflict_rate,
+            "minimum_steps": num_dragged_obj,
         }
         placeholder_expression = {
             "scene": {
@@ -165,7 +166,8 @@ class RearrangeIntoSceneBase(BaseTask):
     def reset(self, env):
         super().reset(env)
 
-        num_dragged_obj = self.rng.uniform(low=1, high=self.task_meta["num_dragged_obj"])
+        # num_dragged_obj = self.rng.uniform(low=1, high=self.task_meta["num_dragged_obj"])
+        self.task_meta["minimum_steps"] = self.task_meta["num_dragged_obj"]
 
         sampled_dragged_obj_textures = [
             e.value

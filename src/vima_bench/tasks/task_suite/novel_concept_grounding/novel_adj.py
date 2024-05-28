@@ -61,6 +61,7 @@ class NovelAdj(BaseTask):
             "n_supports": n_supports,
             "difficulty": "easy",
             "num_geometric_distractors": num_geometric_distractors,
+            "minimum_steps": 1,
         }
         placeholder_expression = {
             "dragged_obj": {

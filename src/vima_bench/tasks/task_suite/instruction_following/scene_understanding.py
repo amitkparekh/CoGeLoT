@@ -254,6 +254,7 @@ class SceneUnderstanding(BaseTask):
 
     def reset(self, env):
         super().reset(env)
+        self.task_meta["minimum_steps"] = self.task_meta["num_dragged_obj"]
 
         # sample textures for base objects and dragged objects
         # these two textures must be different! we do this by reject sampling.

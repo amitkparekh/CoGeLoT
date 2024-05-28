@@ -71,6 +71,7 @@ class ManipulateOldNeighbor(BaseTask):
             "num_array_rows": num_array_rows,
             # num_array_columns could take the value of 2,3,4,...
             "num_array_columns": num_array_columns,
+            "minimum_steps": num_dragged_obj,
         }
 
         placeholder_expression = {

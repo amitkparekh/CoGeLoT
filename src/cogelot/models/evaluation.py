@@ -357,11 +357,12 @@ class EvaluationLightningModule(pl.LightningModule):
             return self.environment.vima_environment.task.oracle_max_steps
 
         if self._max_timesteps == "num_dragged_obj":
-            num_dragged_obj = self.environment.vima_environment.task.task_meta.get(
-                "num_dragged_obj"
-            )
-            assert isinstance(num_dragged_obj, int)
-            return num_dragged_obj
+            try:
+                return int(self.environment.vima_environment.task.task_meta["minimum_steps"])
+            except (KeyError, TypeError):
+                logger.error(
+                    f"Task {self.environment.vima_environment.task_name} does not have an integer `minimum_steps` in task_meta."
+                )
 
         assert isinstance(self._max_timesteps, int)
         return self._max_timesteps

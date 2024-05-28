@@ -63,6 +63,7 @@ class PickInOrderThenRestore(BaseTask):
             "num_array_rows": num_array_rows,
             # num_array_columns could take the value of 2,3,4,...
             "num_array_columns": num_array_columns,
+            "minimum_steps": num_target_base_obj,
         }
 
         placeholder_expression = {

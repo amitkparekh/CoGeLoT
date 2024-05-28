@@ -63,6 +63,7 @@ class FollowMotion(BaseTask):
             "num_frames": num_frames,
             "num_distractor_in_workspace": 1,
             "num_distractor_in_scene": 1,
+            "minimum_steps": num_frames,
         }
         placeholder_expression = {
             f"frame_{i}": {

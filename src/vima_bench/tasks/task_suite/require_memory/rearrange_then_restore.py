@@ -63,6 +63,8 @@ class RearrangeThenRestore(RearrangeIntoSceneBase):
     def reset(self, env):
         super().reset(env)
 
+        self.task_meta["minimum_steps"] = self.task_meta["minimum_steps"] * 2
+
         self._n_deduped_goals = len(self.dragged)
         self._deduped_achieved = 0
 

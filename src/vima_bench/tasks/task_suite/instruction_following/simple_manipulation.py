@@ -202,6 +202,7 @@ class SimpleManipulation(BaseTask):
     def reset(self, env):
         self._reset_prompt()
         super().reset(env)
+        self.task_meta["minimum_steps"] = self.task_meta["num_dragged_obj"]
 
         sampled_colors = [
             self.rng.choice(self.possible_base_obj_texture).value,
