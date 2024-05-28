@@ -1,5 +1,5 @@
 import sys
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import pytorch_lightning as pl
@@ -30,6 +30,8 @@ from vima_bench.env.base import MovementFailedError
 NUM_AXES = 14
 MAX_TIMESTEPS = 20
 
+MaxTimesteps = int | Literal["oracle_max_steps", "num_dragged_obj"]
+
 
 class EvaluationLightningModule(pl.LightningModule):
     """Lightning module for running multiple environments when evaluating the model."""
@@ -43,7 +45,7 @@ class EvaluationLightningModule(pl.LightningModule):
         *,
         difficulty: Difficulty = "easy",
         should_stop_on_first_success: bool = True,
-        max_timesteps: int = MAX_TIMESTEPS,
+        max_timesteps: MaxTimesteps = MAX_TIMESTEPS,
         disable_prompt_text: bool = False,
         disable_prompt_visual: bool = False,
         should_shuffle_obj_per_observations: bool = False,
@@ -139,7 +141,7 @@ class EvaluationLightningModule(pl.LightningModule):
         )
 
         # Run the task until the model thinks it is done
-        while len(self.buffer) < self._max_timesteps:
+        while len(self.buffer) < self._get_max_timesteps():
             logger.info(f"Taking step {len(self.buffer)}")
 
             # Predict the next pose action token
@@ -348,3 +350,18 @@ class EvaluationLightningModule(pl.LightningModule):
             view: torch.zeros_like(tensor, dtype=torch.bool) for view, tensor in masks.items()
         }
         return image_batch
+
+    def _get_max_timesteps(self) -> int:
+        """Get the maximum number of timesteps allowed for the task."""
+        if self._max_timesteps == "oracle_max_steps":
+            return self.environment.vima_environment.task.oracle_max_steps
+
+        if self._max_timesteps == "num_dragged_obj":
+            num_dragged_obj = self.environment.vima_environment.task.task_meta.get(
+                "num_dragged_obj"
+            )
+            assert isinstance(num_dragged_obj, int)
+            return num_dragged_obj
+
+        assert isinstance(self._max_timesteps, int)
+        return self._max_timesteps

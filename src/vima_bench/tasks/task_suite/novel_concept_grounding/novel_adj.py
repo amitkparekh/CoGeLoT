@@ -57,6 +57,7 @@ class NovelAdj(BaseTask):
         assert n_supports >= 1
         self._n_supports = n_supports
         task_meta = {
+            "num_dragged_obj": 1,
             "n_supports": n_supports,
             "difficulty": "easy",
             "num_geometric_distractors": num_geometric_distractors,

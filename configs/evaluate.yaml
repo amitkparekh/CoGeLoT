@@ -22,6 +22,7 @@ seed: 879008
 model:
   _target_: cogelot.models.EvaluationLightningModule
 
+  # max_timesteps: int | oracle_max_steps | num_dragged_obj
   max_timesteps: 10
   should_stop_on_first_success: true
   should_shuffle_obj_per_observations: false
