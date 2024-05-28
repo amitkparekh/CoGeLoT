@@ -140,8 +140,8 @@ def _get_evaluation_prompt_modality_column(config: DictConfig) -> str:
 
 def update_eval_config(config: DictConfig) -> DictConfig:
     """Update the evaluation config with all the necessary details."""
-    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
-    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
+    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None).strip()
+    instance_transform = OmegaConf.select(config, "model.vima_instance_transform").strip()
 
     evaluation_instance_transform_column = _get_evaluation_instance_transform_column(
         instance_transform
@@ -211,6 +211,13 @@ def update_eval_config(config: DictConfig) -> DictConfig:
         config,
         "visual_encoder_style",
         _get_visual_encoder_style(wandb_model_run_id),
+        force_add=True,
+        merge=False,
+    )
+    OmegaConf.update(
+        config,
+        "trained_without_text",
+        _is_trained_without_text(wandb_model_run_id),
         force_add=True,
         merge=False,
     )
