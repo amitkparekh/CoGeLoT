@@ -109,6 +109,10 @@ def _is_shuffle_obj(config: DictConfig) -> bool:
     return OmegaConf.select(config, "model.should_shuffle_obj_per_observations", default=False)
 
 
+def _get_eval_timesteps(config: DictConfig) -> str | int:
+    return OmegaConf.select(config, "model.max_timesteps")
+
+
 def _get_evaluation_instance_transform_column(instance_transform: DictConfig) -> str:
     parameters: list[str] = []
 
@@ -259,6 +263,7 @@ def build_eval_run_name(config: DictConfig) -> str:
     )
     evaluation_prompt_modality_column = _get_evaluation_prompt_modality_column(config)
     difficulty = _get_difficulty(config)
+    eval_max_timesteps = _get_eval_timesteps(config)
 
     eval_instance_transform_to_name = {
         "textual": "ObjText",
@@ -284,6 +289,10 @@ def build_eval_run_name(config: DictConfig) -> str:
         "extreme": "Xtr",
         "extremely_distracting": "XD",
     }
+    max_timesteps_to_name = {
+        "oracle_max_steps": "OracleTime",
+        "num_dragged_obj": "ObjTime",
+    }
     extras = [
         eval_instance_transform_to_name[evaluation_instance_transform_column],
         eval_prompt_modality_to_name[evaluation_prompt_modality_column],
@@ -296,5 +305,8 @@ def build_eval_run_name(config: DictConfig) -> str:
         run_name = f"{run_name} - {' + '.join(extras)}"
     if difficulty != "easy":
         run_name = f"{run_name} [{difficulty_to_name[difficulty]}]"
+
+    if eval_max_timesteps in max_timesteps_to_name:
+        run_name = f"{run_name} [{max_timesteps_to_name[eval_max_timesteps]}]"
 
     return run_name
