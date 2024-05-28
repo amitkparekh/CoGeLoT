@@ -30,6 +30,7 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "53afo878": "original",
         "xivdgqm0": "original",
         "uuee5jre": "original",
+        "6fmcpjg4": "original",
     }
     return trained_instruction[wandb_model_run_id]
 
@@ -53,7 +54,7 @@ def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
 
 
 def _is_trained_without_text(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id in {"uuee5jre"}
+    return wandb_model_run_id in {"uuee5jre", "6fmcpjg4"}
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
@@ -218,8 +219,8 @@ def update_eval_config(config: DictConfig) -> DictConfig:
 
 def build_eval_run_name(config: DictConfig) -> str:
     """Build the run name for the evaluation run."""
-    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None)
-    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
+    wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None).strip()
+    instance_transform = OmegaConf.select(config, "model.vima_instance_transform").strip()
 
     prompt_conditioning_style = _get_prompt_conditioning_style(wandb_model_run_id)
     visual_encoder_style = _get_visual_encoder_style(wandb_model_run_id)
