@@ -29,6 +29,7 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "ln4nrqhg": "original",
         "53afo878": "original",
         "xivdgqm0": "original",
+        "uuee5jre": "original",
     }
     return trained_instruction[wandb_model_run_id]
 
@@ -41,7 +42,7 @@ def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
 
 
 def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
-    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0"}
+    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0" "uuee5jre"}
     if wandb_model_run_id in patches:
         return "patches"
     return "obj_centric"
@@ -49,6 +50,10 @@ def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
     return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer", "wn9jc5l8"}
+
+
+def _is_trained_without_text(wandb_model_run_id: str) -> bool:
+    return wandb_model_run_id in {"uuee5jre"}
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
@@ -228,7 +233,9 @@ def build_eval_run_name(config: DictConfig) -> str:
         "patches": "Ptch",
     }
 
-    run_name = f"{prompt_condition_to_name[prompt_conditioning_style]}+{visual_encoder_to_name[visual_encoder_style]}"
+    run_name = f"{prompt_condition_to_name[prompt_conditioning_style]}+"
+    run_name += "Only" if _is_trained_without_text(wandb_model_run_id) else ""
+    run_name += visual_encoder_to_name[visual_encoder_style]
     run_name += "Shuf" if _is_trained_on_shuffled_obj(wandb_model_run_id) else ""
     run_name += "+14" if _is_14_action_tokens(wandb_model_run_id) else ""
     run_name += " / "
