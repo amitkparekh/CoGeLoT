@@ -141,7 +141,7 @@ def _get_evaluation_prompt_modality_column(config: DictConfig) -> str:
 def update_eval_config(config: DictConfig) -> DictConfig:
     """Update the evaluation config with all the necessary details."""
     wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None).strip()
-    instance_transform = OmegaConf.select(config, "model.vima_instance_transform").strip()
+    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
 
     evaluation_instance_transform_column = _get_evaluation_instance_transform_column(
         instance_transform
@@ -227,7 +227,7 @@ def update_eval_config(config: DictConfig) -> DictConfig:
 def build_eval_run_name(config: DictConfig) -> str:
     """Build the run name for the evaluation run."""
     wandb_model_run_id = OmegaConf.select(config, "model.model.wandb_run_id", default=None).strip()
-    instance_transform = OmegaConf.select(config, "model.vima_instance_transform").strip()
+    instance_transform = OmegaConf.select(config, "model.vima_instance_transform")
 
     prompt_conditioning_style = _get_prompt_conditioning_style(wandb_model_run_id)
     visual_encoder_style = _get_visual_encoder_style(wandb_model_run_id)
