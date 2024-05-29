@@ -9,7 +9,7 @@ from cogelot.environment.vima import VIMAEnvironment
 from cogelot.models import EvaluationLightningModule
 from cogelot.models.training import VIMALightningModule
 from cogelot.modules.instance_preprocessor import InstancePreprocessor
-from cogelot.structures.vima import VIMAInstance
+from cogelot.structures.vima import Task, VIMAInstance
 
 
 def test_can_create_evaluation_dataset() -> None:
@@ -131,6 +131,17 @@ def test_creating_model_instance_from_buffer_works(
 
 def test_evaluation_runs_with_trainer(evaluation_module: EvaluationLightningModule) -> None:
     datamodule = VIMABenchOnlineDataModule()
+    datamodule.setup("test")
+
+    trainer = pl.Trainer(fast_dev_run=True)
+    trainer.test(evaluation_module, datamodule=datamodule)
+
+
+@parametrize("task", list(Task))
+def test_evaluation_runs_with_trainer_for_task(
+    evaluation_module: EvaluationLightningModule, task: Task
+) -> None:
+    datamodule = VIMABenchOnlineDataModule(filter_tasks=[task])
     datamodule.setup("test")
 
     trainer = pl.Trainer(fast_dev_run=True)
