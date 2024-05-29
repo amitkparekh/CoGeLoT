@@ -89,6 +89,10 @@ def _is_textual(instance_transform: DictConfig) -> bool:
     return _check_if_word_in_instance_transform_target("textual", instance_transform)
 
 
+def _get_textual_description_modification_method(instance_transform: DictConfig) -> str:
+    return OmegaConf.select(instance_transform, "description_modification_method", default="")
+
+
 def _is_paraphrase(instance_transform: DictConfig) -> bool:
     return _check_if_word_in_instance_transform_target("reword", instance_transform)
 
@@ -275,6 +279,12 @@ def build_eval_run_name(config: DictConfig) -> str:
         "noop": "",
         "diff_instruction": "DiffInstr",
     }
+    textual_modification_method_to_name = {
+        "underspecify_nouns": "GenericNoun",
+        "remove_textures": "NoTexture",
+        "remove_nouns": "NoNoun",
+        None: "",
+    }
     eval_prompt_modality_to_name = {
         "disable_both": "No Prompt",
         "disable_text": "No Text",
@@ -295,6 +305,9 @@ def build_eval_run_name(config: DictConfig) -> str:
     }
     extras = [
         eval_instance_transform_to_name[evaluation_instance_transform_column],
+        textual_modification_method_to_name.get(
+            _get_textual_description_modification_method(instance_transform), ""
+        ),
         eval_prompt_modality_to_name[evaluation_prompt_modality_column],
     ]
     if _is_shuffle_obj(config):

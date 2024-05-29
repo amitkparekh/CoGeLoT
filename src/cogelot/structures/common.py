@@ -349,11 +349,18 @@ class PromptAsset(Asset):
         )
 
     @property
-    def as_natural_language(self) -> str | None:
-        """Convert the properties to natural language."""
+    def object_description(self) -> ObjectDescription | None:
+        """Get the object description."""
         if self.is_scene_placeholder:
             return None
-        return str(self.descriptions[0])
+        return self.descriptions[0]
+
+    @property
+    def as_natural_language(self) -> str | None:
+        """Convert the properties to natural language."""
+        if self.object_description:
+            return None
+        return str(self.object_description)
 
 
 class PromptAssets(RootModel[list[PromptAsset]]):

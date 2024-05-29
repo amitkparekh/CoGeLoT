@@ -1,4 +1,5 @@
-from typing import ClassVar
+import random
+from typing import ClassVar, Literal
 
 from cogelot.data.transforms.base import VIMAInstanceTransform
 from cogelot.data.transforms.reword import (
@@ -27,7 +28,10 @@ from cogelot.data.transforms.reword import (
 )
 from cogelot.data.transforms.templates.formatter import DefaultFormatter
 from cogelot.data.transforms.templates.replacer import TemplateReplacer, extract_keys_from_original
+from cogelot.structures.common import PromptAssets
 from cogelot.structures.vima import Task, VIMAInstance
+
+DescriptionModificationMethod = Literal["underspecify_nouns", "remove_textures", "remove_nouns"]
 
 
 class TextualDescriptionTransform(VIMAInstanceTransform):
@@ -44,7 +48,15 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
         Task.scene_understanding,
     }
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        description_modification_method: DescriptionModificationMethod | None = None,
+    ) -> None:
+        self.should_underspecify_nouns = description_modification_method == "underspecify_nouns"
+        self.should_remove_textures = description_modification_method == "remove_textures"
+        self.should_remove_nouns = description_modification_method == "remove_nouns"
+
         self._formatter = DefaultFormatter()
 
         self.replacers = {
@@ -186,11 +198,7 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
         if instance.task in self.tasks_to_avoid:
             return instance
 
-        placeholder_replacements = {
-            placeholder: prompt_asset.as_natural_language
-            for placeholder, prompt_asset in instance.prompt_assets.as_dict.items()
-            if prompt_asset.as_natural_language
-        }
+        placeholder_replacements = self._get_placeholder_replacements(instance.prompt_assets)
 
         prompt = self._fix_word_order(instance)
         prompt = self._formatter.format(prompt, **placeholder_replacements)
@@ -216,3 +224,34 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
         )
 
         return new_prompt
+
+    def _get_placeholder_replacements(self, prompt_assets: PromptAssets) -> dict[str, str]:
+        """Get the placeholder replacements for the object."""
+        description_per_placeholder = {
+            placeholder: prompt_asset.object_description
+            for placeholder, prompt_asset in prompt_assets.as_dict.items()
+            if prompt_asset.object_description
+        }
+
+        if self.should_underspecify_nouns:
+            return {
+                placeholder: f"{object_description.texture} {random.choice(list(GENERIC_SINGULAR_NOUNS))}"  # noqa: S311
+                for placeholder, object_description in description_per_placeholder.items()
+            }
+
+        if self.should_remove_textures:
+            return {
+                placeholder: object_description.name
+                for placeholder, object_description in description_per_placeholder.items()
+            }
+
+        if self.should_remove_nouns:
+            return {
+                placeholder: object_description.texture
+                for placeholder, object_description in description_per_placeholder.items()
+            }
+
+        return {
+            placeholder: str(object_description)
+            for placeholder, object_description in description_per_placeholder.items()
+        }

@@ -1,4 +1,4 @@
 # @package model.vima_instance_transform
 _target_: cogelot.data.transforms.TextualDescriptionTransform
 # null | underspecify_nouns | remove_textures | remove_nouns
-description_modification_method: null
+description_modification_method: remove_nouns
