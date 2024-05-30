@@ -31,6 +31,10 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "xivdgqm0": "original",
         "uuee5jre": "original",
         "6fmcpjg4": "original",
+        "zby6xk27": "paraphrases",
+        "fs5v61mz": "paraphrases",
+        "ah5btw8w": "paraphrases",
+        "xb3yttg9": "paraphrases",
     }
     return trained_instruction[wandb_model_run_id]
 
@@ -43,14 +47,14 @@ def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
 
 
 def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
-    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0" "uuee5jre"}
+    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0" "uuee5jre" "zby6xk27", "ah5btw8w"}
     if wandb_model_run_id in patches:
         return "patches"
     return "obj_centric"
 
 
 def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer", "wn9jc5l8"}
+    return wandb_model_run_id in {"ftwoyjb1", "0nsnkaer", "wn9jc5l8", "xb3yttg9"}
 
 
 def _is_trained_without_text(wandb_model_run_id: str) -> bool:
