@@ -40,7 +40,7 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
 
 
 def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
-    dec_only = {"bhuja4vo", "wn9jc5l8", "53afo878", "efxugme9"}
+    dec_only = {"bhuja4vo", "wn9jc5l8", "53afo878", "efxugme9", "fs5v61mz", "zby6xk27"}
     if wandb_model_run_id in dec_only:
         return "dec_only"
     return "xattn"
