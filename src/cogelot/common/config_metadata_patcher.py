@@ -47,7 +47,7 @@ def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
 
 
 def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
-    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0" "uuee5jre" "zby6xk27", "ah5btw8w"}
+    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0", "uuee5jre", "zby6xk27", "ah5btw8w"}
     if wandb_model_run_id in patches:
         return "patches"
     return "obj_centric"

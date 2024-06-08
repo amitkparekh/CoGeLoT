@@ -1,4 +1,5 @@
 import wandb
+from loguru import logger
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
@@ -11,7 +12,14 @@ def update_wandb_eval_configs() -> None:
     runs = wandb.Api().runs("pyop/cogelot-evaluation")
     for run in tqdm(runs):
         omegaconf_config = OmegaConf.from_dotlist(convert_to_dotlist(run.config))
-        run.config.update(flatten_config(update_eval_config(omegaconf_config)))
+
+        try:
+            new_config = update_eval_config(omegaconf_config)
+        except AttributeError:
+            logger.exception(f"Error updating config for run {run.id}")
+            continue
+
+        run.config.update(flatten_config(new_config))
         run.name = build_eval_run_name(omegaconf_config)
         run.update()
 
