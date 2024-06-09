@@ -341,6 +341,7 @@ class VIMAInstanceMetadata(BaseModel):
     actions: list[dict[Literal["start", "end"], SEVector]]
     is_successful_at_end: bool
     success_per_step: list[bool]
+    minimum_steps: int
 
     # These are pre-computed
     num_objects: int
@@ -370,6 +371,7 @@ class VIMAInstanceMetadata(BaseModel):
             ),
             "is_successful_at_end": pl.Boolean,
             "success_per_step": pl.List(pl.Boolean),
+            "minimum_steps": pl.Int32,
         }
 
 
@@ -424,6 +426,9 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
 
     # Seed used when generating the instance
     generation_seed: int
+
+    # Minimum steps if no mistakes are made
+    minimum_steps: int
 
     # Track success for the instance
     is_successful_at_end: bool = False
@@ -497,6 +502,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
                 "generation_seed": datasets.Value("int64"),
                 "is_successful_at_end": datasets.Value("bool"),
                 "success_per_step": datasets.Sequence(datasets.Value("bool")),
+                "minimum_steps": datasets.Value("int64"),
             }
         )
 
@@ -523,6 +529,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
             object_types_in_scene=self._object_types_in_scene,
             is_successful_at_end=self.is_successful_at_end,
             success_per_step=self.success_per_step,
+            minimum_steps=self.minimum_steps,
         )
 
     @property
