@@ -130,7 +130,7 @@ class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
             prompt=prompt,
             prompt_assets=prompt_assets,
             difficulty=self.env.meta_info["difficulty"],
-            minimum_steps=self.env.meta_info["minimum_steps"],
+            minimum_steps=self.env.task.task_meta["minimum_steps"],
         )
 
     def set_task(self, task: Task, partition: Partition, difficulty: Difficulty) -> None:
