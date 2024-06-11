@@ -41,6 +41,7 @@ class TextualDescriptionTransform(VIMAInstanceTransform):
     tasks_to_avoid: ClassVar[set[Task]] = {
         Task.novel_adj,
         Task.follow_order,
+        Task.follow_motion,
         Task.twist,
         Task.rearrange,
         Task.rearrange_then_restore,
