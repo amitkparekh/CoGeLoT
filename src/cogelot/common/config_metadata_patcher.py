@@ -35,19 +35,42 @@ def _get_training_instruction(wandb_model_run_id: str) -> str:
         "fs5v61mz": "paraphrases",
         "ah5btw8w": "paraphrases",
         "xb3yttg9": "paraphrases",
+        "bpmv9tbi": "none",
+        "ib93h28o": "none",
+        "949w4zfi": "none",
+        "lcz1hs8a": "none",
     }
     return trained_instruction[wandb_model_run_id]
 
 
 def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
-    dec_only = {"bhuja4vo", "wn9jc5l8", "53afo878", "efxugme9", "fs5v61mz", "zby6xk27"}
+    dec_only = {
+        "bhuja4vo",
+        "wn9jc5l8",
+        "53afo878",
+        "efxugme9",
+        "fs5v61mz",
+        "zby6xk27",
+        "949w4zfi",
+        "lcz1hs8a",
+    }
     if wandb_model_run_id in dec_only:
         return "dec_only"
     return "xattn"
 
 
 def _get_visual_encoder_style(wandb_model_run_id: str) -> str:
-    patches = {"efxugme9", "ln4nrqhg", "53afo878", "xivdgqm0", "uuee5jre", "zby6xk27", "ah5btw8w"}
+    patches = {
+        "efxugme9",
+        "ln4nrqhg",
+        "53afo878",
+        "xivdgqm0",
+        "uuee5jre",
+        "zby6xk27",
+        "ah5btw8w",
+        "ib93h28o",
+        "lcz1hs8a",
+    }
     if wandb_model_run_id in patches:
         return "patches"
     return "obj_centric"
@@ -58,7 +81,23 @@ def _is_trained_on_shuffled_obj(wandb_model_run_id: str) -> bool:
 
 
 def _is_trained_without_text(wandb_model_run_id: str) -> bool:
-    return wandb_model_run_id in {"uuee5jre", "6fmcpjg4"}
+    return wandb_model_run_id in {
+        "uuee5jre",
+        "6fmcpjg4",
+        "bpmv9tbi",
+        "ib93h28o",
+        "949w4zfi",
+        "lcz1hs8a",
+    }
+
+
+def _is_trained_without_visual_referent(wandb_model_run_id: str) -> bool:
+    return wandb_model_run_id in {
+        "bpmv9tbi",
+        "ib93h28o",
+        "949w4zfi",
+        "lcz1hs8a",
+    }
 
 
 def _is_14_action_tokens(wandb_model_run_id: str) -> bool:
@@ -230,6 +269,13 @@ def update_eval_config(config: DictConfig) -> DictConfig:
         config,
         "trained_without_text",
         _is_trained_without_text(wandb_model_run_id),
+        force_add=True,
+        merge=False,
+    )
+    OmegaConf.update(
+        config,
+        "trained_without_visual_referent",
+        _is_trained_without_visual_referent(wandb_model_run_id),
         force_add=True,
         merge=False,
     )
