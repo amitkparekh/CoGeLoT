@@ -53,6 +53,7 @@ def _get_prompt_conditioning_style(wandb_model_run_id: str) -> str:
         "zby6xk27",
         "949w4zfi",
         "lcz1hs8a",
+        "xb3yttg9",
     }
     if wandb_model_run_id in dec_only:
         return "dec_only"
