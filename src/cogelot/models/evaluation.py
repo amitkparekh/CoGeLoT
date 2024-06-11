@@ -24,6 +24,7 @@ from cogelot.structures.vima import (
     Task,
     VIMAInstance,
 )
+from vima.prepare_obs import BrokeBboxException
 from vima.utils import DataDict, add_batch_dim
 from vima_bench.env.base import MovementFailedError
 
@@ -87,16 +88,25 @@ class EvaluationLightningModule(pl.LightningModule):
         vima_instance = self.environment.create_vima_instance(partition)
         # Transform the instance as desired
         vima_instance = self._vima_instance_transform(vima_instance)
+
         try:
             self.run_vima_instance(vima_instance)
+
         except GetObservationError as err:
             logger.error(
                 "Something went wrong when getting the observation. Resetting and trying again."
             )
             if not is_retry:
                 return self.test_step(batch, batch_idx, is_retry=True)
-
             raise GetObservationError("Already retried once, crashing out") from err
+
+        except BrokeBboxException as err:
+            logger.error("Something went wrong with the bounding box. Trying the next seed.")
+            if not is_retry:
+                current_seed = self.environment.current_seed
+                self.environment.env.seed(current_seed + 1)
+                return self.test_step(batch, batch_idx, is_retry=True)
+            raise BrokeBboxException("Already retried once, crashing out") from err
 
     def on_test_start(self) -> None:
         """When the test starts, prefix all the logs with the current rank."""

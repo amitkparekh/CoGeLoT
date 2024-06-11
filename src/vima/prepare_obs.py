@@ -14,6 +14,10 @@ from vima.utils import (
 )
 
 
+class BrokeBboxException(ValueError):
+    """Something is wrong with the bounding box."""
+
+
 class ObsDict(TypedDict):
     """Dictionary of observations that they expect."""
 
@@ -93,7 +97,13 @@ def prepare_obs(
             if n_pad > 0:
                 if bboxes.ndim == 1:
                     bboxes = np.expand_dims(bboxes, axis=0)
-                bboxes = np.concatenate([bboxes, np.zeros((n_pad, 4), dtype=bboxes.dtype)], axis=0)
+                try:
+                    bboxes = np.concatenate(
+                        [bboxes, np.zeros((n_pad, 4), dtype=bboxes.dtype)], axis=0
+                    )
+                except ValueError as err:
+                    raise BrokeBboxException(f"bboxes: {bboxes}, n_pad: {n_pad}") from err
+
                 cropped_imgs = np.concatenate(
                     [
                         cropped_imgs,
