@@ -1,6 +1,6 @@
 import math
 import random
-from typing import ClassVar
+from collections.abc import Callable
 
 from loguru import logger
 
@@ -56,45 +56,60 @@ PLACEHOLDER_ALTERNATIVES = {
 }
 
 
-def _map_placeholders_from_old_to_new(
-    old_placeholders: set[str], new_placeholders: set[str]
-) -> dict[str, str]:
-    """Map the old placeholders to the new ones."""
-    placeholder_mapping = {}
-
-    intersecting_placeholders = old_placeholders.intersection(new_placeholders)
-    for placeholder in intersecting_placeholders:
-        placeholder_mapping[placeholder] = placeholder
-
-    remaining_placeholders = old_placeholders - intersecting_placeholders
-
-    raise NotImplementedError
+POSSIBLE_DEGREES = [int(math.degrees(1 / 6 * math.pi * i)) for i in range(1, 6)]
 
 
-ROTATE_INSTRUCTION = "Rotate the {dragged_obj_1} {angle_in_degree} degrees."
-POSSIBLE_DEGREES = [1 / 6 * math.pi * i for i in range(1, 6)]
+def _convert_1_to_3(old: str) -> str:  # noqa: ARG001
+    """Use instruction from T3 in T1's environment."""
+    return "Rotate the {dragged_obj_1} {angle_in_degree} degrees.".replace(
+        "{angle_in_degree}",
+        str(random.choice(POSSIBLE_DEGREES)),  # noqa: S311
+    )
 
 
-class InstructionReplacerTransform(VIMAInstanceTransform):
-    """Replace the task instruction with one from any other task."""
+def _convert_2_to_4(old: str) -> str:  # noqa: ARG001
+    """Use instruction from T4 in T2's environment."""
+    return "Rearrange to this {scene}."
 
-    disabled_tasks: ClassVar[set[Task]] = {
-        Task.novel_adj,
-        Task.novel_noun,
-        Task.novel_adj_and_noun,
-        Task.twist,
-    }
+
+def _convert_2_to_5(old: str) -> str:  # noqa: ARG001
+    """Use instruction from T5 in T2's environment."""
+    return "Rearrange to this {scene} and restore."
+
+
+def _convert_12_to_13(old: str) -> str:  # noqa: ARG001
+    """Use instruction from T13 in T12's environment."""
+    return "Sweep {det} {swept_obj} into {bounds} without touching {constraint}."
+
+
+def _convert_11_to_10(old: str) -> str:
+    """Use instruction from T10 in T11's environment."""
+    # Count the number of time "frames" appears in the instruction
+    num_frames = old.count("frames")
+    return (
+        "Follow this motion for {dragged_obj}: "
+        + " ".join([f"{{frame_{i}}}" for i in range(num_frames)])
+        + "."
+    )
+
+
+TASK_MAPPING: dict[Task, list[Callable[[str], str]]] = {
+    Task.visual_manipulation: [_convert_1_to_3],
+    Task.simple_manipulation: [_convert_2_to_4, _convert_2_to_5],
+    Task.sweep_without_exceeding: [_convert_12_to_13],
+    Task.follow_order: [_convert_11_to_10],
+}
+
+
+class DifferentInstructionTransform(VIMAInstanceTransform):
+    """Replace the task instruction with one from another task."""
 
     def __call__(self, instance: VIMAInstance) -> VIMAInstance:
         """Return the instance with a completely different language instruction for the visuals."""
-        if instance.task != Task.visual_manipulation:
-            raise NotImplementedError("Other tasks are not supported rn.")
+        if instance.task not in TASK_MAPPING:
+            raise NotImplementedError("This task is not supported.")
 
-        # Make sure its mapped right
-        new_instruction = ROTATE_INSTRUCTION.replace(
-            "{angle_in_degree}",
-            str(random.choice(POSSIBLE_DEGREES)),  # noqa: S311
-        )
+        new_instruction = random.choice(TASK_MAPPING[instance.task])(instance.prompt)  # noqa: S311
 
         placeholders = _extract_placeholders_from_instruction(new_instruction)
 

@@ -1,4 +1,5 @@
 from cogelot.data.transforms.base import ChainTransform, NoopTransform, VIMAInstanceTransform
+from cogelot.data.transforms.different_instruction import DifferentInstructionTransform
 from cogelot.data.transforms.gobbledygook import (
     GobbledyGookPromptTokenTransform,
     GobbledyGookPromptWordTransform,
