@@ -5,6 +5,8 @@ from collections.abc import Callable
 from loguru import logger
 
 from cogelot.data.transforms.base import VIMAInstanceTransform
+from cogelot.data.transforms.templates.formatter import TemplateFormatter
+from cogelot.data.transforms.templates.replacer import extract_keys_from_original
 from cogelot.environment.vima import get_task_kwargs
 from cogelot.modules.tokenizers.text import PLACEHOLDER_TOKENS
 from cogelot.structures.common import PromptAssets
@@ -109,10 +111,16 @@ class DifferentInstructionTransform(VIMAInstanceTransform):
         if instance.task not in TASK_MAPPING:
             raise NotImplementedError("This task is not supported.")
 
-        new_instruction = random.choice(TASK_MAPPING[instance.task])(instance.prompt)  # noqa: S311
+        new_instruction_template = random.choice(TASK_MAPPING[instance.task])(instance.prompt)  # noqa: S311
 
-        placeholders = _extract_placeholders_from_instruction(new_instruction)
+        # Make the new instruction
+        keys_from_original = extract_keys_from_original(instance.prompt, new_instruction_template)
+        new_instruction = TemplateFormatter().format(
+            new_instruction_template, **keys_from_original
+        )
 
+        # Update the prompt assets
+        placeholders = _extract_placeholders_from_instruction(new_instruction_template)
         prompt_assets = [
             asset for asset in instance.prompt_assets.root if asset.name in placeholders
         ]
