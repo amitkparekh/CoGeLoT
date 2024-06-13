@@ -20,7 +20,9 @@ def prompt_fix_hacks(prompt: str) -> str:
     return prompt.replace("{adv}", "").replace("  ", " ")
 
 
-def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
+def extract_keys_from_original(
+    prompt: str, template: str, *, strict: bool = True
+) -> dict[str, str]:
     """Extract keys from the original prompt."""
     # Remove any '.'s from the end before splittings
     words = [word.rstrip(".").rstrip(":") for word in prompt.lower().split(" ")]
@@ -29,7 +31,7 @@ def extract_keys_from_original(prompt: str, template: str) -> dict[str, str]:
     ]
 
     extracted_key_values = {}
-    for placeholder, word in zip(placeholders, words, strict=True):
+    for placeholder, word in zip(placeholders, words, strict=strict):
         if placeholder.startswith("{") and placeholder.endswith("}"):
             extracted_key_values[placeholder[1:-1]] = word
 

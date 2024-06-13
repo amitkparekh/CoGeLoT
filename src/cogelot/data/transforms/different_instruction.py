@@ -58,10 +58,10 @@ PLACEHOLDER_ALTERNATIVES = {
 }
 
 
-POSSIBLE_DEGREES = [int(math.degrees(1 / 6 * math.pi * i)) for i in range(1, 6)]
+POSSIBLE_DEGREES = [int(round(math.degrees(1 / 6 * math.pi * i), 0)) for i in range(1, 6)]
 
 
-def _convert_1_to_3(old: str) -> str:  # noqa: ARG001
+def _convert_1_to_3() -> str:
     """Use instruction from T3 in T1's environment."""
     return "Rotate the {dragged_obj_1} {angle_in_degree} degrees.".replace(
         "{angle_in_degree}",
@@ -69,37 +69,32 @@ def _convert_1_to_3(old: str) -> str:  # noqa: ARG001
     )
 
 
-def _convert_2_to_4(old: str) -> str:  # noqa: ARG001
-    """Use instruction from T4 in T2's environment."""
-    return "Rearrange to this {scene}."
-
-
-def _convert_2_to_5(old: str) -> str:  # noqa: ARG001
-    """Use instruction from T5 in T2's environment."""
-    return "Rearrange to this {scene} and restore."
-
-
-def _convert_12_to_13(old: str) -> str:  # noqa: ARG001
+def _convert_12_to_13() -> str:
     """Use instruction from T13 in T12's environment."""
     return "Sweep {det} {swept_obj} into {bounds} without touching {constraint}."
 
 
-def _convert_11_to_10(old: str) -> str:
-    """Use instruction from T10 in T11's environment."""
-    # Count the number of time "frames" appears in the instruction
-    num_frames = old.count("frames")
-    return (
-        "Follow this motion for {dragged_obj}: "
-        + " ".join([f"{{frame_{i}}}" for i in range(num_frames)])
-        + "."
-    )
+def _convert_13_to_12() -> str:
+    """Use instruction from T13 in T12's environment."""
+    return "Sweep {det} {swept_obj} into {bounds} without exceeding {constraint}."
 
 
-TASK_MAPPING: dict[Task, list[Callable[[str], str]]] = {
+def _convert_14_to_15() -> str:
+    """Use instruction from T14 in T15's environment."""
+    return "Put all objects with the same profile as {base_obj} into it."
+
+
+def _convert_15_to_14() -> str:
+    """Use instruction from T15 in T14's environment."""
+    return "Put all objects with the same texture as {base_obj} into it."
+
+
+TASK_MAPPING: dict[Task, list[Callable[[], str]]] = {
     Task.visual_manipulation: [_convert_1_to_3],
-    Task.simple_manipulation: [_convert_2_to_4, _convert_2_to_5],
     Task.sweep_without_exceeding: [_convert_12_to_13],
-    Task.follow_order: [_convert_11_to_10],
+    Task.sweep_without_touching: [_convert_13_to_12],
+    Task.same_texture: [_convert_14_to_15],
+    Task.same_shape: [_convert_15_to_14],
 }
 
 
@@ -111,10 +106,12 @@ class DifferentInstructionTransform(VIMAInstanceTransform):
         if instance.task not in TASK_MAPPING:
             raise NotImplementedError("This task is not supported.")
 
-        new_instruction_template = random.choice(TASK_MAPPING[instance.task])(instance.prompt)  # noqa: S311
+        new_instruction_template = random.choice(TASK_MAPPING[instance.task])()  # noqa: S311
 
         # Make the new instruction
-        keys_from_original = extract_keys_from_original(instance.prompt, new_instruction_template)
+        keys_from_original = extract_keys_from_original(
+            instance.prompt, new_instruction_template, strict=False
+        )
         new_instruction = TemplateFormatter().format(
             new_instruction_template, **keys_from_original
         )
