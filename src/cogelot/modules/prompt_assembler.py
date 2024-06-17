@@ -122,6 +122,7 @@ def assemble_multimodal_prompt(
     )
     visuals_iterator = assemble_visuals(
         embedded_visuals=embedded_visuals,
+        # TODO: If using patches, we should not be using the visuals_mask at all. this needs fixing.
         visuals_mask=None if is_using_patches else cast(VisualsMask, original_visuals["mask"]),
         raw_prompts_token_type=raw_prompts_token_type,
         embed_dim=embed_dim,
