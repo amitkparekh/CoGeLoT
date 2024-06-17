@@ -428,7 +428,7 @@ class VIMAInstance(BaseModel, PydanticHFDatasetMixin):
     generation_seed: int
 
     # Minimum steps if no mistakes are made
-    minimum_steps: int
+    minimum_steps: int = 0
 
     # Track success for the instance
     is_successful_at_end: bool = False

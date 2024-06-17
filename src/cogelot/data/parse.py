@@ -183,6 +183,8 @@ class VIMAInstanceParser:
             generation_seed=trajectory_metadata["seed"],
             is_successful_at_end=trajectory_metadata["success"],
             success_per_step=success_per_step,
+            # TODO: This is currently wrong for parsed datasets and just a placeholder to prevent breaking.
+            minimum_steps=0,
         )
 
     def _parse_pose_actions(self, instance_dir: Path) -> list[PoseAction]:
