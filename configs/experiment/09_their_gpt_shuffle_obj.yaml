@@ -2,8 +2,12 @@
 
 defaults:
   - override /model/transformer_decoder@model.policy.transformer_decoder: their_gpt.yaml
-  - override /model/visual_encoder@model.policy.obj_encoder: patches
-  - override /model/prompt_modality@model.policy: disable_text
   - _self_
 
 num_action_tokens: 1
+
+model:
+  should_shuffle_obj_per_observations: true
+
+datamodule:
+  dataset_variant: reworded

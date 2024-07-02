@@ -2,8 +2,6 @@
 
 defaults:
   - override /model/transformer_decoder@model.policy.transformer_decoder: their_vima.yaml
-  - override /model/action_decoder@model.policy.action_decoder: token_per_axis
-  - override /model/action_encoder@model.policy.action_encoder: token_per_axis
   - _self_
 
 architecture: encoder_decoder
@@ -13,4 +11,10 @@ xattn_positional_encoding: absolute
 source: VIMA
 prompt_input: encoder
 observation_input: decoder
-num_action_tokens: 14
+num_action_tokens: 1
+
+model:
+  should_shuffle_obj_per_observations: true
+
+datamodule:
+  dataset_variant: reworded
