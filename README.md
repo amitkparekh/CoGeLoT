@@ -4,18 +4,11 @@
 # Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks
 
 
-<a href="https://www.python.org/">
-  <img alt="Python 3.11+" src="https://img.shields.io/badge/-Python 3.11+-blue?logo=python&logoColor=white">
-</a>
-<a href="https://pdm-project.org/en/latest/">
-  <img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white">
-</a>
-<a href="https://pytorch.org/">
-  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white">
-</a>
-<a href="https://pytorchlightning.ai/">
-  <img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=lightning&logoColor=white">
-</a>
+<a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/-Python 3.11+-blue?logo=python&logoColor=white"></a>
+<a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
+<a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
+<a href="https://lightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=lightning&logoColor=white"></a>
+
 
 
 
