@@ -70,7 +70,7 @@ jobs:
     if: ${{ (needs.changes.outputs.python == 'true' || needs.changes.outputs.pre_commit_config == 'true') && !github.event.pull_request.draft }}
 
     steps:
-      - name: Checkpout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
