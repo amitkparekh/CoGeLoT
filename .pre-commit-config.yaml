@@ -49,7 +49,7 @@ repos:
       - id: fix-smartquotes
 
   - repo: https://github.com/hakancelik96/unimport
-    rev: 1.0.0
+    rev: 1.2.1
     hooks:
       - id: unimport
         types: [python]
