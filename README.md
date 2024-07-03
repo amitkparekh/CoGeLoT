@@ -473,7 +473,7 @@ The raw data was downloaded from VIMA. Each instance is a folder of multiple fil
                     └─ <instance_id>/
 ```
 
-I used symlinks to make it easier to manage the data, but this is what the folder structure was. If you want to use a different directory, you can change it using the [Pydantic settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) in `src/cogelot/commmon/settings.py`.
+I used symlinks to make it easier to manage the data, but this is what the folder structure was. If you want to use a different directory, you can change it using the [Pydantic settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) in `src/cogelot/common/settings.py`.
 
 </details>
 
