@@ -18,8 +18,6 @@
 
 </div>
 
----
-
 Evaluating the generalisation capabilities of multimodal models based solely on their performance on out-of-distribution data fails to capture their true robustness. This work introduces a comprehensive evaluation framework that systematically examines the role of instructions and inputs in the generalisation abilities of such models, considering architectural design, input perturbations across language and vision modalities, and increased task complexity. The proposed framework uncovers the resilience of multimodal models to extreme instruction perturbations and their vulnerability to observational changes, raising concerns about overfitting to spurious correlations. By employing this evaluation framework on current Transformer-based multimodal models for robotic manipulation tasks, we uncover limitations and suggest future advancements should focus on architectural and training innovations that better integrate multimodal inputs, enhancing a model's generalisation prowess by prioritising sensitivity to input content over incidental correlations.
 
 <br/>
@@ -30,7 +28,7 @@ Evaluating the generalisation capabilities of multimodal models based solely on 
 ![Table of perturbations from the paper](docs/PERT%20Table.png)
 
 <div align='center'>
-<small><i>Our evaluation framework. Each perturbation affects the instruction or observation inputs, which can be linguistic, visual, or a combination of both. The plausibility of a perturbation relates to a model's expected performance. Sensitivity to unreasonable conditions (:heavy_multiplication_x:) indicates that a model should not perform the task successfully given the perturbation, while plausible perturbations (:heavy_check_mark:) suggest that it should still perform successfully.</i></small>
+<small><i>Our evaluation framework. Each perturbation affects the instruction or observation inputs, which can be linguistic, visual, or a combination of both. The plausibility of a perturbation relates to a model's expected performance.</i></small>
 </div>
 
 
@@ -46,15 +44,6 @@ Additionally, I've tried to work in a constrained, clean, and robust manner. I h
 
 > [!NOTE]
 > This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
-
-
-### Limitations on further development
-
-> [!WARNING]
-> This is a research project, and so the scope of it is limited to the paper it is attached to.
-
-It is unlikely that I will maintaining this repository to ensure it continues to work with the latest dependencies outside those pinned. That said, I've tried to be lax in my pinning of deps so that building on this project will not be overly restrictive.
-
 
 
 
