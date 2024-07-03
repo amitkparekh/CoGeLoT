@@ -16,7 +16,7 @@ from vima.prepare_prompt import prepare_prompt
 from vima.utils import DataDict, any_to_datadict
 
 
-def _resize_image(image: np.ndarray, size: tuple[int, int] = (128, 64)) -> np.ndarray:
+def _resize_image(image: np.ndarray, size: tuple[int, int] = (128, 64)) -> np.ndarray:  # pyright: ignore[reportMissingTypeArgument]
     if image.ndim > 3:  # noqa: PLR2004
         return np.stack(
             [_resize_image(image_this_view, size=size) for image_this_view in image],
@@ -33,11 +33,13 @@ def _resize_image(image: np.ndarray, size: tuple[int, int] = (128, 64)) -> np.nd
 
 
 def convert_observations_to_their_format(
-    *, observations: list[Observation], tokenized_end_effector: np.ndarray
+    *,
+    observations: list[Observation],
+    tokenized_end_effector: np.ndarray,  # pyright: ignore[reportMissingTypeArgument]
 ) -> ObsDict:
     """Convert our observations to the format that VIMA uses."""
     observation_dicts = [observation.to_image_per_view_per_type() for observation in observations]
-    rgb_dict: dict[Literal["top", "front"], np.ndarray] = {
+    rgb_dict: dict[Literal["top", "front"], np.ndarray] = {  # pyright: ignore[reportMissingTypeArgument]
         view.value: np.stack(
             [
                 observation_dict[ImageType.rgb][view].numpy()
@@ -47,7 +49,7 @@ def convert_observations_to_their_format(
         )
         for view in (View.front, View.top)
     }
-    segm_dict: dict[Literal["top", "front"], np.ndarray] = {
+    segm_dict: dict[Literal["top", "front"], np.ndarray] = {  # pyright: ignore[reportMissingTypeArgument]
         view.value: np.stack(
             [
                 observation_dict[ImageType.segmentation][view].numpy()
@@ -175,7 +177,7 @@ class InstancePreprocessor:
         }
         return prepared_observations
 
-    def tokenize_end_effector(self, end_effector: str, num_observations: int) -> np.ndarray:
+    def tokenize_end_effector(self, end_effector: str, num_observations: int) -> np.ndarray:  # pyright: ignore[reportMissingTypeArgument]
         """Tokenize the end effector for all the observations."""
         tokenized_end_effector = self.end_effector_tokenizer.encode(end_effector)
         return np.array(tokenized_end_effector).repeat(num_observations)

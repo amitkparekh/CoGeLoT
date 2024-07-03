@@ -113,6 +113,7 @@ reportUnknownVariableType = false
 reportUntypedFunctionDecorator = false
 reportUnknownLambdaType = false
 reportUnknownArgumentType = false
+reportUnknownParameterType = false
 reportAny = false
 reportImplicitOverride = false
 reportMissingSuperCall = false

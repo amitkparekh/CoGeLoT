@@ -5,7 +5,8 @@ from pydantic_settings import BaseSettings
 
 from cogelot.structures.vima import Task
 
-DatasetVariant = Literal["original", "keep_null_action", "reworded", "reworded_keep_null_action"]
+# `original` is the original insstructions, `reworded` is for the paraphrased instructions
+DatasetVariant = Literal["original", "reworded"]
 ConfigStage = Literal["parsing", "preprocessing"]
 
 

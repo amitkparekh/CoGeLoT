@@ -5,7 +5,7 @@ from gym.wrappers import TimeLimit as _TimeLimit
 from loguru import logger
 
 
-class ResetFaultToleranceWrapper(Wrapper):
+class ResetFaultToleranceWrapper(Wrapper):  # pyright: ignore[reportMissingTypeArgument]
     """Ensure the environment is reset successfully."""
 
     max_retries = 300
@@ -30,5 +30,5 @@ class ResetFaultToleranceWrapper(Wrapper):
 class TimeLimitWrapper(_TimeLimit):
     """Limit the number of steps allowed in the environment."""
 
-    def __init__(self, env: Env, bonus_steps: int = 0) -> None:
-        super().__init__(env, env.task.oracle_max_steps + bonus_steps)
+    def __init__(self, env: Env, bonus_steps: int = 0) -> None:  # pyright: ignore[reportMissingTypeArgument]
+        super().__init__(env, env.task.oracle_max_steps + bonus_steps)  # pyright: ignore[reportAttributeAccessIssue]

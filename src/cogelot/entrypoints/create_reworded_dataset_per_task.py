@@ -32,15 +32,11 @@ def create_reworded_dataset_per_task(
     200G for 20 workers. That's what I did. Each task was processed in about 2-3 hours.
     """
     # Make sure the dataset variants are valid
-    assert old_dataset_variant in {"original", "keep_null_action"}
-    assert new_dataset_variant in {"reworded", "reworded_keep_null_action"}
-    assert (old_dataset_variant == "original" and new_dataset_variant == "reworded") or (
-        old_dataset_variant == "keep_null_action"
-        and new_dataset_variant == "reworded_keep_null_action"
-    )
+    assert old_dataset_variant == "original"
+    assert new_dataset_variant == "reworded"
 
     old_parsed_hf_dataset_dir = Settings(dataset_variant=old_dataset_variant).parsed_hf_dataset_dir
-    new_parsed_hf_dataset_dir = Settings(dataset_variant="reworded").parsed_hf_dataset_dir
+    new_parsed_hf_dataset_dir = Settings(dataset_variant=new_dataset_variant).parsed_hf_dataset_dir
     new_parsed_hf_dataset_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading parsed dataset for each task...")

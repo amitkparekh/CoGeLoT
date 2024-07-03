@@ -2,43 +2,12 @@ import math
 import random
 from collections.abc import Callable
 
-from loguru import logger
-
 from cogelot.data.transforms.base import VIMAInstanceTransform
 from cogelot.data.transforms.templates.formatter import TemplateFormatter
 from cogelot.data.transforms.templates.replacer import extract_keys_from_original
-from cogelot.environment.vima import get_task_kwargs
 from cogelot.modules.tokenizers.text import PLACEHOLDER_TOKENS
 from cogelot.structures.common import PromptAssets
-from cogelot.structures.vima import Partition, Task, VIMAInstance
-from vima_bench.tasks import ALL_TASKS as _ALL_TASKS
-from vima_bench.tasks.task_suite.base import BaseTask
-
-
-def _get_all_tasks() -> dict[str, type[BaseTask]]:
-    """Get all tasks."""
-    all_tasks = _ALL_TASKS.copy()
-    all_tasks.update({k.split("/")[1]: v for k, v in all_tasks.items()})
-    return all_tasks
-
-
-def _generate_other_instruction(task_to_avoid: Task, partition: Partition) -> str:
-    """Generate an instruction for the task."""
-    task = task_to_avoid
-    task_kwargs = None
-    while task == task_to_avoid:
-        # Pick a new task
-        proposed_task = random.choice(list(Task))  # noqa: S311
-
-        try:
-            task_kwargs = get_task_kwargs(partition, proposed_task)
-        except KeyError:
-            logger.error(f"Could not get task kwargs for {proposed_task.name} in {partition.name}")
-        else:
-            task = proposed_task
-
-    created_task = _get_all_tasks()[task.name](debug=False, **(task_kwargs or {}))
-    return created_task.prompt_template
+from cogelot.structures.vima import Task, VIMAInstance
 
 
 def _extract_placeholders_from_instruction(instruction: str) -> set[str]:

@@ -185,19 +185,5 @@ def interactive_evaluate(
     typer.confirm("Press enter to exit")
 
 
-def _view_every_task() -> None:
-    # Create the evaluation lightning module
-    evaluation = create_evaluation_module(Path("configs/evaluate.yaml"))
-
-    for task, partition_list in map_task_to_partitions.items():
-        partition = partition_list[0]
-        logger.info(f"Running {task} on {partition}")
-        # Reset the environment with the task and partition
-        evaluation.reset_environment(task=task, partition=partition)
-        vima_instance = evaluation.environment.create_vima_instance(partition)
-        with torch.inference_mode():
-            evaluation.run_vima_instance(vima_instance)
-
-
 if __name__ == "__main__":
     app()

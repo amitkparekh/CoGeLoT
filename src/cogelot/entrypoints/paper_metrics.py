@@ -373,12 +373,12 @@ def print_prompt_lengths() -> None:
     gobbledygook_tokens: list[tuple[str, list[int]]] = []
     for partition, task in evaluation_dataset:
         logger.info(f"Partition: {partition}, Task: {task}")
-        environment.set_task(task, partition)
+        environment.set_task(task, partition, difficulty="easy")
         environment.reset()
         # environment.render()
 
         logger.info("Creating VIMA instance")
-        instance = environment.create_vima_instance()
+        instance = environment.create_vima_instance(partition)
         original_instructions.append(
             (instance.prompt, text_tokenizer.tokenizer.encode(instance.prompt))
         )
