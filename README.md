@@ -13,7 +13,7 @@
 [![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 
-[[arXiv]](https://arxiv.org/abs/1234.56789) | [[Training Data]](https://huggingface.co/datasets/amitkparekh/vima) | [[Checkpoints]](https://huggingface.co/amitkparekh/cogelot)
+[[arXiv :link:]](https://arxiv.org/abs/1234.56789) | [[Training Data :link:]](https://huggingface.co/datasets/amitkparekh/vima) | [[Checkpoints :link:]](https://huggingface.co/amitkparekh/cogelot)
 
 
 </div>
