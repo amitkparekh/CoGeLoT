@@ -1,5 +1,5 @@
 hf_model:
   _target_: cogelot.common.hf_models.HuggingFaceModelLogger
-  repo_id: "amitkparekh/vima"
+  repo_id: "amitkparekh/cogelot"
   use_hf_transfer: false
   upload_in_background_each_checkpoint: false

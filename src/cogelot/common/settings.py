@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     num_train_shards: int = 20
     num_valid_shards: int = 5
 
-    # The repository ID on HF
+    # The dataset repository ID on HF
     hf_repo_id: str = "amitkparekh/vima"
     parsed_config_name: str = "parsed"
     preprocessed_config_name: str = "preprocessed"

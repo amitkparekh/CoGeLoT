@@ -11,15 +11,9 @@
 [![Hydra](https://img.shields.io/badge/Config-Hydra-89b8cd)](https://hydra.cc/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
-
-<a href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white"></a>
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 
-[![license](https://img.shields.io/github/license/amitkparekh/CoGeLoT)](https://github.com/amitkparekh/CoGeLoT/blob/main/LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
-
-
-
+[[arXiv]](https://arxiv.org/abs/1234.56789) | [[Training Data]](https://huggingface.co/datasets/amitkparekh/vima) | [[Checkpoints]](https://huggingface.co/amitkparekh/cogelot)
 
 
 </div>
@@ -73,18 +67,18 @@ Below is a table of each model run and where to find the checkpoints. We're prov
 
 | Instruction-style | Instruction Modalities | Prompt-conditioning | Vision Encoder | Shuffled Objects? | Model ID | Experiment ID |
 |:--|:--|:--|:--|:--:|:--:|:---|
-| Original | Text + Visual | Cross-Attention | Object-Centric | False | [`8lkml12g`](https://huggingface.co/amitkparekh/vima/tree/main/8lkml12g) | `01_their_vima` |
-| Original | Text + Visual | Cross-Attention | Object-Centric | True | [`ftwoyjb1`](https://huggingface.co/amitkparekh/vima/tree/main/ftwoyjb1) | `01_their_vima_shuffle_obj` |
-| Original | Text + Visual | Cross-Attention | Image-Patches | N/A | [`ln4nrqhg`](https://huggingface.co/amitkparekh/vima/tree/main/ln4nrqhg) | `01_their_vima_patches` |
-| Original | Text + Visual | Concatenate | Object-Centric | False | [`bhuja4vo`](https://huggingface.co/amitkparekh/vima/tree/main/bhuja4vo) | `08_their_gpt` |
-| Original | Text + Visual | Concatenate | Object-Centric | True | [`wn9jc5l8`](https://huggingface.co/amitkparekh/vima/tree/main/wn9jc5l8) | `08_their_gpt_shuffle_obj` |
-| Original | Text + Visual | Concatenate | Image-Patches | N/A | [`efxugme9`](https://huggingface.co/amitkparekh/vima/tree/main/efxugme9) | `08_their_gpt_patches` |
-| Paraphrases | Text + Visual | Cross-Attention | Object-Centric | False | [`2df3mwfn`](https://huggingface.co/amitkparekh/vima/tree/main/2df3mwfn) | `02_their_vima` |
-| Paraphrases | Text + Visual | Cross-Attention | Object-Centric | True | [`0nsnkaer`](https://huggingface.co/amitkparekh/vima/tree/main/0nsnkaer) | `02_their_vima_shuffle_obj` |
-| Paraphrases | Text + Visual | Cross-Attention | Image-Patches | N/A | [`ah5btw8w`](https://huggingface.co/amitkparekh/vima/tree/main/ah5btw8w) | `02_their_vima_patches` |
-| Paraphrases | Text + Visual | Concatenate | Object-Centric | False | [`fs5v61mz`](https://huggingface.co/amitkparekh/vima/tree/main/fs5v61mz) | `09_their_gpt` |
-| Paraphrases | Text + Visual | Concatenate | Object-Centric | True | [`xb3yttg9`](https://huggingface.co/amitkparekh/vima/tree/main/xb3yttg9) | `09_their_gpt_shuffle_obj` |
-| Paraphrases | Text + Visual | Concatenate | Image-Patches | N/A | [`zby6xk27`](https://huggingface.co/amitkparekh/vima/tree/main/zby6xk27) | `09_their_gpt_patches` |
+| Original | Text + Visual | Cross-Attention | Object-Centric | False | [`8lkml12g`](https://huggingface.co/amitkparekh/cogelot/tree/main/8lkml12g) | `01_their_vima` |
+| Original | Text + Visual | Cross-Attention | Object-Centric | True | [`ftwoyjb1`](https://huggingface.co/amitkparekh/cogelot/tree/main/ftwoyjb1) | `01_their_vima_shuffle_obj` |
+| Original | Text + Visual | Cross-Attention | Image-Patches | N/A | [`ln4nrqhg`](https://huggingface.co/amitkparekh/cogelot/tree/main/ln4nrqhg) | `01_their_vima_patches` |
+| Original | Text + Visual | Concatenate | Object-Centric | False | [`bhuja4vo`](https://huggingface.co/amitkparekh/cogelot/tree/main/bhuja4vo) | `08_their_gpt` |
+| Original | Text + Visual | Concatenate | Object-Centric | True | [`wn9jc5l8`](https://huggingface.co/amitkparekh/cogelot/tree/main/wn9jc5l8) | `08_their_gpt_shuffle_obj` |
+| Original | Text + Visual | Concatenate | Image-Patches | N/A | [`efxugme9`](https://huggingface.co/amitkparekh/cogelot/tree/main/efxugme9) | `08_their_gpt_patches` |
+| Paraphrases | Text + Visual | Cross-Attention | Object-Centric | False | [`2df3mwfn`](https://huggingface.co/amitkparekh/cogelot/tree/main/2df3mwfn) | `02_their_vima` |
+| Paraphrases | Text + Visual | Cross-Attention | Object-Centric | True | [`0nsnkaer`](https://huggingface.co/amitkparekh/cogelot/tree/main/0nsnkaer) | `02_their_vima_shuffle_obj` |
+| Paraphrases | Text + Visual | Cross-Attention | Image-Patches | N/A | [`ah5btw8w`](https://huggingface.co/amitkparekh/cogelot/tree/main/ah5btw8w) | `02_their_vima_patches` |
+| Paraphrases | Text + Visual | Concatenate | Object-Centric | False | [`fs5v61mz`](https://huggingface.co/amitkparekh/cogelot/tree/main/fs5v61mz) | `09_their_gpt` |
+| Paraphrases | Text + Visual | Concatenate | Object-Centric | True | [`xb3yttg9`](https://huggingface.co/amitkparekh/cogelot/tree/main/xb3yttg9) | `09_their_gpt_shuffle_obj` |
+| Paraphrases | Text + Visual | Concatenate | Image-Patches | N/A | [`zby6xk27`](https://huggingface.co/amitkparekh/cogelot/tree/main/zby6xk27) | `09_their_gpt_patches` |
 
 
 
