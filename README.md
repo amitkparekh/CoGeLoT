@@ -101,6 +101,7 @@ This is what was used to run the dataset creation, train models, evaluate models
 I have tried to make sure that docstrings and comments are relevant and detailed. If you want more information on what a function is doing or why it is doing that, feel free to make an issue. If you figure out something that I haven't described enough of, feel free to make a PR improving my documentation so that you, me, _and_ future people can benefit from your insight.
 
 
+
 ### How I managed and installed dependencies
 
 
@@ -114,14 +115,14 @@ pdm install
 
 
 <details>
-<summary>What if you use <code>requirements.txt</code>?</summary>
+<summary><b>What if you use <code>requirements.txt</code>?</b></summary>
 
 I have exported and included the `requirements.txt` from PDM. Using it is up to you. I'm not going to be maintaining it, but it's there if you need it.
 
 </details>
 
 <details>
-<summary>How I install dependencies on every machine</summary>
+<summary><b>How I install dependencies on every machine</b></summary>
 
 I literally just run the following on the machines I use. I don't use Windows though so I can't help you there.
 
@@ -133,7 +134,7 @@ pdm install
 
 
 <details>
-<summary> How to make sure it works on your machine</summary>
+<summary><b>How to make sure it works on your machine</b></summary>
 
 The quickest way to make sure you're all setup is to run either of the following:
 
@@ -157,22 +158,31 @@ Things happen and things break. I needed a sense check to make sure everything w
 
 You can find all the tests in the `tests/` folder. If you are using an IDE (like VSCode), it likely has support for pytest and the other test-related dependencies I used. While coverage is not going to be 100%, I used the tests with breakpoints to verify inner functions are working as expected. The various tests are a good way of looking how different pieces were implemented and are used.
 
-**To make sure everything works, you can run the following from your terminal:**
+<details>
+<summary><b>How to make sure all tests can be loaded without errors</b></summary>
 
-1. See what tests are available:
+```bash
+pdm run pytest --deselect tests/test_online_evaluation.py --collect-only
+```
 
-    ```bash
-    pdm run pytest --deselect tests/test_online_evaluation.py --collect-only
-    ```
-2. Run all the tests:
+This is also useful for just making sure things installed correctly and that all tests can be found.
 
-    ```bash
-    pdm run pytest --deselect tests/test_online_evaluation.py
-    ```
+</details>
+
+<details>
+<summary><b>How to run all the tests</b></summary>
+
+```bash
+pdm run pytest --deselect tests/test_online_evaluation.py
+```
+
+I've also got CI doing this so you can check the badge at the top of the README to see if everything is working as expected.
 
 Check out [pytest-xdist](https://github.com/pytest-dev/pytest-xdist) if you want to know more about running tests in parallel, or just throw ` -n auto` on the end of the above commands. It makes it go faster.[^1]
 
 [^1]: I don't know what happens if you replace `auto` with a number that has more processes than your machine. Maybe don't do that.
+
+</details>
 
 
 > [!TIP]
@@ -203,6 +213,7 @@ pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
 #### Training on different hardware
 
 The `configs/hardware` folder contains the hardware configurations that were used to run the experiments. These are used to set the number of GPUs, the number of CPUs, and the memory available to the model. These were preset for the cluster I was using, but you can adjust them to your needs.
+
 
 
 
