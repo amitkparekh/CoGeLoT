@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+env:
+  PYTHON_VERSION: 3.11
+  # Disable tokenizers parallelism because this doesn't help, and can cause issues in distributed tests.
+  TOKENIZERS_PARALLELISM: "false"
+  # Disable multithreading with OMP because this can lead to dead-locks in distributed tests.
+  OMP_NUM_THREADS: "1"
+  # See https://github.com/pytorch/pytorch/issues/37377#issuecomment-677851112.
+  MKL_THREADING_LAYER: "GNU"
+
+jobs:
+  changes:
+    name: Check for Python file changes
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    outputs:
+      python: ${{steps.filter.outputs.python}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - '**/*.py'
+              - 'storage/fixtures/**/*'
+              - 'configs/**/*'
+              - 'pyproject.toml'
+              - 'pdm.lock'
+              - '.github/workflows/ci.yml'
+            pre_commit_config:
+              - '.pre-commit-config.yaml'
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: ${{needs.changes.outputs.python == 'true' && !github.event.pull_request.draft }}
+    steps:
+      - name: Checkpout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: pdm install --without notebooks,monitoring,lint
+
+      - name: Run tests
+        run: pdm run pytest --deselect tests/test_online_evaluation.py
+
+  check_pre_commit:
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: ${{ (needs.changes.outputs.python == 'true' || needs.changes.outputs.pre_commit_config == 'true') && !github.event.pull_request.draft }}
+
+    steps:
+      - name: Checkpout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install pre-commit
+        run: |
+          pip install pre-commit
+
+      - name: Load cached pre-commit environment
+        uses: actions/cache@4
+        id: pre-commit-cache
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('**/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
+      - name: Run pre-commit hook
+        id: run-pre-commit-hooks
+        run: |
+          git add .pre-commit-config.yaml
+          pre-commit run --color=always --all-files
+
+      - name: Annotate any changes using reviewdog
+        if: ${{ failure() }}
+        id: reviewdog-suggester
+        uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: pre-commit
