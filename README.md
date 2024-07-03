@@ -10,6 +10,7 @@
 <a href="https://lightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=lightning&logoColor=white"></a>
 [![Hydra](https://img.shields.io/badge/Config-Hydra-89b8cd)](https://hydra.cc/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
 
 <a href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white"></a>
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
