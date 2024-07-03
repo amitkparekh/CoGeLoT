@@ -18,6 +18,7 @@ submit_jobs() {
 	echo "Upload preprocessed dataset: $upload_preprocessed_dataset_job_id"
 }
 
-# DATASET_VARIANT='original'
-DATASET_VARIANT="keep_null_action"
+DATASET_VARIANT='original'
+submit_jobs
+DATASET_VARIANT="reworded"
 submit_jobs

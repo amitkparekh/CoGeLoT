@@ -156,7 +156,7 @@ The quickest way to make sure you're all setup is to run either of the following
 
 Things happen and things break. I needed a sense check to make sure everything worked. I developed everything using tests to verify that each pieces works in isolation and together. This is the first thing I did when using a new machine or node or whatever.
 
-You can find all the tests in the `tests/` folder. If you are using an IDE (like VSCode), it likely has support for pytest and the other test-related dependencies I used. While coverage is not going to be 100%, I used the tests with breakpoints to verify inner functions are working as expected. The various tests are a good way of looking how different pieces were implemented and are used.
+You can find all the tests in the `tests/` folder. The various tests are a good way of looking how different pieces were implemented and are used. While coverage is not 100%, I used the tests with breakpoints to verify things are working as expected.
 
 <details>
 <summary><b>How to make sure all tests can be loaded without errors</b></summary>
@@ -442,27 +442,105 @@ As experiments were often run on a compute cluster, I ran commands with SLURM. Y
 
 </details>
 
-## The Datasets
 
-### How I processed the dataset
+### How I prepared the dataset
 
-The raw data was downloaded from VIMA. Each instance is a folder of multiple files. So that things can be run quickly, the dataset was loaded and parsed with Pydantic, and then converted into a [HF dataset](https://huggingface.co/datasets/amitkparekh/cogelot). There are unit tests showing how this was done in `tests/test_dataset_creation.py`.
+So that things can be run quickly, the dataset was loaded and parsed with Pydantic, and then converted into a [HF dataset](https://huggingface.co/datasets/amitkparekh/cogelot). There are unit tests showing how this was done in `tests/test_dataset_creation.py`.
 
-There were some errors when doing it all in one step, so the dataset creation needs to be done in two steps. First, the raw data is parsed and pickled into individual files because this takes the longest to do. Then, these files are loaded and converted into a HF dataset.
-
-The raw dataset is around 712GB.
-
-### Creating the different dataset variants
-
-Controlling how the datasets are made is done through the various Pydantic settings (which can be controlled with environment variables).
-
-### Tokenising the instances, ready for modelling
+The dataset was processed in two steps. The first step was to parse the raw data and pickle it into individual files. This was done because it was the most time-consuming part of the process. The second step was to load the pickled files and convert them into a HF dataset.
 
 To make loading data efficient when modelling, all the instances were tokenised in advanced. Similarly, this is also available on HF, as a different config name.
 
 
+> [!NOTE]
+> For each of the following commands, you can append `--help` to get more information on the command and what it does and the various arguments to control it. Alternatively, you can change things using the [Pydantic settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) in `src/cogelot/commmon/settings.py`.
+>
+> For example, each command has a way of distributing the load to multiple workers, and even splitting them across multiple SLURM jobs to make it go so much faster.
 
----
+
+<details>
+<summary><b>Step 1. Download the raw data from VIMA</b></summary>
+
+The raw data was downloaded from VIMA. Each instance is a folder of multiple files. Once extracted, the folder structure looked like this:
+
+```
+<project_root>
+└─ storage/
+    └─ data/
+        └─ raw/
+            └─ vima_v6/
+                └─ <task_name>/
+                    └─ <instance_id>/
+```
+
+I used symlinks to make it easier to manage the data, but this is what the folder structure was. If you want to use a different directory, you can change it using the [Pydantic settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) in `src/cogelot/commmon/settings.py`.
+
+</details>
+
+
+<details>
+<summary><b>Step 2. Parse the original data</b></summary>
+
+The raw data was parsed and pickled into individual files, and then it was converted into a HF dataset. This is for speed.
+
+```bash
+pdm run python -m cogelot parse-original-dataset --replace-if-exists
+pdm run python -m cogelot create-raw-dataset-per-task
+```
+
+I have separate SBATCH files for these steps:
+  - `scripts/slurm/parse-original-dataset.sh`
+  - `scripts/slurm/create-raw-dataset.sh`
+
+</details>
+
+
+
+<details>
+<summary><b>Step 3. Tokenize and preprocess for faster training</b></summary>
+
+Again, we preprocess and just dump each as pickles because it's faster before turning it into the HF dataset
+
+```bash
+pdm run python -m cogelot preprocess-instances
+pdm run python -m cogelot create-preprocessed-dataset-per-task
+
+```
+
+I have separate SBATCH files for these steps:
+  - `scripts/slurm/preprocess-instances.sh`
+  - `scripts/slurm/create-preprocessed-dataset.sh`
+
+</details>
+
+
+
+<details>
+<summary><b>Step 4. Create a dataset variant of paraphrased instructions</b></summary>
+
+We use just the previous instances to make the new variations, and use environment variables to create the preprocessed versions of the dataset.
+
+```bash
+pdm run python -m cogelot create-reworded-dataset-per-task original reworded
+
+DATASET_VARIANT=reworded pdm run python -m cogelot preprocess-instances
+DATASET_VARIANT=reworded pdm run python -m cogelot create-preprocessed-dataset-per-task
+```
+
+Again, I have a SBATCH file for this: `scripts/slurm/create-reworded-dataset.sh`, or more conveniently, a bash script to submit SBATCH jobs: `scripts/submit-reworded-dataset-creation-jobs.sh`.
+
+</details>
+
+
+<details>
+<summary><b>Step 5. Upload all the datasets</b></summary>
+
+This one's just for me but refer to `scripts/submit-dataset-upload-jobs.sh` for uploading all the datasets to HF as fast as possible without hitting the rate limit.
+
+</details>
+
+
+
 
 ## License
 
