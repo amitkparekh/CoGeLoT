@@ -48,7 +48,7 @@ def hydra_config(
     ]
 
     # Custom overrides if we're testing the VIMA model.
-    if experiment.startswith("01_their_vima"):
+    if experiment.startswith(("01_their_vima", "02_their_vima")):
         overrides.extend(
             [
                 "model.policy.transformer_decoder.vima_xattn_gpt.n_layer=2",
@@ -79,7 +79,7 @@ def hydra_config(
         )
 
     # Otherwise, custom overrides for theur gpt
-    elif experiment.startswith("08_their_gpt"):
+    elif experiment.startswith(("08_their_gpt", "09_their_gpt")):
         overrides.extend(
             [
                 "model.policy.transformer_decoder.vima_hf_gpt.n_layer=2",
