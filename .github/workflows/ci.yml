@@ -18,6 +18,7 @@ env:
   OMP_NUM_THREADS: "1"
   # See https://github.com/pytorch/pytorch/issues/37377#issuecomment-677851112.
   MKL_THREADING_LAYER: "GNU"
+  CI: "1"
 
 jobs:
   changes:

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,11 @@ def hydra_config(
         "model.policy.obj_encoder.vit_heads=2",
         "model.policy.obj_encoder.vit_layers=2",
     ]
+
+    # If we're running in CI, we don't want to log the model or even start talking to HF since
+    # that'll cause errors.
+    if os.getenv("CI"):
+        overrides.append("~trainer.logger.hf_model")
 
     # Custom overrides if we're testing the VIMA model.
     if experiment.startswith(("01_their_vima", "02_their_vima")):
