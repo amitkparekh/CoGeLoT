@@ -4,24 +4,22 @@
 # Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks
 
 
-<a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11+-blue?logo=python&logoColor=white"></a>
+<a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11-blue?logo=python&logoColor=white"></a>
 <a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
 <a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 <a href="https://lightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=lightning&logoColor=white"></a>
+[![Hydra](https://img.shields.io/badge/Config-Hydra-89b8cd)](https://hydra.cc/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+<a href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white"></a>
+[![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
+
+[![license](https://img.shields.io/github/license/amitkparekh/CoGeLoT)](https://github.com/amitkparekh/CoGeLoT/blob/main/LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
 
 
-<a href="https://hydra.cc/"><img alt="Config: Hydra" src="https://img.shields.io/badge/Config-Hydra-89b8cd"></a>
 
 
-[![GitHub license](https://img.shields.io/github/license/amitkparekh/CoGeLoT)](https://github.com/amitkparekh/CoGeLoT/blob/main/LICENSE)
-
-<a href="https://github.com/pre-commit/pre-commit">
-  <img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white">
-</a>
-
-[![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 
 </div>
 
@@ -210,9 +208,97 @@ pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
 > You can find the experiments in the folder, or check the `Experiment ID` column in the [above table](#model-architectures-and-checkpoints) for what each one means since the names aren't the clearest.
 
 
-#### Training on different hardware
+
+<details>
+<summary><b>Training on different hardware</b></summary>
 
 The `configs/hardware` folder contains the hardware configurations that were used to run the experiments. These are used to set the number of GPUs, the number of CPUs, and the memory available to the model. These were preset for the cluster I was using, but you can adjust them to your needs.
+
+</details>
+
+
+
+<details>
+<summary><b>How to train models on OCI</b></summary>
+
+This was a while ago now, but I had a setup script which you can find at `scripts/setup-oci-a100.sh`. This was used to setup the environment on the OCI instance I was using. It's not perfect, but it's a good starting point.
+
+</details>
+
+
+
+<details>
+<summary><b>How I trained models on K8s</b></summary>
+
+Running on K8s was a bit more involved but it's all here. That said, it will be different for your setups.
+
+My pod spec was:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: &name cogelot-1
+  namespace: ???
+spec:
+  restartPolicy: Never
+  containers:
+    - name: 1st
+      image: amitkparekh/python-pdm-cuda:latest
+      envFrom:
+        - secretRef:
+            name: amit-cogelot
+      imagePullPolicy: Always
+      command: ["/bin/bash", "-c"]
+      args:
+        - gh repo clone amitkparekh/cogelot cogelot &&
+          cd cogelot &&
+          bash ./scripts/setup-eidf.sh 2>&1 | tee setup-eidf.log &&
+          sleep infinity
+          #bash ./scripts/run-sweep-4.sh
+      resources:
+        requests:
+          cpu: &num-cpu 10
+          memory: &num-memory "150Gi"
+          nvidia.com/gpu: &num-gpu 4
+        limits:
+          cpu: *num-cpu
+          memory: *num-memory
+          nvidia.com/gpu: *num-gpu
+      volumeMounts:
+        - mountPath: /mnt/ceph_rbd
+          name: volume
+          # this is necessary for training in distributed mode - used for different processes to communicate
+        - mountPath: /dev/shm
+          name: dshm1
+  nodeSelector:
+    nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB
+  volumes:
+    - name: volume
+      persistentVolumeClaim:
+        claimName: *name
+    - name: dshm1
+      emptyDir:
+        medium: Memory
+```
+
+
+The Dockerfile is public and the secrets contained the following:
+
+```
+WANDB_API_KEY=???
+HUGGING_FACE_HUB_TOKEN=???
+GH_TOKEN=???
+
+HF_HUB_VERBOSITY=info
+
+WANDB_CONFIG_DIR=/mnt/ceph_rbd/wandb
+WANDB_CACHE_DIR=/mnt/ceph_rbd/wandb
+HF_HOME=/mnt/ceph_rbd/huggingface
+TORCH_HOME=/mnt/ceph_rbd/torch
+```
+
+</details>
 
 
 
