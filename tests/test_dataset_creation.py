@@ -102,8 +102,10 @@ def test_using_seed_when_splitting_is_deterministic(
     dataset_split_1 = vima_instances_dataset.train_test_split(test_size=0.2, seed=seed)
     dataset_split_2 = vima_instances_dataset.train_test_split(test_size=0.2, seed=seed)
 
-    assert cast(torch.Tensor, dataset_split_1["test"]["task"]).tolist() == [4, 11, 16]
-    assert cast(torch.Tensor, dataset_split_2["test"]["task"]).tolist() == [4, 11, 16]
+    assert (
+        cast(torch.Tensor, dataset_split_1["test"]["task"]).tolist()
+        == cast(torch.Tensor, dataset_split_2["test"]["task"]).tolist()
+    )
 
 
 def test_instance_can_be_converted_to_just_metadata(vima_instance: VIMAInstance) -> None:
