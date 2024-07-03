@@ -4,50 +4,41 @@
 # Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks
 
 
-<a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/-Python 3.11+-blue?logo=python&logoColor=white"></a>
+<a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11+-blue?logo=python&logoColor=white"></a>
 <a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
 <a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 <a href="https://lightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=lightning&logoColor=white"></a>
 
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
 
 
-
-<a href="https://hydra.cc/">
-  <img alt="Config: Hydra" src="https://img.shields.io/badge/Config-Hydra-89b8cd">
-</a>
+<a href="https://hydra.cc/"><img alt="Config: Hydra" src="https://img.shields.io/badge/Config-Hydra-89b8cd"></a>
 
 
-[![GitHub license](https://img.shields.io/github/license/vimalabs/VIMA)](https://github.com/vimalabs/VIMA/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/amitkparekh/CoGeLoT)](https://github.com/amitkparekh/CoGeLoT/blob/main/LICENSE)
+
 <a href="https://github.com/pre-commit/pre-commit">
   <img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white">
 </a>
 
-[![Continuous Integration](https://github.com/emma-heriot-watt/common/actions/workflows/continuous_integration.yml/badge.svg)](https://github.com/emma-heriot-watt/common/actions/workflows/continuous_integration.yml)
-[![Tests](https://github.com/emma-heriot-watt/common/actions/workflows/tests.yml/badge.svg)](https://github.com/emma-heriot-watt/common/actions/workflows/tests.yml)
+[![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 
 </div>
 
 ---
 
-TODO: Add fig1 from the paper here
-
-## Abstract from the paper
-
 Evaluating the generalisation capabilities of multimodal models based solely on their performance on out-of-distribution data fails to capture their true robustness. This work introduces a comprehensive evaluation framework that systematically examines the role of instructions and inputs in the generalisation abilities of such models, considering architectural design, input perturbations across language and vision modalities, and increased task complexity. The proposed framework uncovers the resilience of multimodal models to extreme instruction perturbations and their vulnerability to observational changes, raising concerns about overfitting to spurious correlations. By employing this evaluation framework on current Transformer-based multimodal models for robotic manipulation tasks, we uncover limitations and suggest future advancements should focus on architectural and training innovations that better integrate multimodal inputs, enhancing a model's generalisation prowess by prioritising sensitivity to input content over incidental correlations.
 
+<br/>
+
+## Our Evaluation Framework
 
 
+![Table of perturbations from the paper](docs/PERT%20Table.png)
 
-
-
-## What do people want to know?
-
-- [ ] How did i train models
-- [ ] How did i eval models
-- [ ] How did i run VIMA's checkpoint in the environment
-- [x] What checkpoint am I providing
-- [ ] What datasets
-- [ ] what else?
+<div align='center'>
+<small><i>Our evaluation framework. Each perturbation affects the instruction or observation inputs, which can be linguistic, visual, or a combination of both. The plausibility of a perturbation relates to a model's expected performance. Sensitivity to unreasonable conditions (:heavy_multiplication_x:) indicates that a model should not perform the task successfully given the perturbation, while plausible perturbations (:heavy_check_mark:) suggest that it should still perform successfully.</i></small>
+</div>
 
 
 
@@ -119,6 +110,43 @@ To quickly install and get up and running, you can run the following:
 ```bash
 pdm install
 ```
+
+
+<details>
+<summary>What if you use <code>requirements.txt</code>?</summary>
+
+I have exported and included the `requirements.txt` from PDM. Using it is up to you. I'm not going to be maintaining it, but it's there if you need it.
+
+</details>
+
+<details>
+<summary>How I install dependencies on every machine</summary>
+
+I literally just run the following on the machines I use. I don't use Windows though so I can't help you there.
+
+```bash
+mise use python@3.11 pdm@latest
+pdm install
+```
+</details>
+
+
+<details>
+<summary> How to make sure it works on your machine</summary>
+
+The quickest way to make sure you're all setup is to run either of the following:
+
+- If you know you've got a venv activated or something
+    ```bash
+    python -m cogelot
+    ```
+
+- If you're using PDM instead of activating the venv
+    ```bash
+    pdm run python -m cogelot
+    ```
+
+</details>
 
 
 
@@ -209,6 +237,10 @@ To make loading data efficient when modelling, all the instances were tokenised 
 
 
 ---
+
+## License
+
+VIMA, VIMA-Bench, and all artefacts from VIMA are licensed under the MIT License. Everything within this repository continues to be licensed under the MIT License.
 
 ## Citation
 

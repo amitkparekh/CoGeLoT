@@ -4,7 +4,6 @@ version = "1.0.0"
 description = ""
 authors = [
     {name = "Amit Parekh", email = "7276308+amitkparekh@users.noreply.github.com"},
-    {name = "VIMA Team"},
 ]
 requires-python = ">=3.11,<3.13"
 readme = "README.md"
@@ -14,7 +13,7 @@ dependencies = [
     "tokenizers>=0.13.3",
     "transformers>=4.32.0",
     "omegaconf>=2.3.0",
-    "numpy>=1.25.2",
+    "numpy>=1.25.2,<2",
     "torchmetrics>=1.1.0",
     "loguru>=0.7.0",
     "tqdm>=4.66.1",
