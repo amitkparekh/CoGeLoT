@@ -108,14 +108,14 @@ def test_action_decoder_output_shape_is_correct(
 )
 @settings(deadline=None)
 def test_greedy_decoder_outputs_correct_shape(
-    vima_lightning_module_for_inference: VIMALightningModule,
+    vima_lightning_module: VIMALightningModule,
     max_num_objects: int,
     num_observations: int,
     instruction_length: int,
     embed_dim: int,
 ) -> None:
     num_tokens_to_generate_per_timestep = (
-        vima_lightning_module_for_inference.policy.num_action_tokens_per_timestep
+        vima_lightning_module.policy.num_action_tokens_per_timestep
     )
     tgt_seq_length = (
         (max_num_objects + num_tokens_to_generate_per_timestep) * (num_observations - 1)
@@ -127,7 +127,7 @@ def test_greedy_decoder_outputs_correct_shape(
     memory_key_padding_mask = torch.zeros((1, instruction_length), dtype=torch.bool)
 
     with torch.inference_mode():
-        generated_tokens = vima_lightning_module_for_inference.policy._transformer_decoder(
+        generated_tokens = vima_lightning_module.policy._transformer_decoder(
             tgt,
             memory,
             tgt_key_padding_mask=tgt_key_padding_mask,
