@@ -50,6 +50,11 @@ While I tried to bring everything front and centre, some things might be buried.
 
 Additionally, I've tried to work in a constrained, clean, and robust manner. I hope that helps you as much as it helped me.
 
+
+> [!NOTE]
+> This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
+
+
 ### Limitations on further development
 
 > [!WARNING]
@@ -88,12 +93,8 @@ Below is a table of each model run and where to find the checkpoints. We're prov
 ## How I ran things
 
 
-> [!NOTE]
-> This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
-
-
 > [!IMPORTANT]
-> **Everything that was run, in some shape or form, can be found in `src/cogelot/entrypoints/`.**
+> **Everything that was run, in some shape or form, starts from a module in `src/cogelot/entrypoints/`.**
 
 This is what was used to run the dataset creation, train models, evaluate models, and more. Everything I ran started from that folder, every single time.
 
@@ -204,17 +205,141 @@ pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
 The `configs/hardware` folder contains the hardware configurations that were used to run the experiments. These are used to set the number of GPUs, the number of CPUs, and the memory available to the model. These were preset for the cluster I was using, but you can adjust them to your needs.
 
 
-### How I ran my checkpoints in the environment
 
-### How I ran the checkpoint from VIMA in the environment
+### How I ran checkpoints in the environment
+
+Again, this uses Hydra so, like training, the entrypoint is `src/cogelot/entrypoints/evaluate.py` and the config for it is `configs/evaluate.yaml`.
+
+To run the evaluation in the environment, I used the following command:
+
+```bash
+pdm run python src/cogelot/entrypoints/evaluate.py trainer.devices=1 model.model.wandb_run_id=8lkml12g
+```
 
 
-### Batch files with the commands I ran on SLURM
+<details>
+<summary><b>How to choose your checkpoint</b></summary>
+
+`model.model.wandb_run_id` parameter is important used to get the checkpoint to evaluate. The checkpoint ID is the one from the table above.
+
+By default, we use the epoch from the last checkpoint, but if you want to change the epoch, just add `model.model.epoch=<epoch_number>` to the command.
+
+</details>
+
+<details>
+<summary><b>How to run multiple runs in parallel</b></summary>
+
+The `trainer.devices` creates multiple CPU processes for evaluation as eval does not need the GPU.
+Change the number in the command to however many processes you want.
+
+Important things to note:
+
+1. The more processes/devices you use, the more memeory you need since multiple instantiations of the model are loaded into the memory.
+2. I did not do anything fancy with batching across instances. Since we use CPU for evaluation, I didn't need to.
+
+</details>
+
+
+
+<details>
+<summary><b>How to perturb the instructions</b></summary>
+
+You can find all of these in `configs/evaluation_instance_transform/`. For each file name, you can invoke them by appending `evaluation_instance_transform=<file_name>` to the command.
+
+| Evaluation Instance Transform | Description |
+|:--|:--|
+| `noop` | Interleave modalities in the prompt, _by default_ |
+| `gobbledygook_tokens` | Apply _Gobbledygook Tokens_ to the prompt |
+| `gobbledygook_words` | Apply _Gobbledygook Words_ to the prompt |
+| `reworded` | Use paraphrased instructions with interleaved modalities |
+| `textual` | Convert visual referents to text |
+| `textual_gobbledygook_words` | Convert visual referents to text and apply _Gobbledygook Words_ |
+| `textual_gobbledygook_tokens` | Convert visual referents to text and apply _Gobbledygook Tokens_ |
+| `textual_no_noun` | Convert visual referents to text, but remove the nouns |
+| `textual_no_texture` | Convert visual referents to text, but remove the descriptions of nouns |
+| `textual_generic_noun` | Convert visual referents to text, but replace each noun with a generic form (e.g. "block" becomes "thing") |
+
+</details>
+
+
+<details>
+<summary><b>How to disable modalities in the prompt</b></summary>
+
+
+You can find all of these in `configs/evaluation_prompt_modality/`. For each file name, you can invoke them by appending `evaluation_prompt_modality=<file_name>` to the command.
+
+| Evaluation Prompt Modality | Description |
+|:--|:--|
+| `disable_none` | Do nothing |
+| `disable_text` | Disable the text modality |
+| `disable_visual` | Disable the visual modality |
+| `disable_both` | Disable both modalities, basically masking _every token_ |
+
+</details>
+
+
+
+
+<details>
+<summary><b>How to permute object token order for observations</b></summary>
+
+
+Append `model.should_shuffle_obj_per_observations=true` to the command. This will shuffle the object tokens in the observation.
+
+</details>
+
+
+
+
+<details>
+<summary><b>How to run on different difficulties</b></summary>
+
+Append `model.difficulty=<difficulty>` to the command. The difficulties are:
+
+- `easy`
+- `medium` _(unused)_
+- `hard` _(unused)_
+- `extreme`
+- `distracting`
+- `extremely_distracting`
+
+</details>
+
+
+<details>
+<summary><b>How I ran the checkpoint from VIMA in the environment</b></summary>
+
+I downloaded the checkpoint from [VIMA's repo](https://github.com/vimalabs/VIMA), renamed it to `them.ckpt` and put it in `storage/data/models`. If you want to change the path used, you can change the path in `configs/model/from_their_policy.yaml`.
+
+I used the following command to run the checkpoint from VIMA in the environment:
+
+```bash
+SLURM_JOB_NAME='bash' pdm run python src/cogelot/entrypoints/evaluate_theirs.py trainer.devices=20
+```
+
+You can use all of the other perturbations mentioned above.
+
+</details>
+
+
+
+<details>
+<summary><b>How to run checkpoints with a live display</b></summary>
+
+If you want to see what's going on live, you can append `environment@model.environment=display` onto the evaluate command.
+
+Importantly, **only use one process** because I don't know what'll happen if you don't.
+
+</details>
+
+<details>
+<summary><b>How to evaluate models on SLURM</b></summary>
 
 It is very unlikely that I ran things in a tmux session and just stared at it. I don't like copy-pasting hundreds of commands.
 
 As experiments were often run on a compute cluster, I ran commands with SLURM. You can find these contained batch files in `./scripts/slurm/`. These were made for my system, so some adjustments are likely going to be needed, but I'm hoping it's obvious and not too complicated!
 
+</details>
 
 ## The Datasets
 
