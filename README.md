@@ -93,9 +93,10 @@ Below is a table of each model run and where to find the checkpoints. We're prov
 
 
 > [!IMPORTANT]
-> **Everything that was run, in some shape or form, starts from a module in `src/cogelot/entrypoints/`.**
+> **Everything that was run, in some shape or form, starts from a module in `src/cogelot/entrypoints/`.** This is what was used to run the dataset creation, train models, evaluate models, and more. Everything I ran started from that folder, every single time.
 
-This is what was used to run the dataset creation, train models, evaluate models, and more. Everything I ran started from that folder, every single time.
+
+This is not a comprehensive library made for all use cases and every possible scenario. It's a research project. That said, I tried to make everything as clear as possible for you. In this section, I detailed how I did everything so that you can use it as an example for how to start yourself.
 
 I have tried to make sure that docstrings and comments are relevant and detailed. If you want more information on what a function is doing or why it is doing that, feel free to make an issue. If you figure out something that I haven't described enough of, feel free to make a PR improving my documentation so that you, me, _and_ future people can benefit from your insight.
 
@@ -427,6 +428,8 @@ You can use all of the other perturbations mentioned above.
 If you want to see what's going on live, you can append `environment@model.environment=display` onto the evaluate command.
 
 Importantly, **only use one process** because I don't know what'll happen if you don't.
+
+Also, this wasn't run on SLURM, just on my Mac. I can't speak for every machine so your mileage may vary.
 
 </details>
 
