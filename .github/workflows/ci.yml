@@ -62,7 +62,7 @@ jobs:
         run: pdm install --without notebooks,monitoring,lint
 
       - name: Run tests
-        run: pdm run pytest --deselect tests/test_online_evaluation.py -n auto
+        run: pdm run pytest --deselect tests/test_online_evaluation.py -n 2
 
   check_pre_commit:
     runs-on: ubuntu-latest
