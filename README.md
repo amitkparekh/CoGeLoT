@@ -57,6 +57,7 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
     pdm run python src/cogelot/entrypoints/evaluate.py trainer.devices=1 model.model.wandb_run_id=8lkml12g
     ```
 
+  For `model.model.wandb_run_id`, you can use any of the Run IDs from the [table below](#model-architectures-and-checkpoints).
 
 
 
@@ -115,7 +116,7 @@ Below is a table of each model run and where to find the checkpoints. We're prov
 
 
 
-| Instruction-style | Instruction Modalities | Prompt-conditioning | Vision Encoder | Shuffled Objects? | Model ID | Experiment ID |
+| Instruction-style | Instruction Modalities | Prompt-conditioning | Vision Encoder | Shuffled Objects? | WandB Run ID | Experiment ID |
 |:--|:--|:--|:--|:--:|:--:|:---|
 | Original | Text + Visual | Cross-Attention | Object-Centric | False | [`8lkml12g`](https://huggingface.co/amitkparekh/cogelot/tree/main/8lkml12g) | `01_their_vima` |
 | Original | Text + Visual | Cross-Attention | Object-Centric | True | [`ftwoyjb1`](https://huggingface.co/amitkparekh/cogelot/tree/main/ftwoyjb1) | `01_their_vima_shuffle_obj` |
