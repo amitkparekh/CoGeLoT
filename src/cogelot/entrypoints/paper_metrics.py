@@ -244,7 +244,7 @@ class EvaluationPerformancePrinter:
 
             performance_per_level[success["partition"]][success["task"]] = Decimal(
                 success["success"]
-            )
+            ).quantize(Decimal("1.0"))
 
         return performance_per_level
 
