@@ -51,7 +51,7 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
     pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
     ```
 
-5. Evaluate a model
+5. Evaluate a model from one of the [provided checkpoints](#model-architectures-and-checkpoints)
 
     ```bash
     pdm run python src/cogelot/entrypoints/evaluate.py trainer.devices=1 model.model.wandb_run_id=8lkml12g
@@ -69,6 +69,7 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
 
 - [Evaluation Framework Overview](#our-evaluation-framework)
 - [What is included in this project?](#what-is-included)
+    - [Model Architectures and Provided Checkpoints](#model-architectures-and-checkpoints)
 - [How I ran things](#how-i-ran-things)
     - [Install dependencies](#how-i-managed-and-installed-dependencies)
     - [Easily check that everything works](#how-i-checked-that-everything-worked-before-i-ran-things)
@@ -107,9 +108,11 @@ Additionally, I've tried to work in a constrained, clean, and robust manner. I h
 
 ### Model Architectures and Checkpoints
 
-All model checkpoints are stored on Hugging Face, but *they will not work with the Transformers library out-of-the-box*. This library contains multiple methods and functions to make the checkpoints work on our framework, but it's all included for you.
+Below is a table of each model run and where to find the checkpoints. We're providing all checkpoints from the end of each epoch, even though we only used the one from the very last epoch.
 
-Below is a table of each model run and where to find the checkpoints. We're providing the checkpoint stored at the end of each training epoch. I detail how I ran things in a later section.
+**You do not need to download checkpoints yourself.** This library contains multiple methods and functions to make the checkpoints work on our framework, and it's all included for you. All model checkpoints are stored on Hugging Face, but *they will not work with the Transformers library out-of-the-box*.
+
+
 
 
 | Instruction-style | Instruction Modalities | Prompt-conditioning | Vision Encoder | Shuffled Objects? | Model ID | Experiment ID |
