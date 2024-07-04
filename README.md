@@ -39,13 +39,19 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
     pdm install
     ```
 
-3. Train a model
+3. Make sure everything works and is installed correctly
+
+    ```bash
+    pdm run pytest --deselect tests/test_online_evaluation.py
+    ```
+
+4. Train a model
 
     ```bash
     pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
     ```
 
-4. Evaluate a model
+5. Evaluate a model
 
     ```bash
     pdm run python src/cogelot/entrypoints/evaluate.py trainer.devices=1 model.model.wandb_run_id=8lkml12g
