@@ -1,8 +1,10 @@
 
-<div align="center">
-
 # Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks
 
+_Unveiling the true robustness of multimodal models: A comprehensive framework to explore whether models are plausibly resilient._
+
+**Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks** [[Paper]](https://arxiv.org/abs/1234.56789) \
+Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
 
 <a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11-blue?logo=python&logoColor=white"></a>
 <a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
@@ -13,16 +15,67 @@
 [![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 
-[[arXiv :link:]](https://arxiv.org/abs/1234.56789) | [[Training Data :link:]](https://huggingface.co/datasets/amitkparekh/vima) | [[Checkpoints :link:]](https://huggingface.co/amitkparekh/cogelot)
 
 
-</div>
 
-Evaluating the generalisation capabilities of multimodal models based solely on their performance on out-of-distribution data fails to capture their true robustness. This work introduces a comprehensive evaluation framework that systematically examines the role of instructions and inputs in the generalisation abilities of such models, considering architectural design, input perturbations across language and vision modalities, and increased task complexity. The proposed framework uncovers the resilience of multimodal models to extreme instruction perturbations and their vulnerability to observational changes, raising concerns about overfitting to spurious correlations. By employing this evaluation framework on current Transformer-based multimodal models for robotic manipulation tasks, we uncover limitations and suggest future advancements should focus on architectural and training innovations that better integrate multimodal inputs, enhancing a model's generalisation prowess by prioritising sensitivity to input content over incidental correlations.
 
-<br/>
 
-## Our Evaluation Framework
+
+## Quick Start
+
+> [!NOTE]
+> This codebase automatically downloads checkpoints and datasets so you don't need to do that manually. Everything is hosted on Hugging Face and uses HF so it's all cached too.
+
+1. Clone this repository and navigate to the folder
+
+    ```bash
+    git clone https://github.com/amitkparekh/CoGeLoT.git
+    cd CoGeLoT
+    ```
+
+2. Install the dependencies (I used [PDM](https://pdm-project.org/en/latest/) and Python 3.11)
+
+    ```bash
+    pdm install
+    ```
+
+3. Train a model
+
+    ```bash
+    pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
+    ```
+
+4. Evaluate a model
+
+    ```bash
+    pdm run python src/cogelot/entrypoints/evaluate.py trainer.devices=1 model.model.wandb_run_id=8lkml12g
+    ```
+
+
+
+
+## Contents
+
+
+> [!NOTE]
+> This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
+
+
+- [Evaluation Framework Overview](#our-evaluation-framework)
+- [What is included in this project?](#what-is-included)
+- [How I ran things](#how-i-ran-things)
+    - [Install dependencies](#how-i-managed-and-installed-dependencies)
+    - [Easily check that everything works](#how-i-checked-that-everything-worked-before-i-ran-things)
+    - [Train models](#how-i-trained-models)
+    - [Evaluate checkpoints in the environment](#how-i-ran-checkpoints-in-the-environment)
+    - [Prepare the dataset](#how-i-prepared-the-dataset)
+- [License](#license)
+- [Citation](#citation)
+
+
+
+
+## Evaluation Framework Overview
 
 
 ![Table of perturbations from the paper](docs/PERT%20Table.png)
@@ -30,6 +83,8 @@ Evaluating the generalisation capabilities of multimodal models based solely on 
 <div align='center'>
 <small><i>Our evaluation framework. Each perturbation affects the instruction or observation inputs, which can be linguistic, visual, or a combination of both. The plausibility of a perturbation relates to a model's expected performance.</i></small>
 </div>
+
+
 
 
 
@@ -41,9 +96,6 @@ While I tried to bring everything front and centre, some things might be buried.
 
 Additionally, I've tried to work in a constrained, clean, and robust manner. I hope that helps you as much as it helped me.
 
-
-> [!NOTE]
-> This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
 
 
 
