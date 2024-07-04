@@ -1,10 +1,5 @@
 
-# Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks
-
-_Unveiling the true robustness of multimodal models: A comprehensive framework to explore whether models are plausibly resilient._
-
-**Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks** [[Paper]](https://arxiv.org/abs/1234.56789) \
-Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
+# [Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks](https://arxiv.org/abs/1234.56789)
 
 <a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11-blue?logo=python&logoColor=white"></a>
 <a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
@@ -15,6 +10,15 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
 [![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
+
+
+_Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas._
+
+<br />
+
+![Table of perturbations from the paper](docs/PERT%20Table.png)
+
+_Unveiling the true robustness of multimodal models: A comprehensive framework to explore whether models are plausibly resilient._
 
 
 
@@ -67,8 +71,6 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
 > [!NOTE]
 > This project is codenamed `cogelot` so that's what the library is called to prevent needing to rewrite everything.
 
-
-- [Evaluation Framework Overview](#our-evaluation-framework)
 - [What is included in this project?](#what-is-included)
     - [Model Architectures and Provided Checkpoints](#model-architectures-and-checkpoints)
 - [How I ran things](#how-i-ran-things)
@@ -82,15 +84,6 @@ Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas.
 
 
 
-
-## Evaluation Framework Overview
-
-
-![Table of perturbations from the paper](docs/PERT%20Table.png)
-
-<div align='center'>
-<small><i>Our evaluation framework. Each perturbation affects the instruction or observation inputs, which can be linguistic, visual, or a combination of both. The plausibility of a perturbation relates to a model's expected performance.</i></small>
-</div>
 
 
 
