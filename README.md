@@ -1,5 +1,5 @@
 
-# [Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks](https://arxiv.org/abs/1234.56789)
+# [Investigating the Role of Instruction Variety and Task Difficulty in Robotic Manipulation Tasks](https://arxiv.org/abs/2407.03967)
 
 <a href="https://www.python.org/"><img alt="Python 3.11" src="https://img.shields.io/badge/Python 3.11-blue?logo=python&logoColor=white"></a>
 <a href="https://pdm-project.org/en/latest/"><img alt="PDM" src="https://img.shields.io/badge/PDM-AC75D7?logo=pdm&logoColor=white"></a>
@@ -9,7 +9,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![basedpyright - checked](https://img.shields.io/badge/basedpyright-checked-42b983)](https://detachhead.github.io/basedpyright)
 [![CI](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml/badge.svg)](https://github.com/amitkparekh/CoGeLoT/actions/workflows/ci.yml)
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
+[![arXiv](https://img.shields.io/badge/arXiv-2407.03967-b31b1b.svg)](https://arxiv.org/abs/2407.03967)
 
 
 _Amit Parekh, Nikolas Vitsakis, Alessandro Suglia, and Ioannis Konstas._
@@ -587,7 +587,13 @@ VIMA, VIMA-Bench, and all artefacts from VIMA are licensed under the MIT License
 ## Citation
 
 ```bibtex
-@misc{parekh2024investigating
-year = {2024}
+@misc{parekh2024investigatingroleinstructionvariety,
+  title = {Investigating the {{Role}} of {{Instruction Variety}} and {{Task Difficulty}} in {{Robotic Manipulation Tasks}}},
+  author={Amit Parekh and Nikolas Vitsakis and Alessandro Suglia and Ioannis Konstas},
+  year={2024},
+  eprint={2407.03967},
+  archivePrefix={arXiv},
+  primaryClass={cs.CL},
+  url={https://arxiv.org/abs/2407.03967},
 }
 ```
