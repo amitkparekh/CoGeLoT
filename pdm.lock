@@ -5,7 +5,7 @@
 groups = ["default", "lint", "monitoring", "notebooks", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:a6797a17858c4d6f318111624104a8b2e96469c26bd0651e72b8be792b1f54a7"
+content_hash = "sha256:fed4dc0b374f21db8287297b70818048bf212e86fcb8e7bbb54dc644447de064"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -3342,19 +3342,6 @@ files = [
     {file = "windows_curses-2.3.2-cp311-cp311-win_amd64.whl", hash = "sha256:9b7ecd0f21f643e22a979effff25f62200626bb9853ea8b9aacf0bbcaab0950d"},
     {file = "windows_curses-2.3.2-cp312-cp312-win32.whl", hash = "sha256:4546122f5bec2fb46c1706c020d971bcfc4d9a5158372f25ba7472a834b0f165"},
     {file = "windows_curses-2.3.2-cp312-cp312-win_amd64.whl", hash = "sha256:e3f27939f39143c513f444a8c0419b2737e8de55fbe5d63d765992512125366d"},
-]
-
-[[package]]
-name = "x-transformers"
-version = "1.27.16"
-summary = "X-Transformers - Pytorch"
-dependencies = [
-    "einops>=0.7.0",
-    "torch>=1.6",
-]
-files = [
-    {file = "x-transformers-1.27.16.tar.gz", hash = "sha256:b3d4709d4272d73816bc2ea8eb0238dde67d0fbbd98b176346b48383c60e1422"},
-    {file = "x_transformers-1.27.16-py3-none-any.whl", hash = "sha256:a894a2074cd63ee6158f44929adcac8e20817e6b49a2917afcac67ab4f543491"},
 ]
 
 [[package]]

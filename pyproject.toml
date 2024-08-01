@@ -48,7 +48,6 @@ dependencies = [
     "moviepy>=1.0.3",
     "more-itertools>=10.2.0",
     "polars>=0.20.6",
-    "x-transformers==1.27.16",
 ]
 
 [tool.pdm]
