@@ -120,7 +120,7 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: pdm install --without notebooks,monitoring,test
+        run: pdm install --without monitoring
 
       - name: Run basedpyright
         run: pdm run basedpyright
