@@ -5,7 +5,7 @@
 groups = ["default", "lint", "monitoring", "notebooks", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:fed4dc0b374f21db8287297b70818048bf212e86fcb8e7bbb54dc644447de064"
+content_hash = "sha256:4497c27990af78a36dc8f224d4fd80537af3c3d02d4dfe562125cbae620e754f"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -214,16 +214,6 @@ dependencies = [
 files = [
     {file = "basedpyright-1.10.2-py3-none-any.whl", hash = "sha256:f30d5dbd8f80fd5a5bc43af798e93e312f90821b3c15c2dfd9cdf019017fa649"},
     {file = "basedpyright-1.10.2.tar.gz", hash = "sha256:5541da9d5a44cda964070315382d17e3783bde6fd4318a308484ffa3973b3494"},
-]
-
-[[package]]
-name = "blinker"
-version = "1.7.0"
-requires_python = ">=3.8"
-summary = "Fast, simple object-to-object and broadcast signaling"
-files = [
-    {file = "blinker-1.7.0-py3-none-any.whl", hash = "sha256:c3f865d4d54db7abc53758a01601cf343fe55b84c1de4e3fa910e420b438d5b9"},
-    {file = "blinker-1.7.0.tar.gz", hash = "sha256:e6820ff6fa4e4d1d8e2747c2283749c3f547e4fee112b98555cdcdae32996182"},
 ]
 
 [[package]]
@@ -2198,20 +2188,6 @@ files = [
 ]
 
 [[package]]
-name = "pydeck"
-version = "0.8.1b0"
-requires_python = ">=3.7"
-summary = "Widget for deck.gl maps"
-dependencies = [
-    "jinja2>=2.10.1",
-    "numpy>=1.16.4",
-]
-files = [
-    {file = "pydeck-0.8.1b0-py2.py3-none-any.whl", hash = "sha256:c89b3dd76f9991140a33b886b336c762105e9c9def8e842e891bc72dbce8a4ce"},
-    {file = "pydeck-0.8.1b0.tar.gz", hash = "sha256:9e0a67890ab061b8c6080e06f8c780934c00355a7114291c884f055f3fc0dc25"},
-]
-
-[[package]]
 name = "pygments"
 version = "2.17.2"
 requires_python = ">=3.7"
@@ -2859,37 +2835,6 @@ files = [
 ]
 
 [[package]]
-name = "streamlit"
-version = "1.33.0"
-requires_python = "!=3.9.7,>=3.8"
-summary = "A faster way to build and share data apps"
-dependencies = [
-    "altair<6,>=4.0",
-    "blinker<2,>=1.0.0",
-    "cachetools<6,>=4.0",
-    "click<9,>=7.0",
-    "gitpython!=3.1.19,<4,>=3.0.7",
-    "numpy<2,>=1.19.3",
-    "packaging<25,>=16.8",
-    "pandas<3,>=1.3.0",
-    "pillow<11,>=7.1.0",
-    "protobuf<5,>=3.20",
-    "pyarrow>=7.0",
-    "pydeck<1,>=0.8.0b4",
-    "requests<3,>=2.27",
-    "rich<14,>=10.14.0",
-    "tenacity<9,>=8.1.0",
-    "toml<2,>=0.10.1",
-    "tornado<7,>=6.0.3",
-    "typing-extensions<5,>=4.3.0",
-    "watchdog>=2.1.5; platform_system != \"Darwin\"",
-]
-files = [
-    {file = "streamlit-1.33.0-py2.py3-none-any.whl", hash = "sha256:bfacb5d1edefcf803c2040b051a21b4c81317a9865448e6767d0a0c6aae7edae"},
-    {file = "streamlit-1.33.0.tar.gz", hash = "sha256:a8da8ff46f5b948c56d2dc7aca7a61cf8d995f4f21744cf82258ae75e63004ba"},
-]
-
-[[package]]
 name = "sympy"
 version = "1.12"
 requires_python = ">=3.8"
@@ -2983,16 +2928,6 @@ files = [
     {file = "tokenizers-0.15.2-pp39-pypy39_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:cf27fd43472e07b57cf420eee1e814549203d56de00b5af8659cb99885472f1f"},
     {file = "tokenizers-0.15.2-pp39-pypy39_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:7ca22bd897537a0080521445d91a58886c8c04084a6a19e6c78c586e0cfa92a5"},
     {file = "tokenizers-0.15.2.tar.gz", hash = "sha256:e6e9c6e019dd5484be5beafc775ae6c925f4c69a3487040ed09b45e13df2cb91"},
-]
-
-[[package]]
-name = "toml"
-version = "0.10.2"
-requires_python = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-summary = "Python Library for Tom's Obvious, Minimal Language"
-files = [
-    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
-    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
 ]
 
 [[package]]
@@ -3284,31 +3219,6 @@ dependencies = [
 files = [
     {file = "wandb-0.16.6-py3-none-any.whl", hash = "sha256:5810019a3b981c796e98ea58557a7c380f18834e0c6bdaed15df115522e5616e"},
     {file = "wandb-0.16.6.tar.gz", hash = "sha256:86f491e3012d715e0d7d7421a4d6de41abef643b7403046261f962f3e512fe1c"},
-]
-
-[[package]]
-name = "watchdog"
-version = "3.0.0"
-requires_python = ">=3.7"
-summary = "Filesystem events monitoring"
-files = [
-    {file = "watchdog-3.0.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2b57a1e730af3156d13b7fdddfc23dea6487fceca29fc75c5a868beed29177ae"},
-    {file = "watchdog-3.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:7ade88d0d778b1b222adebcc0927428f883db07017618a5e684fd03b83342bd9"},
-    {file = "watchdog-3.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7e447d172af52ad204d19982739aa2346245cc5ba6f579d16dac4bfec226d2e7"},
-    {file = "watchdog-3.0.0-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:13bbbb462ee42ec3c5723e1205be8ced776f05b100e4737518c67c8325cf6100"},
-    {file = "watchdog-3.0.0-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:8f3ceecd20d71067c7fd4c9e832d4e22584318983cabc013dbf3f70ea95de346"},
-    {file = "watchdog-3.0.0-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:c9d8c8ec7efb887333cf71e328e39cffbf771d8f8f95d308ea4125bf5f90ba64"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0e06ab8858a76e1219e68c7573dfeba9dd1c0219476c5a44d5333b01d7e1743a"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_armv7l.whl", hash = "sha256:d00e6be486affb5781468457b21a6cbe848c33ef43f9ea4a73b4882e5f188a44"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_i686.whl", hash = "sha256:c07253088265c363d1ddf4b3cdb808d59a0468ecd017770ed716991620b8f77a"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_ppc64.whl", hash = "sha256:5113334cf8cf0ac8cd45e1f8309a603291b614191c9add34d33075727a967709"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:51f90f73b4697bac9c9a78394c3acbbd331ccd3655c11be1a15ae6fe289a8c83"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:ba07e92756c97e3aca0912b5cbc4e5ad802f4557212788e72a72a47ff376950d"},
-    {file = "watchdog-3.0.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:d429c2430c93b7903914e4db9a966c7f2b068dd2ebdd2fa9b9ce094c7d459f33"},
-    {file = "watchdog-3.0.0-py3-none-win32.whl", hash = "sha256:3ed7c71a9dccfe838c2f0b6314ed0d9b22e77d268c67e015450a29036a81f60f"},
-    {file = "watchdog-3.0.0-py3-none-win_amd64.whl", hash = "sha256:4c9956d27be0bb08fc5f30d9d0179a855436e655f046d288e2bcc11adfae893c"},
-    {file = "watchdog-3.0.0-py3-none-win_ia64.whl", hash = "sha256:5d9f3a10e02d7371cd929b5d8f11e87d4bad890212ed3901f9b4d68767bee759"},
-    {file = "watchdog-3.0.0.tar.gz", hash = "sha256:4d98a320595da7a7c5a18fc48cb633c2e73cda78f93cac2ef42d42bf609a33f9"},
 ]
 
 [[package]]
