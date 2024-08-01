@@ -3,7 +3,7 @@
 
 [metadata]
 groups = ["default", "lint", "monitoring", "notebooks", "test"]
-strategy = []
+strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
 content_hash = "sha256:4497c27990af78a36dc8f224d4fd80537af3c3d02d4dfe562125cbae620e754f"
 
@@ -15,6 +15,7 @@ name = "aiohttp"
 version = "3.9.3"
 requires_python = ">=3.8"
 summary = "Async http client/server framework (asyncio)"
+groups = ["default"]
 dependencies = [
     "aiosignal>=1.1.2",
     "async-timeout<5.0,>=4.0; python_version < \"3.11\"",
@@ -62,6 +63,7 @@ name = "aiosignal"
 version = "1.3.1"
 requires_python = ">=3.7"
 summary = "aiosignal: a list of registered asynchronous callbacks"
+groups = ["default"]
 dependencies = [
     "frozenlist>=1.1.0",
 ]
@@ -75,6 +77,7 @@ name = "altair"
 version = "5.3.0"
 requires_python = ">=3.8"
 summary = "Vega-Altair: A declarative statistical visualization library for Python."
+groups = ["notebooks"]
 dependencies = [
     "jinja2",
     "jsonschema>=3.0",
@@ -94,6 +97,7 @@ name = "annotated-types"
 version = "0.6.0"
 requires_python = ">=3.8"
 summary = "Reusable constraint types to use with typing.Annotated"
+groups = ["default"]
 dependencies = [
     "typing-extensions>=4.0.0; python_version < \"3.9\"",
 ]
@@ -106,6 +110,7 @@ files = [
 name = "antlr4-python3-runtime"
 version = "4.9.3"
 summary = "ANTLR 4.9.3 runtime for Python 3.7"
+groups = ["default"]
 dependencies = [
     "typing; python_version < \"3.5\"",
 ]
@@ -117,6 +122,7 @@ files = [
 name = "appdirs"
 version = "1.4.4"
 summary = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+groups = ["default"]
 files = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
     {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
@@ -127,6 +133,8 @@ name = "appnope"
 version = "0.1.4"
 requires_python = ">=3.6"
 summary = "Disable App Nap on macOS >= 10.9"
+groups = ["notebooks"]
+marker = "platform_system == \"Darwin\""
 files = [
     {file = "appnope-0.1.4-py2.py3-none-any.whl", hash = "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"},
     {file = "appnope-0.1.4.tar.gz", hash = "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee"},
@@ -137,6 +145,7 @@ name = "argcomplete"
 version = "3.2.2"
 requires_python = ">=3.8"
 summary = "Bash tab completion for argparse"
+groups = ["lint"]
 files = [
     {file = "argcomplete-3.2.2-py3-none-any.whl", hash = "sha256:e44f4e7985883ab3e73a103ef0acd27299dbfe2dfed00142c35d4ddd3005901d"},
     {file = "argcomplete-3.2.2.tar.gz", hash = "sha256:f3e49e8ea59b4026ee29548e24488af46e30c9de57d48638e24f54a1ea1000a2"},
@@ -146,6 +155,7 @@ files = [
 name = "asttokens"
 version = "2.4.1"
 summary = "Annotate AST trees with source code positions"
+groups = ["notebooks"]
 dependencies = [
     "six>=1.12.0",
     "typing; python_version < \"3.5\"",
@@ -160,6 +170,7 @@ name = "attrs"
 version = "23.2.0"
 requires_python = ">=3.7"
 summary = "Classes Without Boilerplate"
+groups = ["default", "notebooks", "test"]
 dependencies = [
     "importlib-metadata; python_version < \"3.8\"",
 ]
@@ -173,6 +184,7 @@ name = "av"
 version = "12.0.0"
 requires_python = ">=3.8"
 summary = "Pythonic bindings for FFmpeg's libraries."
+groups = ["default"]
 files = [
     {file = "av-12.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:4fa78fbe0e4469226512380180063116105048c66cb12e18ab4b518466c57e6c"},
     {file = "av-12.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:60a869be1d6af916e65ea461cb93922f5db0698655ed7a7eae7c3ecd4af4debb"},
@@ -194,6 +206,7 @@ name = "basedpyright"
 version = "1.10.2"
 requires_python = ">=3.8"
 summary = "static type checking for Python (but based)"
+groups = ["lint"]
 dependencies = [
     "nodejs-bin>=18.4.0a4",
 ]
@@ -207,6 +220,7 @@ name = "cachetools"
 version = "5.3.2"
 requires_python = ">=3.7"
 summary = "Extensible memoizing collections and decorators"
+groups = ["monitoring"]
 files = [
     {file = "cachetools-5.3.2-py3-none-any.whl", hash = "sha256:861f35a13a451f94e301ce2bec7cac63e881232ccce7ed67fab9b5df4d3beaa1"},
     {file = "cachetools-5.3.2.tar.gz", hash = "sha256:086ee420196f7b2ab9ca2db2520aca326318b68fe5ba8bc4d49cca91add450f2"},
@@ -217,6 +231,7 @@ name = "certifi"
 version = "2024.2.2"
 requires_python = ">=3.6"
 summary = "Python package for providing Mozilla's CA Bundle."
+groups = ["default"]
 files = [
     {file = "certifi-2024.2.2-py3-none-any.whl", hash = "sha256:dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1"},
     {file = "certifi-2024.2.2.tar.gz", hash = "sha256:0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f"},
@@ -227,6 +242,8 @@ name = "cffi"
 version = "1.16.0"
 requires_python = ">=3.8"
 summary = "Foreign Function Interface for Python calling C code."
+groups = ["notebooks"]
+marker = "implementation_name == \"pypy\""
 dependencies = [
     "pycparser",
 ]
@@ -260,6 +277,7 @@ name = "cfgv"
 version = "3.4.0"
 requires_python = ">=3.8"
 summary = "Validate configuration and produce human readable error messages."
+groups = ["lint"]
 files = [
     {file = "cfgv-3.4.0-py2.py3-none-any.whl", hash = "sha256:b7265b1f29fd3316bfcd2b330d63d024f2bfd8bcb8b0272f8e19a504856c48f9"},
     {file = "cfgv-3.4.0.tar.gz", hash = "sha256:e52591d4c5f5dead8e0f673fb16db7949d2cfb3f7da4582893288f0ded8fe560"},
@@ -270,6 +288,7 @@ name = "charset-normalizer"
 version = "3.3.2"
 requires_python = ">=3.7.0"
 summary = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
+groups = ["default", "lint"]
 files = [
     {file = "charset-normalizer-3.3.2.tar.gz", hash = "sha256:f30c3cb33b24454a82faecaf01b19c18562b1e89558fb6c56de4d9118a032fd5"},
     {file = "charset_normalizer-3.3.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:802fe99cca7457642125a8a88a084cef28ff0cf9407060f7b93dca5aa25480db"},
@@ -310,6 +329,7 @@ name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
 summary = "Composable command line interface toolkit"
+groups = ["default"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
     "importlib-metadata; python_version < \"3.8\"",
@@ -324,6 +344,7 @@ name = "cloudpickle"
 version = "3.0.0"
 requires_python = ">=3.8"
 summary = "Pickler class to extend the standard pickle.Pickler functionality"
+groups = ["default"]
 files = [
     {file = "cloudpickle-3.0.0-py3-none-any.whl", hash = "sha256:246ee7d0c295602a036e86369c77fecda4ab17b506496730f2f576d9016fd9c7"},
     {file = "cloudpickle-3.0.0.tar.gz", hash = "sha256:996d9a482c6fb4f33c1a35335cf8afd065d2a56e973270364840712d9131a882"},
@@ -334,6 +355,7 @@ name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
+groups = ["default", "lint", "monitoring", "notebooks", "test"]
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -344,6 +366,7 @@ name = "comm"
 version = "0.2.1"
 requires_python = ">=3.8"
 summary = "Jupyter Python Comm implementation, for usage in ipykernel, xeus-python etc."
+groups = ["notebooks"]
 dependencies = [
     "traitlets>=4",
 ]
@@ -357,6 +380,7 @@ name = "commitizen"
 version = "3.22.0"
 requires_python = ">=3.8"
 summary = "Python commitizen client tool"
+groups = ["lint"]
 dependencies = [
     "argcomplete<3.3,>=1.12.1",
     "charset-normalizer<4,>=2.1.0",
@@ -381,6 +405,7 @@ name = "contourpy"
 version = "1.2.0"
 requires_python = ">=3.9"
 summary = "Python library for calculating contours of 2D quadrilateral grids"
+groups = ["default", "notebooks"]
 dependencies = [
     "numpy<2.0,>=1.20",
 ]
@@ -413,6 +438,7 @@ name = "convert-case"
 version = "1.2.3"
 requires_python = ">=3.6"
 summary = "Convert between string cases with built-in case inference."
+groups = ["default"]
 files = [
     {file = "convert-case-1.2.3.tar.gz", hash = "sha256:a8c4329e47233a2b16cac3c5d020e8ba0305293efbe22a6d80f8ffddf049703f"},
     {file = "convert_case-1.2.3-py3-none-any.whl", hash = "sha256:ec8884050ca548e990666f82cba7ae2edfaa3c85dbead3042c2fd663b292373a"},
@@ -423,6 +449,7 @@ name = "coverage"
 version = "7.4.1"
 requires_python = ">=3.8"
 summary = "Code coverage measurement for Python"
+groups = ["test"]
 files = [
     {file = "coverage-7.4.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b8ffb498a83d7e0305968289441914154fb0ef5d8b3157df02a90c6695978295"},
     {file = "coverage-7.4.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3cacfaefe6089d477264001f90f55b7881ba615953414999c46cc9713ff93c8c"},
@@ -453,6 +480,7 @@ version = "7.4.1"
 extras = ["toml"]
 requires_python = ">=3.8"
 summary = "Code coverage measurement for Python"
+groups = ["test"]
 dependencies = [
     "coverage==7.4.1",
     "tomli; python_full_version <= \"3.11.0a6\"",
@@ -486,6 +514,7 @@ name = "cycler"
 version = "0.12.1"
 requires_python = ">=3.8"
 summary = "Composable style cycles"
+groups = ["default", "notebooks"]
 files = [
     {file = "cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30"},
     {file = "cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c"},
@@ -496,6 +525,7 @@ name = "datasets"
 version = "2.18.0"
 requires_python = ">=3.8.0"
 summary = "HuggingFace community-driven open-source library of datasets"
+groups = ["default"]
 dependencies = [
     "aiohttp",
     "dill<0.3.9,>=0.3.0",
@@ -523,6 +553,7 @@ name = "debugpy"
 version = "1.8.0"
 requires_python = ">=3.8"
 summary = "An implementation of the Debug Adapter Protocol for Python"
+groups = ["notebooks"]
 files = [
     {file = "debugpy-1.8.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:ef54404365fae8d45cf450d0544ee40cefbcb9cb85ea7afe89a963c27028261e"},
     {file = "debugpy-1.8.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:60009b132c91951354f54363f8ebdf7457aeb150e84abba5ae251b8e9f29a8a6"},
@@ -537,6 +568,7 @@ name = "decli"
 version = "0.6.1"
 requires_python = ">=3.7"
 summary = "Minimal, easy-to-use, declarative cli tool"
+groups = ["lint"]
 files = [
     {file = "decli-0.6.1-py3-none-any.whl", hash = "sha256:7815ac58617764e1a200d7cadac6315fcaacc24d727d182f9878dd6378ccf869"},
     {file = "decli-0.6.1.tar.gz", hash = "sha256:ed88ccb947701e8e5509b7945fda56e150e2ac74a69f25d47ac85ef30ab0c0f0"},
@@ -546,6 +578,7 @@ files = [
 name = "decopatch"
 version = "1.4.10"
 summary = "Create decorators easily in python."
+groups = ["test"]
 dependencies = [
     "enum34; python_version < \"3.4\"",
     "funcsigs; python_version < \"3.3\"",
@@ -561,6 +594,7 @@ name = "decorator"
 version = "4.4.2"
 requires_python = ">=2.6, !=3.0.*, !=3.1.*"
 summary = "Decorators for Humans"
+groups = ["default", "notebooks"]
 files = [
     {file = "decorator-4.4.2-py2.py3-none-any.whl", hash = "sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760"},
     {file = "decorator-4.4.2.tar.gz", hash = "sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7"},
@@ -571,6 +605,7 @@ name = "dill"
 version = "0.3.8"
 requires_python = ">=3.8"
 summary = "serialize all of Python"
+groups = ["default"]
 files = [
     {file = "dill-0.3.8-py3-none-any.whl", hash = "sha256:c36ca9ffb54365bdd2f8eb3eff7d2a21237f8452b57ace88b1ac615b7e815bd7"},
     {file = "dill-0.3.8.tar.gz", hash = "sha256:3ebe3c479ad625c4553aca177444d89b486b1d84982eeacded644afc0cf797ca"},
@@ -580,6 +615,7 @@ files = [
 name = "distlib"
 version = "0.3.8"
 summary = "Distribution utilities"
+groups = ["lint"]
 files = [
     {file = "distlib-0.3.8-py2.py3-none-any.whl", hash = "sha256:034db59a0b96f8ca18035f36290806a9a6e6bd9d1ff91e45a7f172eb17e51784"},
     {file = "distlib-0.3.8.tar.gz", hash = "sha256:1530ea13e350031b6312d8580ddb6b27a104275a31106523b8f123787f494f64"},
@@ -589,6 +625,7 @@ files = [
 name = "dm-tree"
 version = "0.1.8"
 summary = "Tree is a library for working with nested data structures."
+groups = ["default"]
 files = [
     {file = "dm-tree-0.1.8.tar.gz", hash = "sha256:0fcaabbb14e7980377439e7140bd05552739ca5e515ecb3119f234acee4b9430"},
     {file = "dm_tree-0.1.8-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ad16ceba90a56ec47cf45b21856d14962ac314787975ef786efb5e6e9ca75ec7"},
@@ -613,6 +650,7 @@ name = "docformatter"
 version = "1.7.5"
 requires_python = ">=3.7,<4.0"
 summary = "Formats docstrings to follow PEP 257"
+groups = ["lint"]
 dependencies = [
     "charset-normalizer<4.0.0,>=3.0.0",
     "untokenize<0.2.0,>=0.1.1",
@@ -626,6 +664,7 @@ files = [
 name = "docker-pycreds"
 version = "0.4.0"
 summary = "Python bindings for the docker credentials store API"
+groups = ["default"]
 dependencies = [
     "six>=1.4.0",
 ]
@@ -639,6 +678,7 @@ name = "einops"
 version = "0.7.0"
 requires_python = ">=3.8"
 summary = "A new flavour of deep learning operations"
+groups = ["default"]
 files = [
     {file = "einops-0.7.0-py3-none-any.whl", hash = "sha256:0f3096f26b914f465f6ff3c66f5478f9a5e380bb367ffc6493a68143fbbf1fd1"},
     {file = "einops-0.7.0.tar.gz", hash = "sha256:b2b04ad6081a3b227080c9bf5e3ace7160357ff03043cd66cc5b2319eb7031d1"},
@@ -649,6 +689,7 @@ name = "execnet"
 version = "2.0.2"
 requires_python = ">=3.7"
 summary = "execnet: rapid multi-Python deployment"
+groups = ["test"]
 files = [
     {file = "execnet-2.0.2-py3-none-any.whl", hash = "sha256:88256416ae766bc9e8895c76a87928c0012183da3cc4fc18016e6f050e025f41"},
     {file = "execnet-2.0.2.tar.gz", hash = "sha256:cc59bc4423742fd71ad227122eb0dd44db51efb3dc4095b45ac9a08c770096af"},
@@ -659,6 +700,7 @@ name = "executing"
 version = "2.0.1"
 requires_python = ">=3.5"
 summary = "Get the currently executing AST node of a frame, and other information"
+groups = ["notebooks"]
 files = [
     {file = "executing-2.0.1-py2.py3-none-any.whl", hash = "sha256:eac49ca94516ccc753f9fb5ce82603156e590b27525a8bc32cce8ae302eb61bc"},
     {file = "executing-2.0.1.tar.gz", hash = "sha256:35afe2ce3affba8ee97f2d69927fa823b08b472b7b994e36a52a964b93d16147"},
@@ -669,6 +711,7 @@ name = "filelock"
 version = "3.13.1"
 requires_python = ">=3.8"
 summary = "A platform independent file lock."
+groups = ["default", "lint"]
 files = [
     {file = "filelock-3.13.1-py3-none-any.whl", hash = "sha256:57dbda9b35157b05fb3e58ee91448612eb674172fab98ee235ccb0b5bee19a1c"},
     {file = "filelock-3.13.1.tar.gz", hash = "sha256:521f5f56c50f8426f5e03ad3b281b490a87ef15bc6c526f168290f0c7148d44e"},
@@ -679,6 +722,7 @@ name = "fonttools"
 version = "4.48.1"
 requires_python = ">=3.8"
 summary = "Tools to manipulate font files"
+groups = ["default", "notebooks"]
 files = [
     {file = "fonttools-4.48.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:18b35fd1a850ed7233a99bbd6774485271756f717dac8b594958224b54118b61"},
     {file = "fonttools-4.48.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cad5cfd044ea2e306fda44482b3dd32ee47830fa82dfa4679374b41baa294f5f"},
@@ -705,6 +749,7 @@ name = "frozenlist"
 version = "1.4.1"
 requires_python = ">=3.8"
 summary = "A list-like structure which implements collections.abc.MutableSequence"
+groups = ["default"]
 files = [
     {file = "frozenlist-1.4.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a0cb6f11204443f27a1628b0e460f37fb30f624be6051d490fa7d7e26d4af3d0"},
     {file = "frozenlist-1.4.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b46c8ae3a8f1f41a0d2ef350c0b6e65822d80772fe46b653ab6b6274f61d4a49"},
@@ -745,6 +790,7 @@ name = "fsspec"
 version = "2023.10.0"
 requires_python = ">=3.8"
 summary = "File-system specification"
+groups = ["default"]
 files = [
     {file = "fsspec-2023.10.0-py3-none-any.whl", hash = "sha256:346a8f024efeb749d2a5fca7ba8854474b1ff9af7c3faaf636a4548781136529"},
     {file = "fsspec-2023.10.0.tar.gz", hash = "sha256:330c66757591df346ad3091a53bd907e15348c2ba17d63fd54f5c39c4457d2a5"},
@@ -756,6 +802,7 @@ version = "2023.10.0"
 extras = ["http"]
 requires_python = ">=3.8"
 summary = "File-system specification"
+groups = ["default"]
 dependencies = [
     "aiohttp!=4.0.0a0,!=4.0.0a1",
     "fsspec==2023.10.0",
@@ -771,6 +818,7 @@ name = "gitdb"
 version = "4.0.11"
 requires_python = ">=3.7"
 summary = "Git Object Database"
+groups = ["default"]
 dependencies = [
     "smmap<6,>=3.0.1",
 ]
@@ -784,6 +832,7 @@ name = "gitpython"
 version = "3.1.41"
 requires_python = ">=3.7"
 summary = "GitPython is a Python library used to interact with Git repositories"
+groups = ["default"]
 dependencies = [
     "gitdb<5,>=4.0.1",
     "typing-extensions>=3.7.4.3; python_version < \"3.8\"",
@@ -798,6 +847,7 @@ name = "gym"
 version = "0.26.2"
 requires_python = ">=3.6"
 summary = "Gym: A universal API for reinforcement learning environments"
+groups = ["default"]
 dependencies = [
     "cloudpickle>=1.2.0",
     "dataclasses==0.8; python_version == \"3.6\"",
@@ -813,6 +863,7 @@ files = [
 name = "gym-notices"
 version = "0.0.8"
 summary = "Notices for gym"
+groups = ["default"]
 files = [
     {file = "gym-notices-0.0.8.tar.gz", hash = "sha256:ad25e200487cafa369728625fe064e88ada1346618526102659b4640f2b4b911"},
     {file = "gym_notices-0.0.8-py3-none-any.whl", hash = "sha256:e5f82e00823a166747b4c2a07de63b6560b1acb880638547e0cabf825a01e463"},
@@ -823,6 +874,7 @@ name = "hf-transfer"
 version = "0.1.6"
 requires_python = ">=3.7"
 summary = ""
+groups = ["default"]
 files = [
     {file = "hf_transfer-0.1.6-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:f1d8c172153f9a6cdaecf137612c42796076f61f6bea1072c90ac2e17c1ab6fa"},
     {file = "hf_transfer-0.1.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2c601996351f90c514a75a0eeb02bf700b1ad1db2d946cbfe4b60b79e29f0b2f"},
@@ -852,6 +904,7 @@ name = "huggingface-hub"
 version = "0.20.3"
 requires_python = ">=3.8.0"
 summary = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
+groups = ["default"]
 dependencies = [
     "filelock",
     "fsspec>=2023.5.0",
@@ -870,6 +923,7 @@ files = [
 name = "hydra-core"
 version = "1.3.2"
 summary = "A framework for elegantly configuring complex applications"
+groups = ["default"]
 dependencies = [
     "antlr4-python3-runtime==4.9.*",
     "importlib-resources; python_version < \"3.9\"",
@@ -886,6 +940,7 @@ name = "hypothesis"
 version = "6.100.1"
 requires_python = ">=3.8"
 summary = "A library for property-based testing"
+groups = ["test"]
 dependencies = [
     "attrs>=22.2.0",
     "exceptiongroup>=1.0.0; python_version < \"3.11\"",
@@ -901,6 +956,7 @@ name = "identify"
 version = "2.5.33"
 requires_python = ">=3.8"
 summary = "File identification library for Python"
+groups = ["lint"]
 files = [
     {file = "identify-2.5.33-py2.py3-none-any.whl", hash = "sha256:d40ce5fcd762817627670da8a7d8d8e65f24342d14539c59488dc603bf662e34"},
     {file = "identify-2.5.33.tar.gz", hash = "sha256:161558f9fe4559e1557e1bff323e8631f6a0e4837f7497767c1782832f16b62d"},
@@ -911,6 +967,7 @@ name = "idna"
 version = "3.6"
 requires_python = ">=3.5"
 summary = "Internationalized Domain Names in Applications (IDNA)"
+groups = ["default"]
 files = [
     {file = "idna-3.6-py3-none-any.whl", hash = "sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f"},
     {file = "idna-3.6.tar.gz", hash = "sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca"},
@@ -921,6 +978,7 @@ name = "imageio"
 version = "2.34.0"
 requires_python = ">=3.8"
 summary = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
+groups = ["default"]
 dependencies = [
     "numpy",
     "pillow>=8.3.2",
@@ -935,6 +993,8 @@ name = "imageio-ffmpeg"
 version = "0.4.9"
 requires_python = ">=3.5"
 summary = "FFMPEG wrapper for Python"
+groups = ["default"]
+marker = "python_version >= \"3.4\""
 dependencies = [
     "setuptools",
 ]
@@ -952,6 +1012,7 @@ name = "importlib-metadata"
 version = "7.0.1"
 requires_python = ">=3.8"
 summary = "Read metadata from Python packages"
+groups = ["lint"]
 dependencies = [
     "typing-extensions>=3.6.4; python_version < \"3.8\"",
     "zipp>=0.5",
@@ -966,6 +1027,7 @@ name = "importlib-resources"
 version = "6.4.0"
 requires_python = ">=3.8"
 summary = "Read resources from Python packages"
+groups = ["default"]
 dependencies = [
     "zipp>=3.1.0; python_version < \"3.10\"",
 ]
@@ -979,6 +1041,7 @@ name = "iniconfig"
 version = "2.0.0"
 requires_python = ">=3.7"
 summary = "brain-dead simple config-ini parsing"
+groups = ["test"]
 files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
@@ -989,6 +1052,7 @@ name = "ipykernel"
 version = "6.29.4"
 requires_python = ">=3.8"
 summary = "IPython Kernel for Jupyter"
+groups = ["notebooks"]
 dependencies = [
     "appnope; platform_system == \"Darwin\"",
     "comm>=0.1.1",
@@ -1014,6 +1078,7 @@ name = "ipython"
 version = "8.18.0"
 requires_python = ">=3.9"
 summary = "IPython: Productive Interactive Computing"
+groups = ["notebooks"]
 dependencies = [
     "colorama; sys_platform == \"win32\"",
     "decorator",
@@ -1037,6 +1102,7 @@ name = "jedi"
 version = "0.19.1"
 requires_python = ">=3.6"
 summary = "An autocompletion tool for Python that can be used for text editors."
+groups = ["notebooks"]
 dependencies = [
     "parso<0.9.0,>=0.8.3",
 ]
@@ -1050,6 +1116,7 @@ name = "jinja2"
 version = "3.1.3"
 requires_python = ">=3.7"
 summary = "A very fast and expressive template engine."
+groups = ["default", "lint", "notebooks"]
 dependencies = [
     "MarkupSafe>=2.0",
 ]
@@ -1063,6 +1130,7 @@ name = "jsonschema"
 version = "4.21.1"
 requires_python = ">=3.8"
 summary = "An implementation of JSON Schema validation for Python"
+groups = ["notebooks"]
 dependencies = [
     "attrs>=22.2.0",
     "importlib-resources>=1.4.0; python_version < \"3.9\"",
@@ -1081,6 +1149,7 @@ name = "jsonschema-specifications"
 version = "2023.12.1"
 requires_python = ">=3.8"
 summary = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
+groups = ["notebooks"]
 dependencies = [
     "importlib-resources>=1.4.0; python_version < \"3.9\"",
     "referencing>=0.31.0",
@@ -1095,6 +1164,7 @@ name = "jupyter-client"
 version = "8.6.0"
 requires_python = ">=3.8"
 summary = "Jupyter protocol implementation and client libraries"
+groups = ["notebooks"]
 dependencies = [
     "importlib-metadata>=4.8.3; python_version < \"3.10\"",
     "jupyter-core!=5.0.*,>=4.12",
@@ -1113,6 +1183,7 @@ name = "jupyter-core"
 version = "5.7.1"
 requires_python = ">=3.8"
 summary = "Jupyter core package. A base package on which Jupyter projects rely."
+groups = ["notebooks"]
 dependencies = [
     "platformdirs>=2.5",
     "pywin32>=300; sys_platform == \"win32\" and platform_python_implementation != \"PyPy\"",
@@ -1128,6 +1199,7 @@ name = "kiwisolver"
 version = "1.4.5"
 requires_python = ">=3.7"
 summary = "A fast implementation of the Cassowary constraint solver"
+groups = ["default", "notebooks"]
 dependencies = [
     "typing-extensions; python_version < \"3.8\"",
 ]
@@ -1170,6 +1242,7 @@ name = "kornia"
 version = "0.7.2"
 requires_python = ">=3.8"
 summary = "Open Source Differentiable Computer Vision Library for PyTorch"
+groups = ["default"]
 dependencies = [
     "kornia-rs>=0.1.0",
     "packaging",
@@ -1185,6 +1258,7 @@ name = "kornia-rs"
 version = "0.1.2"
 requires_python = ">=3.8"
 summary = "Low level implementations for computer vision in Rust"
+groups = ["default"]
 files = [
     {file = "kornia_rs-0.1.2-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:7bb6265532a3012a6818c4b4ec1e617cb47f259e1a9aae9a6c7a8987deaefc8e"},
     {file = "kornia_rs-0.1.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:9a0ebaa37642a37f228f435b3382656981fc2e5c8f7187f74361d5e2d595bf55"},
@@ -1204,6 +1278,7 @@ name = "lightning-utilities"
 version = "0.10.1"
 requires_python = ">=3.7"
 summary = "Lightning toolbox for across the our ecosystem."
+groups = ["default"]
 dependencies = [
     "importlib-metadata>=4.0.0; python_version < \"3.8\"",
     "packaging>=17.1",
@@ -1220,6 +1295,7 @@ name = "loguru"
 version = "0.7.2"
 requires_python = ">=3.5"
 summary = "Python logging made (stupidly) simple"
+groups = ["default"]
 dependencies = [
     "aiocontextvars>=0.2.0; python_version < \"3.7\"",
     "colorama>=0.3.4; sys_platform == \"win32\"",
@@ -1234,6 +1310,7 @@ files = [
 name = "makefun"
 version = "1.15.2"
 summary = "Small library to dynamically create python functions."
+groups = ["test"]
 dependencies = [
     "funcsigs; python_version < \"3.3\"",
 ]
@@ -1247,6 +1324,7 @@ name = "markdown-it-py"
 version = "3.0.0"
 requires_python = ">=3.8"
 summary = "Python port of markdown-it. Markdown parsing, done right!"
+groups = ["default"]
 dependencies = [
     "mdurl~=0.1",
 ]
@@ -1260,6 +1338,7 @@ name = "markupsafe"
 version = "2.1.5"
 requires_python = ">=3.7"
 summary = "Safely add untrusted strings to HTML/XML markup."
+groups = ["default", "lint", "notebooks"]
 files = [
     {file = "MarkupSafe-2.1.5-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:629ddd2ca402ae6dbedfceeba9c46d5f7b2a61d9749597d4307f943ef198fc1f"},
     {file = "MarkupSafe-2.1.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:5b7b716f97b52c5a14bffdf688f971b2d5ef4029127f1ad7a513973cfd818df2"},
@@ -1289,6 +1368,7 @@ name = "matplotlib"
 version = "3.8.4"
 requires_python = ">=3.9"
 summary = "Python plotting package"
+groups = ["default", "notebooks"]
 dependencies = [
     "contourpy>=1.0.1",
     "cycler>=0.10",
@@ -1322,6 +1402,7 @@ name = "matplotlib-inline"
 version = "0.1.6"
 requires_python = ">=3.5"
 summary = "Inline Matplotlib backend for Jupyter"
+groups = ["notebooks"]
 dependencies = [
     "traitlets",
 ]
@@ -1335,6 +1416,7 @@ name = "mdurl"
 version = "0.1.2"
 requires_python = ">=3.7"
 summary = "Markdown URL utilities"
+groups = ["default"]
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
@@ -1345,6 +1427,7 @@ name = "more-itertools"
 version = "10.2.0"
 requires_python = ">=3.8"
 summary = "More routines for operating on iterables, beyond itertools"
+groups = ["default"]
 files = [
     {file = "more-itertools-10.2.0.tar.gz", hash = "sha256:8fccb480c43d3e99a00087634c06dd02b0d50fbf088b380de5a41a015ec239e1"},
     {file = "more_itertools-10.2.0-py3-none-any.whl", hash = "sha256:686b06abe565edfab151cb8fd385a05651e1fdf8f0a14191e4439283421f8684"},
@@ -1354,6 +1437,7 @@ files = [
 name = "moviepy"
 version = "1.0.3"
 summary = ""
+groups = ["default"]
 dependencies = [
     "decorator<5.0,>=4.0.2",
     "imageio-ffmpeg>=0.2.0; python_version >= \"3.4\"",
@@ -1373,6 +1457,7 @@ files = [
 name = "mpmath"
 version = "1.3.0"
 summary = "Python library for arbitrary-precision floating-point arithmetic"
+groups = ["default"]
 files = [
     {file = "mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"},
     {file = "mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f"},
@@ -1383,6 +1468,7 @@ name = "multidict"
 version = "6.0.5"
 requires_python = ">=3.7"
 summary = "multidict implementation"
+groups = ["default"]
 files = [
     {file = "multidict-6.0.5-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:f285e862d2f153a70586579c15c44656f888806ed0e5b56b64489afe4a2dbfba"},
     {file = "multidict-6.0.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:53689bb4e102200a4fafa9de9c7c3c212ab40a7ab2c8e474491914d2305f187e"},
@@ -1423,6 +1509,7 @@ name = "multiprocess"
 version = "0.70.15"
 requires_python = ">=3.7"
 summary = "better multiprocessing and multithreading in Python"
+groups = ["default"]
 dependencies = [
     "dill>=0.3.7",
 ]
@@ -1436,6 +1523,7 @@ name = "nest-asyncio"
 version = "1.6.0"
 requires_python = ">=3.5"
 summary = "Patch asyncio to allow nested event loops"
+groups = ["notebooks"]
 files = [
     {file = "nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c"},
     {file = "nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe"},
@@ -1446,6 +1534,7 @@ name = "networkx"
 version = "3.2.1"
 requires_python = ">=3.9"
 summary = "Python package for creating and manipulating graphs and networks"
+groups = ["default"]
 files = [
     {file = "networkx-3.2.1-py3-none-any.whl", hash = "sha256:f18c69adc97877c42332c170849c96cefa91881c99a7cb3e95b7c659ebdc1ec2"},
     {file = "networkx-3.2.1.tar.gz", hash = "sha256:9f1bb5cf3409bf324e0a722c20bdb4c20ee39bf1c30ce8ae499c8502b0b5e0c6"},
@@ -1456,6 +1545,7 @@ name = "nodeenv"
 version = "1.8.0"
 requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
 summary = "Node.js virtual environment builder"
+groups = ["lint"]
 dependencies = [
     "setuptools",
 ]
@@ -1469,6 +1559,7 @@ name = "nodejs-bin"
 version = "18.4.0a4"
 requires_python = "~=3.5"
 summary = "       Node.js is an open-source, cross-platform, back-end JavaScript\nruntime environment that runs on the V8 engine and executes JavaScript code\noutside a web browser."
+groups = ["lint"]
 files = [
     {file = "nodejs_bin-18.4.0a4-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:16cb1abf7fe8c11c574e1e474d9f934a0df49a480290eae6e733d8bb09512e22"},
     {file = "nodejs_bin-18.4.0a4-py3-none-macosx_11_0_arm64.whl", hash = "sha256:068ca987ed83ea1123775fafe5dc22d8f2ff920d7d31571e1bfe6fb1093833eb"},
@@ -1484,6 +1575,7 @@ name = "numpy"
 version = "1.26.4"
 requires_python = ">=3.9"
 summary = "Fundamental package for array computing in Python"
+groups = ["default", "lint", "notebooks"]
 files = [
     {file = "numpy-1.26.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:4c66707fabe114439db9068ee468c26bbdf909cac0fb58686a42a24de1760c71"},
     {file = "numpy-1.26.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:edd8b5fe47dab091176d21bb6de568acdd906d1887a4584a15a9a96a1dca06ef"},
@@ -1509,6 +1601,8 @@ name = "nvidia-cublas-cu12"
 version = "12.1.3.1"
 requires_python = ">=3"
 summary = "CUBLAS native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:ee53ccca76a6fc08fb9701aa95b6ceb242cdaab118c3bb152af4e579af792728"},
     {file = "nvidia_cublas_cu12-12.1.3.1-py3-none-win_amd64.whl", hash = "sha256:2b964d60e8cf11b5e1073d179d85fa340c120e99b3067558f3cf98dd69d02906"},
@@ -1519,6 +1613,8 @@ name = "nvidia-cuda-cupti-cu12"
 version = "12.1.105"
 requires_python = ">=3"
 summary = "CUDA profiling tools runtime libs."
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_cuda_cupti_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:e54fde3983165c624cb79254ae9818a456eb6e87a7fd4d56a2352c24ee542d7e"},
     {file = "nvidia_cuda_cupti_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:bea8236d13a0ac7190bd2919c3e8e6ce1e402104276e6f9694479e48bb0eb2a4"},
@@ -1529,6 +1625,8 @@ name = "nvidia-cuda-nvrtc-cu12"
 version = "12.1.105"
 requires_python = ">=3"
 summary = "NVRTC native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:339b385f50c309763ca65456ec75e17bbefcbbf2893f462cb8b90584cd27a1c2"},
     {file = "nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:0a98a522d9ff138b96c010a65e145dc1b4850e9ecb75a0172371793752fd46ed"},
@@ -1539,6 +1637,8 @@ name = "nvidia-cuda-runtime-cu12"
 version = "12.1.105"
 requires_python = ">=3"
 summary = "CUDA Runtime native Libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:6e258468ddf5796e25f1dc591a31029fa317d97a0a94ed93468fc86301d61e40"},
     {file = "nvidia_cuda_runtime_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:dfb46ef84d73fababab44cf03e3b83f80700d27ca300e537f85f636fac474344"},
@@ -1549,6 +1649,8 @@ name = "nvidia-cudnn-cu12"
 version = "8.9.2.26"
 requires_python = ">=3"
 summary = "cuDNN runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "nvidia-cublas-cu12",
 ]
@@ -1561,6 +1663,8 @@ name = "nvidia-cufft-cu12"
 version = "11.0.2.54"
 requires_python = ">=3"
 summary = "CUFFT native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_cufft_cu12-11.0.2.54-py3-none-manylinux1_x86_64.whl", hash = "sha256:794e3948a1aa71fd817c3775866943936774d1c14e7628c74f6f7417224cdf56"},
     {file = "nvidia_cufft_cu12-11.0.2.54-py3-none-win_amd64.whl", hash = "sha256:d9ac353f78ff89951da4af698f80870b1534ed69993f10a4cf1d96f21357e253"},
@@ -1571,6 +1675,8 @@ name = "nvidia-curand-cu12"
 version = "10.3.2.106"
 requires_python = ">=3"
 summary = "CURAND native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl", hash = "sha256:9d264c5036dde4e64f1de8c50ae753237c12e0b1348738169cd0f8a536c0e1e0"},
     {file = "nvidia_curand_cu12-10.3.2.106-py3-none-win_amd64.whl", hash = "sha256:75b6b0c574c0037839121317e17fd01f8a69fd2ef8e25853d826fec30bdba74a"},
@@ -1581,6 +1687,8 @@ name = "nvidia-cusolver-cu12"
 version = "11.4.5.107"
 requires_python = ">=3"
 summary = "CUDA solver native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "nvidia-cublas-cu12",
     "nvidia-cusparse-cu12",
@@ -1596,6 +1704,8 @@ name = "nvidia-cusparse-cu12"
 version = "12.1.0.106"
 requires_python = ">=3"
 summary = "CUSPARSE native runtime libraries"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "nvidia-nvjitlink-cu12",
 ]
@@ -1608,6 +1718,7 @@ files = [
 name = "nvidia-ml-py"
 version = "12.535.133"
 summary = "Python Bindings for the NVIDIA Management Library"
+groups = ["monitoring"]
 files = [
     {file = "nvidia-ml-py-12.535.133.tar.gz", hash = "sha256:b1559af0d57dd20955bf58d05afff7b166ddd44947eb3051c9905638799eb1dc"},
     {file = "nvidia_ml_py-12.535.133-py3-none-any.whl", hash = "sha256:91d808d3f246d30bead2a0a2540b74b9e9fc584a9c3f1f55abfc2940c4e44fd2"},
@@ -1618,6 +1729,8 @@ name = "nvidia-nccl-cu12"
 version = "2.19.3"
 requires_python = ">=3"
 summary = "NVIDIA Collective Communication Library (NCCL) Runtime"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_nccl_cu12-2.19.3-py3-none-manylinux1_x86_64.whl", hash = "sha256:a9734707a2c96443331c1e48c717024aa6678a0e2a4cb66b2c364d18cee6b48d"},
 ]
@@ -1627,6 +1740,8 @@ name = "nvidia-nvjitlink-cu12"
 version = "12.3.101"
 requires_python = ">=3"
 summary = "Nvidia JIT LTO Library"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_nvjitlink_cu12-12.3.101-py3-none-manylinux1_x86_64.whl", hash = "sha256:64335a8088e2b9d196ae8665430bc6a2b7e6ef2eb877a9c735c804bd4ff6467c"},
     {file = "nvidia_nvjitlink_cu12-12.3.101-py3-none-win_amd64.whl", hash = "sha256:1b2e317e437433753530792f13eece58f0aec21a2b05903be7bffe58a606cbd1"},
@@ -1637,6 +1752,8 @@ name = "nvidia-nvtx-cu12"
 version = "12.1.105"
 requires_python = ">=3"
 summary = "NVIDIA Tools Extension"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:dc21cf308ca5691e7c04d962e213f8a4aa9bbfa23d95412f452254c2caeb09e5"},
     {file = "nvidia_nvtx_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:65f4d98982b31b60026e0e6de73fbdfc09d08a96f4656dd3665ca616a11e1e82"},
@@ -1647,6 +1764,7 @@ name = "nvitop"
 version = "1.3.2"
 requires_python = ">=3.7"
 summary = "An interactive NVIDIA-GPU process viewer and beyond, the one-stop solution for GPU process management."
+groups = ["monitoring"]
 dependencies = [
     "cachetools>=1.0.1",
     "colorama>=0.4.0; platform_system == \"Windows\"",
@@ -1665,6 +1783,7 @@ name = "omegaconf"
 version = "2.3.0"
 requires_python = ">=3.6"
 summary = "A flexible configuration library"
+groups = ["default"]
 dependencies = [
     "PyYAML>=5.1.0",
     "antlr4-python3-runtime==4.9.*",
@@ -1680,6 +1799,7 @@ name = "opencv-python-headless"
 version = "4.9.0.80"
 requires_python = ">=3.6"
 summary = "Wrapper package for OpenCV python bindings."
+groups = ["default"]
 dependencies = [
     "numpy>=1.13.3; python_version < \"3.7\"",
     "numpy>=1.17.0; python_version >= \"3.7\"",
@@ -1707,6 +1827,7 @@ name = "orjson"
 version = "3.10.1"
 requires_python = ">=3.8"
 summary = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
+groups = ["default"]
 files = [
     {file = "orjson-3.10.1-cp311-cp311-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:b345a3d6953628df2f42502297f6c1e1b475cfbf6268013c94c5ac80e8abc04c"},
     {file = "orjson-3.10.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:caa7395ef51af4190d2c70a364e2f42138e0e5fcb4bc08bc9b76997659b27dab"},
@@ -1736,6 +1857,7 @@ name = "packaging"
 version = "23.2"
 requires_python = ">=3.7"
 summary = "Core utilities for Python packages"
+groups = ["default", "lint", "notebooks", "test"]
 files = [
     {file = "packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7"},
     {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
@@ -1746,6 +1868,7 @@ name = "pandas"
 version = "2.2.2"
 requires_python = ">=3.9"
 summary = "Powerful data structures for data analysis, time series, and statistics"
+groups = ["default", "notebooks"]
 dependencies = [
     "numpy>=1.22.4; python_version < \"3.11\"",
     "numpy>=1.23.2; python_version == \"3.11\"",
@@ -1777,6 +1900,7 @@ name = "pandas-stubs"
 version = "2.2.1.240316"
 requires_python = ">=3.9"
 summary = "Type annotations for pandas"
+groups = ["lint"]
 dependencies = [
     "numpy>=1.26.0; python_version < \"3.13\"",
     "types-pytz>=2022.1.1",
@@ -1791,6 +1915,7 @@ name = "parso"
 version = "0.8.3"
 requires_python = ">=3.6"
 summary = "A Python Parser"
+groups = ["notebooks"]
 files = [
     {file = "parso-0.8.3-py2.py3-none-any.whl", hash = "sha256:c001d4636cd3aecdaf33cbb40aebb59b094be2a74c556778ef5576c175e19e75"},
     {file = "parso-0.8.3.tar.gz", hash = "sha256:8c07be290bb59f03588915921e29e8a50002acaf2cdc5fa0e0114f91709fafa0"},
@@ -1800,6 +1925,8 @@ files = [
 name = "pexpect"
 version = "4.9.0"
 summary = "Pexpect allows easy control of interactive console applications."
+groups = ["notebooks"]
+marker = "sys_platform != \"win32\""
 dependencies = [
     "ptyprocess>=0.5",
 ]
@@ -1813,6 +1940,7 @@ name = "pillow"
 version = "10.3.0"
 requires_python = ">=3.8"
 summary = "Python Imaging Library (Fork)"
+groups = ["default", "notebooks"]
 files = [
     {file = "pillow-10.3.0-cp311-cp311-macosx_10_10_x86_64.whl", hash = "sha256:5f77cf66e96ae734717d341c145c5949c63180842a545c47a0ce7ae52ca83795"},
     {file = "pillow-10.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e4b878386c4bf293578b48fc570b84ecfe477d3b77ba39a6e87150af77f40c57"},
@@ -1844,6 +1972,7 @@ name = "platformdirs"
 version = "4.2.0"
 requires_python = ">=3.8"
 summary = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+groups = ["lint", "notebooks"]
 files = [
     {file = "platformdirs-4.2.0-py3-none-any.whl", hash = "sha256:0614df2a2f37e1a662acbd8e2b25b92ccf8632929bc6d43467e17fe89c75e068"},
     {file = "platformdirs-4.2.0.tar.gz", hash = "sha256:ef0cc731df711022c174543cb70a9b5bd22e5a9337c8624ef2c2ceb8ddad8768"},
@@ -1854,6 +1983,7 @@ name = "plotly"
 version = "5.20.0"
 requires_python = ">=3.8"
 summary = "An open-source, interactive data visualization library for Python"
+groups = ["notebooks"]
 dependencies = [
     "packaging",
     "tenacity>=6.2.0",
@@ -1868,6 +1998,7 @@ name = "pluggy"
 version = "1.4.0"
 requires_python = ">=3.8"
 summary = "plugin and hook calling mechanisms for python"
+groups = ["test"]
 files = [
     {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
     {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
@@ -1878,6 +2009,7 @@ name = "polars"
 version = "0.20.21"
 requires_python = ">=3.8"
 summary = "Blazingly fast DataFrame library"
+groups = ["default"]
 files = [
     {file = "polars-0.20.21-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:f1de9b7190111b0d6c3731157da26252697ba27f2eef201d01e121c6873e713e"},
     {file = "polars-0.20.21-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:18847d198cbdb133c35847d096f0b72783c9cc81df0878959dba60495a99a1c7"},
@@ -1892,6 +2024,7 @@ name = "pre-commit"
 version = "3.7.0"
 requires_python = ">=3.9"
 summary = "A framework for managing and maintaining multi-language pre-commit hooks."
+groups = ["lint"]
 dependencies = [
     "cfgv>=2.0.0",
     "identify>=1.0.0",
@@ -1908,6 +2041,7 @@ files = [
 name = "proglog"
 version = "0.1.10"
 summary = "Log and progress bar manager for console, notebooks, web..."
+groups = ["default"]
 dependencies = [
     "tqdm",
 ]
@@ -1921,6 +2055,7 @@ name = "prompt-toolkit"
 version = "3.0.36"
 requires_python = ">=3.6.2"
 summary = "Library for building powerful interactive command lines in Python"
+groups = ["lint", "notebooks"]
 dependencies = [
     "wcwidth",
 ]
@@ -1934,6 +2069,8 @@ name = "protobuf"
 version = "4.25.2"
 requires_python = ">=3.8"
 summary = ""
+groups = ["default"]
+marker = "python_version > \"3.9\" or sys_platform != \"linux\""
 files = [
     {file = "protobuf-4.25.2-cp310-abi3-win32.whl", hash = "sha256:b50c949608682b12efb0b2717f53256f03636af5f60ac0c1d900df6213910fd6"},
     {file = "protobuf-4.25.2-cp310-abi3-win_amd64.whl", hash = "sha256:8f62574857ee1de9f770baf04dde4165e30b15ad97ba03ceac65f760ff018ac9"},
@@ -1949,6 +2086,7 @@ name = "psutil"
 version = "5.9.8"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 summary = "Cross-platform lib for process and system monitoring in Python."
+groups = ["default", "monitoring", "notebooks"]
 files = [
     {file = "psutil-5.9.8-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:aee678c8720623dc456fa20659af736241f575d79429a0e5e9cf88ae0605cc81"},
     {file = "psutil-5.9.8-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8cb6403ce6d8e047495a701dc7c5bd788add903f8986d523e3e20b98b733e421"},
@@ -1963,6 +2101,8 @@ files = [
 name = "ptyprocess"
 version = "0.7.0"
 summary = "Run a subprocess in a pseudo terminal"
+groups = ["notebooks"]
+marker = "sys_platform != \"win32\""
 files = [
     {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
     {file = "ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220"},
@@ -1972,6 +2112,7 @@ files = [
 name = "pure-eval"
 version = "0.2.2"
 summary = "Safely evaluate AST nodes without side effects"
+groups = ["notebooks"]
 files = [
     {file = "pure_eval-0.2.2-py3-none-any.whl", hash = "sha256:01eaab343580944bc56080ebe0a674b39ec44a945e6d09ba7db3cb8cec289350"},
     {file = "pure_eval-0.2.2.tar.gz", hash = "sha256:2b45320af6dfaa1750f543d714b6d1c520a1688dec6fd24d339063ce0aaa9ac3"},
@@ -1982,6 +2123,7 @@ name = "pyarrow"
 version = "17.0.0"
 requires_python = ">=3.8"
 summary = "Python library for Apache Arrow"
+groups = ["default"]
 dependencies = [
     "numpy>=1.16.6",
 ]
@@ -2008,6 +2150,7 @@ name = "pyarrow-hotfix"
 version = "0.6"
 requires_python = ">=3.5"
 summary = ""
+groups = ["default"]
 files = [
     {file = "pyarrow_hotfix-0.6-py3-none-any.whl", hash = "sha256:dcc9ae2d220dff0083be6a9aa8e0cdee5182ad358d4931fce825c545e5c89178"},
     {file = "pyarrow_hotfix-0.6.tar.gz", hash = "sha256:79d3e030f7ff890d408a100ac16d6f00b14d44a502d7897cd9fc3e3a534e9945"},
@@ -2017,6 +2160,7 @@ files = [
 name = "pybullet"
 version = "3.2.6"
 summary = "Official Python Interface for the Bullet Physics SDK specialized for Robotics Simulation and Reinforcement Learning"
+groups = ["default"]
 files = [
     {file = "pybullet-3.2.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a476d51726efa7aabe1dc8c4ee676b78bcd9fc19d4a2ce9776f2c9a9dacd9e8b"},
     {file = "pybullet-3.2.6.tar.gz", hash = "sha256:da27525433c88698dc9fd8bc20fa4ae4d07738b4656633659ebd82c2d2884e08"},
@@ -2027,6 +2171,8 @@ name = "pycparser"
 version = "2.21"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 summary = "C parser in Python"
+groups = ["notebooks"]
+marker = "implementation_name == \"pypy\""
 files = [
     {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
@@ -2037,6 +2183,7 @@ name = "pydantic"
 version = "2.7.0"
 requires_python = ">=3.8"
 summary = "Data validation using Python type hints"
+groups = ["default"]
 dependencies = [
     "annotated-types>=0.4.0",
     "pydantic-core==2.18.1",
@@ -2052,6 +2199,7 @@ name = "pydantic-core"
 version = "2.18.1"
 requires_python = ">=3.8"
 summary = "Core functionality for Pydantic validation and serialization"
+groups = ["default"]
 dependencies = [
     "typing-extensions!=4.7.0,>=4.6.0",
 ]
@@ -2090,6 +2238,7 @@ name = "pydantic-settings"
 version = "2.2.1"
 requires_python = ">=3.8"
 summary = "Settings management using Pydantic"
+groups = ["default"]
 dependencies = [
     "pydantic>=2.3.0",
     "python-dotenv>=0.21.0",
@@ -2104,6 +2253,7 @@ name = "pygments"
 version = "2.17.2"
 requires_python = ">=3.7"
 summary = "Pygments is a syntax highlighting package written in Python."
+groups = ["default", "notebooks"]
 files = [
     {file = "pygments-2.17.2-py3-none-any.whl", hash = "sha256:b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c"},
     {file = "pygments-2.17.2.tar.gz", hash = "sha256:da46cec9fd2de5be3a8a784f434e4c4ab670b4ff54d605c4c2717e9d49c4c367"},
@@ -2114,6 +2264,7 @@ name = "pyparsing"
 version = "3.1.1"
 requires_python = ">=3.6.8"
 summary = "pyparsing module - Classes and methods to define and execute parsing grammars"
+groups = ["default", "notebooks"]
 files = [
     {file = "pyparsing-3.1.1-py3-none-any.whl", hash = "sha256:32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb"},
     {file = "pyparsing-3.1.1.tar.gz", hash = "sha256:ede28a1a32462f5a9705e07aea48001a08f7cf81a021585011deba701581a0db"},
@@ -2124,6 +2275,7 @@ name = "pytest"
 version = "7.4.4"
 requires_python = ">=3.7"
 summary = "pytest: simple powerful testing with Python"
+groups = ["test"]
 dependencies = [
     "colorama; sys_platform == \"win32\"",
     "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
@@ -2142,6 +2294,7 @@ files = [
 name = "pytest-cases"
 version = "3.8.5"
 summary = "Separate test code from test cases in pytest."
+groups = ["test"]
 dependencies = [
     "decopatch",
     "funcsigs; python_version < \"3.3\"",
@@ -2159,6 +2312,7 @@ name = "pytest-cov"
 version = "5.0.0"
 requires_python = ">=3.8"
 summary = "Pytest plugin for measuring coverage."
+groups = ["test"]
 dependencies = [
     "coverage[toml]>=5.2.1",
     "pytest>=4.6",
@@ -2173,6 +2327,7 @@ name = "pytest-mock"
 version = "3.14.0"
 requires_python = ">=3.8"
 summary = "Thin-wrapper around the mock package for easier use with pytest"
+groups = ["test"]
 dependencies = [
     "pytest>=6.2.5",
 ]
@@ -2185,6 +2340,7 @@ files = [
 name = "pytest-sugar"
 version = "1.0.0"
 summary = "pytest-sugar is a plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)."
+groups = ["test"]
 dependencies = [
     "packaging>=21.3",
     "pytest>=6.2.0",
@@ -2200,6 +2356,7 @@ name = "pytest-xdist"
 version = "3.5.0"
 requires_python = ">=3.7"
 summary = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
+groups = ["test"]
 dependencies = [
     "execnet>=1.1",
     "pytest>=6.2.0",
@@ -2214,6 +2371,7 @@ name = "python-dateutil"
 version = "2.8.2"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 summary = "Extensions to the standard Python datetime module"
+groups = ["default", "notebooks"]
 dependencies = [
     "six>=1.5",
 ]
@@ -2227,6 +2385,7 @@ name = "python-dotenv"
 version = "1.0.1"
 requires_python = ">=3.8"
 summary = "Read key-value pairs from a .env file and set them as environment variables"
+groups = ["default"]
 files = [
     {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
     {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
@@ -2237,6 +2396,7 @@ name = "pytorch-lightning"
 version = "2.2.2"
 requires_python = ">=3.8"
 summary = "PyTorch Lightning is the lightweight PyTorch wrapper for ML researchers. Scale your models. Write less boilerplate."
+groups = ["default"]
 dependencies = [
     "PyYAML>=5.4",
     "fsspec[http]>=2022.5.0",
@@ -2257,6 +2417,7 @@ files = [
 name = "pytz"
 version = "2024.1"
 summary = "World timezone definitions, modern and historical"
+groups = ["default", "notebooks"]
 files = [
     {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
     {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
@@ -2266,6 +2427,8 @@ files = [
 name = "pywin32"
 version = "306"
 summary = "Python for Window Extensions"
+groups = ["notebooks"]
+marker = "sys_platform == \"win32\" and platform_python_implementation != \"PyPy\""
 files = [
     {file = "pywin32-306-cp311-cp311-win32.whl", hash = "sha256:e65028133d15b64d2ed8f06dd9fbc268352478d4f9289e69c190ecd6818b6407"},
     {file = "pywin32-306-cp311-cp311-win_amd64.whl", hash = "sha256:a7639f51c184c0272e93f244eb24dafca9b1855707d94c192d4a0b4c01e1100e"},
@@ -2280,6 +2443,7 @@ name = "pyyaml"
 version = "6.0.1"
 requires_python = ">=3.6"
 summary = "YAML parser and emitter for Python"
+groups = ["default", "lint"]
 files = [
     {file = "PyYAML-6.0.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6965a7bc3cf88e5a1c3bd2e0b5c22f8d677dc88a455344035f03399034eb3007"},
     {file = "PyYAML-6.0.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f003ed9ad21d6a4713f0a9b5a7a0a79e08dd0f221aff4525a2be4c346ee60aab"},
@@ -2304,6 +2468,7 @@ name = "pyzmq"
 version = "25.1.2"
 requires_python = ">=3.6"
 summary = "Python bindings for 0MQ"
+groups = ["notebooks"]
 dependencies = [
     "cffi; implementation_name == \"pypy\"",
 ]
@@ -2338,6 +2503,7 @@ name = "questionary"
 version = "2.0.1"
 requires_python = ">=3.8"
 summary = "Python library to build pretty command line user prompts ⭐️"
+groups = ["lint"]
 dependencies = [
     "prompt-toolkit<=3.0.36,>=2.0",
 ]
@@ -2351,6 +2517,7 @@ name = "referencing"
 version = "0.33.0"
 requires_python = ">=3.8"
 summary = "JSON Referencing + Python"
+groups = ["notebooks"]
 dependencies = [
     "attrs>=22.2.0",
     "rpds-py>=0.7.0",
@@ -2365,6 +2532,7 @@ name = "regex"
 version = "2023.12.25"
 requires_python = ">=3.7"
 summary = "Alternative regular expression module, to replace re."
+groups = ["default"]
 files = [
     {file = "regex-2023.12.25-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:1b9d811f72210fa9306aeb88385b8f8bcef0dfbf3873410413c00aa94c56c2b6"},
     {file = "regex-2023.12.25-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:d902a43085a308cef32c0d3aea962524b725403fd9373dea18110904003bac97"},
@@ -2404,6 +2572,7 @@ name = "requests"
 version = "2.31.0"
 requires_python = ">=3.7"
 summary = "Python HTTP for Humans."
+groups = ["default"]
 dependencies = [
     "certifi>=2017.4.17",
     "charset-normalizer<4,>=2",
@@ -2420,6 +2589,7 @@ name = "rich"
 version = "13.7.1"
 requires_python = ">=3.7.0"
 summary = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+groups = ["default"]
 dependencies = [
     "markdown-it-py>=2.2.0",
     "pygments<3.0.0,>=2.13.0",
@@ -2435,6 +2605,7 @@ name = "rpds-py"
 version = "0.17.1"
 requires_python = ">=3.8"
 summary = "Python bindings to Rust's persistent data structures (rpds)"
+groups = ["notebooks"]
 files = [
     {file = "rpds_py-0.17.1-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:65dcf105c1943cba45d19207ef51b8bc46d232a381e94dd38719d52d3980015b"},
     {file = "rpds_py-0.17.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:01f58a7306b64e0a4fe042047dd2b7d411ee82e54240284bab63e325762c1147"},
@@ -2470,6 +2641,7 @@ name = "ruff"
 version = "0.3.7"
 requires_python = ">=3.7"
 summary = "An extremely fast Python linter and code formatter, written in Rust."
+groups = ["lint"]
 files = [
     {file = "ruff-0.3.7-py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:0e8377cccb2f07abd25e84fc5b2cbe48eeb0fea9f1719cad7caedb061d70e5ce"},
     {file = "ruff-0.3.7-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:15a4d1cc1e64e556fa0d67bfd388fed416b7f3b26d5d1c3e7d192c897e39ba4b"},
@@ -2495,6 +2667,7 @@ name = "safetensors"
 version = "0.4.2"
 requires_python = ">=3.7"
 summary = ""
+groups = ["default"]
 files = [
     {file = "safetensors-0.4.2-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:c5dd2ed788730ed56b415d1a11c62026b8cc8c573f55a2092afb3ab383e94fff"},
     {file = "safetensors-0.4.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:cc41791b33efb9c83a59b731619f3d15f543dfe71f3a793cb8fbf9bd5d0d5d71"},
@@ -2528,6 +2701,7 @@ name = "seaborn"
 version = "0.13.2"
 requires_python = ">=3.8"
 summary = "Statistical data visualization"
+groups = ["notebooks"]
 dependencies = [
     "matplotlib!=3.6.1,>=3.4",
     "numpy!=1.24.0,>=1.20",
@@ -2542,6 +2716,7 @@ files = [
 name = "sentry-sdk"
 version = "1.40.1"
 summary = "Python client for Sentry (https://sentry.io)"
+groups = ["default"]
 dependencies = [
     "certifi",
     "urllib3>=1.25.7; python_version <= \"3.4\"",
@@ -2558,6 +2733,7 @@ name = "setproctitle"
 version = "1.3.3"
 requires_python = ">=3.7"
 summary = "A Python module to customize the process title"
+groups = ["default"]
 files = [
     {file = "setproctitle-1.3.3-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:334f7ed39895d692f753a443102dd5fed180c571eb6a48b2a5b7f5b3564908c8"},
     {file = "setproctitle-1.3.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:950f6476d56ff7817a8fed4ab207727fc5260af83481b2a4b125f32844df513a"},
@@ -2591,6 +2767,7 @@ name = "setuptools"
 version = "69.0.3"
 requires_python = ">=3.8"
 summary = "Easily download, build, install, upgrade, and uninstall Python packages"
+groups = ["default", "lint"]
 files = [
     {file = "setuptools-69.0.3-py3-none-any.whl", hash = "sha256:385eb4edd9c9d5c17540511303e39a147ce2fc04bc55289c322b9e5904fe2c05"},
     {file = "setuptools-69.0.3.tar.gz", hash = "sha256:be1af57fc409f93647f2e8e4573a142ed38724b8cdd389706a867bb4efcf1e78"},
@@ -2601,6 +2778,7 @@ name = "shellingham"
 version = "1.5.4"
 requires_python = ">=3.7"
 summary = "Tool to Detect Surrounding Shell"
+groups = ["default"]
 files = [
     {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
     {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
@@ -2611,6 +2789,7 @@ name = "six"
 version = "1.16.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 summary = "Python 2 and 3 compatibility utilities"
+groups = ["default", "notebooks"]
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
@@ -2621,6 +2800,7 @@ name = "smmap"
 version = "5.0.1"
 requires_python = ">=3.7"
 summary = "A pure Python implementation of a sliding window memory map manager"
+groups = ["default"]
 files = [
     {file = "smmap-5.0.1-py3-none-any.whl", hash = "sha256:e6d8668fa5f93e706934a62d7b4db19c8d9eb8cf2adbb75ef1b675aa332b69da"},
     {file = "smmap-5.0.1.tar.gz", hash = "sha256:dceeb6c0028fdb6734471eb07c0cd2aae706ccaecab45965ee83f11c8d3b1f62"},
@@ -2630,6 +2810,7 @@ files = [
 name = "sortedcontainers"
 version = "2.4.0"
 summary = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
+groups = ["test"]
 files = [
     {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
     {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
@@ -2639,6 +2820,7 @@ files = [
 name = "stack-data"
 version = "0.6.3"
 summary = "Extract data from python stack frames and tracebacks for informative displays"
+groups = ["notebooks"]
 dependencies = [
     "asttokens>=2.1.0",
     "executing>=1.2.0",
@@ -2654,6 +2836,7 @@ name = "sympy"
 version = "1.12"
 requires_python = ">=3.8"
 summary = "Computer algebra system (CAS) in Python"
+groups = ["default"]
 dependencies = [
     "mpmath>=0.19",
 ]
@@ -2667,6 +2850,7 @@ name = "tenacity"
 version = "8.2.3"
 requires_python = ">=3.7"
 summary = "Retry code until it succeeds"
+groups = ["notebooks"]
 files = [
     {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
     {file = "tenacity-8.2.3.tar.gz", hash = "sha256:5398ef0d78e63f40007c1fb4c0bff96e1911394d2fa8d194f77619c05ff6cc8a"},
@@ -2677,6 +2861,7 @@ name = "termcolor"
 version = "2.4.0"
 requires_python = ">=3.8"
 summary = "ANSI color formatting for output in terminal"
+groups = ["lint", "monitoring", "test"]
 files = [
     {file = "termcolor-2.4.0-py3-none-any.whl", hash = "sha256:9297c0df9c99445c2412e832e882a7884038a25617c60cea2ad69488d4040d63"},
     {file = "termcolor-2.4.0.tar.gz", hash = "sha256:aab9e56047c8ac41ed798fa36d892a37aca6b3e9159f3e0c24bc64a9b3ac7b7a"},
@@ -2687,6 +2872,7 @@ name = "tokenizers"
 version = "0.15.2"
 requires_python = ">=3.7"
 summary = ""
+groups = ["default"]
 dependencies = [
     "huggingface-hub<1.0,>=0.16.4",
 ]
@@ -2723,6 +2909,7 @@ name = "toml-sort"
 version = "0.23.1"
 requires_python = ">=3.7,<4.0"
 summary = "Toml sorting library"
+groups = ["lint"]
 dependencies = [
     "tomlkit>=0.11.2",
 ]
@@ -2736,6 +2923,7 @@ name = "tomlkit"
 version = "0.12.3"
 requires_python = ">=3.7"
 summary = "Style preserving TOML library"
+groups = ["lint"]
 files = [
     {file = "tomlkit-0.12.3-py3-none-any.whl", hash = "sha256:b0a645a9156dc7cb5d3a1f0d4bab66db287fcb8e0430bdd4664a095ea16414ba"},
     {file = "tomlkit-0.12.3.tar.gz", hash = "sha256:75baf5012d06501f07bee5bf8e801b9f343e7aac5a92581f20f80ce632e6b5a4"},
@@ -2746,6 +2934,7 @@ name = "toolz"
 version = "0.12.1"
 requires_python = ">=3.7"
 summary = "List processing tools and functional utilities"
+groups = ["notebooks"]
 files = [
     {file = "toolz-0.12.1-py3-none-any.whl", hash = "sha256:d22731364c07d72eea0a0ad45bafb2c2937ab6fd38a3507bf55eae8744aa7d85"},
     {file = "toolz-0.12.1.tar.gz", hash = "sha256:ecca342664893f177a13dac0e6b41cbd8ac25a358e5f215316d43e2100224f4d"},
@@ -2756,6 +2945,7 @@ name = "torch"
 version = "2.2.0"
 requires_python = ">=3.8.0"
 summary = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
+groups = ["default"]
 dependencies = [
     "filelock",
     "fsspec",
@@ -2794,6 +2984,7 @@ name = "torchmetrics"
 version = "1.3.2"
 requires_python = ">=3.8"
 summary = "PyTorch native Metrics"
+groups = ["default"]
 dependencies = [
     "lightning-utilities>=0.8.0",
     "numpy>1.20.0",
@@ -2811,6 +3002,7 @@ name = "tornado"
 version = "6.4"
 requires_python = ">= 3.8"
 summary = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
+groups = ["notebooks"]
 files = [
     {file = "tornado-6.4-cp38-abi3-macosx_10_9_universal2.whl", hash = "sha256:02ccefc7d8211e5a7f9e8bc3f9e5b0ad6262ba2fbb683a6443ecc804e5224ce0"},
     {file = "tornado-6.4-cp38-abi3-macosx_10_9_x86_64.whl", hash = "sha256:27787de946a9cffd63ce5814c33f734c627a87072ec7eed71f7fc4417bb16263"},
@@ -2830,6 +3022,7 @@ name = "tqdm"
 version = "4.66.2"
 requires_python = ">=3.7"
 summary = "Fast, Extensible Progress Meter"
+groups = ["default"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]
@@ -2843,6 +3036,7 @@ name = "traitlets"
 version = "5.14.1"
 requires_python = ">=3.8"
 summary = "Traitlets Python configuration system"
+groups = ["notebooks"]
 files = [
     {file = "traitlets-5.14.1-py3-none-any.whl", hash = "sha256:2e5a030e6eff91737c643231bfcf04a65b0132078dad75e4936700b213652e74"},
     {file = "traitlets-5.14.1.tar.gz", hash = "sha256:8585105b371a04b8316a43d5ce29c098575c2e477850b62b848b964f1444527e"},
@@ -2853,6 +3047,7 @@ name = "transformers"
 version = "4.39.3"
 requires_python = ">=3.8.0"
 summary = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
+groups = ["default"]
 dependencies = [
     "filelock",
     "huggingface-hub<1.0,>=0.19.3",
@@ -2875,6 +3070,7 @@ name = "transforms3d"
 version = "0.4.1"
 requires_python = ">=3.6"
 summary = "Functions for 3D coordinate transformations"
+groups = ["default"]
 files = [
     {file = "transforms3d-0.4.1-py3-none-any.whl", hash = "sha256:aea08776c1c915c8b424418994202aced8e46301c375ce63423d14f1d0045aa7"},
     {file = "transforms3d-0.4.1.tar.gz", hash = "sha256:31c755266a0b0a222488b8d039f6f325cf486c52728c03e307ce047b2fad1179"},
@@ -2884,6 +3080,8 @@ files = [
 name = "triton"
 version = "2.2.0"
 summary = "A language and compiler for custom Deep Learning operations"
+groups = ["default"]
+marker = "platform_system == \"Linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "filelock",
 ]
@@ -2897,6 +3095,7 @@ name = "typer"
 version = "0.12.3"
 requires_python = ">=3.7"
 summary = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+groups = ["default"]
 dependencies = [
     "click>=8.0.0",
     "rich>=10.11.0",
@@ -2913,6 +3112,7 @@ name = "types-pytz"
 version = "2024.1.0.20240203"
 requires_python = ">=3.8"
 summary = "Typing stubs for pytz"
+groups = ["lint"]
 files = [
     {file = "types-pytz-2024.1.0.20240203.tar.gz", hash = "sha256:c93751ee20dfc6e054a0148f8f5227b9a00b79c90a4d3c9f464711a73179c89e"},
     {file = "types_pytz-2024.1.0.20240203-py3-none-any.whl", hash = "sha256:9679eef0365db3af91ef7722c199dbb75ee5c1b67e3c4dd7bfbeb1b8a71c21a3"},
@@ -2923,6 +3123,7 @@ name = "types-tqdm"
 version = "4.66.0.20240106"
 requires_python = ">=3.8"
 summary = "Typing stubs for tqdm"
+groups = ["lint"]
 files = [
     {file = "types-tqdm-4.66.0.20240106.tar.gz", hash = "sha256:7acf4aade5bad3ded76eb829783f9961b1c2187948eaa6dd1ae8644dff95a938"},
     {file = "types_tqdm-4.66.0.20240106-py3-none-any.whl", hash = "sha256:7459b0f441b969735685645a5d8480f7912b10d05ab45f99a2db8a8e45cb550b"},
@@ -2933,6 +3134,7 @@ name = "typing-extensions"
 version = "4.9.0"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
+groups = ["default"]
 files = [
     {file = "typing_extensions-4.9.0-py3-none-any.whl", hash = "sha256:af72aea155e91adfc61c3ae9e0e342dbc0cba726d6cba4b6c72c1f34e47291cd"},
     {file = "typing_extensions-4.9.0.tar.gz", hash = "sha256:23478f88c37f27d76ac8aee6c905017a143b0b1b886c3c9f66bc2fd94f9f5783"},
@@ -2943,6 +3145,7 @@ name = "tzdata"
 version = "2023.4"
 requires_python = ">=2"
 summary = "Provider of IANA time zone data"
+groups = ["default", "notebooks"]
 files = [
     {file = "tzdata-2023.4-py2.py3-none-any.whl", hash = "sha256:aa3ace4329eeacda5b7beb7ea08ece826c28d761cda36e747cfbf97996d39bf3"},
     {file = "tzdata-2023.4.tar.gz", hash = "sha256:dd54c94f294765522c77399649b4fefd95522479a664a0cec87f41bebc6148c9"},
@@ -2952,6 +3155,7 @@ files = [
 name = "untokenize"
 version = "0.1.1"
 summary = "Transforms tokens into original source code (while preserving whitespace)."
+groups = ["lint"]
 files = [
     {file = "untokenize-0.1.1.tar.gz", hash = "sha256:3865dbbbb8efb4bb5eaa72f1be7f3e0be00ea8b7f125c69cbd1f5fda926f37a2"},
 ]
@@ -2961,6 +3165,7 @@ name = "urllib3"
 version = "2.2.0"
 requires_python = ">=3.8"
 summary = "HTTP library with thread-safe connection pooling, file post, and more."
+groups = ["default"]
 files = [
     {file = "urllib3-2.2.0-py3-none-any.whl", hash = "sha256:ce3711610ddce217e6d113a2732fafad960a03fd0318c91faa79481e35c11224"},
     {file = "urllib3-2.2.0.tar.gz", hash = "sha256:051d961ad0c62a94e50ecf1af379c3aba230c66c710493493560c0c223c49f20"},
@@ -2971,6 +3176,7 @@ name = "virtualenv"
 version = "20.25.0"
 requires_python = ">=3.7"
 summary = "Virtual Python Environment builder"
+groups = ["lint"]
 dependencies = [
     "distlib<1,>=0.3.7",
     "filelock<4,>=3.12.2",
@@ -2987,6 +3193,7 @@ name = "wandb"
 version = "0.16.6"
 requires_python = ">=3.7"
 summary = "A CLI and library for interacting with the Weights & Biases API."
+groups = ["default"]
 dependencies = [
     "Click!=8.0.0,>=7.1",
     "GitPython!=3.1.29,>=1.0.0",
@@ -3013,6 +3220,7 @@ files = [
 name = "wcwidth"
 version = "0.2.13"
 summary = "Measures the displayed width of unicode strings in a terminal"
+groups = ["lint", "notebooks"]
 dependencies = [
     "backports-functools-lru-cache>=1.2.1; python_version < \"3.2\"",
 ]
@@ -3026,6 +3234,8 @@ name = "win32-setctime"
 version = "1.1.0"
 requires_python = ">=3.5"
 summary = "A small Python utility to set file creation time on Windows"
+groups = ["default"]
+marker = "sys_platform == \"win32\""
 files = [
     {file = "win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad"},
     {file = "win32_setctime-1.1.0.tar.gz", hash = "sha256:15cf5750465118d6929ae4de4eb46e8edae9a5634350c01ba582df868e932cb2"},
@@ -3035,6 +3245,8 @@ files = [
 name = "windows-curses"
 version = "2.3.2"
 summary = "Support for the standard curses module on Windows"
+groups = ["monitoring"]
+marker = "platform_system == \"Windows\""
 files = [
     {file = "windows_curses-2.3.2-cp311-cp311-win32.whl", hash = "sha256:95d2a288af6172270da5ca9225aa99eeae98595c6e90f3574aa9b9f2fc1d2619"},
     {file = "windows_curses-2.3.2-cp311-cp311-win_amd64.whl", hash = "sha256:9b7ecd0f21f643e22a979effff25f62200626bb9853ea8b9aacf0bbcaab0950d"},
@@ -3047,6 +3259,7 @@ name = "xxhash"
 version = "3.4.1"
 requires_python = ">=3.7"
 summary = "Python binding for xxHash"
+groups = ["default"]
 files = [
     {file = "xxhash-3.4.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:58c49083801885273e262c0f5bbeac23e520564b8357fbb18fb94ff09d3d3ea5"},
     {file = "xxhash-3.4.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:b526015a973bfbe81e804a586b703f163861da36d186627e27524f5427b0d520"},
@@ -3086,6 +3299,7 @@ name = "yarl"
 version = "1.9.4"
 requires_python = ">=3.7"
 summary = "Yet another URL library"
+groups = ["default"]
 dependencies = [
     "idna>=2.0",
     "multidict>=4.0",
@@ -3131,6 +3345,7 @@ name = "zipp"
 version = "3.17.0"
 requires_python = ">=3.8"
 summary = "Backport of pathlib-compatible object wrapper for zip files"
+groups = ["lint"]
 files = [
     {file = "zipp-3.17.0-py3-none-any.whl", hash = "sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31"},
     {file = "zipp-3.17.0.tar.gz", hash = "sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0"},
