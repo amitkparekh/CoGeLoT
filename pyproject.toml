@@ -1,6 +1,6 @@
 [project]
 name = "cogelot"
-version = "1.0.1"
+version = "1.0.2"
 description = ""
 authors = [
     {name = "Amit Parekh", email = "7276308+amitkparekh@users.noreply.github.com"},
@@ -43,7 +43,7 @@ dependencies = [
     "psutil>=5.9.5",
     "importlib-resources>=6.0.1",
     "transforms3d>=0.4.1",
-    "pyarrow<14",
+    "pyarrow!=14",
     "convert-case>=1.2.3",
     "moviepy>=1.0.3",
     "more-itertools>=10.2.0",
