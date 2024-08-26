@@ -14,7 +14,7 @@ def load_instance_from_path(
     """Load the instance from the pickled path."""
     try:
         return instance.model_validate(load_from_path_fn(path)).model_dump()
-    except Exception as err:
+    except Exception as err:  # noqa:  BLE001
         logger.exception(f"Something went wrong with {path}")
         raise err from None
 

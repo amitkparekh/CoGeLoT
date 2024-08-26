@@ -108,7 +108,7 @@ def test_experiment_can_instantiate_from_config(hydra_config: DictConfig) -> Non
     assert instantiated_module is not None
 
 
-@pytest.mark.trylast()
+@pytest.mark.trylast
 def test_experiment_can_fast_dev_run(
     hydra_config: DictConfig, vima_dataloader: DataLoader[list[PreprocessedInstance]]
 ) -> None:

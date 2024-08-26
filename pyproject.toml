@@ -144,7 +144,6 @@ src = ["src"]
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore-init-module-imports = true
 # Enable every possible rule
 select = ["ALL"]
 ignore = [

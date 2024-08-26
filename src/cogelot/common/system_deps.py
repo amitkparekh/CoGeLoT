@@ -6,8 +6,8 @@ def verify_ffmpeg_is_available() -> None:
     """Verify ffmpeg is available."""
     is_available = False
     with suppress(FileNotFoundError):
-        outcome = subprocess.run(
-            ["ffmpeg", "-version"],  # noqa: S603 S607
+        outcome = subprocess.run(  # noqa: S603
+            ["ffmpeg", "-version"],  # noqa: S607
             capture_output=True,
             check=False,
         )

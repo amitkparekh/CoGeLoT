@@ -50,12 +50,12 @@ def load_datamodule(
     return datamodule
 
 
-def simplify_target_actions(actions: Any) -> dict[str, dict[str, torch.Tensor]]:  # noqa: ARG001
+def simplify_target_actions(actions: Any) -> dict[str, dict[str, torch.Tensor]]:
     """Simplify the target actions."""
     raise NotImplementedError
 
 
-def simplify_predicted_actions(actions: Any) -> dict[str, dict[str, torch.Tensor]]:  # noqa: ARG001
+def simplify_predicted_actions(actions: Any) -> dict[str, dict[str, torch.Tensor]]:
     """Simplify the predicted actions."""
     raise NotImplementedError
 

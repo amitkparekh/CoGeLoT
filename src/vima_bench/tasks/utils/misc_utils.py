@@ -9,7 +9,6 @@ import pybullet as p
 import torch
 from transforms3d import euler
 
-
 # -----------------------------------------------------------------------------
 # HEIGHTMAP UTILS
 # -----------------------------------------------------------------------------
@@ -335,7 +334,7 @@ def preprocess(img, dist="transporter"):
         depth_std = transporter_depth_std
 
     # convert to pytorch tensor (if required)
-    if type(img) == torch.Tensor:
+    if type(img) is torch.Tensor:
 
         def cast_shape(stat, img):
             tensor = torch.from_numpy(np.array(stat)).to(device=img.device, dtype=img.dtype)
