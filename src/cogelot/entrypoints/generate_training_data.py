@@ -85,7 +85,7 @@ def try_generate_episode(env: VIMAEnvBase, *, seed: int, only_keep_success: bool
 
         # Clip action to space
         oracle_action = {
-            k: np.clip(v, env.action_space[k].low, env.action_space[k].high)  # type: ignore[reportIndexIssue]
+            k: np.clip(v, env.action_space[k].low, env.action_space[k].high)  # pyright: ignore[reportIndexIssue]
             for k, v in oracle_action.items()
         }
 
@@ -140,7 +140,7 @@ def save_episode(episode: EpisodeOutput, task_output_dir: Path, episode_idx: int
 
     # Save RGB images
     logger.debug(f"{output_dir}: Save RGB images")
-    rgb = obs.pop("rgb")  # type: ignore[reportAttributeAccessError]
+    rgb = obs.pop("rgb")  # pyright: ignore[reportAttributeAccessIssue,reportArgumentType]
     views = sorted(rgb.keys())
     for view in views:
         frames = rgb[view]

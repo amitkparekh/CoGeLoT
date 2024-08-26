@@ -38,7 +38,7 @@ def _find_prompt_renderer(env: Env[Any, Any]) -> PromptRenderer | None:
     if isinstance(env, PromptRenderer):
         return env
     if getattr(env, "env", None) is not None:
-        return _find_prompt_renderer(env.env)  # type: ignore[attr-defined]
+        return _find_prompt_renderer(env.env)  # pyright: ignore[reportAttributeAccessIssue]
     return None
 
 
@@ -49,7 +49,7 @@ def get_task_kwargs(partition: Partition, task: Task) -> dict[str, Any] | None:
     return task_kwargs
 
 
-class VIMAEnvironment(Wrapper):  # type: ignore[type-arg]
+class VIMAEnvironment(Wrapper):  # pyright: ignore[reportMissingTypeArgument]
     """Environment wrapper for VIMA."""
 
     env: VIMAEnvBase

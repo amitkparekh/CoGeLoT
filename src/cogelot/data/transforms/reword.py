@@ -101,8 +101,7 @@ BUILD_ALTERNATIVES = {"build", "create", "construct", "form", "make"}
 def _consecutive_subsets(iterable: list[str]) -> list[str]:
     """Get all consecutive subsets of an iterable."""
     subsets: list[tuple[str, ...]] = [
-        beginning
-        for beginning, _, _ in more_itertools.windowed_complete(iterable, 1)  # pyright: ignore[reportAssignmentType]
+        beginning for beginning, _, _ in more_itertools.windowed_complete(iterable, 1)
     ]
     # Add the full list onto the end
     subsets.append(tuple(iterable))

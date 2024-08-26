@@ -120,12 +120,15 @@ reportUnusedCallResult = false
 reportIncompatibleMethodOverride = false
 reportInvalidCast = false
 reportPrivateLocalImportUsage = false
+reportUnsafeMultipleInheritance = false
 # Covered by ruff
+reportUnusedParameter = false
 reportPrivateUsage = false
 reportUnusedImport = false
 reportPrivateImportUsage = false
 reportImplicitStringConcatenation = false
 reportDeprecated = false
+reportMissingParameterType = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

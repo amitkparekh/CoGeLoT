@@ -1,16 +1,17 @@
 import os
 from pathlib import Path
+from typing import Never
 
 import pytest
 
 if os.getenv("_PYTEST_RAISE", "0") != "0":
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_exception_interact(call):  # type: ignore[no-untyped-def] # noqa: ANN201, ANN001
+    def pytest_exception_interact(call) -> Never:  # noqa:  ANN001
         raise call.excinfo.value
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_internalerror(excinfo):  # type: ignore[no-untyped-def] # noqa: ANN201, ANN001
+    def pytest_internalerror(excinfo) -> Never:  # noqa: ANN001
         raise excinfo.value
 
 
