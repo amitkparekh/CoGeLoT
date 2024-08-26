@@ -27,6 +27,8 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     outputs:
       python: ${{steps.filter.outputs.python}}
+      deps: ${{steps.filter.outputs.deps}}
+      pre_commit_config: ${{steps.filter.outputs.pre_commit_config}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
