@@ -47,6 +47,7 @@ dependencies = [
     "moviepy>=1.0.3",
     "more-itertools>=10.2.0",
     "polars>=0.20.6",
+    "huggingface-hub>=0.25.2",
 ]
 
 [tool.pdm]

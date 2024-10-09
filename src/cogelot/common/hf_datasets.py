@@ -10,10 +10,7 @@ from datasets.distributed import split_dataset_by_node
 from datasets.features.features import require_decoding
 from datasets.table import embed_table_storage
 from huggingface_hub import HfApi, snapshot_download
-from huggingface_hub.utils._errors import (
-    BadRequestError,
-    HfHubHTTPError,
-)
+from huggingface_hub.errors import BadRequestError, HfHubHTTPError
 from loguru import logger
 from tqdm import tqdm
 
