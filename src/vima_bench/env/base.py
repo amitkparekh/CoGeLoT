@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 import time
+from contextlib import suppress
 from typing import Literal
 
 import gym
@@ -159,6 +160,12 @@ class VIMAEnvBase(gym.Env):
         # setup task
         ALL_TASKS = _ALL_TASKS.copy()
         ALL_TASKS.update({k.split("/")[1]: v for k, v in ALL_TASKS.items()})
+
+        with suppress(AttributeError):
+            updated_task_kwargs = {"seed": self.global_seed[0]}
+            if task_kwargs:
+                task_kwargs = {**task_kwargs, **updated_task_kwargs}
+
         if isinstance(task, str):
             assert task in ALL_TASKS, f"Invalid task name provided {task}"
             task = ALL_TASKS[task](debug=self._debug, **(task_kwargs or {}))

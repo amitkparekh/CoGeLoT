@@ -6,6 +6,7 @@ import hydra
 import torch
 import typer
 from loguru import logger
+from pytorch_lightning import seed_everything
 from rich.console import Console
 from rich.table import Table
 
@@ -29,6 +30,8 @@ def create_evaluation_module(config_path: Path) -> EvaluationLightningModule:
         config_path.name,
         overrides=["model.model.wandb_run_id=8lkml12g", "environment@model.environment=display"],
     )
+    seed = config.get("seed")
+    seed_everything(seed, workers=True)
     evaluation = hydra.utils.instantiate(config["model"])
     assert isinstance(evaluation, EvaluationLightningModule)
     return evaluation
