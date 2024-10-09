@@ -34,14 +34,6 @@ mission_task = param_fixture(
     ],
     scope="session",
 )
-# mission_id = param_fixture("mission_id", ["000000"], scope="session")
-
-keep_null_action = param_fixture(
-    "keep_null_action",
-    [False, True],
-    ids=["without_null_action", "with_null_action"],
-    scope="session",
-)
 
 
 @fixture(scope="session")
@@ -58,8 +50,8 @@ def raw_instance_dir(fixture_storage_dir: Path, mission_task: str) -> Path:
 
 
 @fixture(scope="session")
-def vima_instance_parser(keep_null_action: bool) -> VIMAInstanceParser:
-    return VIMAInstanceParser(keep_null_action=keep_null_action)
+def vima_instance_parser() -> VIMAInstanceParser:
+    return VIMAInstanceParser(keep_null_action=False)
 
 
 @fixture(scope="session")

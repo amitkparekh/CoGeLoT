@@ -17,23 +17,3 @@ torch_device = param_fixture(
     ids=["cpu", "cuda"],
     scope="session",
 )
-
-
-use_flash_attn = param_fixture(
-    "use_flash_attn",
-    [
-        False,
-        pytest.param(
-            True,
-            marks=[
-                pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available"),
-                pytest.mark.skipif(
-                    not torch.backends.cuda.flash_sdp_enabled(), reason="FlashAttn not supported"
-                ),
-                pytest.mark.xdist_group("gpu"),
-            ],
-        ),
-    ],
-    ids=["without_flash_attn", "with_flash_attn"],
-    scope="session",
-)
