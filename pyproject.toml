@@ -1,6 +1,6 @@
 [project]
 name = "cogelot"
-version = "1.0.4"
+version = "1.0.5"
 description = ""
 authors = [
     {name = "Amit Parekh", email = "7276308+amitkparekh@users.noreply.github.com"},
