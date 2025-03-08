@@ -52,7 +52,7 @@ _Unveiling the true robustness of multimodal models: A comprehensive framework t
 4. Train a model
 
     ```bash
-    pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
+    pdm run python src/cogelot/entrypoints/train.py experiment=01_their_vima
     ```
 
 5. Evaluate a model from one of the [provided checkpoints](#model-architectures-and-checkpoints)
@@ -240,7 +240,7 @@ I went all out on the Hydra stuff and everything is pretty compositional. The `c
 
 
 ```bash
-pdm run python src/cogelot/entrypoints/train.py --experiment=01_their_vima
+pdm run python src/cogelot/entrypoints/train.py experiment=01_their_vima
 ```
 
 
