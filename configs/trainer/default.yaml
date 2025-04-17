@@ -1,8 +1,8 @@
 defaults:
   - callbacks: default
-  - logger:
-      - wandb_training
-      - hf_model
+  # - logger:
+  #     - wandb_training
+  #     - hf_model
   - _self_
 
 _target_: pytorch_lightning.trainer.Trainer
