@@ -3,7 +3,7 @@ defaults:
   - override callbacks:
       - model_summary
       - rich_progress
-  - override logger: wandb_evaluation
+  # - override logger: wandb_evaluation
   - _self_
 
 max_epochs: 1
